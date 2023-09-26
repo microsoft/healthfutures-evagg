@@ -1,0 +1,22 @@
+{
+    "query": {
+        "gene": "TUBB3",
+        "variant": "p.E410K"
+    },
+    "library": {
+        "collections": [
+            "~/data/evagg/collections/tiny_positive",
+            "~/data/evagg/collections/tiny_negative"
+        ]
+    },
+    "content": {
+        "fields": [
+            "MOI",
+            "Phenotype",
+            "Functional data"
+        ]
+    },
+    "output": {
+        "output_path": "~/data/evagg/outputs/run_single_query_sync.json"
+    }
+}
