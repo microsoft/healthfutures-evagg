@@ -8,6 +8,7 @@ from lib.evagg import (
     IGetPapers, 
     IExtractFields, 
     IWriteOutput,
+    Variant,
     ConsoleOutputWriter, 
     FileOutputWriter,
     SimpleFileLibrary,
@@ -21,36 +22,46 @@ class DiContainer():
 
     @cache
     def application(self) -> EvAggApp:
-        config_dict = self._config_file_to_dict(self._config_path)
-        query = self._query(config_dict["query"])
-        library = self._library(config_dict["library"])
-        extractor = self._extractor(config_dict["content"])
-        writer = self._writer(config_dict["output"])
 
+        # Assemble dependencies.
+        config_dict = self._config_file_to_dict(self._config_path)
+        query = self._query(
+            gene=config_dict["query"]["gene"], 
+            modification=config_dict["query"]["modification"]
+        )
+        library = self._library(
+            collections=tuple(config_dict["library"]["collections"])
+        )
+        extractor = self._extractor(
+            fields=tuple(config_dict["content"]["fields"])
+        )
+        writer = self._writer(
+            output_path=config_dict["output"]["output_path"]
+        )
+
+        # Instantiate the app.
         return EvAggApp(query, library, extractor, writer)
+
+    # TODO - consider frozendict and passing a config dict to each of the private dependency builders below.
+    # See https://stackoverflow.com/questions/6358481/using-functools-lru-cache-with-dictionary-arguments
 
     @cache
     def _config_file_to_dict(self, config: Path) -> dict[str, Any]:
         return json.loads(config.read_text())
 
-    # TODO, figure out alternative signature that supports caching here and below
-    def _query(self, config: dict[str, str]) -> dict[str, str]: 
-        assert "gene" in config
-        assert "variant" in config
-        return config
+    @cache
+    def _query(self, gene: str, modification: str) -> Variant: 
+        return Variant(gene=gene, modification=modification)
 
-    def _library(self, config: dict[str, str]) -> IGetPapers:
-        assert "collections" in config
-        assert isinstance(config["collections"], Sequence)
+    @cache
+    def _library(self, collections: Sequence[str]) -> IGetPapers:
+        return SimpleFileLibrary(collections)
 
-        return SimpleFileLibrary(config["collections"])
-
-    def _extractor(self, config: dict[str, str]) -> IExtractFields:
-        assert "fields" in config
-        assert isinstance(config["fields"], Sequence)
-
-        return SimpleContentExtractor(config["fields"])
+    @cache
+    def _extractor(self, fields: Sequence[str]) -> IExtractFields:
+        return SimpleContentExtractor(fields)
         
-    def _writer(self, config: dict[str, str]) -> IWriteOutput:
-        # return ConsoleOutputWriter()
-        return FileOutputWriter(config["output_path"])
+    @cache
+    def _writer(self, output_path: str) -> IWriteOutput:
+        return ConsoleOutputWriter()
+        # return FileOutputWriter(output_path)

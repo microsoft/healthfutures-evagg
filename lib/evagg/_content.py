@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from ._library import (
+from ._base import (
     Paper
 )
 
@@ -13,6 +13,10 @@ class SimpleContentExtractor(IExtractFields):
         self._fields = fields
 
     def _field_to_value(self, field: str) -> str:
+        if field == "gene":
+            return "CHI3L1"
+        if field == "modification":
+            return "p.Y34C"
         if field == "MOI":
             return "AD"
         if field == "Phenotype":
@@ -22,5 +26,6 @@ class SimpleContentExtractor(IExtractFields):
         else:
             return "Unknown"
         
-    def extract(self, paper: Paper) -> dict[str, str]:
-        return {field: self._field_to_value(field) for field in self._fields}
+    def extract(self, paper: Paper) -> Sequence[dict[str, str]]:
+        # Dummy implementation that returns a single variant with a static set of fields.
+        return [{field: self._field_to_value(field) for field in self._fields}]

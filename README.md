@@ -119,3 +119,4 @@ No implementation of comparing this pipeline's output to ground truth has been i
 - TODO: data science env dependencies
 - TODO: notebook for processing the current literature spreadsheet
 - TODO: dataset organization, and readme
+- Consider base types for the results that we're pulling out of a paper?
