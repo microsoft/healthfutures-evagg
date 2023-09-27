@@ -14,7 +14,7 @@ Local Machine
 Ubuntu 20.04 VM
 - [Python](https://www.python.org/downloads/) 3.8 (TODO check version) and above
 - Miniconda (TODO)
-
+- Poetry (curl -sSL https://install.python-poetry.org | python3 -)
 Open visual studio code on your local machine and connect to the VM using `Remote-SSH: Connect to Host`. This will initiate a connection to your VM within VSCode.
 
 Next, clone this repository with `git clone https://github.com/jeremiahwander/ev-agg-exp`.
