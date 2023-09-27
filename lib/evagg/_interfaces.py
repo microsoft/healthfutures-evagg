@@ -1,12 +1,14 @@
 from typing import Protocol, Sequence
 
+from ._base import Paper, Variant
+
 class IGetPapers(Protocol):
-    def search(self, gene: str, variant: str) -> Sequence[dict[str, str]]:
+    def search(self, query: Variant) -> Sequence[Paper]:
         ...
 
 
 class IExtractFields(Protocol):
-    def extract(self, paper: dict[str, str]) -> dict[str, str]:
+    def extract(self, paper: Paper) -> Sequence[dict[str, str]]:
         ...
     
 

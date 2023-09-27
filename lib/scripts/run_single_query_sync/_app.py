@@ -1,15 +1,16 @@
 from lib.evagg import IGetPapers, IExtractFields, IWriteOutput
+from lib.evagg import Variant
 
 class EvAggApp():
-    def __init__(self, query: dict[str, str], library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput) -> None:
+    def __init__(self, query: Variant, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput) -> None:
         self._query = query
         self._library = library        
         self._extractor = extractor
         self._writer = writer
 
     def execute(self) -> None:
-        # Get the papers that match.
-        papers = self._library.search(self._query['gene'], self._query['variant'])
+        # Get the papers that match the query.
+        papers = self._library.search(self._query)
 
         # For all papers that match, extract the fields we want.
         fields = {paper.id: self._extractor.extract(paper) for paper in papers}
