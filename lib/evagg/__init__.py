@@ -6,6 +6,11 @@ from ._interfaces import (
     IWriteOutput
 )
 
+from ._base import (
+    Paper,
+    Variant
+)
+
 from ._io import (
     ConsoleOutputWriter,
     FileOutputWriter
@@ -13,7 +18,6 @@ from ._io import (
 
 from ._library import (
     SimpleFileLibrary,
-    Paper
 )
 
 from ._content import (
@@ -25,11 +29,13 @@ __all__ = [
     "IExtractFields",
     "IGetPapers",
     "IWriteOutput",
+    # Base.
+    "Paper",
+    "Variant",
     # IO.
     "ConsoleOutputWriter",
     "FileOutputWriter",
     # Library.
-    "Paper",
     "SimpleFileLibrary",
     # Content.
     "SimpleContentExtractor"
