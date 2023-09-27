@@ -16,5 +16,7 @@ class FileOutputWriter(IWriteOutput):
     def write(self, fields: dict[str, dict[str, str]]) -> None:
         print(f"Writing output to: {self._path}")
         
+        # TODO create parent if doesn't exist.
+
         with open(self._path, "w") as f:
-            json.dump(fields, f)
+            json.dump(fields, f, indent=4)
