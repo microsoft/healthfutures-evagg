@@ -1,7 +1,7 @@
 {
     "query": {
         "gene": "TUBB3",
-        "variant": "p.E410K"
+        "modification": "p.E410K"
     },
     "library": {
         "collections": [
@@ -11,6 +11,8 @@
     },
     "content": {
         "fields": [
+            "gene",
+            "modification",
             "MOI",
             "Phenotype",
             "Functional data"

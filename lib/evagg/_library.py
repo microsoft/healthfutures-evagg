@@ -4,28 +4,8 @@ import os
 import json
 
 from ._interfaces import IGetPapers
+from ._base import Variant, Paper
 
-# TODO dataclass?
-# TODO should be immutable after load.
-class Paper():
-    def __init__(self, id: str, citation: str, abstract: str) -> None:
-        self.id = id
-        self.citation = citation
-        self.abstract = abstract
-
-    def __repr__(self) -> str:
-        m = 10
-        csuf = "..." if len(self.citation) > m else ""
-        asuf = "..." if len(self.abstract) > m else ""
-
-        return f"id: {self.id} - abstract: \"{self.abstract[:m]}{asuf}\""
-    
-    # def __eq__(self, b: 'Paper') -> bool:
-    #     return self.id == b.id
-    
-    @classmethod
-    def from_dict(cls, values: dict[str, str]) -> 'Paper':
-        return Paper(id=values['id'], citation=values['citation'], abstract=values['abstract'])
 
 
 class SimpleFileLibrary(IGetPapers):
@@ -52,7 +32,7 @@ class SimpleFileLibrary(IGetPapers):
         
         return papers
 
-    def search(self, gene: str, variant: str) -> Sequence[Paper]:
+    def search(self, query: Variant) -> Sequence[Paper]:
         # Dummy implementation that returns all papers regardless of query.
         all_papers = self._load().values()
         return all_papers

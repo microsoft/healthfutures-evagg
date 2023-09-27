@@ -7,7 +7,7 @@ class ConsoleOutputWriter(IWriteOutput):
         pass
 
     def write(self, fields: dict[str, dict[str, str]]) -> None:
-        print(fields)
+        print(json.dumps(fields, indent=4))
 
 class FileOutputWriter(IWriteOutput):
     def __init__(self, path: str) -> None:
