@@ -17,6 +17,6 @@
         ]
     },
     "output": {
-        "output_path": "/home/miah/data/evagg/outputs/run_single_query_sync.json"
+        "output_path": ".out/run_single_query_sync.json"
     }
 }
