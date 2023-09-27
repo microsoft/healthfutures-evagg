@@ -111,8 +111,11 @@ No implementation of comparing this pipeline's output to ground truth has been i
 ## Questions and todos
 - Consider specifying injected dependencies in config files? Seems like a PITA, but will ultimately be much more flexible.
 - Consider writing script for literature library localization? Likely only necessary if we don't see ourselves moving directly to PMC API requests.
-- TODO: Linting setup and actually doing the linting
+- TODO: Linting env, vscode dependencies, and readme
+- TODO: Actually doing the linting
 - TODO: VSCode Interactive dependencies and setup 
-- TODO: data science dependencies
-- TODO: notebook for processing the current literature spreadsheet.
-- TODO: dataset organization
+- TODO: pytest env dependencies
+- TODO: implement basic tests
+- TODO: data science env dependencies
+- TODO: notebook for processing the current literature spreadsheet
+- TODO: dataset organization, and readme
