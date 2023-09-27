@@ -1,3 +1,5 @@
+"""The evagg core library."""
+
 from ._interfaces import (
     IExtractFields, 
     IGetPapers, 

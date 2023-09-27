@@ -1,1 +1,1 @@
-Location for general purpose notebooks.
+Location for shared notebooks.
