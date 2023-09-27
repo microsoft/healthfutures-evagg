@@ -5,8 +5,8 @@
     },
     "library": {
         "collections": [
-            "~/data/evagg/collections/tiny_positive",
-            "~/data/evagg/collections/tiny_negative"
+            "/home/miah/data/evagg/collections/tiny_positive",
+            "/home/miah/data/evagg/collections/tiny_negative"
         ]
     },
     "content": {
@@ -17,6 +17,6 @@
         ]
     },
     "output": {
-        "output_path": "~/data/evagg/outputs/run_single_query_sync.json"
+        "output_path": "/home/miah/data/evagg/outputs/run_single_query_sync.json"
     }
 }
