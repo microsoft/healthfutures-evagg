@@ -10,7 +10,8 @@ from ._io import (
 )
 
 from ._library import (
-    SimpleFileLibrary
+    SimpleFileLibrary,
+    Paper
 )
 
 from ._content import (
@@ -26,7 +27,8 @@ __all__ = [
     "ConsoleOutputWriter",
     "FileOutputWriter",
     # Library.
-    "SimpleFileLibrary"
+    "Paper",
+    "SimpleFileLibrary",
     # Content.
     "SimpleContentExtractor"
 ]

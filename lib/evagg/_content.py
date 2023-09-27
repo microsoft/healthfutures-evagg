@@ -1,5 +1,9 @@
 from typing import Sequence
 
+from ._library import (
+    Paper
+)
+
 from ._interfaces import (
     IExtractFields,
 )
@@ -18,5 +22,5 @@ class SimpleContentExtractor(IExtractFields):
         else:
             return "Unknown"
         
-    def extract(self, paper: dict[str, str]) -> dict[str, str]:
+    def extract(self, paper: Paper) -> dict[str, str]:
         return {field: self._field_to_value(field) for field in self._fields}
