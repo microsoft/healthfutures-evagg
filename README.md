@@ -9,16 +9,22 @@ This is an environment for experimentation on LLM prompts and related applicatio
 The intended model for interacting with this environment is using VSCode. Many of the descriptions and instructions below will be specific to users of VSCode. Some of the command line functionality will work directly in the terminal.
 
 Local Machine
-- [Visual studio code](TODO)
+- [Visual studio code](https://code.visualstudio.com/download)
 - The Remote Development Extension Pack for VSCode.
 
 Ubuntu 20.04 VM/WSL
 - [Python](https://www.python.org/downloads/) 3.8 and above
-- azcopy (TODO)
-- azure cli (TODO)
-- git (TODO)
-- Miniconda (TODO)
-- Poetry (curl -sSL https://install.python-poetry.org | python3 -)
+- azcopy (install script)
+- azure cli (install script)
+- git (install script)
+- Miniconda
+
+    ```bash
+    curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
+    sh ./miniconda.sh
+    conda update -n base -c defaults conda
+    conda config --add channels conda-forge
+    ```
 
 Open visual studio code on your local machine and connect to the VM using `Remote-SSH: Connect to Host`. This will initiate a connection to your VM within VSCode. Alternatively, if you're using WSL connect using `WSL: Connect to WSL`.
 
@@ -120,3 +126,5 @@ No implementation of comparing this pipeline's output to ground truth has been i
 - TODO: notebook for processing the current literature spreadsheet
 - TODO: dataset organization, and readme
 - Consider base types for the results that we're pulling out of a paper?
+- Consider pydantic for configs, get the config plan figured out first though
+- TODO: poetry via conda env
