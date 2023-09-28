@@ -1,6 +1,39 @@
 name: evagg
 channels:
- - conda-forge
- - defaults
+  - conda-forge
+  - defaults
+  # - bioconda
 dependencies:
- - python>=3.8
+  - python>=3.10
+  - poetry>=1.2
+
+  # Scientific computing.
+  - numpy
+  - pandas
+  - openpyxl # To work with Excel files in pandas.
+  - ipykernel # IPython kernel for jupyter.
+  - jinja2 # Required for jupyter notebooks.
+  - ipywidgets # Support for widgets in jupyter notebooks.
+  - matplotlib
+  - seaborn
+
+  # Dependencies used for code development (linting, testing, etc.)
+  - black
+  - isort
+  - flake8
+  - pep8-naming
+  - flake8-bugbear
+  - flake8-comprehensions
+  - flake8-docstrings
+  - flake8-eradicate
+  - flake8-noqa
+  - flake8-isort
+  - flake8-black
+  - bandit
+  - mypy
+  # - types-python-dateutil
+  # - types-pyyaml
+  - pytest
+  - pytest-cov
+  - pytest-mock
+  #? - snakeviz
