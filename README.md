@@ -19,6 +19,7 @@ Ubuntu 20.04 VM/WSL
 - azcopy (install script)
 - azure cli (install script)
 - git (install script)
+- make (install script)
 - Miniconda
 
     ```bash
@@ -122,9 +123,7 @@ No implementation of comparing this pipeline's output to ground truth has been i
 
 - Consider specifying injected dependencies in config files? Seems like a PITA, but will ultimately be much more flexible.
 - Consider writing script for literature library localization? Likely only necessary if we don't see ourselves moving directly to PMC API requests.
-- TODO: readme
-- TODO: VSCode Interactive dependencies and setup
-- TODO: implement basic tests
+- TODO: readme todos
 - TODO: notebook for processing the current literature spreadsheet
 - TODO: dataset organization, and readme
 - Consider base types for the results that we're pulling out of a paper, using primitives is ugly?
