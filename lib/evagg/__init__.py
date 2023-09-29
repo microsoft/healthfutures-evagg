@@ -1,28 +1,10 @@
 """The evagg core library."""
 
-from ._interfaces import (
-    IExtractFields, 
-    IGetPapers, 
-    IWriteOutput
-)
-
-from ._base import (
-    Paper,
-    Variant
-)
-
-from ._io import (
-    ConsoleOutputWriter,
-    FileOutputWriter
-)
-
-from ._library import (
-    SimpleFileLibrary,
-)
-
-from ._content import (
-    SimpleContentExtractor
-)
+from ._base import Paper, Variant
+from ._content import SimpleContentExtractor
+from ._interfaces import IExtractFields, IGetPapers, IWriteOutput
+from ._io import ConsoleOutputWriter, FileOutputWriter
+from ._library import SimpleFileLibrary
 
 __all__ = [
     # Interfaces.
@@ -38,5 +20,5 @@ __all__ = [
     # Library.
     "SimpleFileLibrary",
     # Content.
-    "SimpleContentExtractor"
+    "SimpleContentExtractor",
 ]
