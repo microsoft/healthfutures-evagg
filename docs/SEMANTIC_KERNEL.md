@@ -1,3 +1,7 @@
+# Semantic Kernel - notes cache
+
+These notes aren't useful in the current version of this repository, but will be revisited when we re-incorporate semantic kernel.
+
 ## Configuration
 
 Execution of code within this repo requires execution of APIs hosted either by OpenAI or the Azure OpenAI Service. Accessing these APIs require configuration details that are specific to a given user and organization. **Do not share your api keys or other secrets; do not commit them to source control.**
@@ -10,7 +14,7 @@ Copy the `.env.example` file to a new file named `.env`. Then, copy those keys i
 
 Configuration of AZURE_OPENAI_ variables in your `.env` file will supersede configuration of `OPENAI...` variables, so in practice your configuration file will contain the following values if you're leveraging OpenAI APIs
 
-```
+```bash
 OPENAI_API_KEY=""
 OPENAI_ORG_ID=""
 OPENAI_MODEL_ID=""
@@ -20,7 +24,7 @@ OPENAI_MODEL_ID=""
 
 And it will alternatively contain the following values if you're levering the Azure OpenAI APIs
 
-```
+```bash
 AZURE_OPENAI_DEPLOYMENT_NAME=""
 AZURE_OPENAI_ENDPOINT=""
 AZURE_OPENAI_API_KEY=""
@@ -40,7 +44,7 @@ export PYTHONPATH=$(pwd)/lib:$PYTHONPATH
 python scripts/exec_sem_function.py
 ```
 
-**Note: in both of these execution methods, the semantic function being executed and the json parameter file configuring that execution are implicitly specified. Review (exec_sem_function.py)[scripts/exec_sem_function.py] or run `python scripts/exec_sem_function.py --help` for additional detail on how to modify this behavior.**
+**Note: in both of these execution methods, the semantic function being executed and the json parameter file configuring that execution are implicitly specified. Review [scripts/exec_sem_function.py](exec_sem_function.py) or run `python scripts/exec_sem_function.py --help` for additional detail on how to modify this behavior.**
 
 ## Modifying prompts interactively
 
