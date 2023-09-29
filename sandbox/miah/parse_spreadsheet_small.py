@@ -1,7 +1,7 @@
-##% Imports.
+# %% Imports.
 
-##% Constants.
+# %% Constants.
 SPREADSHEET_PATH = "/mnt/data/variant_examples.tsv"
 
-##% Parse the spreadsheet
+# %% Parse the spreadsheet
 print("hello")
