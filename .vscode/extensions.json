@@ -1,6 +1,14 @@
 {
     "recommendations": [
         "ms-python.python",
-        "ms-semantic-kernel.semantic-kernel"
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-python.isort",
+        "ms-toolsai.jupyter",
+        "mhutchie.git-graph",
+        "davidanson.vscode-markdownlint",
+        "oderwat.indent-rainbow",
+        "mechatroner.rainbow-csv",
     ]
 }
