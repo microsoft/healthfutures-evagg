@@ -2,94 +2,129 @@
 
 This is an environment for experimentation on LLM prompts and related application code relevant to evidence aggregation for molecular diagnosis of mendelian disease.
 
-## Prerequisites, and environment setup
+## Compute environment pre-requisites
 
-**Note: this environment has only been tested on Ubuntu 20.04. Behavior on other operating systems may vary,.If you run into issues, please submit them on Github.**
+**Note: this environment has only been tested on Ubuntu 20.04 in WSL and an Azure VM. Behavior on other operating systems may vary. If you run into issues, please submit them on Github.**
 
 The intended model for interacting with this environment is using VSCode. Many of the descriptions and instructions below will be specific to users of VSCode. Some of the command line functionality will work directly in the terminal.
 
 Local Machine
-- [Visual studio code](todo)
 
-Ubuntu 20.04 VM
+- [Visual studio code](https://code.visualstudio.com/download)
+- The Remote Development Extension Pack for VSCode.
+
+Ubuntu 20.04 VM/WSL
+
 - [Python](https://www.python.org/downloads/) 3.8 and above
+- azcopy (install script)
+- azure cli (install script)
+- git (install script)
+- make (install script)
+- Miniconda
 
-Open visual studio code on your local machine and connect to the VM using `Remote-SSH: Connect to Host`. This will initiate a connection to your VM within VSCode.
+    ```bash
+    curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
+    sh ./miniconda.sh # close and reopen shell.
+    conda update -n base -c defaults conda
+    conda config --add channels conda-forge
+    conda install -n base conda-libmamba-solver
+    conda config --set solver libmamba
+    ```
+
+Open visual studio code on your local machine and connect to the VM using `Remote-SSH: Connect to Host`. This will initiate a connection to your VM within VSCode. Alternatively, if you're using WSL connect using `WSL: Connect to WSL`.
 
 Next, clone this repository with `git clone https://github.com/jeremiahwander/ev-agg-exp`.
 
 Open this newly cloned repository in VSCode with "File -> Open Folder"
 
-You will likely be prompted to install recommended extensions for this repository, accept these recommendations.
+You will be prompted to install recommended extensions for this repository, accept these recommendations.
 
-Unless you want to use a conda environment (TODO), you'll need to install a few python packages for the basic script to run.
+## Environment setup
+
+Create a conda environment. All shell commands in this section should be executed from the repository's root directory.
 
 ```bash
-python3 -m pip install semantic kernel
-python3 -m pip install click
+conda env create -f environment.yml
+conda activate evagg
 ```
+
+Now use poetry to install the local library and registered scripts.
+
+```bash
+poetry install
+```
+
+Test installation of scripts by running the following command
+
+```bash
+run_single_query_sync -h
+```
+
+You should see a help message displayed providing usage for the `run_single_query_sync` script.
 
 ## Configuration
 
-Execution of code within this repo requires execution of APIs hosted either by OpenAI or the Azure OpenAI Service. Accessing these APIs require configuration details that are specific to a given user and organization. **Do not share your api keys or other secrets; do not commit them to source control.**
+At this point, no additional configuration is needed, when we start using the Azure OpenAI service and/or other cloud services, we will need to put additional configuration detail here.
 
-Make sure you have an
-[Open AI API Key](https://openai.com/api/) or
-[Azure Open AI service key](https://learn.microsoft.com/azure/cognitive-services/openai/quickstart?pivots=rest-api)
+## Code organization
 
-Copy the `.env.example` file to a new file named `.env`. Then, copy those keys into the `.env` file:
+The repository contains the following subdirectories:
 
-Configuration of AZURE_OPENAI_ variables in your `.env` file will supersede configuration of `OPENAI...` variables, so in practice your configuration file will contain the following values if you're leveraging OpenAI APIs
+root
+|-- deploy: infrastructure as code for the deployment and management of necessary cloud resources.
+|-- docs: additional documentation beyond what is in scope for this README.
+|-- lib: source code for scripts and core libraries.
+|-- notebooks: shared notebooks for interactive development.
+|-- test: unit tests for core libraries.
 
-```
-OPENAI_API_KEY=""
-OPENAI_ORG_ID=""
-OPENAI_MODEL_ID=""
-```
+## Running Benchmarks
 
-**Note: the key `OPENAI_MODEL_ID` is not directly used by Semantic Kernel in the way that the other two `OPENAI...` keys are. Instead this is where you will specify which model you're using (e.g., 'davinci-text-003'). Currently the scripts in this repo only leverage the completion API, so you'll need to specify a model here that supports the completion API.**
+### run_single_query_sync.py
 
-And it will alternatively contain the following values if you're levering the Azure OpenAI APIs
+`run_single_query_sync.py` is intended to be a standalone, synchronous benchmark for the full evidence aggregation pipeline. Given a single query (i.e., gene-variant pair, accepted nomenclatures TBD), this script will attempt to find all papers relevant to the query and extract a set of structured fields for all relevant variants within those papers.
 
-```
-AZURE_OPENAI_DEPLOYMENT_NAME=""
-AZURE_OPENAI_ENDPOINT=""
-AZURE_OPENAI_API_KEY=""
-```
+As currently implemented, this script is pretty dumb. It leverages a local library of papers backed by one or more directories of json files, each one represnting a paper (see data pre-requisites below). When asked for papers relevant to a query, all papers in the library are returned.
 
-## Running scripts
+Further, this script leverages an implementation of content extraction that has a fixed set of fields of interest (e.g., MOI, phenotype) and returns a static value for each of those fields for exactly one variant in each paper.
 
-**Note: the current set of scripts are only configured to use the completion API (clients inherit from `TextCompletionClientBase`). Thus they cannot be configured to use GPT-4, whether provided by OAI or AOAI.**
+Once the set of structured content has been extracted from the paper, it can either be written to disk or displayed as console output, as an exercise to demonstrate how dependencies are injected into the app.
 
-To run a console application (i.e script) within Visual Studio Code, open the python file for that script and hit `F5`.
-As configured in `launch.json` Visual Studio code will then run this script.
+#### Data pre-requisites
 
-To run the console application from the terminal (`cwd` is the repository root), use the following commands:
+Execution of this script depends on a local library of papers, which can be downloaded from a document repository (Azure Blob Storage) using the following commands.
 
 ```bash
-export PYTHONPATH=$(pwd)/lib:$PYTHONPATH
-python scripts/exec_sem_function.py
+export DOC_SA="<Your ABS Document repository nanme>"
+sudo mkdir -p -m=0777 /mnt/data
+azcopy login # This will log in to your default tenant, otherwise use --tenant-id
+azcopy cp -r "https://$DOC_SA.blob.core.windows.net/library/tiny_positive/" /mnt/data
 ```
 
-**Note: in both of these execution methods, the semantic function being executed and the json parameter file configuring that execution are implicitly specified. Review (exec_sem_function.py)[scripts/exec_sem_function.py] or run `python scripts/exec_sem_function.py --help` for additional detail on how to modify this behavior.**
+If you place the local paper library in a different location, note you will need to modify `lib/scripts/run_single_query_sync/config/example_config.json` accordingly for `run_single_query_sync` to be able to run. By default the above commands will localize these files to the temp disk on an Azure VM; the temp disk is ephemeral storage and the data must be re-localized each time the VM is restarted.
 
-## Modifying prompts interactively
+#### Running the script
 
-The Semantic Kernel extension provides a mechanism to modify prompts and execute them against a pre-configured LLM endpoint. Instructions for how to configure this are available in the [Semantic Kernel vscode tools documentation](https://learn.microsoft.com/en-us/semantic-kernel/vs-code-tools/).
+This script is configured in pyproject.toml as an installed script. It can be run using the following command, executed from the repository root directory:
 
-Once configured, you can select a semantic function you wish to run (i.e., the `skprompt.txt` text file for that function) and execute it directly from within vscode. You will be prompted for arguments, I haven't yet figured out how to prespecify them or pick them up from a file.
+```bash
+run_single_query_sync -c lib/evagg/scripts/run_single_query_sync/config/example_config.json
+```
 
-## Development todo
+Successful execution should result in the following output and a JSON file should be written to the `.out` directory in your repository root.
 
-- Support for chat API
-- figure out what's going on with AOAI gpt-3.5-turbo (extended responses), probably because we're using the completions API
-- tests for model code
-- benchmarking
-  - csv to test data
-  - test data in bulk
-  - comparing to truth labels
-- how to embed the papers
-- containerized / codespaces execution
-- pythonpath in the shell, direnv?
-- Conda or other dependency manager
-- todo package version management
+```text
+Writing output to: .out/run_single_query_sync.json
+```
+
+#### Evaluating results
+
+No implementation of comparing this pipeline's output to ground truth has been implemented yet, but when one exists, it will probably exist in notebooks.
+
+## Questions and todos
+
+- Consider specifying injected dependencies in config files? Seems like a PITA, but will ultimately be much more flexible.
+- Consider writing script for literature library localization? Likely only necessary if we don't see ourselves moving directly to PMC API requests.
+- TODO: notebook for processing the current literature spreadsheet
+- Consider dataset organization, online access
+- Consider base types for the results that we're pulling out of a paper, using primitives is ugly?
+- Consider pydantic for configs, get the config plan figured out first though
