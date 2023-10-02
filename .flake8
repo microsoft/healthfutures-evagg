@@ -1,0 +1,27 @@
+[flake8]
+show_source = True
+max-line-length = 120
+max-doc-length = 120
+docstring-convention = google
+extend-select = 
+    # Check for `self` or `cls` as first argument to class methods.
+    B902,
+    # Include everything from flake8-comprehensions.
+    C4
+extend-ignore = 
+    # Black doesn't agree with E203: whitespace before ':'
+    E203
+    # Docstrings not required.
+    #   They are highly recommended, but are not always needed (particularly for well named or very simple items).
+    D1
+    # OK to use functools.lru_cache.
+    B019
+per-file-ignores = 
+    # Much less strict rules for tests.
+    #   D: no docstring checks.
+    test/*: D
+
+    # Much less strict rules for playpen.
+    #   F401: allow unused imports.
+    #   E800: allow commented out code.
+    sandbox/*: F401,E800

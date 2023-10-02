@@ -1,0 +1,4 @@
+# Poetry is used on top of conda in order to install the local library.
+# These settings ensure that poetry installs into the existing conda environment rather than creating a new virtual environment.
+[virtualenvs]
+create = false
