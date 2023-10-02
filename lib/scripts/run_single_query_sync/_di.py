@@ -54,5 +54,5 @@ class DiContainer:
 
     @cache
     def _writer(self, output_path: str) -> IWriteOutput:
-        # Can use FileOutputWriter with output_ath instead
+        # Can use FileOutputWriter with output_path instead
         return ConsoleOutputWriter()
