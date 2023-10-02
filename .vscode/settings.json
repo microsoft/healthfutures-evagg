@@ -38,5 +38,6 @@
         "editor.codeActionsOnSave": {
             "source.organizeImports": true
         },
-    }
+    },
+    "python.defaultInterpreterPath": "~/miniconda3/envs/evagg/bin/python"
 }
