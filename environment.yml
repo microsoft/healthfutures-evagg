@@ -17,6 +17,9 @@ dependencies:
   - matplotlib
   - seaborn
 
+  # Bioinformatics.
+  - biopython
+
   # Dependencies used for code development (linting, testing, etc.)
   - black
   - isort
@@ -33,6 +36,7 @@ dependencies:
   - mypy
   # - types-python-dateutil
   # - types-pyyaml
+  - types-requests
   - pytest
   - pytest-cov
   - pytest-mock

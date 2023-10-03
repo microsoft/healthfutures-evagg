@@ -35,6 +35,7 @@ class DiContainer:
 
     # TODO - consider frozendict and passing a config dict to each of the private dependency builders below.
     # See https://stackoverflow.com/questions/6358481/using-functools-lru-cache-with-dictionary-arguments
+    # TODO, consider instead kwargs
 
     @cache
     def _config_file_to_dict(self, config: Path) -> dict[str, Any]:
