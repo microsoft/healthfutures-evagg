@@ -91,16 +91,13 @@ Once the set of structured content has been extracted from the paper, it can eit
 
 #### Data pre-requisites
 
-Execution of this script depends on a local library of papers, which can be downloaded from a document repository (Azure Blob Storage) using the following commands.
+Execution of this script currently depends on a local library of papers, we have a simple script to create that "library" based on a collection of pubmed IDs (pmids)
 
 ```bash
-export DOC_SA="<Your ABS Document repository nanme>"
-sudo mkdir -p -m=0777 /mnt/data
-azcopy login # This will log in to your default tenant, otherwise use --tenant-id
-azcopy cp -r "https://$DOC_SA.blob.core.windows.net/library/tiny_positive/" /mnt/data
+python sandbox/miah/make_local_library.py
 ```
 
-If you place the local paper library in a different location, note you will need to modify `lib/scripts/run_single_query_sync/config/example_config.json` accordingly for `run_single_query_sync` to be able to run. By default the above commands will localize these files to the temp disk on an Azure VM; the temp disk is ephemeral storage and the data must be re-localized each time the VM is restarted.
+By default this notebook will create a library in `/home/azureuser/data/evagg_local/`. If you place the local paper library in a different location, note you will need to modify `lib/scripts/run_single_query_sync/config/example_config.json` accordingly for `run_single_query_sync` to be able to run.
 
 #### Running the script
 
