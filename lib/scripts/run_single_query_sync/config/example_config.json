@@ -5,8 +5,7 @@
     },
     "library": {
         "collections": [
-            "/home/miah/data/evagg/collections/tiny_positive",
-            "/home/miah/data/evagg/collections/tiny_negative"
+            "/home/azureuser/data/evagg_local"
         ]
     },
     "content": {
