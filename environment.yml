@@ -17,6 +17,9 @@ dependencies:
   - matplotlib
   - seaborn
 
+  # General utilities.
+  - pydantic
+
   # Bioinformatics.
   - biopython
 
@@ -37,6 +40,7 @@ dependencies:
   # - types-python-dateutil
   # - types-pyyaml
   - types-requests
+  - types-pyyaml
   - pytest
   - pytest-cov
   - pytest-mock
