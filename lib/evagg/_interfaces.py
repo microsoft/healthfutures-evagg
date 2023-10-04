@@ -1,10 +1,10 @@
 from typing import Protocol, Sequence
 
-from ._base import Paper, Variant
+from ._base import Paper, Query
 
 
 class IGetPapers(Protocol):
-    def search(self, query: Variant) -> Sequence[Paper]:
+    def search(self, query: Query) -> Sequence[Paper]:
         ...
 
 
