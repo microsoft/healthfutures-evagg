@@ -1,6 +1,6 @@
 """The evagg core library."""
 
-from ._base import Paper, Variant
+from ._base import Paper, Query
 from ._content import SimpleContentExtractor
 from ._interfaces import IExtractFields, IGetPapers, IWriteOutput
 from ._io import ConsoleOutputWriter, FileOutputWriter
@@ -13,7 +13,7 @@ __all__ = [
     "IWriteOutput",
     # Base.
     "Paper",
-    "Variant",
+    "Query",
     # IO.
     "ConsoleOutputWriter",
     "FileOutputWriter",

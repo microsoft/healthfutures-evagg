@@ -1,0 +1,15 @@
+query: 
+  gene: TUBB3
+  variant: p.E410K
+library: 
+  collections: 
+    - /home/azureuser/data/evagg_local
+content:
+  fields:
+    - gene
+    - variant
+    - MOI
+    - phenotype
+    - functional data
+output:
+  output_path: .out/run_single_query_sync.json

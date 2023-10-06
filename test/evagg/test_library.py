@@ -3,7 +3,7 @@ import os
 import tempfile
 from typing import Sequence
 
-from lib.evagg import Paper, SimpleFileLibrary, Variant
+from lib.evagg import Paper, Query, SimpleFileLibrary
 
 
 def _paper_to_dict(paper: Paper) -> dict[str, str]:
@@ -30,7 +30,7 @@ def test_search():
         # Create a SimpleFileLibrary instance and search for papers
         library = SimpleFileLibrary(collections=[tmpdir])
         # This should return all papers in the library.
-        results = library.search(Variant(gene="test gene", modification="test modification"))
+        results = library.search(Query(gene="test gene", variant="test variant"))
 
         # Check that the correct papers were returned
         assert len(results) == 3

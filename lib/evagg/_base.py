@@ -1,9 +1,9 @@
 # TODO dataclass?
 # TODO should be immutable after load.
-class Variant:
-    def __init__(self, gene: str, modification: str) -> None:
+class Query:
+    def __init__(self, gene: str, variant: str) -> None:
         self._gene = gene
-        self._modification = modification
+        self._variant = variant
 
 
 # TODO dataclass?
