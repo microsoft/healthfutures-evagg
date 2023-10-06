@@ -1,8 +1,8 @@
-from lib.evagg import IExtractFields, IGetPapers, IWriteOutput, Variant
+from lib.evagg import IExtractFields, IGetPapers, IWriteOutput, Query
 
 
 class EvAggApp:
-    def __init__(self, query: Variant, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput) -> None:
+    def __init__(self, query: Query, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput) -> None:
         self._query = query
         self._library = library
         self._extractor = extractor
