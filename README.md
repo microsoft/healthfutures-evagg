@@ -104,7 +104,7 @@ By default this notebook will create a library in `/home/azureuser/data/evagg_lo
 This script is configured in pyproject.toml as an installed script. It can be run using the following command, executed from the repository root directory:
 
 ```bash
-run_single_query_sync -c lib/evagg/scripts/run_single_query_sync/config/example_config.json
+run_single_query_sync -c lib/scripts/run_single_query_sync/config/example_config.yaml
 ```
 
 Successful execution should result in the following output and a JSON file should be written to the `.out` directory in your repository root.
