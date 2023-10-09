@@ -10,7 +10,6 @@ The output dataframe will contain the following columns:
 - gene
 - HGVS.C
 - HGVS.P
-- paper_title
 - pmid
 - pmcid
 - phenotype
@@ -19,6 +18,7 @@ The output dataframe will contain the following columns:
 - study_type
 - functional_info
 - mutation_type
+- paper_title
 - link
 - notes
 
@@ -52,7 +52,7 @@ from lib.config import PydanticYamlModel
 
 # %% Constants.
 SPREADSHEET_PATH = "/mnt/data/variant_examples.xlsx"
-CONFIG_PATH = "./sandbox/miah/.config/parse_spreadsheet_small_config.yaml"
+CONFIG_PATH = "/home/azureuser/repos/ev-agg-exp/sandbox/miah/.config/parse_spreadsheet_small_config.yaml"
 OUTPUT_PATH_TEMPLATE = "/mnt/data/truth_set_SIZE.tsv"
 TINY_GENE_SET = ["COQ2", "JPH1"]
 
@@ -74,6 +74,10 @@ df = pd.read_excel(SPREADSHEET_PATH, sheet_name="user study variants")
 # Quick cleanup of spreadsheet, remove all empty rows. Remove all rows corresponding to Family IDs.
 df = df.dropna(how="all")
 df = df[~df["Gene"].str.startswith("RGP_")]
+
+# Strip whitespace from some string columns.
+df["HGVS.C"] = df["HGVS.C"].str.strip()
+df["HGVS.P"] = df["HGVS.P"].str.strip()
 
 # %% Add the links into the dataframe (they're lost by pandas).
 
@@ -181,7 +185,6 @@ df = df[
         "gene",
         "HGVS.C",
         "HGVS.P",
-        "paper_title",
         "pmid",
         "pmcid",
         "phenotype",
@@ -190,6 +193,7 @@ df = df[
         "study_type",
         "functional_info",
         "mutation_type",
+        "paper_title",
         "link",
         "notes",
     ]
