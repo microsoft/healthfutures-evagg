@@ -162,3 +162,4 @@ cython_debug/
 # Execution outputs and local config files
 .out
 .config
+.data
