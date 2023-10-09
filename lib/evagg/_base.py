@@ -1,13 +1,5 @@
 # TODO dataclass?
 # TODO should be immutable after load.
-class Query:
-    def __init__(self, gene: str, variant: str) -> None:
-        self._gene = gene
-        self._variant = variant
-
-
-# TODO dataclass?
-# TODO should be immutable after load.
 class Paper:
     def __init__(self, id: str, citation: str, abstract: str) -> None:
         self.id = id
@@ -23,3 +15,9 @@ class Paper:
     @classmethod
     def from_dict(cls, values: dict[str, str]) -> "Paper":
         return Paper(id=values["id"], citation=values["citation"], abstract=values["abstract"])
+
+
+class Variant:
+    def __init__(self, gene: str, variant: str) -> None:
+        self._gene = gene
+        self._variant = variant
