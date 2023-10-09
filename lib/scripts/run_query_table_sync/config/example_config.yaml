@@ -1,10 +1,13 @@
-query: 
-  gene: TUBB3
-  variant: p.E410K
+query:
+  class: MultiQuery
+  variants:
+    - TUBB3:p.E410K
 library: 
+  class: SimpleFileLibrary
   collections: 
     - /home/gregsmi/data/evagg_local
 content:
+  class: SimpleContentExtractor
   fields:
     - gene
     - variant
@@ -12,4 +15,5 @@ content:
     - phenotype
     - functional data
 output:
+  class: TableOutputWriter
   output_path: .out/run_query_table_sync.tsv

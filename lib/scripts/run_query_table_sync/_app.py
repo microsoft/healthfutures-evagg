@@ -1,21 +1,16 @@
 from functools import cache
+from importlib import import_module
 from pathlib import Path
 from typing import Any, Dict
 
 from lib.config import PydanticYamlModel
-from lib.evagg import (
-    IExtractFields,
-    IGetPapers,
-    IWriteOutput,
-    Query,
-    SimpleContentExtractor,
-    SimpleFileLibrary,
-    TableOutputWriter,
-)
+from lib.evagg import IExtractFields, IGetPapers, IPaperQuery, IWriteOutput
 
 
 class EvAggApp:
-    def __init__(self, query: Query, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput) -> None:
+    def __init__(
+        self, query: IPaperQuery, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput
+    ) -> None:
         self._query = query
         self._library = library
         self._extractor = extractor
@@ -45,14 +40,25 @@ class DiContainer:
     def __init__(self, config: Path) -> None:
         self._config_path = config
 
+    def create_class_instance(self, spec: Dict[str, Any]) -> Any:
+        module = import_module("lib.evagg")
+        class_name = spec.pop("class")
+
+        try:
+            class_obj = getattr(module, class_name)
+        except AttributeError:
+            raise TypeError(f"Module does not define a {class_name}class")
+
+        return class_obj(**spec)
+
     @cache
     def application(self) -> EvAggApp:
         # Assemble dependencies.
         config = AppConfig.parse_yaml(self._config_path)
-        query = Query(**config.query)
-        library = SimpleFileLibrary(**config.library)
-        extractor = SimpleContentExtractor(**config.content)
-        writer = TableOutputWriter(**config.output)
+        query: Query = self.create_class_instance(config.query)
+        library: IGetPapers = self.create_class_instance(config.library)
+        extractor: IExtractFields = self.create_class_instance(config.content)
+        writer: IWriteOutput = self.create_class_instance(config.output)
 
         # Instantiate the app.
         return EvAggApp(query, library, extractor, writer)
