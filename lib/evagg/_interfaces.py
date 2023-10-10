@@ -9,7 +9,7 @@ class IGetPapers(Protocol):
 
 
 class IExtractFields(Protocol):
-    def extract(self, paper: Paper) -> Sequence[dict[str, str]]:
+    def extract(self, query: Query, paper: Paper) -> Sequence[dict[str, str]]:
         ...
 
 
