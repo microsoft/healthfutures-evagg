@@ -18,7 +18,7 @@ class SimpleFileLibrary(IGetPapers):
             if filename.endswith(".json"):
                 # load the json file into a dict and append it to papers
                 with open(os.path.join(collection, filename), "r") as f:
-                    paper = Paper.from_dict(json.load(f))
+                    paper = Paper(**json.load(f))
                     papers[paper.id] = paper
         return papers
 
