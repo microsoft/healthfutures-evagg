@@ -15,5 +15,4 @@ content:
     - phenotype
     - functional data
 output:
-  class: TableOutputWriter
-  output_path: .out/run_query_table_sync.tsv
+  class: ConsoleOutputWriter
