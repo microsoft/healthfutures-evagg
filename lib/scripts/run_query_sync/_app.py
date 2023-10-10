@@ -47,7 +47,7 @@ class DiContainer:
         try:
             class_obj = getattr(module, class_name)
         except AttributeError:
-            raise TypeError(f"Module does not define a {class_name}class")
+            raise TypeError(f"Module does not define a {class_name} class")
 
         return class_obj(**spec)
 
@@ -55,7 +55,7 @@ class DiContainer:
     def application(self) -> EvAggApp:
         # Assemble dependencies.
         config = AppConfig.parse_yaml(self._config_path)
-        query: Query = self.create_class_instance(config.query)
+        query: IPaperQuery = self.create_class_instance(config.query)
         library: IGetPapers = self.create_class_instance(config.library)
         extractor: IExtractFields = self.create_class_instance(config.content)
         writer: IWriteOutput = self.create_class_instance(config.output)
