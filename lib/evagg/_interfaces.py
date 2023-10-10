@@ -14,7 +14,7 @@ class IGetPapers(Protocol):
 
 
 class IExtractFields(Protocol):
-    def extract(self, paper: Paper) -> Sequence[dict[str, str]]:
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
         ...
 
 

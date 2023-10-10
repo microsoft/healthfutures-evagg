@@ -13,7 +13,7 @@ class EvAggApp:
         papers = self._library.search(self._query)
 
         # For all papers that match, extract the fields we want.
-        fields = {paper.id: self._extractor.extract(paper) for paper in papers}
+        fields = {paper.id: self._extractor.extract(paper, self._query) for paper in papers}
 
         # Write out the result.
         self._writer.write(fields)
