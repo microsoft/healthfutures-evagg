@@ -1,7 +1,7 @@
 import json
 import os
 from functools import cache
-from typing import Sequence
+from typing import List, Sequence, Set
 
 from ._base import Paper
 from ._interfaces import IGetPapers, IPaperQuery
@@ -30,7 +30,7 @@ class SimpleFileLibrary(IGetPapers):
 
         return papers
 
-    def search(self, query: IPaperQuery) -> Sequence[Paper]:
+    def search(self, query: IPaperQuery) -> Set[Paper]:
         # Dummy implementation that returns all papers regardless of query.
-        all_papers = list(self._load().values())
+        all_papers = set(self._load().values())
         return all_papers
