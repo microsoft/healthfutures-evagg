@@ -1,11 +1,11 @@
-from lib.evagg import Paper, SimpleContentExtractor
+from lib.evagg import Paper, Query, SimpleContentExtractor
 
 
 def test_simple_content_extractor():
     paper = Paper(id="12345678", citation="Doe, J. et al. Test Journal 2021", abstract="This is a test paper.")
     fields = ["gene", "variant", "MOI", "phenotype", "functional data"]
     extractor = SimpleContentExtractor(fields)
-    result = extractor.extract(paper)
+    result = extractor.extract(paper, Query("CHI3L1", "p.Y34C"))
     assert len(result) == 1
     assert result[0]["gene"] == "CHI3L1"
     assert result[0]["variant"] == "p.Y34C"
