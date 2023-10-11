@@ -1,0 +1,18 @@
+query:
+  class: MultiQuery
+  variants:
+    - TUBB3:p.E410K
+library: 
+  class: SimpleFileLibrary
+  collections: 
+    - /home/gregsmi/data/evagg_local
+content:
+  class: SimpleContentExtractor
+  fields:
+    - gene
+    - variant
+    - MOI
+    - phenotype
+    - functional data
+output:
+  class: ConsoleOutputWriter
