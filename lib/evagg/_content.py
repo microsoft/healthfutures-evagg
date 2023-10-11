@@ -1,7 +1,7 @@
 from typing import Sequence
 
 from ._base import Paper
-from ._interfaces import IExtractFields
+from ._interfaces import IExtractFields, IPaperQuery
 
 
 class SimpleContentExtractor(IExtractFields):
@@ -22,6 +22,9 @@ class SimpleContentExtractor(IExtractFields):
         else:
             return "Unknown"
 
-    def extract(self, paper: Paper) -> Sequence[dict[str, str]]:
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
         # Dummy implementation that returns a single variant with a static set of fields.
         return [{field: self._field_to_value(field) for field in self._fields}]
+
+
+# class JsonSampleContentExtractor(IExtractFields):
