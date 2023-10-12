@@ -1,12 +1,12 @@
-from typing import Any, List, Protocol, Sequence, Set
+from typing import Any, Dict, List, Protocol, Sequence, Set
 
 import requests
 
 from lib.evagg.lit import IAnnotateEntities
 from lib.evagg.sk import SemanticKernelClient
 
-from ._base import Paper, Query
-from ._interfaces import IExtractFields
+from ._base import Paper
+from ._interfaces import IExtractFields, IPaperQuery
 
 
 class SimpleContentExtractor(IExtractFields):
@@ -27,13 +27,13 @@ class SimpleContentExtractor(IExtractFields):
         else:
             return "Unknown"
 
-    def extract(self, query: Query, paper: Paper) -> Sequence[dict[str, str]]:
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
         # Dummy implementation that returns a single variant with a static set of fields.
         return [{field: self._field_to_value(field) for field in self._fields}]
 
 
 class IFindVariantMentions(Protocol):
-    def find_mentions(self, query: Query, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
+    def find_mentions(self, query: IPaperQuery, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
         """Find variant mentions relevant to query that are mentioned in `paper`.
 
         Returns a dictionary mapping each variant to a list of text chunks that mention it.
@@ -79,7 +79,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
         return mentions
 
-    def find_mentions(self, query: Query, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
+    def find_mentions(self, query: IPaperQuery, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
         # Get the gene_id for the query gene.
         # TODO, query member is private.
         # TODO, move this to a separate library.
@@ -110,7 +110,7 @@ class SemanticKernelContentExtractor(IExtractFields):
     def _excerpt_from_mentions(self, mentions: Sequence[dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def extract(self, query: Query, paper: Paper) -> Sequence[dict[str, str]]:
+    def extract(self, query: IPaperQuery, paper: Paper) -> Sequence[dict[str, str]]:
         # Find all the variant mentions in the paper
         variants_mentions = self._mention_finder.find_mentions(query, paper)
 
@@ -134,3 +134,19 @@ class SemanticKernelContentExtractor(IExtractFields):
                 variant_results[field] = result
             results.append(variant_results)
         return results
+
+
+class TruthsetContentExtractor(IExtractFields):
+    def __init__(self, field_map: Sequence[Dict[str, str]]) -> None:
+        # Turn list of single-element key-mapping dicts into a list of tuples.
+        self._field_map = [kv for [kv] in [kv.items() for kv in field_map]]
+
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
+        extracted_fields = []
+        # For each queried variant for which we have evidence in the paper...
+        for v in query.terms() & paper.evidence.keys():
+            # Union the evidence props with the paper props.
+            properties = paper.props | paper.evidence[v]
+            # Add a new evidence dict to the list, mapping evidence values to new key names.
+            extracted_fields.append({out_key: properties[k] for k, out_key in self._field_map})
+        return extracted_fields
