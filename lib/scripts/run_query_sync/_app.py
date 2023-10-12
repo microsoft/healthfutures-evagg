@@ -4,33 +4,13 @@ from pathlib import Path
 from typing import Any, Dict
 
 from lib.config import PydanticYamlModel
-from lib.evagg import IExtractFields, IGetPapers, IPaperQuery, IWriteOutput
-
-
-class EvAggApp:
-    def __init__(
-        self, query: IPaperQuery, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput
-    ) -> None:
-        self._query = query
-        self._library = library
-        self._extractor = extractor
-        self._writer = writer
-
-    def execute(self) -> None:
-        # Get the papers that match the query.
-        papers = self._library.search(self._query)
-        print(f"Found {len(papers)} papers")
-
-        # For all papers that match, extract the fields we want.
-        fields = {paper.id: self._extractor.extract(paper, self._query) for paper in papers}
-
-        # Write out the result.
-        self._writer.write(fields)
+from lib.evagg import IEvAggApp
 
 
 class AppConfig(PydanticYamlModel):
     """Configuration for the app."""
 
+    app: Dict[str, Any]
     query: Dict[str, Any]
     library: Dict[str, Any]
     content: Dict[str, Any]
@@ -53,13 +33,17 @@ class DiContainer:
         return class_obj(**spec)
 
     @cache
-    def application(self) -> EvAggApp:
+    def application(self) -> IEvAggApp:
         # Assemble dependencies.
         config = AppConfig.parse_yaml(self._config_path)
-        query: IPaperQuery = self.create_class_instance(config.query)
-        library: IGetPapers = self.create_class_instance(config.library)
-        extractor: IExtractFields = self.create_class_instance(config.content)
-        writer: IWriteOutput = self.create_class_instance(config.output)
+
+        app_args = {
+            "query": self.create_class_instance(config.query),
+            "library": self.create_class_instance(config.library),
+            "extractor": self.create_class_instance(config.content),
+            "writer": self.create_class_instance(config.output),
+        }
 
         # Instantiate the app.
-        return EvAggApp(query, library, extractor, writer)
+        app_config = config.app | app_args
+        return self.create_class_instance(app_config)
