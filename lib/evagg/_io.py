@@ -1,7 +1,8 @@
 import csv
 import json
 import os
-from typing import Sequence
+import sys
+from typing import Optional, Sequence
 
 from ._interfaces import IWriteOutput
 
@@ -30,54 +31,27 @@ class FileOutputWriter(IWriteOutput):
             json.dump(fields, f, indent=4)
 
 
-TABLE_COLUMNS = [
-    "gene_symbol",  # SEQR looks for this column name
-    "paper_id",
-    "hgvsc",
-    "hgvsp",
-    "phenotype",
-    "zygosity",
-    "inheritance",
-    "citation",
-    "study_type",
-    "functional_info",
-    "mutation_type",
-]
-
-
 class TableOutputWriter(IWriteOutput):
-    def __init__(self, output_path: str) -> None:
+    def __init__(self, output_path: Optional[str] = None) -> None:
         self._path = output_path
 
     def write(self, fields: dict[str, Sequence[dict[str, str]]]) -> None:
-        print(f"Writing output to: {self._path}")
+        print(f"Writing output to: {self._path or 'stdout'}")
 
-        table_lines = []
-        # Reformat the data into a table keyed by paper/variant pair.
-        for paper_id, variants in fields.items():
-            for variant in variants:
-                table_lines.append(
-                    [
-                        variant["gene"],
-                        paper_id,
-                        "",
-                        variant["variant"],
-                        variant["phenotype"],
-                        "",
-                        variant["MOI"],
-                        "",
-                        "",
-                        variant["functional data"],
-                        "",
-                    ]
-                )
+        table_lines = [variant for variant_list in fields.values() for variant in variant_list]
+        if len(table_lines) == 0:
+            print("No results to write")
+            return
 
-        parent = os.path.dirname(self._path)
-        if not os.path.exists(parent):
-            os.makedirs(parent)
+        if self._path:
+            parent = os.path.dirname(self._path)
+            if not os.path.exists(parent):
+                os.makedirs(parent)
 
-        with open(self._path, "w", newline="") as tsvfile:
-            writer = csv.writer(tsvfile, delimiter="\t", lineterminator="\n")
-            writer.writerow(TABLE_COLUMNS)
-            for record in table_lines:
-                writer.writerow(record)
+        output_stream = open(self._path, "w") if self._path else sys.stdout
+        writer = csv.writer(output_stream, delimiter="\t", lineterminator="\n")
+        writer.writerow(table_lines[0].keys())
+        for line in table_lines:
+            writer.writerow(line.values())
+
+        output_stream.close()
