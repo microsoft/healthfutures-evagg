@@ -1,7 +1,7 @@
 query:
   class: MultiQuery
   variants:
-    - TUBB3:p.E410K
+    - "TUBB3:p.E410K"
 library: 
   class: SimpleFileLibrary
   collections: 
