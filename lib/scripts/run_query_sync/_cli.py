@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Sequence
 
-from ._app import DiContainer
+from lib.evagg import DiContainer
 
 
 def _parse_args(args: Sequence[str] | None = None) -> Namespace:

@@ -3,6 +3,7 @@
 from ._app import SynchronousLocalApp
 from ._base import Paper, Variant
 from ._content import SimpleContentExtractor, TruthsetContentExtractor
+from ._di import DiContainer
 from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IPaperQuery, IWriteOutput
 from ._io import ConsoleOutputWriter, FileOutputWriter, TableOutputWriter
 from ._library import SimpleFileLibrary, TruthsetFileLibrary
@@ -18,6 +19,8 @@ __all__ = [
     # Base.
     "Paper",
     "Variant",
+    # DI.
+    "DiContainer",
     # App.
     "SynchronousLocalApp",
     # Query.
