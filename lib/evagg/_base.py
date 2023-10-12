@@ -36,6 +36,6 @@ class Variant:
         if not isinstance(o, Variant):
             return False
         return self._gene == o._gene and self._variant == o._variant
-    
+
     def __repr__(self) -> str:
         return f"{self._gene}:{self._variant}"
