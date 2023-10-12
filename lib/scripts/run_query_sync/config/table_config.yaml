@@ -1,3 +1,5 @@
+app:
+  class: SynchronousLocalApp
 query:
   class: MultiQuery
   variants:
