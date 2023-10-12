@@ -2,6 +2,8 @@ from typing import Any
 
 import requests
 
+from lib.evagg import Paper
+
 from .._interfaces import IAnnotateEntities
 
 
