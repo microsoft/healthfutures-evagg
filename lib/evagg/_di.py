@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 from lib.config import PydanticYamlModel
-from lib.evagg import IEvAggApp
+
+from ._interfaces import IEvAggApp
 
 
 class AppConfig(PydanticYamlModel):
