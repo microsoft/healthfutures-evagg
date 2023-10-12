@@ -46,13 +46,18 @@ def _get_authors(d: dict) -> str:
         return "???"
 
 
+def _get_pmcid(d: dict) -> str:
+    raise NotImplementedError
+
+
 def fetch_paper_bioc(pmid: str) -> dict:
     """Fetch a paper from PubMed Central using the BioC API."""
     r = requests.get(
         f"https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/{pmid}/ascii", timeout=10
     )
+    r.raise_for_status()
     d = r.json()["documents"][0]
-    return {"abstract": _get_abstract(d), "title": _get_title(d), "citation": _get_authors(d), "id": pmid}
+    return {"abstract": _get_abstract(d), "title": _get_title(d), "citation": _get_authors(d), "pmcid": _get_pmcid(d)}
 
 
 # %% Generate the library of PMIDs.

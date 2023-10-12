@@ -239,9 +239,20 @@ Output:
 
 ---
 
-Input: Cystic fibrosis (CF; OMIM #219700) is the most frequent autosomal recessive inherited genetic disease of the Caucasian race. Its incidence is 1/2500-3500 newborns.1,2 It is more frequent in European and European-origin communities when compared with other communities.3 Recently, we showed the incidence of CF to be 1/3400 live births in our region, similar to other European communities.4 While the percentage of carriers differs according to ethnic origins, it is 1/25 in Northern Europe, 1/29 among Ashkenazi Jews,5,6 1/46 in Hispanic Americans, and 1/65 in African Americans.7
+Input: Cystic fibrosis (CF; OMIM #219700) is the most frequent autosomal recessive inherited genetic disease of the 
+Caucasian race. Its incidence is 1/2500-3500 newborns.1,2 It is more frequent in European and European-origin 
+communities when compared with other communities.3 Recently, we showed the incidence of CF to be 1/3400 live births in 
+our region, similar to other European communities.4 While the percentage of carriers differs according to ethnic 
+origins, it is 1/25 in Northern Europe, 1/29 among Ashkenazi Jews,5,6 1/46 in Hispanic Americans, and 1/65 in African 
+Americans.7
 
-The cystic fibrosis transmembrane conductance regulatory (CFTR) gene contains 27 exons and is localized on 7q31. The protein is composed of 1480 amino acids. CFTR is an integral membrane protein that operates as a regulated chloride channel in the epithelia. Cystic fibrosis occurs due to homozygous or compound heterozygous pathogenic variants in the CFTR (CFTR/ABCC7: MIM*602421) gene. Today, more than 2000 disease-causing variants of the CFTR gene have been found and their ethnic and geographical distributions show differences.8 The most common variant seen in almost all the studies is F508del. In addition, the frequency of more than 20 variants is more significant than 0.1% (www.genet.sickkid.on.ca/Home.html.).
+The cystic fibrosis transmembrane conductance regulatory (CFTR) gene contains 27 exons and is localized on 7q31. The 
+protein is composed of 1480 amino acids. CFTR is an integral membrane protein that operates as a regulated chloride 
+channel in the epithelia. Cystic fibrosis occurs due to homozygous or compound heterozygous pathogenic variants in the 
+CFTR (CFTR/ABCC7: MIM*602421) gene. Today, more than 2000 disease-causing variants of the CFTR gene have been found and
+their ethnic and geographical distributions show differences.8 The most common variant seen in almost all the studies is
+F508del. In addition, the frequency of more than 20 variants is more significant than 0.1% 
+(www.genet.sickkid.on.ca/Home.html.).
 Variant: c.865_869delAGACA; p.R289Nfs*17
 Gene: CFTR
 Output: 
@@ -262,7 +273,7 @@ func = kernel.create_semantic_function(prompt, max_tokens=2000, temperature=0.2)
 
 for variant, vars in contexts.items():
     print(f"Processing variant: {variant}")
-    summary = func(variables=vars)
+    summary = func.invoke(variables=vars)
     print(summary)
 
 # # If needed, async is available too: summary = await summarize.invoke_async(input_text)
@@ -275,7 +286,9 @@ for variant, vars in contexts.items():
 
 # %%
 
-prompt2 = """Here is some text from a paper describing genetic variants in the gene {{$gene}}. What is the described mode of inheritance for patients with the variant: {{$variant}}?
+prompt2 = """
+Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+What is the described mode of inheritance for patients with the variant: {{$variant}}?
 
 {{$input}}
 
@@ -290,6 +303,7 @@ Provide your response in the following format:
 func2 = kernel.create_semantic_function(prompt2, max_tokens=100, temperature=0.2)
 
 for variant, vars in contexts.items():
-    print(func2(variables=vars))
+    print(f"Processing variant: {variant}")
+    print(func2.invoke(variables=vars))
 
 # %%
