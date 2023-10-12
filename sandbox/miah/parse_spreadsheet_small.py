@@ -10,6 +10,7 @@ The output dataframe will contain the following columns:
 - gene
 - HGVS.C
 - HGVS.P
+- doi
 - pmid
 - pmcid
 - phenotype
@@ -22,7 +23,7 @@ The output dataframe will contain the following columns:
 - link
 - notes
 
-Note, each row will be uniqely identified by gene, variant, pmid. That means if a paper mentions multiple variants,
+Note, each row will be uniqely identified by gene, variant, doi. That means if a paper mentions multiple variants,
 there will be a separate row in the dataframe for each mention within the paper. If a variant is mentioned in multiple
 papers, there will be a separate row in the dataframe for each mention of the variant.
 """
@@ -40,7 +41,8 @@ papers, there will be a separate row in the dataframe for each mention of the va
 
 # %% Imports.
 
-from typing import Tuple
+from functools import cache
+from typing import Any, Tuple
 
 import numpy as np
 import openpyxl
@@ -76,6 +78,7 @@ df = df.dropna(how="all")
 df = df[~df["Gene"].str.startswith("RGP_")]
 
 # Strip whitespace from some string columns.
+df["Gene"] = df["Gene"].str.strip()
 df["HGVS.C"] = df["HGVS.C"].str.strip()
 df["HGVS.P"] = df["HGVS.P"].str.strip()
 
@@ -90,10 +93,11 @@ link_index = 7
 
 links: dict[Tuple, str | None] = {}
 
+count = 0
 for row in ws.iter_rows():
     if not row[0].value or not row[1].value:
         continue
-    key = (row[0].value, row[1].value)
+    key = (str(row[0].value).strip(), str(row[1].value).strip())
     if row[link_index].hyperlink:
         links[key] = row[link_index].hyperlink.target  # type: ignore
 
@@ -111,10 +115,25 @@ df = df.drop(columns=["level_0", "level_1"])
 # %% Extract the PMID from the links.
 df["pmid"] = df["link"].str.extract(r"https://pubmed.ncbi.nlm.nih.gov/(\d+)")
 
-# %% Populate the PMCID.
+# %% Populate the PMCID and DOI.
 
 
-def convert_ids(ids: pd.Series) -> pd.Series | None:
+@cache
+def _call_converter(ids_cat: str) -> dict[str, Any]:
+    service_root = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
+    email = config.email
+    tool = "research_use"
+    format = "json"
+
+    url = f"{service_root}?tool={tool}&email={email}&ids={ids_cat}&format={format}"
+
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()
+
+    return response.json()
+
+
+def convert_ids(ids: pd.Series, tgt: str) -> pd.Series | None:
     # Example syntax
     # https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?tool=my_tool&email=my_email@example.com&ids=PMC1193645
     # See https://www.ncbi.nlm.nih.gov/pmc/tools/id-converter-api/ for API documentation
@@ -126,24 +145,17 @@ def convert_ids(ids: pd.Series) -> pd.Series | None:
     if len(ids_str) > max_len:
         raise ValueError(f"Number of ids to process must be less than {max_len} in length, got {len(ids_str)}")
 
-    service_root = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
-    email = config.email
-    tool = "research_use"
-    ids_cat = ",".join(ids_str)
-    format = "json"
-
-    url = f"{service_root}?tool={tool}&email={email}&ids={ids_cat}&format={format}"
-
-    response = requests.get(url, timeout=5)
-    response.raise_for_status()
-
-    raw = response.json()
-    lookup = {record["pmid"]: record["pmcid"] for record in raw["records"] if "pmcid" in record}
+    raw = _call_converter(",".join(ids_str))
+    lookup = {record["pmid"]: record[tgt] for record in raw["records"] if tgt in record}
 
     return pd.Series(ids.map(lookup))
 
 
-df["pmcid"] = convert_ids(df["pmid"])
+df["pmcid"] = convert_ids(df["pmid"], "pmcid")
+df["doi"] = convert_ids(df["pmid"], "doi")
+
+
+# %% Build paper_id
 
 
 # %% Fetch paper title
@@ -185,6 +197,7 @@ df = df[
         "gene",
         "HGVS.C",
         "HGVS.P",
+        "doi",
         "pmid",
         "pmcid",
         "phenotype",
