@@ -1,0 +1,27 @@
+query:
+  class: MultiQuery
+  variants:
+    - "CHI3L1:p.R116C"
+    - "TWNK:p.S369F"
+    - "COL23A1:p.A112V"
+    - "PRKCG:p.A24S"
+library: 
+  class: TruthsetFileLibrary
+  file_path: /home/gregsmi/data/evagg_truth/truth_set_small_10-10-23.tsv
+content:
+  class: TruthsetContentExtractor
+  field_map:
+    - gene: gene_symbol
+    - id: paper_id
+    - HGVS.C: hgvsc
+    - HGVS.P: hgvsp
+    - phenotype: phenotype
+    - variant_inheritance: zygosity
+    - condition_inheritance: inheritance
+    #- citation
+    - study_type: study_type
+    - functional_info: functional_info
+    - mutation_type: mutation_type
+output:
+  class: TableOutputWriter
+  # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
