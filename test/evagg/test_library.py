@@ -38,17 +38,6 @@ def test_search():
         print(paper1)
         print(results)
 
-        def _check_for_paper(paper: Paper, results: Sequence[Paper]) -> bool:
-            # __eq__ isn't implemented for Paper, and after writing to disk and reloading, the Papers are two different
-            # objects.
-            if not any(p.id == paper.id for p in results):
-                return False
-            if not any(p.citation == paper.citation for p in results):
-                return False
-            if not any(p.abstract == paper.abstract for p in results):
-                return False
-            return True
-
-        assert _check_for_paper(paper1, results)
-        assert _check_for_paper(paper2, results)
-        assert _check_for_paper(paper3, results)
+        assert paper1 in results
+        assert paper2 in results
+        assert paper3 in results
