@@ -9,10 +9,11 @@ class Query:
 # TODO dataclass?
 # TODO should be immutable after load.
 class Paper:
-    def __init__(self, id: str, citation: str, abstract: str) -> None:
+    def __init__(self, id: str, citation: str, abstract: str, pmcid: str) -> None:
         self.id = id
         self.citation = citation
         self.abstract = abstract
+        self.pmcid = pmcid
 
     def __repr__(self) -> str:
         m = 10
@@ -22,4 +23,4 @@ class Paper:
 
     @classmethod
     def from_dict(cls, values: dict[str, str]) -> "Paper":
-        return Paper(id=values["id"], citation=values["citation"], abstract=values["abstract"])
+        return Paper(**values)
