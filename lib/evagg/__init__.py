@@ -1,10 +1,10 @@
 """The evagg core library."""
 
 from ._base import Paper, Variant
-from ._content import SimpleContentExtractor
+from ._content import SimpleContentExtractor, TruthsetContentExtractor
 from ._interfaces import IExtractFields, IGetPapers, IPaperQuery, IWriteOutput
 from ._io import ConsoleOutputWriter, FileOutputWriter, TableOutputWriter
-from ._library import SimpleFileLibrary
+from ._library import SimpleFileLibrary, TruthsetFileLibrary
 from ._query import MultiQuery, Query
 
 __all__ = [
@@ -25,6 +25,8 @@ __all__ = [
     "TableOutputWriter",
     # Library.
     "SimpleFileLibrary",
+    "TruthsetFileLibrary",
     # Content.
     "SimpleContentExtractor",
+    "TruthsetContentExtractor",
 ]
