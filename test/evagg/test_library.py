@@ -1,17 +1,18 @@
 import json
 import os
 import tempfile
-from typing import Sequence
+from typing import Any, Sequence
 
 from lib.evagg import Paper, Query, SimpleFileLibrary
 
 
-def _paper_to_dict(paper: Paper) -> dict[str, str]:
+def _paper_to_dict(paper: Paper) -> dict[str, Any]:
     return {
         "id": paper.id,
+        "evidence": paper.evidence,
         "citation": paper.citation,
         "abstract": paper.abstract,
-        "pmcid": paper.pmcid,
+        "props": paper.props,
     }
 
 
@@ -35,8 +36,6 @@ def test_search():
 
         # Check that the correct papers were returned
         assert len(results) == 3
-        print(paper1)
-        print(results)
 
         assert paper1 in results
         assert paper2 in results
