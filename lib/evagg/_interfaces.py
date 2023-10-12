@@ -4,7 +4,7 @@ from ._base import Paper, Variant
 
 
 class IPaperQuery(Protocol):
-    def terms(self) -> Sequence[Variant]:
+    def terms(self) -> Set[Variant]:
         ...
 
 
