@@ -2,7 +2,8 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Sequence
 
-from lib.evagg import DiContainer, IEvAggApp
+from lib.di import DiContainer
+from lib.evagg import IEvAggApp
 
 
 def _parse_args(args: Sequence[str] | None = None) -> Namespace:
@@ -16,7 +17,7 @@ def _parse_args(args: Sequence[str] | None = None) -> Namespace:
 def main() -> None:
     args = _parse_args()
     di = DiContainer(config=Path(args.config))
-    app: IEvAggApp = di.application()
+    app: IEvAggApp = di.build()
     app.execute()
 
 
