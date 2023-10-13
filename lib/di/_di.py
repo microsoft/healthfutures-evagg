@@ -27,7 +27,7 @@ class DiContainer:
         return class_obj(**spec)
 
     @cache
-    def application(self) -> Any:
+    def build(self) -> Any:
         # Read in the config dictionary.
         with open(self._config_path, "r") as f:
             config = yaml.safe_load(f)
