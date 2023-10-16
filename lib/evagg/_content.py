@@ -81,20 +81,28 @@ class VariantMentionFinder(IFindVariantMentions):
 
     def find_mentions(self, query: IPaperQuery, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
         # Get the gene_id for the query gene.
-        # TODO, query member is private.
         # TODO, move this to a separate library.
-        query_gene_id = self._gene_id_for_symbol([query._gene])[query._gene]
+        query_gene_ids = self._gene_id_for_symbol([v.gene for v in query.terms()])
 
         # Annotate entities in the paper.
         annotations = self._entity_annotator.annotate(paper)
 
-        # Search all of the annotations for `Mutations` with the query gene id.
-        variant_ids = self._get_variant_ids(annotations, query_gene_id)
+        from typing import Tuple
+
+        # Search all of the annotations for `Mutations` with the query gene ids.
+        variant_gene_ids: Set[Tuple[str, str]] = set()
+        for id in query_gene_ids:
+            variant_ids = self._get_variant_ids(annotations, id)
+            variant_gene_pairs = {(v, id) for v in variant_ids}
+            variant_gene_ids.update(variant_gene_pairs)
 
         # Now collect all the text chunks that mention each variant.
+        # Record the gene id for each variant as well.
         mentions: dict[str, Sequence[dict[str, Any]]] = {}
-        for variant_id in variant_ids:
+        for variant_id, gene_id in variant_gene_ids:
             mentions[variant_id] = self._gather_mentions(annotations, variant_id)
+            for m in mentions[variant_id]:
+                m["gene_id"] = gene_id
 
         return mentions
 
@@ -110,22 +118,23 @@ class SemanticKernelContentExtractor(IExtractFields):
     def _excerpt_from_mentions(self, mentions: Sequence[dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def extract(self, query: IPaperQuery, paper: Paper) -> Sequence[dict[str, str]]:
-        # Find all the variant mentions in the paper
-        variants_mentions = self._mention_finder.find_mentions(query, paper)
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
+        # Find all the variant mentions in the paper relating to the query.
+        variant_mentions = self._mention_finder.find_mentions(query, paper)
 
         # For each variant/field pair, run the appropriate prompt.
         results: List[dict[str, str]] = []
 
-        for variant in variants_mentions:
+        for variant_id in variant_mentions.keys():
+            mentions = variant_mentions[variant_id]
             variant_results: dict[str, str] = {}
 
-            # Simplest thing we can think of.
-            paper_excerpts = self._excerpt_from_mentions(variants_mentions[variant])
+            # Simplest thing we can think of is to just concatenate all the chunks.
+            paper_excerpts = self._excerpt_from_mentions(mentions)
             context_variables = {
                 "input": paper_excerpts,
-                "variant": variant,
-                "gene": query._gene,
+                "variant": variant_id,
+                "gene": mentions[0].get("gene_id", "unknown"),  # Mentions should never be empty.
             }
             for field in self._fields:
                 result = self._sk_client.run_completion_function(
