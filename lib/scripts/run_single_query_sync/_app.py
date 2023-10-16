@@ -1,4 +1,5 @@
-from lib.evagg import IExtractFields, IGetPapers, IWriteOutput, Query
+from lib.evagg import IExtractFields, IGetPapers, IWriteOutput
+from lib.evagg.types import Query
 
 
 class EvAggApp:
