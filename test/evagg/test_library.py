@@ -1,9 +1,10 @@
 import json
 import os
 import tempfile
-from typing import Any, Sequence
+from typing import Any
 
-from lib.evagg import Paper, Query, SimpleFileLibrary
+from lib.evagg import SimpleFileLibrary
+from lib.evagg.types import Paper, Query
 
 
 def _paper_to_dict(paper: Paper) -> dict[str, Any]:

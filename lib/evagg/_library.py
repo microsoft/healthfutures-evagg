@@ -5,8 +5,9 @@ from collections import defaultdict
 from functools import cache
 from typing import Sequence, Set
 
-from ._base import Paper, Variant
-from ._interfaces import IGetPapers, IPaperQuery
+from lib.evagg.types import IPaperQuery, Paper, Variant
+
+from ._interfaces import IGetPapers
 
 
 class SimpleFileLibrary(IGetPapers):
