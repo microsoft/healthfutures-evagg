@@ -39,7 +39,7 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["pmid", "pmcid", "paper_title", "link"]
+TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link"]
 # These are the columns in the truthset that are specific to the variant.
 TRUTHSET_VARIANT_KEYS = [
     "gene",
@@ -68,7 +68,7 @@ class TruthsetFileLibrary(IGetPapers):
             reader = csv.reader(tsvfile, delimiter="\t")
             for line in reader:
                 fields = dict(zip(header, [field.strip() for field in line]))
-                paper_id = fields.get("pmid") or fields.get("pmcid") or "MISSING_ID"
+                paper_id = fields.get("doi") or fields.get("pmid") or fields.get("pmcid") or "MISSING_ID"
                 paper_groups[paper_id].append(fields)
 
         papers: Set[Paper] = set()
