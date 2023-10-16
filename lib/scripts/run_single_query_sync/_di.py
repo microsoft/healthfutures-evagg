@@ -11,10 +11,10 @@ from lib.evagg import (
     IExtractFields,
     IGetPapers,
     IWriteOutput,
-    Query,
     SimpleContentExtractor,
     SimpleFileLibrary,
 )
+from lib.evagg.types import Query
 
 from ._app import EvAggApp
 
