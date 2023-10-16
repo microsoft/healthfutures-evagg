@@ -16,12 +16,15 @@ class PubtatorEntityAnnotator(IAnnotateEntities):
 
         Returns paper annotations.
         """
+        if "pmcid" not in paper.props:
+            raise ValueError("Paper must have a PMC ID to be annotated by PubTator.")
+        paper_id = paper.props["pmcid"]
         format = "json"
-        paper_id = paper.pmcid
 
         r = requests.get(
             f"https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/bioc{format}?pmcids={paper_id}",
             timeout=10,
         )
+        # TODO, handle errors.
         r.raise_for_status()
         return r.json()
