@@ -1,9 +1,9 @@
-from collections import defaultdict
 import csv
 import json
 import os
+from collections import defaultdict
 from functools import cache
-from typing import List, Sequence, Set
+from typing import Sequence, Set
 
 from ._base import Paper, Variant
 from ._interfaces import IGetPapers, IPaperQuery
