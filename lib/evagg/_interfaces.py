@@ -1,6 +1,11 @@
-from typing import Protocol, Sequence, Set
+from typing import Dict, Protocol, Sequence, Set
 
 from ._base import Paper, Variant
+
+
+class IEvAggApp(Protocol):
+    def execute(self) -> None:
+        ...
 
 
 class IPaperQuery(Protocol):
@@ -14,10 +19,10 @@ class IGetPapers(Protocol):
 
 
 class IExtractFields(Protocol):
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
         ...
 
 
 class IWriteOutput(Protocol):
-    def write(self, fields: dict[str, Sequence[dict[str, str]]]) -> None:
+    def write(self, fields: Dict[str, Sequence[Dict[str, str]]]) -> None:
         ...
