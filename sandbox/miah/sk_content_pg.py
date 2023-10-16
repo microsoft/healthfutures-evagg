@@ -12,6 +12,7 @@ import semantic_kernel as sk
 from semantic_kernel.connectors.ai.open_ai import AzureTextCompletion
 
 from lib.config import PydanticYamlModel
+from lib.evagg.sk import SemanticKernelClient, SemanticKernelConfig
 
 # %% Constants.
 pmid = "33739604"
@@ -176,6 +177,18 @@ for idx in range(len(deduped)):
     variables = {"variant": deduped[idx]["text"], "gene": query_gene}
     context_variables = sk.ContextVariables(content=txt, variables=variables)
     contexts[deduped[idx]["text"]] = context_variables
+
+# %% Extract content using evagg library code.
+
+sk_config = SemanticKernelConfig.parse_yaml(CONFIG_PATH)
+
+client = SemanticKernelClient(sk_config)
+
+for variant, vars in contexts.items():
+    print(f"Processing variant: {variant}")
+    variables_dict = vars.dict()["variables"]
+    print(client.run_completion_function("content", "phenotype", variables_dict))
+
 
 # %% Extract content.
 

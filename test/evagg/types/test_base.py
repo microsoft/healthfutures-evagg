@@ -1,4 +1,4 @@
-from lib.evagg import Paper
+from lib.evagg.types import Paper
 
 
 def test_paper_from_dict():

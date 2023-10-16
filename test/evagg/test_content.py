@@ -1,4 +1,9 @@
-from lib.evagg import Paper, Query, SimpleContentExtractor
+from typing import Any, Sequence
+
+from lib.evagg import SemanticKernelContentExtractor, SimpleContentExtractor
+from lib.evagg.lit import IFindVariantMentions
+from lib.evagg.sk import ISemanticKernelClient
+from lib.evagg.types import IPaperQuery, Paper, Query
 
 
 def test_simple_content_extractor():
@@ -14,3 +19,45 @@ def test_simple_content_extractor():
     assert result[0]["MOI"] == "AD"
     assert result[0]["phenotype"] == "Long face (HP:0000276)"
     assert result[0]["functional data"] == "No"
+
+
+class MockMentionFinder(IFindVariantMentions):
+    mentions: dict[str, Sequence[dict[str, Any]]] = {
+        "var1": [{"text": "This is a test paper.", "gene_id": "test_gene"}],
+        "var2": [
+            {"text": "This is another test paper.", "gene_id": "test_gene"},
+        ],
+    }
+
+    def find_mentions(self, query: IPaperQuery, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
+        return self.mentions
+
+
+class MockSemanticKernelClient(ISemanticKernelClient):
+    def run_completion_function(self, skill: str, function: str, context_variables: Any) -> str:
+        return "::".join(
+            [function, context_variables["input"], context_variables["gene"], context_variables["variant"]]
+        )
+
+
+def test_sk_content_extractor():
+    fields = ["moi", "phenotype", "zygosity"]
+    content_extractor = SemanticKernelContentExtractor(fields, MockSemanticKernelClient(), MockMentionFinder())
+    paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
+    content = content_extractor.extract(paper, Query("CHI3L1", "p.Y34C"))
+
+    # Based on the above, there should be two elements in `content`, each containing a dict keyed by fields, with a
+    # fake value.
+    for k in MockMentionFinder().mentions.keys():
+        row = [c for c in content if c["variant"] == k]
+        assert len(row) == 1
+        row = row[0]
+
+        for f in fields:
+            assert f in row.keys()
+            tokens = row[f].split("::")
+            assert len(tokens) == 4
+            assert tokens[0] == f
+            assert tokens[1] == MockMentionFinder().mentions[k][0]["text"]
+            assert tokens[2] == MockMentionFinder().mentions[k][0]["gene_id"]
+            assert tokens[3] == k
