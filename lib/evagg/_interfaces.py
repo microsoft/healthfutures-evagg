@@ -1,11 +1,6 @@
 from typing import Protocol, Sequence, Set
 
-from ._base import Paper, Variant
-
-
-class IPaperQuery(Protocol):
-    def terms(self) -> Set[Variant]:
-        ...
+from lib.evagg.types import IPaperQuery, Paper
 
 
 class IGetPapers(Protocol):
