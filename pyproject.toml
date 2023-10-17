@@ -33,3 +33,9 @@ check_untyped_defs = true
 # Asserts are OK in test code.
 [tool.bandit.assert_used]
 skips = ['test/*']
+
+[tool.coverage.run]
+omit = [
+    "test/*",
+    "lib/scripts/*",
+]
