@@ -26,7 +26,7 @@ def test_run_completion_function(mocker, fake_config):
     context_variables = {"input": "my_input", "gene": "gene", "variant": "variant"}
 
     # Test all functions in the content skill/plugin
-    for function_name in ["moi", "phenotype", "zygosity"]:
+    for function_name in ["inheritance", "phenotype", "zygosity"]:
         result = client.run_completion_function("content", function_name, context_variables)
         assert result == "my_expected_result"
 
@@ -39,11 +39,11 @@ def test_cached_function(mocker, fake_config):
     context_variables = {"input": "my_input", "gene": "gene", "variant": "variant"}
 
     # This should load the function from disk
-    result = client.run_completion_function("content", "moi", context_variables)
+    result = client.run_completion_function("content", "inheritance", context_variables)
     assert result == "my_expected_result"
 
     # This should use the cached function
-    result = client.run_completion_function("content", "moi", context_variables)
+    result = client.run_completion_function("content", "inheritance", context_variables)
     assert result == "my_expected_result"
 
     assert SemanticKernelClient._import_function.call_count == 1
@@ -75,10 +75,8 @@ def test_custom_skill_dir(mocker, fake_config):
     with tempfile.TemporaryDirectory() as tmpdir:
         skill_dir = os.path.join(tmpdir, skill)
         os.mkdir(skill_dir)
-        print(skill_dir)
         func_dir = os.path.join(skill_dir, func)
         os.mkdir(func_dir)
-        print(func_dir)
         with open(os.path.join(func_dir, "config.json"), "w") as f:
             f.write(
                 """

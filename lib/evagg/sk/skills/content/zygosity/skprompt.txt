@@ -5,6 +5,6 @@ What is the described zygosity for the patient with the variant: {{$variant}}?
 
 Provide your response in the following format:
 {
-  "grounding": "evidence in support of the moi.",
-  "moi": "homozygous" | "heterozygous" | "compound heterozygous" | "not specified"
+  "grounding": "evidence in support of the zygosity.",
+  "zygosity": "homozygous" | "heterozygous" | "compound heterozygous" | "not specified"
 }
