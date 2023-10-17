@@ -5,6 +5,6 @@ What is the described mode of inheritance for the condition associated with the 
 
 Provide your response in the following format:
 {
-  "grounding": "evidence in support of the moi.",
-  "moi": "de novo" | "dominant" | "autosomal dominant" | "recessive" | "autosomal recessive" | "X-linked" | "not specified"
+  "grounding": "evidence in support of the condition inheritance.",
+  "inheritance": "de novo" | "dominant" | "autosomal dominant" | "recessive" | "autosomal recessive" | "X-linked" | "not specified"
 }

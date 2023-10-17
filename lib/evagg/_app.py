@@ -13,7 +13,7 @@ class SynchronousLocalApp(IEvAggApp):
     def execute(self) -> None:
         # Get the papers that match the query.
         papers = self._library.search(self._query)
-        print(f"Found {len(papers)} papers")
+        print(f"Found {len(papers)} papers for {self._query.terms()}")
 
         # For all papers that match, extract the fields we want.
         fields = {paper.id: self._extractor.extract(paper, self._query) for paper in papers}
