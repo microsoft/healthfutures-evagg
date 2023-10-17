@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Sequence
 
 from lib.evagg.lit import IFindVariantMentions
@@ -31,6 +32,8 @@ class SimpleContentExtractor(IExtractFields):
 
 
 class SemanticKernelContentExtractor(IExtractFields):
+    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvsc", "hgvsp", "phenotype", "zygosity", "inheritance"}
+
     def __init__(
         self, fields: Sequence[str], sk_client: ISemanticKernelClient, mention_finder: IFindVariantMentions
     ) -> None:
@@ -45,7 +48,7 @@ class SemanticKernelContentExtractor(IExtractFields):
         # Find all the variant mentions in the paper relating to the query.
         variant_mentions = self._mention_finder.find_mentions(query, paper)
 
-        # For each variant/field pair, run the appropriate prompt.
+        # For each variant/field pair, extract the appropriate content.
         results: List[dict[str, str]] = []
 
         for variant_id in variant_mentions.keys():
@@ -57,12 +60,25 @@ class SemanticKernelContentExtractor(IExtractFields):
             context_variables = {
                 "input": paper_excerpts,
                 "variant": variant_id,
-                "gene": mentions[0].get("gene_id", "unknown"),  # Mentions should never be empty.
+                "gene": mentions[0].get("gene_symbol", "unknown"),  # Mentions should never be empty.
             }
             for field in self._fields:
-                result = self._sk_client.run_completion_function(
-                    skill="content", function=field, context_variables=context_variables
-                )
+                if field not in self._SUPPORTED_FIELDS:
+                    raise NotImplementedError(f"Unsupported field: {field}")
+
+                if field == "gene":
+                    result = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
+                elif field == "paper_id":
+                    result = paper.id
+                elif field == "hgvsc":
+                    result = f"{variant_id} (kinda)"
+                elif field == "hgvsp":
+                    result = f"{variant_id} (also kinda)"
+                else:
+                    raw = self._sk_client.run_completion_function(
+                        skill="content", function=field, context_variables=context_variables
+                    )
+                    result = json.loads(raw)[field]
                 variant_results[field] = result
             results.append(variant_results)
         return results
