@@ -10,7 +10,7 @@ class VariantMentionFinder(IFindVariantMentions):
     def __init__(self, entity_annotator: IAnnotateEntities) -> None:
         self._entity_annotator = entity_annotator
 
-    def _get_variant_ids(self, annotations: dict[str, Any], query_gene_id: str) -> Set[str]:
+    def _get_variant_ids(self, annotations: dict[str, Any], query_gene_id: int) -> Set[str]:
         variants_in_query_gene: Set[str] = set()
 
         for passage in annotations["passages"]:
@@ -20,12 +20,13 @@ class VariantMentionFinder(IFindVariantMentions):
                         variants_in_query_gene.add(annotation["infons"]["identifier"])
         return variants_in_query_gene
 
-    def _gene_id_for_symbol(self, symbols: Sequence[str]) -> dict[str, str]:
+    def _gene_id_for_symbol(self, symbols: Sequence[str]) -> dict[str, int]:
         # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
         url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{','.join(symbols)}/taxon/Human"
         r = requests.get(url, timeout=10)
         r.raise_for_status()
-        return {g["gene"]["symbol"]: g["gene"]["gene_id"] for g in r.json()["reports"]}
+        # Assumes gene_id will always be an int, raises exception if not.
+        return {g["gene"]["symbol"]: int(g["gene"]["gene_id"]) for g in r.json()["reports"]}
 
     def _gather_mentions(self, annotations: dict[str, Any], variant_id: str) -> Sequence[dict[str, Any]]:
         mentions: List[dict[str, Any]] = []
@@ -53,22 +54,19 @@ class VariantMentionFinder(IFindVariantMentions):
         annotations = self._entity_annotator.annotate(paper)
 
         # Search all of the annotations for `Mutations` with the query gene ids.
-        variant_gene_ids: Set[Tuple[str, str]] = set()
-        for id in query_gene_ids:
+        variant_gene_ids: Set[Tuple[str, int, str]] = set()
+        for symbol, id in query_gene_ids.items():
             variant_ids = self._get_variant_ids(annotations, id)
-            variant_gene_pairs = {(v, id) for v in variant_ids}
-            variant_gene_ids.update(variant_gene_pairs)
+            variant_gene_tuples = {(symbol, id, v) for v in variant_ids}
+            variant_gene_ids.update(variant_gene_tuples)
 
         # Now collect all the text chunks that mention each variant.
         # Record the gene id for each variant as well.
         mentions: dict[str, Sequence[dict[str, Any]]] = {}
-        for variant_id, gene_id in variant_gene_ids:
-            # TODO, there's an error mode here where two genes in the query posess the same variant name.
-            if variant_id in mentions:
-                raise ValueError(f"Variant {variant_id} mentioned in multiple query genes.")
-
+        for gene_symbol, gene_id, variant_id in variant_gene_ids:
             mentions[variant_id] = self._gather_mentions(annotations, variant_id)
             for m in mentions[variant_id]:
                 m["gene_id"] = gene_id
+                m["gene_symbol"] = gene_symbol
 
         return mentions

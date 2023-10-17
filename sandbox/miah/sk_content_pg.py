@@ -12,7 +12,7 @@ import semantic_kernel as sk
 from semantic_kernel.connectors.ai.open_ai import AzureTextCompletion
 
 from lib.config import PydanticYamlModel
-from lib.evagg.sk import SemanticKernelClient, SemanticKernelConfig
+from lib.evagg.sk import SemanticKernelClient, SemanticKernelDotEnvConfig
 
 # %% Constants.
 pmid = "33739604"
@@ -20,18 +20,9 @@ query_gene = "PRKCG"
 query_variant = None
 pmcid = "PMC8045942"
 
-CONFIG_PATH = "/home/azureuser/repos/ev-agg-exp/sandbox/miah/.config/sk_content_pg_config.yaml"
+# %% Handle config.
 
-# %% Handle Config.
-
-
-class Config(PydanticYamlModel):
-    deployment: str
-    endpoint: str
-    api_key: str
-
-
-config = Config.parse_yaml(CONFIG_PATH)
+config = SemanticKernelDotEnvConfig()
 
 # # %% Load in, pre-process a paper.
 
@@ -180,9 +171,7 @@ for idx in range(len(deduped)):
 
 # %% Extract content using evagg library code.
 
-sk_config = SemanticKernelConfig.parse_yaml(CONFIG_PATH)
-
-client = SemanticKernelClient(sk_config)
+client = SemanticKernelClient(config)
 
 for variant, vars in contexts.items():
     print(f"Processing variant: {variant}")

@@ -1,3 +1,4 @@
+import json
 from typing import Any, Sequence
 
 from lib.evagg import SemanticKernelContentExtractor, SimpleContentExtractor
@@ -35,13 +36,11 @@ class MockMentionFinder(IFindVariantMentions):
 
 class MockSemanticKernelClient(ISemanticKernelClient):
     def run_completion_function(self, skill: str, function: str, context_variables: Any) -> str:
-        return "::".join(
-            [function, context_variables["input"], context_variables["gene"], context_variables["variant"]]
-        )
+        return json.dumps({function: "test"})
 
 
 def test_sk_content_extractor():
-    fields = ["moi", "phenotype", "zygosity"]
+    fields = ["inheritance", "phenotype", "zygosity"]
     content_extractor = SemanticKernelContentExtractor(fields, MockSemanticKernelClient(), MockMentionFinder())
     paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
     content = content_extractor.extract(paper, Query("CHI3L1", "p.Y34C"))
@@ -55,9 +54,4 @@ def test_sk_content_extractor():
 
         for f in fields:
             assert f in row.keys()
-            tokens = row[f].split("::")
-            assert len(tokens) == 4
-            assert tokens[0] == f
-            assert tokens[1] == MockMentionFinder().mentions[k][0]["text"]
-            assert tokens[2] == MockMentionFinder().mentions[k][0]["gene_id"]
-            assert tokens[3] == k
+            assert row[f] == "test"
