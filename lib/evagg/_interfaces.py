@@ -1,15 +1,10 @@
 from typing import Dict, Protocol, Sequence, Set
 
-from ._base import Paper, Variant
+from lib.evagg.types import IPaperQuery, Paper
 
 
 class IEvAggApp(Protocol):
     def execute(self) -> None:
-        ...
-
-
-class IPaperQuery(Protocol):
-    def terms(self) -> Set[Variant]:
         ...
 
 

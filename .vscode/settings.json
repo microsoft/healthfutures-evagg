@@ -39,5 +39,10 @@
             "source.organizeImports": true
         },
     },
-    "python.defaultInterpreterPath": "~/miniconda3/envs/evagg/bin/python"
+    "python.defaultInterpreterPath": "~/miniconda3/envs/evagg/bin/python",
+    "files.exclude": {
+        "**/__pycache__": true,
+        ".mypy_cache": true,
+        ".pytest_cache": true
+    }
 }

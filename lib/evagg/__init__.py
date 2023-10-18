@@ -1,12 +1,12 @@
 """The evagg core library."""
 
 from ._app import SynchronousLocalApp
-from ._base import Paper, Variant
-from ._content import SimpleContentExtractor, TruthsetContentExtractor
+from ._content._semantic_kernel import SemanticKernelContentExtractor
+from ._content._simple import SimpleContentExtractor
+from ._content._truth_set import TruthsetContentExtractor
 from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IPaperQuery, IWriteOutput
 from ._io import ConsoleOutputWriter, FileOutputWriter, TableOutputWriter
 from ._library import SimpleFileLibrary, TruthsetFileLibrary
-from ._query import MultiQuery, Query
 
 __all__ = [
     # Interfaces.
@@ -15,14 +15,8 @@ __all__ = [
     "IGetPapers",
     "IExtractFields",
     "IWriteOutput",
-    # Base.
-    "Paper",
-    "Variant",
     # App.
     "SynchronousLocalApp",
-    # Query.
-    "Query",
-    "MultiQuery",
     # IO.
     "ConsoleOutputWriter",
     "FileOutputWriter",
@@ -31,6 +25,7 @@ __all__ = [
     "SimpleFileLibrary",
     "TruthsetFileLibrary",
     # Content.
+    "SemanticKernelContentExtractor",
     "SimpleContentExtractor",
     "TruthsetContentExtractor",
 ]
