@@ -1,8 +1,7 @@
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
-import requests
-
 from lib.evagg.lit import IAnnotateEntities, IFindVariantMentions
+from lib.evagg.ref import NCBIGeneReference
 from lib.evagg.types import IPaperQuery, Paper
 
 
@@ -19,14 +18,6 @@ class VariantMentionFinder(IFindVariantMentions):
                     if "gene_id" in annotation["infons"] and annotation["infons"]["gene_id"] == query_gene_id:
                         variants_in_query_gene.add(annotation["infons"]["identifier"])
         return variants_in_query_gene
-
-    def _gene_id_for_symbol(self, symbols: Sequence[str]) -> Dict[str, int]:
-        # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
-        url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{','.join(symbols)}/taxon/Human"
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        # Assumes gene_id will always be an int, raises exception if not.
-        return {g["gene"]["symbol"]: int(g["gene"]["gene_id"]) for g in r.json()["reports"]}
 
     def _gather_mentions(self, annotations: Dict[str, Any], variant_id: str) -> Sequence[Dict[str, Any]]:
         mentions: List[Dict[str, Any]] = []
@@ -47,8 +38,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
     def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
         # Get the gene_id for the query gene.
-        # TODO, move this to a separate module/package.
-        query_gene_ids = self._gene_id_for_symbol([v.gene for v in query.terms()])
+        query_gene_ids = NCBIGeneReference.gene_id_for_symbol([v.gene for v in query.terms()])
 
         # Annotate entities in the paper.
         annotations = self._entity_annotator.annotate(paper)
