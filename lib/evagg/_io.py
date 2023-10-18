@@ -2,7 +2,7 @@ import csv
 import json
 import os
 import sys
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 from ._interfaces import IWriteOutput
 
@@ -11,7 +11,7 @@ class ConsoleOutputWriter(IWriteOutput):
     def __init__(self) -> None:
         pass
 
-    def write(self, fields: dict[str, Sequence[dict[str, str]]]) -> None:
+    def write(self, fields: Dict[str, Sequence[Dict[str, str]]]) -> None:
         print(json.dumps(fields, indent=4))
 
 
@@ -19,7 +19,7 @@ class FileOutputWriter(IWriteOutput):
     def __init__(self, path: str) -> None:
         self._path = path
 
-    def write(self, fields: dict[str, Sequence[dict[str, str]]]) -> None:
+    def write(self, fields: Dict[str, Sequence[Dict[str, str]]]) -> None:
         print(f"Writing output to: {self._path}")
 
         # TODO create parent if doesn't exist.
@@ -35,7 +35,7 @@ class TableOutputWriter(IWriteOutput):
     def __init__(self, output_path: Optional[str] = None) -> None:
         self._path = output_path
 
-    def write(self, fields: dict[str, Sequence[dict[str, str]]]) -> None:
+    def write(self, fields: Dict[str, Sequence[Dict[str, str]]]) -> None:
         print(f"Writing output to: {self._path or 'stdout'}")
 
         table_lines = [variant for variant_list in fields.values() for variant in variant_list]
