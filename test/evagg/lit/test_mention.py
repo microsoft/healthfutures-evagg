@@ -1,4 +1,4 @@
-from typing import Any, Sequence, Tuple
+from typing import Any, Dict, Sequence, Tuple
 
 from lib.evagg.lit import IAnnotateEntities, VariantMentionFinder
 from lib.evagg.types import MultiQuery, Paper, Query
@@ -14,7 +14,7 @@ class MockAnnotator(IAnnotateEntities):
     def __init__(self, gene_id_variant_tuples: Sequence[Tuple[int, str]]) -> None:
         self._gene_id_variant_tuples = gene_id_variant_tuples
 
-    def annotate(self, paper: Paper) -> dict[str, Any]:
+    def annotate(self, paper: Paper) -> Dict[str, Any]:
         passages = {
             "passages": [
                 {
