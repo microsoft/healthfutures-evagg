@@ -64,16 +64,16 @@ class SemanticKernelContentExtractor(IExtractFields):
             }
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
-                    raise NotImplementedError(f"Unsupported field: {field}")
+                    raise ValueError(f"Unsupported field: {field}")
 
                 if field == "gene":
                     result = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
                 elif field == "paper_id":
                     result = paper.id
                 elif field == "hgvsc":
-                    result = f"{variant_id} (kinda)"
+                    result = f"{variant_id}"  # TODO
                 elif field == "hgvsp":
-                    result = f"{variant_id} (also kinda)"
+                    result = f"{variant_id}"  # TODO
                 else:
                     raw = self._sk_client.run_completion_function(
                         skill="content", function=field, context_variables=context_variables
