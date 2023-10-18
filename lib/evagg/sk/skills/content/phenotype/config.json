@@ -1,0 +1,31 @@
+{
+    "schema": 1,
+    "description": "Determine phenotype described in a block of text for a patient with a given variant-gene pair",
+    "type": "completion",
+    "completion": {
+        "max_tokens": 1000,
+        "temperature": 0.2,
+        "top_p": 0,
+        "presence_penalty": 0,
+        "frequency_penalty": 0
+    },
+    "input": {
+        "parameters": [
+            {
+                "name": "text",
+                "description": "Text from which the phenotype should be extracted",
+                "defaultValue": ""
+            },
+            {
+                "name": "variant",
+                "description": "The variant for which the phenotype should be extracted",
+                "defaultValue": ""
+            },
+            {
+                "name": "gene",
+                "description": "The gene for which the phenotype should be extracted",
+                "defaultValue": ""
+            }
+        ]
+    }
+}

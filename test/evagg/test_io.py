@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Sequence
+from typing import Dict, Sequence
 
 from lib.evagg import ConsoleOutputWriter, FileOutputWriter
 
@@ -8,7 +8,7 @@ from lib.evagg import ConsoleOutputWriter, FileOutputWriter
 def test_console_output_writer(capsys):
     # Arrange
     writer = ConsoleOutputWriter()
-    fields: dict[str, Sequence[dict[str, str]]] = {
+    fields: Dict[str, Sequence[Dict[str, str]]] = {
         "field1": [{"key1": "value1"}, {"key2": "value2"}],
         "field2": [{"key3": "value3"}, {"key4": "value4"}],
     }
@@ -26,7 +26,7 @@ def test_file_output_writer(tmp_path):
     # Arrange
     path = os.path.join(tmp_path, "output.json")
     writer = FileOutputWriter(path)
-    fields: dict[str, Sequence[dict[str, str]]] = {
+    fields: Dict[str, Sequence[Dict[str, str]]] = {
         "field1": [{"key1": "value1"}, {"key2": "value2"}],
         "field2": [{"key3": "value3"}, {"key4": "value4"}],
     }

@@ -1,25 +1,28 @@
 import json
 import os
 import tempfile
-from typing import Sequence
+from typing import Any, Dict
 
-from lib.evagg import Paper, Query, SimpleFileLibrary
+from lib.evagg import SimpleFileLibrary
+from lib.evagg.types import Paper, Query
 
 
-def _paper_to_dict(paper: Paper) -> dict[str, str]:
+def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
     return {
         "id": paper.id,
+        "evidence": paper.evidence,
         "citation": paper.citation,
         "abstract": paper.abstract,
+        "props": paper.props,
     }
 
 
 def test_search():
     # Create a temporary directory and write some test papers to it
     with tempfile.TemporaryDirectory() as tmpdir:
-        paper1 = Paper(id="1", citation="Test Paper 1", abstract="This is a test paper.")
-        paper2 = Paper(id="2", citation="Test Paper 2", abstract="This is another test paper.")
-        paper3 = Paper(id="3", citation="Test Paper 3", abstract="This is a third test paper.")
+        paper1 = Paper(id="1", citation="Test Paper 1", abstract="This is a test paper.", pmcid="PMC123")
+        paper2 = Paper(id="2", citation="Test Paper 2", abstract="This is another test paper.", pmcid="PMC123")
+        paper3 = Paper(id="3", citation="Test Paper 3", abstract="This is a third test paper.", pmcid="PMC123")
         with open(os.path.join(tmpdir, "paper1.json"), "w") as f:
             json.dump(_paper_to_dict(paper1), f)
         with open(os.path.join(tmpdir, "paper2.json"), "w") as f:
@@ -34,8 +37,6 @@ def test_search():
 
         # Check that the correct papers were returned
         assert len(results) == 3
-        print(paper1)
-        print(results)
 
         assert paper1 in results
         assert paper2 in results
