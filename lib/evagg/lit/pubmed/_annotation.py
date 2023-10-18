@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 import requests
 
@@ -11,7 +11,7 @@ class PubtatorEntityAnnotator(IAnnotateEntities):
     def __init__(self) -> None:
         pass
 
-    def annotate(self, paper: Paper) -> dict[str, Any]:
+    def annotate(self, paper: Paper) -> Dict[str, Any]:
         """Annotate the paper with entities from PubTator.
 
         Returns paper annotations.
