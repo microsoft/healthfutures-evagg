@@ -1,0 +1,29 @@
+di_class: lib.evagg.SynchronousLocalApp
+query:
+  di_class: lib.evagg.types.Query
+  gene: "COQ2"
+  variant: "p.R55*"
+library:
+  di_class: lib.evagg.TruthsetFileLibrary
+  file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_small.tsv
+extractor:
+  di_class: lib.evagg.SemanticKernelContentExtractor
+  fields:
+    - gene
+    - paper_id
+    - hgvsc
+    - hgvsp
+    - phenotype
+    - zygosity
+    - inheritance
+  sk_client:
+    di_class: lib.evagg.sk.SemanticKernelClient
+    config:
+      di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
+  mention_finder:
+    di_class: lib.evagg.lit.VariantMentionFinder
+    entity_annotator:
+      di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
+writer:
+  di_class: lib.evagg.TableOutputWriter
+  # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv

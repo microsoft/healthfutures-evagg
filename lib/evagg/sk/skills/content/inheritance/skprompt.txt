@@ -1,0 +1,10 @@
+Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+What is the described mode of inheritance for the condition associated with the following variant in {{$gene}}: {{$variant}}?
+
+{{$input}}
+
+Provide your response in the following format:
+{
+  "grounding": "evidence in support of the condition inheritance.",
+  "inheritance": "de novo" | "dominant" | "autosomal dominant" | "recessive" | "autosomal recessive" | "X-linked" | "not specified"
+}

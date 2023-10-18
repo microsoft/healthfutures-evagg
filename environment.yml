@@ -18,7 +18,7 @@ dependencies:
   - seaborn
 
   # General utilities.
-  - pydantic
+  - pydantic>=2.4.2
 
   # Bioinformatics.
   - biopython
@@ -38,10 +38,14 @@ dependencies:
   - bandit
   - mypy
   # - types-python-dateutil
-  # - types-pyyaml
   - types-requests
   - types-pyyaml
   - pytest
   - pytest-cov
   - pytest-mock
   #? - snakeviz
+
+  # pip dependencies. Before adding a package to this list, make sure it's not available in conda.
+  - pip
+  - pip:
+    - semantic-kernel

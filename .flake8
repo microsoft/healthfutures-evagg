@@ -24,4 +24,7 @@ per-file-ignores =
     # Much less strict rules for playpen.
     #   F401: allow unused imports.
     #   E800: allow commented out code.
-    sandbox/*: F401,E800
+    #   W291: allow trailing whitespace.
+    #   E501: allow long lines.
+    sandbox/*: F401,E800,W291,E501
+
