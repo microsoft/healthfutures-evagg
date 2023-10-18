@@ -3,7 +3,7 @@ import json
 import os
 from collections import defaultdict
 from functools import cache
-from typing import Sequence, Set
+from typing import Dict, Sequence, Set
 
 from lib.evagg.types import IPaperQuery, Paper, Variant
 
@@ -14,7 +14,7 @@ class SimpleFileLibrary(IGetPapers):
     def __init__(self, collections: Sequence[str]) -> None:
         self._collections = collections
 
-    def _load_collection(self, collection: str) -> dict[str, Paper]:
+    def _load_collection(self, collection: str) -> Dict[str, Paper]:
         papers = {}
         # collection is a local directory, get a list of all of the json files in that directory
         for filename in os.listdir(collection):
@@ -26,7 +26,7 @@ class SimpleFileLibrary(IGetPapers):
         return papers
 
     @cache
-    def _load(self) -> dict[str, Paper]:
+    def _load(self) -> Dict[str, Paper]:
         papers = {}
         for collection in self._collections:
             papers.update(self._load_collection(collection))

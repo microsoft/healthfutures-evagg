@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Set, Tuple
+from typing import Any, Dict, List, Sequence, Set, Tuple
 
 import requests
 
@@ -10,7 +10,7 @@ class VariantMentionFinder(IFindVariantMentions):
     def __init__(self, entity_annotator: IAnnotateEntities) -> None:
         self._entity_annotator = entity_annotator
 
-    def _get_variant_ids(self, annotations: dict[str, Any], query_gene_id: int) -> Set[str]:
+    def _get_variant_ids(self, annotations: Dict[str, Any], query_gene_id: int) -> Set[str]:
         variants_in_query_gene: Set[str] = set()
 
         for passage in annotations["passages"]:
@@ -20,7 +20,7 @@ class VariantMentionFinder(IFindVariantMentions):
                         variants_in_query_gene.add(annotation["infons"]["identifier"])
         return variants_in_query_gene
 
-    def _gene_id_for_symbol(self, symbols: Sequence[str]) -> dict[str, int]:
+    def _gene_id_for_symbol(self, symbols: Sequence[str]) -> Dict[str, int]:
         # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
         url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{','.join(symbols)}/taxon/Human"
         r = requests.get(url, timeout=10)
@@ -28,8 +28,8 @@ class VariantMentionFinder(IFindVariantMentions):
         # Assumes gene_id will always be an int, raises exception if not.
         return {g["gene"]["symbol"]: int(g["gene"]["gene_id"]) for g in r.json()["reports"]}
 
-    def _gather_mentions(self, annotations: dict[str, Any], variant_id: str) -> Sequence[dict[str, Any]]:
-        mentions: List[dict[str, Any]] = []
+    def _gather_mentions(self, annotations: Dict[str, Any], variant_id: str) -> Sequence[Dict[str, Any]]:
+        mentions: List[Dict[str, Any]] = []
 
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
@@ -45,7 +45,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
         return mentions
 
-    def find_mentions(self, query: IPaperQuery, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
+    def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
         # Get the gene_id for the query gene.
         # TODO, move this to a separate module/package.
         query_gene_ids = self._gene_id_for_symbol([v.gene for v in query.terms()])
@@ -62,7 +62,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
         # Now collect all the text chunks that mention each variant.
         # Record the gene id for each variant as well.
-        mentions: dict[str, Sequence[dict[str, Any]]] = {}
+        mentions: Dict[str, Sequence[Dict[str, Any]]] = {}
         for gene_symbol, gene_id, variant_id in variant_gene_ids:
             mentions[variant_id] = self._gather_mentions(annotations, variant_id)
             for m in mentions[variant_id]:

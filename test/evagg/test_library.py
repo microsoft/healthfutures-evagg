@@ -1,13 +1,13 @@
 import json
 import os
 import tempfile
-from typing import Any
+from typing import Any, Dict
 
 from lib.evagg import SimpleFileLibrary
 from lib.evagg.types import Paper, Query
 
 
-def _paper_to_dict(paper: Paper) -> dict[str, Any]:
+def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
     return {
         "id": paper.id,
         "evidence": paper.evidence,

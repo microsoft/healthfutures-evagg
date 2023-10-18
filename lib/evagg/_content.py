@@ -26,7 +26,7 @@ class SimpleContentExtractor(IExtractFields):
         else:
             return "Unknown"
 
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
         # Dummy implementation that returns a single variant with a static set of fields.
         return [{field: self._field_to_value(field) for field in self._fields}]
 
@@ -41,19 +41,19 @@ class SemanticKernelContentExtractor(IExtractFields):
         self._sk_client = sk_client
         self._mention_finder = mention_finder
 
-    def _excerpt_from_mentions(self, mentions: Sequence[dict[str, Any]]) -> str:
+    def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
         # Find all the variant mentions in the paper relating to the query.
         variant_mentions = self._mention_finder.find_mentions(query, paper)
 
         # For each variant/field pair, extract the appropriate content.
-        results: List[dict[str, str]] = []
+        results: List[Dict[str, str]] = []
 
         for variant_id in variant_mentions.keys():
             mentions = variant_mentions[variant_id]
-            variant_results: dict[str, str] = {"variant": variant_id}
+            variant_results: Dict[str, str] = {"variant": variant_id}
 
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = self._excerpt_from_mentions(mentions)
@@ -89,7 +89,7 @@ class TruthsetContentExtractor(IExtractFields):
         # Turn list of single-element key-mapping dicts into a list of tuples.
         self._field_map = [kv for [kv] in [kv.items() for kv in field_map]]
 
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[dict[str, str]]:
+    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
         extracted_fields = []
         # For each queried variant for which we have evidence in the paper...
         for v in query.terms() & paper.evidence.keys():

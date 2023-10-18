@@ -1,5 +1,5 @@
 import json
-from typing import Any, Sequence
+from typing import Any, Dict, Sequence
 
 import pytest
 
@@ -25,14 +25,14 @@ def test_simple_content_extractor():
 
 
 class MockMentionFinder(IFindVariantMentions):
-    mentions: dict[str, Sequence[dict[str, Any]]] = {
+    mentions: Dict[str, Sequence[Dict[str, Any]]] = {
         "var1": [{"text": "This is a test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"}],
         "var2": [
             {"text": "This is another test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"},
         ],
     }
 
-    def find_mentions(self, query: IPaperQuery, paper: Paper) -> dict[str, Sequence[dict[str, Any]]]:
+    def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
         return self.mentions
 
 
