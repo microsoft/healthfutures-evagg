@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "description": "Determine mode of phenotype described in a block of text for a patient with a given variant-gene pair",
+    "description": "Determine phenotype described in a block of text for a patient with a given variant-gene pair",
     "type": "completion",
     "completion": {
         "max_tokens": 1000,
@@ -23,7 +23,7 @@
             },
             {
                 "name": "gene",
-                "description": "The gene for which the MOI should be extracted",
+                "description": "The gene for which the phenotype should be extracted",
                 "defaultValue": ""
             }
         ]
