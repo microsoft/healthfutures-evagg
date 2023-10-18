@@ -1,6 +1,8 @@
 import json
 from typing import Any, Sequence
 
+import pytest
+
 from lib.evagg import SemanticKernelContentExtractor, SimpleContentExtractor
 from lib.evagg.lit import IFindVariantMentions
 from lib.evagg.sk import ISemanticKernelClient
@@ -24,9 +26,9 @@ def test_simple_content_extractor():
 
 class MockMentionFinder(IFindVariantMentions):
     mentions: dict[str, Sequence[dict[str, Any]]] = {
-        "var1": [{"text": "This is a test paper.", "gene_id": "test_gene"}],
+        "var1": [{"text": "This is a test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"}],
         "var2": [
-            {"text": "This is another test paper.", "gene_id": "test_gene"},
+            {"text": "This is another test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"},
         ],
     }
 
@@ -39,12 +41,24 @@ class MockSemanticKernelClient(ISemanticKernelClient):
         return json.dumps({function: "test"})
 
 
-def test_sk_content_extractor():
-    fields = ["inheritance", "phenotype", "zygosity"]
-    content_extractor = SemanticKernelContentExtractor(fields, MockSemanticKernelClient(), MockMentionFinder())
-    paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
-    content = content_extractor.extract(paper, Query("CHI3L1", "p.Y34C"))
+def test_sk_content_extractor_valid_fields():
+    fields = {
+        "gene": "CHI3L1",
+        "paper_id": "12345678",
+        "hgvsc": "",  # value derived from MockMentionFinder
+        "hgvsp": "",  # value derived from MockMentionFinder
+        "phenotype": "test",
+        "zygosity": "test",
+        "inheritance": "test",
+    }
 
+    content_extractor = SemanticKernelContentExtractor(
+        list(fields.keys()), MockSemanticKernelClient(), MockMentionFinder()
+    )
+    paper = Paper(id=fields["paper_id"], citation="citation", abstract="This is a test paper.", pmcid="PMC123")
+    content = content_extractor.extract(paper, Query(fields["gene"], "p.Y34C"))
+
+    print(content)
     # Based on the above, there should be two elements in `content`, each containing a dict keyed by fields, with a
     # fake value.
     for k in MockMentionFinder().mentions.keys():
@@ -54,4 +68,17 @@ def test_sk_content_extractor():
 
         for f in fields:
             assert f in row.keys()
-            assert row[f] == "test"
+            if f in ["hgvsc", "hgvsp"]:
+                assert row[f] == k
+            else:
+                assert row[f] == fields[f]
+
+
+def test_sk_content_extractor_invalid_fields():
+    fields = ["not a field"]
+
+    content_extractor = SemanticKernelContentExtractor(fields, MockSemanticKernelClient(), MockMentionFinder())
+    paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
+
+    with pytest.raises(ValueError):
+        content_extractor.extract(paper, Query("CHI3L1", "p.Y34C"))
