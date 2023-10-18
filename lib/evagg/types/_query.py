@@ -1,7 +1,6 @@
 from typing import Sequence, Set
 
-from lib.evagg.types import Variant
-
+from ._base import Variant
 from ._interfaces import IPaperQuery
 
 
