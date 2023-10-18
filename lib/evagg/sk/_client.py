@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Dict, Tuple
 
 import semantic_kernel as sk
 from dotenv import load_dotenv
@@ -31,7 +31,7 @@ class SemanticKernelDotEnvConfig(SemanticKernelConfig):
 class SemanticKernelClient:
     DEFAULT_SKILL_DIR = os.path.join(os.path.dirname(__file__), "skills")
     _skill_dir: str = DEFAULT_SKILL_DIR
-    _functions: dict[Tuple[str, str], sk.SKFunctionBase]
+    _functions: Dict[Tuple[str, str], sk.SKFunctionBase]
 
     def __init__(self, config: SemanticKernelConfig) -> None:
         self._kernel = sk.Kernel()
@@ -70,7 +70,7 @@ class SemanticKernelClient:
             raise ValueError(f"Error: {result.last_error_description}")
         return result.result
 
-    def run_completion_function(self, skill: str, function: str, context_variables: dict[str, str]) -> str:
+    def run_completion_function(self, skill: str, function: str, context_variables: Dict[str, str]) -> str:
         # TODO handle errors
         # TODO handle token limits?
         function_obj = self._get_function(skill, function)
