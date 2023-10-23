@@ -134,6 +134,8 @@ def _call_converter(ids_cat: str) -> dict[str, Any]:
 
 
 def convert_ids(ids: pd.Series, tgt: str) -> pd.Series | None:
+    # Note: this will fail to find the article if it's not in PMC.
+
     # Example syntax
     # https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?tool=my_tool&email=my_email@example.com&ids=PMC1193645
     # See https://www.ncbi.nlm.nih.gov/pmc/tools/id-converter-api/ for API documentation
@@ -152,24 +154,34 @@ def convert_ids(ids: pd.Series, tgt: str) -> pd.Series | None:
 
 
 df["pmcid"] = convert_ids(df["pmid"], "pmcid")
-df["doi"] = convert_ids(df["pmid"], "doi")
 
 
-# %% Build paper_id
+# %% Build doi and paper title
 
 
-# %% Fetch paper title
+def _parse_id_dict(raw: list[str]) -> dict[str, str]:
+    # each identifier is of the form 'value [key]', parse to dict {key: value}
+    retval: dict[str, str] = {}
+
+    for line in raw:
+        tokens = line.split(" [")
+        if len(tokens) == 2:
+            retval[tokens[1][:-1]] = tokens[0]
+
+    return retval
 
 
-def fetch_paper_title(pmids: pd.Series) -> pd.Series:
-    ids = set(pmids.dropna().tolist())
-    handle = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
-    records = Medline.parse(handle)
-    lookup = {record.get("PMID", ""): record.get("TI", "") for record in records}
-    return pd.Series(pmids.map(lookup))
+ids = set(df["pmid"].dropna().tolist())
+handle = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
+records = Medline.parse(handle)
+lookup = {record.get("PMID", ""): record.get("TI", "") for record in records}
+df["paper_title"] = pd.Series(df["pmid"].map(lookup))
 
+handle = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
+records = Medline.parse(handle)
+lookup = {record.get("PMID", ""): _parse_id_dict(record.get("AID", "")).get("doi", None) for record in records}
 
-df["paper_title"] = fetch_paper_title(df["pmid"])
+df["doi"] = pd.Series(df["pmid"].map(lookup))
 
 # %% Reformat and reorder dataframe
 
