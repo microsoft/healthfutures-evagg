@@ -1,8 +1,7 @@
 di_class: lib.evagg.SynchronousLocalApp
 query:
   di_class: lib.evagg.types.Query
-  gene: "COQ2"
-  variant: "p.R55*"
+  variant: "COQ2:p.R55*"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_small.tsv
