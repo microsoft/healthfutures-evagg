@@ -18,7 +18,8 @@ dependencies:
   - seaborn
 
   # General utilities.
-  - pydantic>=2.4.2
+  - pydantic==1.10
+  - defusedxml
 
   # Bioinformatics.
   - biopython
