@@ -1,18 +1,19 @@
+di_class: lib.evagg.SynchronousLocalApp
 query:
-  class: MultiQuery
+  di_class: lib.evagg.types.MultiQuery
   variants:
     - "TUBB3:p.E410K"
 library: 
-  class: SimpleFileLibrary
+  di_class: lib.evagg.SimpleFileLibrary
   collections: 
-    - /home/gregsmi/data/evagg_local
-content:
-  class: SimpleContentExtractor
+    - .data/evagg_local
+extractor:
+  di_class: lib.evagg.SimpleContentExtractor
   fields:
     - gene
     - variant
     - MOI
     - phenotype
     - functional data
-output:
-  class: ConsoleOutputWriter
+writer:
+  di_class: lib.evagg.ConsoleOutputWriter
