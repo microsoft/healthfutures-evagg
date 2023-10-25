@@ -13,15 +13,14 @@ def test_simple_content_extractor():
     paper = Paper(
         id="12345678", citation="Doe, J. et al. Test Journal 2021", abstract="This is a test paper.", pmcid="PMC123"
     )
-    fields = ["gene", "variant", "MOI", "phenotype", "functional data"]
+    fields = ["gene", "hgvsp", "inheritance", "phenotype"]
     extractor = SimpleContentExtractor(fields)
-    result = extractor.extract(paper, Query("CHI3L1", "p.Y34C"))
+    result = extractor.extract(paper, Query("CHI3L1:p.Y34C"))
     assert len(result) == 1
     assert result[0]["gene"] == "CHI3L1"
-    assert result[0]["variant"] == "p.Y34C"
-    assert result[0]["MOI"] == "AD"
+    assert result[0]["hgvsp"] == "p.Y34C"
+    assert result[0]["inheritance"] == "AD"
     assert result[0]["phenotype"] == "Long face (HP:0000276)"
-    assert result[0]["functional data"] == "No"
 
 
 class MockMentionFinder(IFindVariantMentions):
@@ -45,8 +44,8 @@ def test_sk_content_extractor_valid_fields():
     fields = {
         "gene": "CHI3L1",
         "paper_id": "12345678",
-        "hgvsc": "",  # value derived from MockMentionFinder
-        "hgvsp": "",  # value derived from MockMentionFinder
+        "hgvsc": "unknown",
+        "hgvsp": "unknown",
         "phenotype": "test",
         "zygosity": "test",
         "inheritance": "test",
@@ -56,7 +55,7 @@ def test_sk_content_extractor_valid_fields():
         list(fields.keys()), MockSemanticKernelClient(), MockMentionFinder()
     )
     paper = Paper(id=fields["paper_id"], citation="citation", abstract="This is a test paper.", pmcid="PMC123")
-    content = content_extractor.extract(paper, Query(fields["gene"], "p.Y34C"))
+    content = content_extractor.extract(paper, Query(f"{fields['gene']}:p.Y34C"))
 
     print(content)
     # Based on the above, there should be two elements in `content`, each containing a dict keyed by fields, with a
@@ -68,10 +67,7 @@ def test_sk_content_extractor_valid_fields():
 
         for f in fields:
             assert f in row.keys()
-            if f in ["hgvsc", "hgvsp"]:
-                assert row[f] == k
-            else:
-                assert row[f] == fields[f]
+            assert row[f] == fields[f]
 
 
 def test_sk_content_extractor_invalid_fields():
@@ -81,4 +77,4 @@ def test_sk_content_extractor_invalid_fields():
     paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
 
     with pytest.raises(ValueError):
-        content_extractor.extract(paper, Query("CHI3L1", "p.Y34C"))
+        content_extractor.extract(paper, Query("CHI3L1:p.Y34C"))
