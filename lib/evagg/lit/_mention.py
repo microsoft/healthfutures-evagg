@@ -12,15 +12,27 @@ class VariantMentionFinder(IFindVariantMentions):
     def _get_variant_ids(self, annotations: Dict[str, Any], query_gene_id: int) -> Set[str]:
         variants_in_query_gene: Set[str] = set()
 
+        if len(annotations) == 0:
+            return variants_in_query_gene
+
+        # TODO: this is too strict - the annotator may have identified a variant but failed to associate it with a geme.
+        # Specifically PubTator uses tmVar which often misses this annotation. As a result, we miss the variant.
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
                 if annotation["infons"]["type"] == "Mutation":
                     if "gene_id" in annotation["infons"] and annotation["infons"]["gene_id"] == query_gene_id:
+                        # TODO: this not necessarily specific enough. The identifier may be a dbSNP id, or potentially
+                        # just the HGVS id without the protein context. The former isn't specific to the actual variant
+                        # (e.g., could have two alt alleles), the latter is specific to the gene (e.g., multiple genes)
+                        # might have the same variant.
                         variants_in_query_gene.add(annotation["infons"]["identifier"])
         return variants_in_query_gene
 
     def _gather_mentions(self, annotations: Dict[str, Any], variant_id: str) -> Sequence[Dict[str, Any]]:
         mentions: List[Dict[str, Any]] = []
+
+        if len(annotations) == 0:
+            return mentions
 
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
@@ -37,7 +49,7 @@ class VariantMentionFinder(IFindVariantMentions):
         return mentions
 
     def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
-        # Get the gene_id for the query gene.
+        # Get the gene_id(s) for the query gene(s).
         query_gene_ids = NCBIGeneReference.gene_id_for_symbol([v.gene for v in query.terms()])
 
         # Annotate entities in the paper.
