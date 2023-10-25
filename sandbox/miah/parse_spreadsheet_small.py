@@ -49,6 +49,7 @@ import openpyxl
 import pandas as pd
 import requests
 from Bio import Entrez, Medline
+from defusedxml import ElementTree
 
 from lib.config import PydanticYamlModel
 
@@ -183,6 +184,30 @@ lookup = {record.get("PMID", ""): _parse_id_dict(record.get("AID", "")).get("doi
 
 df["doi"] = pd.Series(df["pmid"].map(lookup))
 
+# %% determine whether the paper is in PMC-OA, only need to do this in cases where there's a PMCID
+
+
+def _is_pmc_oa(pmcid: str) -> bool:
+    url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()
+
+    root = ElementTree.fromstring(response.text)
+    if root.find("error") is not None:
+        error = root.find("error")
+        if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
+            return False
+        else:
+            raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
+    match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
+    if match:
+        return True
+    else:
+        raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
+
+
+df["is_pmc_oa"] = df["pmcid"].dropna().map(_is_pmc_oa)
+
 # %% Reformat and reorder dataframe
 
 df["query_gene"] = df["Gene"]
@@ -212,6 +237,7 @@ df = df[
         "doi",
         "pmid",
         "pmcid",
+        "is_pmc_oa",
         "phenotype",
         "variant_inheritance",
         "condition_inheritance",
