@@ -1,6 +1,12 @@
+import json
+from functools import cache
 from typing import Any, Dict, Sequence
 
 import requests
+from Bio import Entrez
+
+# TODO, remove to config.
+Entrez.email = "miah@microsoft.com"
 
 
 class NCBIGeneReference:
@@ -24,6 +30,7 @@ class NCBIGeneReference:
             symbols = [symbols]
 
         # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
+        # TODO, caching
         url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{','.join(symbols)}/taxon/Human"
         raw = cls._get_json(url)
 
@@ -50,3 +57,96 @@ class NCBIGeneReference:
             }
 
         return result
+
+
+class NCBIVariantReference:
+    @classmethod
+    @cache
+    def _entrez_fetch(cls, db: str, id_str: str, retmode: str | None, rettype: str | None) -> str:
+        return Entrez.efetch(db=db, id=id_str, retmode=retmode, rettype=rettype).read()
+
+    @classmethod
+    def _entrez_fetch_json(cls, db: str, id_str: str) -> Dict[str, Any]:
+        string_response = cls._entrez_fetch(db=db, id_str=id_str, retmode="json", rettype="json")
+        if len(string_response) == 0:
+            return {}
+        return json.loads(string_response)
+
+    @classmethod
+    def _validate_snp_response(cls, response: Dict[str, Any]) -> bool:
+        if "primary_snapshot_data" not in response:
+            return False
+        if "placements_with_allele" not in response["primary_snapshot_data"]:
+            return False
+        if len(response["primary_snapshot_data"]["placements_with_allele"]) == 0:
+            return False
+        return True
+
+    @classmethod
+    def _find_alt_allele(cls, placement: Dict[str, Any]) -> Dict[str, Any]:
+        if len(placement["alleles"]) > 2:
+            print(f"WARNING: Multiple alleles listed for {placement['seq_id']}. Using first alternate.")
+        return placement["alleles"][1]
+
+    @classmethod
+    def _find_hgvsc(cls, response: Dict[str, Any]) -> str | None:
+        mrna_seqs = [
+            p
+            for p in response["primary_snapshot_data"]["placements_with_allele"]
+            if p["placement_annot"]["mol_type"] == "rna"
+        ]
+
+        if len(mrna_seqs) == 0:
+            print(f"WARNING: No RNA sequences found for variant {response['refsnp_id']}.")
+            return None
+
+        # Prioritize any MANE select transcripts.
+        if "mane_select_ids" in response and len(response["mane_select_ids"]) > 0:
+            if len(response["mane_select_ids"]) > 1:
+                print(f"WARNING: Multiple MANE select transcripts for {response['refsnp_id']}.")
+            mane_select = response["mane_select_ids"][0]
+            mane_select_seqs = [p for p in mrna_seqs if p["seq_id"] == mane_select]
+            if len(mane_select_seqs) == 0:
+                print(
+                    f"WARNING: MANE select transcripts listed for variant {response['refsnp_id']}",
+                    "but none found in sequences.",
+                )
+            else:
+                if len(mane_select_seqs) > 1:
+                    print(f"WARNING: Same MANE transcript sequence listed multiple times for {response['refsnp_id']}.")
+                return cls._find_alt_allele(mane_select_seqs[0])["hgvs"]
+
+        # Otherwise, just use the first RNA sequence.
+        return cls._find_alt_allele(mrna_seqs[0])["hgvs"]
+
+    @classmethod
+    def _find_hgvsp(cls, response: Dict[str, Any]) -> str | None:
+        protein_seqs = [
+            p
+            for p in response["primary_snapshot_data"]["placements_with_allele"]
+            if p["placement_annot"]["mol_type"] == "protein"
+        ]
+
+        if len(protein_seqs) == 0:
+            print(f"WARNING: No protein sequences found for variant {response['refsnp_id']}.")
+            return None
+
+        # Otherwise, just use the first protein sequence.
+        return cls._find_alt_allele(protein_seqs[0])["hgvs"]
+
+    @classmethod
+    def hgvs_from_rsid(cls, rsid: str) -> Dict[str, str | None]:
+        if rsid.startswith("rs"):
+            rsid = rsid[2:]
+
+        # Remaining rsid must be only numeric.
+        if not rsid.isnumeric():
+            return {}
+
+        print(f"hgvs query for {rsid}")
+        response = cls._entrez_fetch_json(db="snp", id_str=rsid)
+
+        if not cls._validate_snp_response(response):
+            return {}
+
+        return {"hgvsc": cls._find_hgvsc(response), "hgvsp": cls._find_hgvsp(response)}
