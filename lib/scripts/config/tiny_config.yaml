@@ -1,0 +1,31 @@
+di_class: lib.evagg.SynchronousLocalBatchApp
+query_iterator:
+  di_class: lib.evagg.types.QueryIterator
+  # When querying based on gene only, this should cover the full "tiny" truth set.
+  variants: 
+    - "COQ2:p.T39S"
+    - "JPH1:p.R213P"
+library:
+  di_class: lib.evagg.TruthsetFileLibrary
+  file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_tiny.tsv
+extractor:
+  di_class: lib.evagg.SemanticKernelContentExtractor
+  fields:
+    - gene
+    - paper_id
+    - hgvsc
+    - hgvsp
+    - phenotype
+    - zygosity
+    - inheritance
+  sk_client:
+    di_class: lib.evagg.sk.SemanticKernelClient
+    config:
+      di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
+  mention_finder:
+    di_class: lib.evagg.lit.VariantMentionFinder
+    entity_annotator:
+      di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
+writer:
+  di_class: lib.evagg.TableOutputWriter
+  output_path: /home/azureuser/repos/ev-agg-exp/.out/batch_tiny.tsv
