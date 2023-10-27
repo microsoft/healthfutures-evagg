@@ -25,6 +25,7 @@ Ubuntu 20.04 VM/WSL
     ```bash
     curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
     sh ./miniconda.sh # close and reopen shell.
+    export PATH=/home/azureuser/miniconda3/bin:$PATH
     conda update -n base -c defaults conda
     conda config --add channels conda-forge
     conda install -n base conda-libmamba-solver
@@ -44,6 +45,7 @@ You will be prompted to install recommended extensions for this repository, acce
 Create a conda environment. All shell commands in this section should be executed from the repository's root directory.
 
 ```bash
+source activate base
 conda env create -f environment.yml
 conda activate evagg
 ```
@@ -57,10 +59,10 @@ poetry install
 Test installation of scripts by running the following command
 
 ```bash
-run_single_query_sync -h
+run_query_sync -h
 ```
 
-You should see a help message displayed providing usage for the `run_single_query_sync` script.
+You should see a help message displayed providing usage for the `run_query_sync` script.
 
 ## Configuration
 
