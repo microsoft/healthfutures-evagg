@@ -50,3 +50,21 @@ class NCBIGeneReference:
             }
 
         return result
+
+    @classmethod
+    def gene_symbol_for_id(cls, gene_ids: Sequence[int]) -> Dict[int, str]:
+        """Query the NCBI gene database for the symbol for a given collection of `gene_ids`."""
+        # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
+
+        url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/id/{','.join([str(g) for g in gene_ids])}"
+        records = cls._get_json(url)
+
+        if "reports" not in records:
+            return {}
+
+        result = {}
+        for record in records["reports"]:
+            if int(record["gene"]["gene_id"]) in gene_ids:
+                result[int(record["gene"]["gene_id"])] = record["gene"]["symbol"]
+
+        return result
