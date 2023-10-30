@@ -12,12 +12,18 @@ class SimpleContentExtractor(IExtractFields):
     def _field_to_value(self, field: str) -> str:
         if field == "gene":
             return "CHI3L1"
-        if field == "variant":
+        if field == "paper_id":
+            return "10.1016/j.dib.2019.104311"
+        if field == "hgvsc":
+            return "c.101A>G"
+        if field == "hgvsp":
             return "p.Y34C"
-        if field == "MOI":
-            return "AD"
         if field == "phenotype":
             return "Long face (HP:0000276)"
+        if field == "zygosity":
+            return "Heterozygous"
+        if field == "inheritance":
+            return "AD"
         if field == "functional data":
             return "No"
         else:

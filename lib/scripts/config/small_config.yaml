@@ -1,7 +1,18 @@
-di_class: lib.evagg.SynchronousLocalApp
-query:
-  di_class: lib.evagg.types.Query
-  variant: "COQ2:p.R55*"
+di_class: lib.evagg.SynchronousLocalBatchApp
+query_iterator:
+  di_class: lib.evagg.types.QueryIterator
+  # When querying based on gene only, this should cover the full "small" truth set.
+  variants: 
+    - "CHI3L1:p.Y34C"
+    - "COQ2:p.T39S"
+    - "CPA6:p.A270V"
+    - "PRKCG:p.G23E"
+    - "TWNK:p.I69F"
+    - "FAM111B:p.Y621D"
+    - "RGSL1:p.Q472*"
+    - "COL23A1:p.A213V"
+    - "JPH1:p.R213P"
+    - "UBR5:p.P1228S"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_small.tsv
@@ -25,4 +36,4 @@ extractor:
       di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
 writer:
   di_class: lib.evagg.TableOutputWriter
-  # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
+  output_path: /home/azureuser/repos/ev-agg-exp/.out/batch_small.tsv
