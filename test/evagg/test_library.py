@@ -33,7 +33,7 @@ def test_search():
         # Create a SimpleFileLibrary instance and search for papers
         library = SimpleFileLibrary(collections=[tmpdir])
         # This should return all papers in the library.
-        results = library.search(Query(gene="test gene", variant="test variant"))
+        results = library.search(Query("test gene:test variant"))
 
         # Check that the correct papers were returned
         assert len(results) == 3

@@ -38,7 +38,7 @@ class MockAnnotator(IAnnotateEntities):
 def test_find_single_mention_single_query():
     gene_symbol = list(GENE_ID_PAIRS.keys())[0]
     gene_id = GENE_ID_PAIRS[gene_symbol]
-    query = Query(gene_symbol, "varX")
+    query = Query(f"{gene_symbol}:varX")
 
     mock_annotator = MockAnnotator([(gene_id, "var1")])
     finder = VariantMentionFinder(mock_annotator)
@@ -59,7 +59,7 @@ def test_find_single_mention_single_query():
 def test_find_multiple_mentions_single_query():
     gene_symbol = list(GENE_ID_PAIRS.keys())[0]
     gene_id = GENE_ID_PAIRS[gene_symbol]
-    query = Query(gene_symbol, "varX")
+    query = Query(f"{gene_symbol}:varX")
 
     mock_annotator = MockAnnotator([(gene_id, "var1"), (gene_id, "var2")])
     finder = VariantMentionFinder(mock_annotator)
@@ -107,7 +107,7 @@ def test_find_no_mentions():
     gene_id = GENE_ID_PAIRS[gene_symbol]
 
     assert gene_symbol != "FAM111B"  # Just to be sure.
-    query = Query("FAM111B", "varX")
+    query = Query("FAM111B:varX")
 
     mock_annotator = MockAnnotator([(gene_id, "var1")])
     finder = VariantMentionFinder(mock_annotator)
