@@ -7,7 +7,6 @@ description = "local repo library"
 authors = ["Microsoft Biomedical Computing Group <BiomedComp@microsoft.com>"]
 
 [tool.poetry.scripts]
-run_single_query_sync = "lib.scripts.run_single_query_sync:main"
 run_query_sync = "lib.scripts.run_query_sync:main"
 
 [build-system]

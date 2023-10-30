@@ -1,6 +1,6 @@
 import pytest
 
-from lib.evagg.ref import NCBIGeneReference
+from lib.evagg.ref import NCBIGeneReference, NCBIVariantReference
 
 
 @pytest.fixture
@@ -177,3 +177,114 @@ def test_multi_symbol_for_id_match(mocker, multi_id_match):
 
     result = NCBIGeneReference.gene_symbol_for_id([374393, 57094])
     assert result == {374393: "FAM111B", 57094: "FEB11"}
+
+
+@pytest.fixture
+def valid_variant():
+    return """
+{
+    "refsnp_id": "146010120",
+    "primary_snapshot_data": {
+        "placements_with_allele": [
+            {
+                "seq_id": "NM_001276.4",
+                "is_ptlp": false,
+                "placement_annot": {
+                    "seq_type": "refseq_mrna",
+                    "mol_type": "rna",
+                    "seq_id_traits_by_assembly": [],
+                    "is_aln_opposite_orientation": true,
+                    "is_mismatch": false
+                },
+                "alleles": [
+                    {
+                        "allele": {
+                            "spdi": {
+                                "seq_id": "NM_001276.4",
+                                "position": 184,
+                                "deleted_sequence": "G",
+                                "inserted_sequence": "G"
+                            }
+                        },
+                        "hgvs": "NM_001276.4:c.104="
+                    },
+                    {
+                        "allele": {
+                            "spdi": {
+                                "seq_id": "NM_001276.4",
+                                "position": 184,
+                                "deleted_sequence": "G",
+                                "inserted_sequence": "A"
+                            }
+                        },
+                        "hgvs": "NM_001276.4:c.104G>A"
+                    }
+                ]
+            },
+            {
+                "seq_id": "NP_001267.2",
+                "is_ptlp": false,
+                "placement_annot": {
+                    "seq_type": "refseq_prot",
+                    "mol_type": "protein",
+                    "seq_id_traits_by_assembly": [],
+                    "is_aln_opposite_orientation": false,
+                    "is_mismatch": false
+                },
+                "alleles": [
+                    {
+                        "allele": {
+                            "spdi": {
+                                "seq_id": "NP_001267.2",
+                                "position": 34,
+                                "deleted_sequence": "R",
+                                "inserted_sequence": "R"
+                            }
+                        },
+                        "hgvs": "NP_001267.2:p.Arg35="
+                    },
+                    {
+                        "allele": {
+                            "spdi": {
+                                "seq_id": "NP_001267.2",
+                                "position": 34,
+                                "deleted_sequence": "R",
+                                "inserted_sequence": "Q"
+                            }
+                        },
+                        "hgvs": "NP_001267.2:p.Arg35Gln"
+                    }
+                ]
+            }
+        ]
+    },
+    "mane_select_ids": [
+        "NM_001276.4"
+    ]
+}
+"""
+
+
+@pytest.fixture
+def invalid_variant():
+    return ""
+
+
+def test_variant(mocker, valid_variant):
+    mocker.patch("lib.evagg.ref._ncbi.NCBIVariantReference._entrez_fetch", return_value=valid_variant)
+    result = NCBIVariantReference.hgvs_from_rsid("146010120")
+    assert result == {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}
+
+    result = NCBIVariantReference.hgvs_from_rsid("rs146010120")
+    assert result == {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}
+
+
+def test_missing_variant(mocker, invalid_variant):
+    mocker.patch("lib.evagg.ref._ncbi.NCBIVariantReference._entrez_fetch", return_value=invalid_variant)
+    result = NCBIVariantReference.hgvs_from_rsid("123456789")
+    assert result == {}
+
+
+def test_non_rsid():
+    result = NCBIVariantReference.hgvs_from_rsid("not a rsid")
+    assert result == {}
