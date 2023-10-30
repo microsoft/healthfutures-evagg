@@ -2,6 +2,7 @@ import json
 from typing import Any, Dict, List, Sequence
 
 from lib.evagg.lit import IFindVariantMentions
+from lib.evagg.ref import NCBIVariantReference
 from lib.evagg.sk import ISemanticKernelClient
 from lib.evagg.types import IPaperQuery, Paper
 
@@ -22,8 +23,14 @@ class SemanticKernelContentExtractor(IExtractFields):
         return "\n\n".join([m["text"] for m in mentions])
 
     def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
+        # Only process papers in PMC.
+        if "pmcid" not in paper.props or paper.props["pmcid"] == "":
+            return []
+
         # Find all the variant mentions in the paper relating to the query.
         variant_mentions = self._mention_finder.find_mentions(query, paper)
+
+        print(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
 
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
@@ -39,6 +46,8 @@ class SemanticKernelContentExtractor(IExtractFields):
                 "variant": variant_id,
                 "gene": mentions[0].get("gene_symbol", "unknown"),  # Mentions should never be empty.
             }
+            hgvs = NCBIVariantReference.hgvs_from_rsid(variant_id)
+
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
                     raise ValueError(f"Unsupported field: {field}")
@@ -48,9 +57,9 @@ class SemanticKernelContentExtractor(IExtractFields):
                 elif field == "paper_id":
                     result = paper.id
                 elif field == "hgvsc":
-                    result = f"{variant_id}"  # TODO
+                    result = hgvs["hgvsc"] if ("hgvsc" in hgvs and hgvs["hgvsc"]) else "unknown"
                 elif field == "hgvsp":
-                    result = f"{variant_id}"  # TODO
+                    result = hgvs["hgvsp"] if ("hgvsp" in hgvs and hgvs["hgvsp"]) else "unknown"
                 else:
                     raw = self._sk_client.run_completion_function(
                         skill="content", function=field, context_variables=context_variables
