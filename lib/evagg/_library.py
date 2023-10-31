@@ -103,3 +103,88 @@ class TruthsetFileLibrary(IGetPapers):
         all_papers = self._load_truthset()
         # Filter to just the papers with variant terms that have evidence
         return {p for p in all_papers if query.terms() & p.evidence.keys()}
+
+from Bio import Entrez
+import re
+from typing import List
+
+class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
+    
+    def __init__(self, email: str, max_papers: int = 5) -> None:
+        self._email = email
+        Entrez.email = email
+        self._max_papers = max_papers
+    
+    def search(self, query: IPaperQuery) -> Set[Paper]:
+        # take query.terms
+        term = query.terms()[0]
+        id_list = self._search_id_for_gene(gene=term[:term.find(":")]) # returns gene string
+        return self._build_papers(id_list)
+    
+        # find papers (PMIDs?)
+        
+        return None
+    
+    def _search_id_for_gene(self, query):
+        handle = Entrez.esearch(db='pmc', 
+                                sort='relevance', 
+                                retmax= self._max_papers,
+                                retmode='xml', 
+                                term=query)
+        id_list = Entrez.read(handle)['IdList']
+        return id_list
+
+    def _fetch_details(self, id_list: Sequence[str]) -> Dict[str, Dict[str, str]]:
+        ids = ','.join(id_list)
+        handle = Entrez.efetch(db='pmc',
+                            retmode='xml',
+                            id=ids)
+        results = Entrez.read(handle)
+        # For each paper, we want to know PMCID, Abstract, Citation.
+        return_dict = {}
+        for result in results:
+            return_dict[result.doi] = {
+                "abstract": result.abstract,
+                "citation": result.citation,
+                "pmcid": result.pmcid
+            }
+        # TODO: return a dict key:"DOI", dicts everything else about the paper ()
+        # those would get passed to the contructor of paper
+        return return_dict
+    
+    def _find_DOIs_in_text(self, text):
+        pattern = r"StringElement\('(\d+)', attributes=\{'pub-id-type': 'doi'\}\)"
+        matches = re.findall(pattern, text)
+
+        # Print all matches (PMIDs)
+        for match in matches:
+            print("DOI:", match)
+            
+    def _find_PMCIDs_in_text(self, text):
+        pattern = r"StringElement\('(\d+)', attributes=\{'pub-id-type': 'pmc'\}\)"
+        matches = re.findall(pattern, text)
+
+        # Print all matches (PMIDs)
+        for match in matches:
+            print("PMID:", match)
+            
+    def _build_papers(self, id_list):
+        papers: List[Paper] = []
+        papers_xml = self._fetch_details(id_list)
+        for key, value in papers_xml.values():
+            papers.append(Paper(id=key, **value))
+        #dois = self._find_DOIs_in_text(str(papers_xml))
+        #pmcids = self._find_PMCIDs_in_text(str(papers_xml))
+        return papers
+        
+        return 
+        
+    
+class HanoverFileLibrary(IGetPapers):
+    
+    def __init__(self, file_path: str) -> None:
+        self._file_path = file_path
+    
+    def search(self, query: IPaperQuery) -> Set[Paper]:
+        return None
+    
