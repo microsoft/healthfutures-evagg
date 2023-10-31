@@ -7,16 +7,15 @@ def get_abstract(pmid):
     handle = Entrez.efetch(db='pubmed', id=pmid, retmode='text', rettype='abstract')
     return handle.read()
 
-
 def search(query, email):
     Entrez.email = email
     handle = Entrez.esearch(db='pmc', 
                             sort='relevance', 
-                            retmax='5',
+                            retmax='1',
                             retmode='xml', 
                             term=query)
-    results = Entrez.read(handle)
-    return results
+    id_list = Entrez.read(handle)
+    return id_list
 
 def fetch_details(id_list, email):
     ids = ','.join(id_list)
@@ -28,9 +27,17 @@ def fetch_details(id_list, email):
     
     return results
 
+def find_PMIDs_in_text(text):
+    pattern = r"StringElement\('(\d+)', attributes=\{'pub-id-type': 'doi'\}\)"
+    matches = re.findall(pattern, text)
+
+    # Print all matches (PMIDs)
+    for match in matches:
+        print("PMID:", match)
+
 def get_pubmed_id(gene_name):
     # Search for the gene name in the 'gene' database
-    handle = Entrez.esearch(db='gene', retmax=5, term=gene_name)
+    handle = Entrez.esearch(db='gene', retmax=1, term=gene_name)
     record = Entrez.read(handle)
     print(record)
     
@@ -48,14 +55,6 @@ def get_pubmed_id(gene_name):
         # for linksetdb in record[0]["LinkSetDb"]:
         #     for link in linksetdb["Link"]:
         #         print("PubMed ID:", link["Id"])
-
-def find_PMIDs_in_text(text):
-    pattern = r"StringElement\('(\d+)', attributes=\{'pub-id-type': 'pmid'\}\)"
-    matches = re.findall(pattern, text)
-
-    # Print all matches (PMIDs)
-    for match in matches:
-        print("PMID:", match)
         
 def get_xml_given_pmid(pmid):
     xmls = "https://hanoverdev.blob.core.windows.net/data/20200314_pmc_html/analysis/updates_20210803/20210803/entities/"
@@ -64,16 +63,16 @@ def get_xml_given_pmid(pmid):
 if __name__ == '__main__':
     Entrez.email = "ashleyconard@microsoft.com"
     email = "ashleyconard@microsoft.com"
-    results = search('SRSF1', email)
-    id_list = results['IdList']
-    papers_xml = fetch_details(id_list, email)
-    #print(papers_xml)
+    results = search('PRKCG', email)
+    # id_list = results['IdList']
+    # papers_xml = fetch_details(id_list, email)
+    # print(papers_xml)
     
     # Find PMIDs in papers XML 
-    find_PMIDs_in_text(str(papers))
+    # find_PMIDs_in_text(str(papers_xml))
     
-    # Use abstract to determine rare disease papers.
-    print(get_abstract("22545246"))
+    # # Use abstract to determine rare disease papers.
+    # print(get_abstract("22545246"))
     
     # Get XML from hanoverdev given PMID
     #get_xml_given_pmid(37071997)
@@ -82,7 +81,7 @@ if __name__ == '__main__':
     #### Other code no need to read ####
     # Print summary of paper
     # print("summary")
-    # summary_handle = Entrez.esummary(db="structure", id="19923")
+    # summary_handle = Entrez.esummary(db="pubmed", id="19923")
     # summary = Entrez.read(summary_handle)
     # summary_handle.close()
     # print(summary)
@@ -107,3 +106,4 @@ if __name__ == '__main__':
     #    print(paper['MedlineCitation']['Article']['ArticleTitle'])
     #    print(paper)
     
+# %%
