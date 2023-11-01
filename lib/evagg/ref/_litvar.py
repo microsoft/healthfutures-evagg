@@ -3,9 +3,10 @@ import re
 from typing import Any, Mapping, Sequence
 
 import requests
+from ratelimit import limits, sleep_and_retry
 
 
-class LitVar:
+class LitVarReference:
     # Regular expression for variants with RSIDs, e.g., litvar@rs1002421360##
     LITVAR_RSID_RE = re.compile(r"^litvar%40rs\d+%23%23$")
     # Regular expression for variants with HGVS only, litvar@#673#p.Y1796_1797ins
@@ -14,10 +15,20 @@ class LitVar:
     LITVAR_CLINGEN_RSID_RE = re.compile(r"^litvar%40CA\d+%23rs\d+%23%23$")
 
     @classmethod
-    def _requests_get_text(cls, url: str, timeout: int = 10) -> str:
+    def _requests_get(cls, url: str, timeout: int = 10) -> requests.Response:
         r = requests.get(url, timeout=timeout)
         r.raise_for_status()
-        return r.text
+        return r
+
+    @classmethod
+    def _requests_get_text(cls, url: str, timeout: int = 10) -> str:
+        return cls._requests_get(url, timeout=timeout).text
+
+    @classmethod
+    @sleep_and_retry
+    @limits(calls=3, period=1)
+    def _requests_get_text_limited(cls, url: str, timeout: int = 10) -> str:
+        return cls._requests_get_text(url, timeout=timeout)
 
     @classmethod
     def variant_autocomplete(cls, query: str, limit: int = 100) -> Sequence[Mapping[str, Any]]:
@@ -27,7 +38,8 @@ class LitVar:
             return []
 
         url = f"https://www.ncbi.nlm.nih.gov/research/litvar2-api/variant/autocomplete/?query={query}&limit={limit}"
-        return json.loads(cls._requests_get_text(url))
+        response_text: str = cls._requests_get_text_limited(url)  # type: ignore
+        return json.loads(response_text)
 
     # Note that this will return variants of a few different naming conventions...
     # They represent different objects in the DB even if they're biologically the same variant.
@@ -40,13 +52,15 @@ class LitVar:
             return []
 
         url = f"https://www.ncbi.nlm.nih.gov/research/litvar2-api/variant/search/gene/{gene_symbol}"
-        response_text = cls._requests_get_text(url)
+        response_text: str = cls._requests_get_text_limited(url)  # type: ignore
+
+        if not response_text or len(response_text) == 0:
+            return []
 
         # This API returns a string of JSON-like objects containing both single-quotes and multiple lines.
         # It's necessary to reformat the string to be valid JSON before parsing.
         response_text = response_text.replace('"', '"')
         response_text = response_text.replace("'", '"')
-
         return [json.loads(s) for s in response_text.split("\n")]
 
     @classmethod
@@ -81,7 +95,5 @@ class LitVar:
             return {}
 
         url = f"https://www.ncbi.nlm.nih.gov/research/litvar2-api/variant/get/{variant_id}/publications"
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-
-        return response.json()
+        response_text: str = cls._requests_get_text_limited(url)  # type: ignore
+        return json.loads(response_text)
