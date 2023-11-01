@@ -1,0 +1,5 @@
+- doi more effectively found with matches* than with the xml.etree.ElementTree library
+
+*matches = re.findall(r'pub-id-type="doi">(.*?)</', str(results))
+
+- 

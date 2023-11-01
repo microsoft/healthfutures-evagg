@@ -1,17 +1,13 @@
 from Bio import Entrez # Biopython
 from bs4 import BeautifulSoup as BS
 import re
-#import xml.etree.ElementTree as ET
-
-def get_abstract(pmid):
-    handle = Entrez.efetch(db='pubmed', id=pmid, retmode='text', rettype='abstract')
-    return handle.read()
+import xml.etree.ElementTree as ET
 
 def search(query, email):
     Entrez.email = email
     handle = Entrez.esearch(db='pmc', 
                             sort='relevance', 
-                            retmax='1',
+                            retmax='4',
                             retmode='xml', 
                             term=query)
     id_list = Entrez.read(handle)
@@ -27,6 +23,31 @@ def fetch_details(id_list, email):
     
     return results
 
+def get_abstract(pmid):
+    handle = Entrez.efetch(db='pubmed', id=pmid, retmode='text', rettype='abstract')
+    return handle.read()
+
+def find_pmid_in_xml(xml, ids):
+    handle = Entrez.efetch(db='pmc', id=ids, retmode = 'xml') # PMID
+    tree = ET.parse(handle)
+    root = tree.getroot()
+    all_elements = list(root.iter())
+
+    for elem in all_elements:
+        if((elem.tag == "pub-id") and ("/" not in str(elem.text))==True): # doi
+            print('Text:', elem.text)
+
+def find_doi_in_xml(xml, ids):
+    handle = Entrez.efetch(db='pmc', id=ids, retmode = 'xml')
+    tree = ET.parse(handle)
+    root = tree.getroot()
+    all_elements = list(root.iter())
+
+    for elem in all_elements:
+        if((elem.tag == "pub-id") and ("/" in str(elem.text))==True): # doi
+            print('Text:', elem.text)
+       
+            
 def find_PMIDs_in_text(text):
     pattern = r"StringElement\('(\d+)', attributes=\{'pub-id-type': 'doi'\}\)"
     matches = re.findall(pattern, text)
@@ -37,7 +58,7 @@ def find_PMIDs_in_text(text):
 
 def get_pubmed_id(gene_name):
     # Search for the gene name in the 'gene' database
-    handle = Entrez.esearch(db='gene', retmax=1, term=gene_name)
+    handle = Entrez.esearch(db='gene', retmax=4, term=gene_name)
     record = Entrez.read(handle)
     print(record)
     
@@ -61,16 +82,24 @@ def get_xml_given_pmid(pmid):
     pass
 
 if __name__ == '__main__':
-    Entrez.email = "ashleyconard@microsoft.com"
-    email = "ashleyconard@microsoft.com"
-    results = search('PRKCG', email)
+    ids = ['7294636', '8045942', '8857164', '5525338']
+    Entrez.email = 'ashleyconard@microsoft.com'
+    handle = Entrez.efetch(db='pmc', id=ids, retmode = 'xml')
+    results = handle.read()
+    #print(results)
+    
+    # Entrez.email = "ashleyconard@microsoft.com"
+    # email = "ashleyconard@microsoft.com"
+    # results = search('PRKCG', email)
     # id_list = results['IdList']
-    # papers_xml = fetch_details(id_list, email)
-    # print(papers_xml)
+    # print(id_list)
+    #papers_xml = fetch_details(id_list, email)
+    #print(papers_xml)
     
     # Find PMIDs in papers XML 
-    # find_PMIDs_in_text(str(papers_xml))
-    
+    #find_PMIDs_in_text(str(papers_xml))
+    print("hi")
+    print(get_abstract('24134140'))
     # # Use abstract to determine rare disease papers.
     # print(get_abstract("22545246"))
     
