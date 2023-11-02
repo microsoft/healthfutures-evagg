@@ -1,5 +1,8 @@
-- doi more effectively found with matches* than with the xml.etree.ElementTree library
+# Notes
 
-*matches = re.findall(r'pub-id-type="doi">(.*?)</', str(results))
+
+- doi more effectively found with matches* than with the xml.etree.ElementTree library - *matches = re.findall(r'pub-id-type="doi">(.*?)</', str(results))
+
+- get_abstract does not work as expected in the interactive session. By default always returns Ann Ophthalmol. This function should be called in terminal
 
 - 

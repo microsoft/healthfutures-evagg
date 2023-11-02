@@ -140,7 +140,8 @@ class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
                             retmode='xml',
                             id=ids)
         results = Entrez.read(handle)
-        # For each paper, we want to know PMCID, Abstract, Citation.
+        
+        # For each paper (DOI), we want to know PMCID, Abstract, Citation.
         return_dict = {}
         for result in results:
             return_dict[result.doi] = {
