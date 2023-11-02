@@ -163,3 +163,4 @@ cython_debug/
 .out
 .config
 .data
+papers.xml
