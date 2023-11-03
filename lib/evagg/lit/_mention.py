@@ -1,13 +1,14 @@
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
 from lib.evagg.lit import IAnnotateEntities, IFindVariantMentions
-from lib.evagg.ref import NCBIGeneReference
+from lib.evagg.ref import INcbiGeneClient
 from lib.evagg.types import IPaperQuery, Paper
 
 
 class VariantMentionFinder(IFindVariantMentions):
-    def __init__(self, entity_annotator: IAnnotateEntities) -> None:
+    def __init__(self, entity_annotator: IAnnotateEntities, ncbi_gene_client: INcbiGeneClient) -> None:
         self._entity_annotator = entity_annotator
+        self._ncbi_gene_client = ncbi_gene_client
 
     def _get_variant_ids(self, annotations: Dict[str, Any], query_gene_id: int) -> Set[str]:
         variants_in_query_gene: Set[str] = set()
@@ -50,7 +51,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
     def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
         # Get the gene_id(s) for the query gene(s).
-        query_gene_ids = NCBIGeneReference.gene_id_for_symbol([v.gene for v in query.terms()])
+        query_gene_ids = self._ncbi_gene_client.gene_id_for_symbol([v.gene for v in query.terms()])
 
         # Annotate entities in the paper.
         annotations = self._entity_annotator.annotate(paper)
