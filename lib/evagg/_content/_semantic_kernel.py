@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, List, Sequence
 
 from lib.evagg.lit import IFindVariantMentions
-from lib.evagg.ref import NCBIVariantReference
+from lib.evagg.ref import INcbiSnpClient
 from lib.evagg.sk import ISemanticKernelClient
 from lib.evagg.types import IPaperQuery, Paper
 
@@ -13,11 +13,16 @@ class SemanticKernelContentExtractor(IExtractFields):
     _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvsc", "hgvsp", "phenotype", "zygosity", "inheritance"}
 
     def __init__(
-        self, fields: Sequence[str], sk_client: ISemanticKernelClient, mention_finder: IFindVariantMentions
+        self,
+        fields: Sequence[str],
+        sk_client: ISemanticKernelClient,
+        mention_finder: IFindVariantMentions,
+        ncbi_snp_client: INcbiSnpClient,
     ) -> None:
         self._fields = fields
         self._sk_client = sk_client
         self._mention_finder = mention_finder
+        self._ncbi_snp_client = ncbi_snp_client
 
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
@@ -46,7 +51,7 @@ class SemanticKernelContentExtractor(IExtractFields):
                 "variant": variant_id,
                 "gene": mentions[0].get("gene_symbol", "unknown"),  # Mentions should never be empty.
             }
-            hgvs = NCBIVariantReference.hgvs_from_rsid(variant_id)
+            hgvs = self._ncbi_snp_client.hgvs_from_rsid(variant_id)
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
