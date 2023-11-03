@@ -1,15 +1,17 @@
 import json
-from functools import cache
 from typing import Any, Dict, Sequence
 
 import requests
-from Bio import Entrez
 
-# TODO, remove to config.
-Entrez.email = "miah@microsoft.com"
+from lib.evagg.web.entrez import IEntrezClient
+
+from ._interfaces import INcbiGeneClient, INcbiSnpClient
 
 
-class NCBIGeneReference:
+class NcbiGeneClient(INcbiGeneClient):
+    def __init__(self, entrez_client: IEntrezClient) -> None:
+        self._entrez_client = entrez_client
+
     @classmethod
     def _get_json(cls, url: str, timeout: int = 10) -> Dict[str, Any]:
         r = requests.get(url, timeout=timeout)
@@ -59,21 +61,20 @@ class NCBIGeneReference:
         return result
 
 
-class NCBIVariantReference:
-    @classmethod
-    @cache
-    def _entrez_fetch(cls, db: str, id_str: str, retmode: str | None, rettype: str | None) -> str:
-        return Entrez.efetch(db=db, id=id_str, retmode=retmode, rettype=rettype).read()
+class NcbiSnpClient(INcbiSnpClient):
+    def __init__(self, entrez_client: IEntrezClient) -> None:
+        self._entrez_client = entrez_client
 
-    @classmethod
-    def _entrez_fetch_json(cls, db: str, id_str: str) -> Dict[str, Any]:
-        string_response = cls._entrez_fetch(db=db, id_str=id_str, retmode="json", rettype="json")
+    def _entrez_fetch(self, db: str, id_str: str, retmode: str | None, rettype: str | None) -> str:
+        return self._entrez_client.efetch(db=db, id=id_str, retmode=retmode, rettype=rettype)
+
+    def _entrez_fetch_json(self, db: str, id_str: str) -> Dict[str, Any]:
+        string_response = self._entrez_fetch(db=db, id_str=id_str, retmode="json", rettype="json")
         if len(string_response) == 0:
             return {}
         return json.loads(string_response)
 
-    @classmethod
-    def _validate_snp_response(cls, response: Dict[str, Any]) -> bool:
+    def _validate_snp_response(self, response: Dict[str, Any]) -> bool:
         if "primary_snapshot_data" not in response:
             return False
         if "placements_with_allele" not in response["primary_snapshot_data"]:
@@ -82,14 +83,12 @@ class NCBIVariantReference:
             return False
         return True
 
-    @classmethod
-    def _find_alt_allele(cls, placement: Dict[str, Any]) -> Dict[str, Any]:
+    def _find_alt_allele(self, placement: Dict[str, Any]) -> Dict[str, Any]:
         if len(placement["alleles"]) > 2:
             print(f"WARNING: Multiple alleles listed for {placement['seq_id']}. Using first alternate.")
         return placement["alleles"][1]
 
-    @classmethod
-    def _find_hgvsc(cls, response: Dict[str, Any]) -> str | None:
+    def _find_hgvsc(self, response: Dict[str, Any]) -> str | None:
         mrna_seqs = [
             p
             for p in response["primary_snapshot_data"]["placements_with_allele"]
@@ -114,13 +113,12 @@ class NCBIVariantReference:
             else:
                 if len(mane_select_seqs) > 1:
                     print(f"WARNING: Same MANE transcript sequence listed multiple times for {response['refsnp_id']}.")
-                return cls._find_alt_allele(mane_select_seqs[0])["hgvs"]
+                return self._find_alt_allele(mane_select_seqs[0])["hgvs"]
 
         # Otherwise, just use the first RNA sequence.
-        return cls._find_alt_allele(mrna_seqs[0])["hgvs"]
+        return self._find_alt_allele(mrna_seqs[0])["hgvs"]
 
-    @classmethod
-    def _find_hgvsp(cls, response: Dict[str, Any]) -> str | None:
+    def _find_hgvsp(self, response: Dict[str, Any]) -> str | None:
         protein_seqs = [
             p
             for p in response["primary_snapshot_data"]["placements_with_allele"]
@@ -132,10 +130,9 @@ class NCBIVariantReference:
             return None
 
         # Otherwise, just use the first protein sequence.
-        return cls._find_alt_allele(protein_seqs[0])["hgvs"]
+        return self._find_alt_allele(protein_seqs[0])["hgvs"]
 
-    @classmethod
-    def hgvs_from_rsid(cls, rsid: str) -> Dict[str, str | None]:
+    def hgvs_from_rsid(self, rsid: str) -> Dict[str, str | None]:
         if rsid.startswith("rs"):
             rsid = rsid[2:]
 
@@ -144,9 +141,9 @@ class NCBIVariantReference:
             return {}
 
         print(f"hgvs query for {rsid}")
-        response = cls._entrez_fetch_json(db="snp", id_str=rsid)
+        response = self._entrez_fetch_json(db="snp", id_str=rsid)
 
-        if not cls._validate_snp_response(response):
+        if not self._validate_snp_response(response):
             return {}
 
-        return {"hgvsc": cls._find_hgvsc(response), "hgvsp": cls._find_hgvsp(response)}
+        return {"hgvsc": self._find_hgvsc(response), "hgvsp": self._find_hgvsp(response)}

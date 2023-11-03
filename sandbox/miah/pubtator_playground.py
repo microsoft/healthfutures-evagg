@@ -3,8 +3,9 @@
 import json
 
 from lib.evagg.lit.pubmed import PubtatorEntityAnnotator
-from lib.evagg.ref._ncbi import NCBIVariantReference
+from lib.evagg.ref._ncbi import NcbiSnpClient
 from lib.evagg.types import Paper
+from lib.evagg.web.entrez import BioEntrezClient
 
 # %%
 
@@ -31,7 +32,7 @@ for p in result["passages"]:
 # %%
 
 
-result = NCBIVariantReference._entrez_fetch_json("snp", "150345688")
+result = NcbiSnpClient(BioEntrezClient(email="miah@microsoft.com"))._entrez_fetch_json("snp", "150345688")
 print(json.dumps(result, indent=2))
 
 # %%

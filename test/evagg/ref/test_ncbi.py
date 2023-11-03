@@ -1,6 +1,9 @@
 import pytest
 
-from lib.evagg.ref import NCBIGeneReference, NCBIVariantReference
+from lib.evagg.ref import NcbiGeneClient, NcbiSnpClient
+from lib.evagg.web.entrez import IEntrezClient
+
+# TODO switch away from mocks
 
 
 @pytest.fixture
@@ -63,49 +66,58 @@ def multi_gene():
     }
 
 
-def test_single_gene_direct(mocker, single_gene_direct_match):
-    mocker.patch("lib.evagg.ref._ncbi.NCBIGeneReference._get_json", return_value=single_gene_direct_match)
+@pytest.fixture
+def entrez_client():
+    class DummyEntrezClient(IEntrezClient):
+        def efetch(self, db: str, id: str, retmode: str | None, rettype: str | None) -> str:
+            return ""
 
-    result = NCBIGeneReference.gene_id_for_symbol("FAM111B")
+    return DummyEntrezClient()
+
+
+def test_single_gene_direct(mocker, single_gene_direct_match, entrez_client):
+    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
+
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FAM111B")
     assert result == {"FAM111B": 374393}
 
 
-def test_single_gene_indirect(mocker, single_gene_indirect_match):
-    mocker.patch("lib.evagg.ref._ncbi.NCBIGeneReference._get_json", return_value=single_gene_indirect_match)
+def test_single_gene_indirect(mocker, single_gene_indirect_match, entrez_client):
+    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_indirect_match)
 
-    result = NCBIGeneReference.gene_id_for_symbol("FEB11")
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FEB11")
     assert result == {}
 
-    result = NCBIGeneReference.gene_id_for_symbol("FEB11", allow_synonyms=True)
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FEB11", allow_synonyms=True)
     assert result == {"FEB11": 57094}
 
     # Verify that this would also work for the direct match.
-    result = NCBIGeneReference.gene_id_for_symbol("CPA6")
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("CPA6")
     assert result == {"CPA6": 57094}
 
 
-def test_single_gene_miss(mocker, single_gene_miss, single_gene_direct_match):
-    mocker.patch("lib.evagg.ref._ncbi.NCBIGeneReference._get_json", return_value=single_gene_miss)
+def test_single_gene_miss(mocker, single_gene_miss, single_gene_direct_match, entrez_client):
+    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_miss)
 
-    result = NCBIGeneReference.gene_id_for_symbol("FAM11B")
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FAM11B")
     assert result == {}
 
-    mocker.patch("lib.evagg.ref._ncbi.NCBIGeneReference._get_json", return_value=single_gene_direct_match)
+    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
 
-    result = NCBIGeneReference.gene_id_for_symbol("not a gene")
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("not a gene")
     assert result == {}
 
 
-def test_multi_gene(mocker, multi_gene):
-    mocker.patch("lib.evagg.ref._ncbi.NCBIGeneReference._get_json", return_value=multi_gene)
+def test_multi_gene(mocker, multi_gene, entrez_client):
+    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=multi_gene)
 
-    result = NCBIGeneReference.gene_id_for_symbol(["FAM111B", "FEB11"])
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol(["FAM111B", "FEB11"])
     assert result == {"FAM111B": 374393}
 
-    result = NCBIGeneReference.gene_id_for_symbol(["FAM111B", "FEB11"], allow_synonyms=True)
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol(["FAM111B", "FEB11"], allow_synonyms=True)
     assert result == {"FAM111B": 374393, "FEB11": 57094}
 
-    result = NCBIGeneReference.gene_id_for_symbol(["FAM111B", "FEB11", "not a gene"], allow_synonyms=True)
+    result = NcbiGeneClient(entrez_client).gene_id_for_symbol(["FAM111B", "FEB11", "not a gene"], allow_synonyms=True)
     assert result == {"FAM111B": 374393, "FEB11": 57094}
 
 
@@ -200,21 +212,21 @@ def invalid_variant():
     return ""
 
 
-def test_variant(mocker, valid_variant):
-    mocker.patch("lib.evagg.ref._ncbi.NCBIVariantReference._entrez_fetch", return_value=valid_variant)
-    result = NCBIVariantReference.hgvs_from_rsid("146010120")
+def test_variant(mocker, valid_variant, entrez_client):
+    mocker.patch("lib.evagg.ref._ncbi.NcbiSnpClient._entrez_fetch", return_value=valid_variant)
+    result = NcbiSnpClient(entrez_client).hgvs_from_rsid("146010120")
     assert result == {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}
 
-    result = NCBIVariantReference.hgvs_from_rsid("rs146010120")
+    result = NcbiSnpClient(entrez_client).hgvs_from_rsid("rs146010120")
     assert result == {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}
 
 
-def test_missing_variant(mocker, invalid_variant):
-    mocker.patch("lib.evagg.ref._ncbi.NCBIVariantReference._entrez_fetch", return_value=invalid_variant)
-    result = NCBIVariantReference.hgvs_from_rsid("123456789")
+def test_missing_variant(mocker, invalid_variant, entrez_client):
+    mocker.patch("lib.evagg.ref._ncbi.NcbiSnpClient._entrez_fetch", return_value=invalid_variant)
+    result = NcbiSnpClient(entrez_client).hgvs_from_rsid("123456789")
     assert result == {}
 
 
-def test_non_rsid():
-    result = NCBIVariantReference.hgvs_from_rsid("not a rsid")
+def test_non_rsid(entrez_client):
+    result = NcbiSnpClient(entrez_client).hgvs_from_rsid("not a rsid")
     assert result == {}
