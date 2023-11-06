@@ -41,3 +41,9 @@ def test_search():
         assert paper1 in results
         assert paper2 in results
         assert paper3 in results
+
+def test_temp_pubmed():
+    # what are the reasonable things to test for in search function only, no private functions
+    # dont touch external resources (e.g. Entrez)
+    assert False
+     
