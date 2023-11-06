@@ -12,72 +12,6 @@ def fetch_details(id_list, email):
     results = Entrez.read(handle)
     return results
 
-############ Copy to _library.py ############
-def search(query, email): # 1
-    Entrez.email = email
-    handle = Entrez.esearch(db='pmc', 
-                            sort='relevance', 
-                            retmax='4',
-                            retmode='xml', 
-                            term=query)
-    id_list = Entrez.read(handle)
-    return id_list
-
-def find_doi_in_xml(ids): # 2
-    handle = Entrez.efetch(db='pmc', id=ids, retmode = 'xml')
-    tree = ET.parse(handle)
-    root = tree.getroot()
-    all_elements = list(root.iter())
-
-    list_dois = []
-    for elem in all_elements:
-        if((elem.tag == "pub-id") and ("/" in str(elem.text))==True): # doi
-             list_dois.append(elem.text)
-    return(list_dois, all_elements)   
-
-def find_pmid_in_xml(all_elements): # 3
-    list_pmids = []
-    for elem in all_elements:
-        if((elem.tag == "pub-id") and ("/" not in str(elem.text))==True): # doi
-            list_pmids.append(elem.text)
-    return(list_pmids)
-
-# for loop across pmids extracted
-def get_abstract_and_citation(pmid): # 4
-    handle = Entrez.efetch(db='pubmed', id=pmid, retmode='text', rettype='abstract')
-    text_info = handle.read()
-    citation = generate_citation(text_info)
-    abstract = extract_abstract(text_info)
-    return(citation, abstract)
-
-def generate_citation(text_info):
-    # Extract the author's last name
-    match = re.search(r'(\n\n[^\.]*\.)\n\nAuthor information', text_info, re.DOTALL)
-    sentence = match.group(1).replace('\n', ' ')
-    author_lastname = sentence.split()[0]
-    
-    # Extract year of publication
-    year = re.search(r'\. (\d{4}) ', text_info).group(1)
-    
-    # Extract journal abbreviation
-    journal_abbr = re.search(r'\. ([^\.]*\.)', text_info).group(1).strip(".")
-    
-    # Extract DOI number
-    # TODO: modify to pull from key
-    doi_number = re.search(r'\nDOI: (.*)\nPMID', text_info).group(1).replace('10.1111/', '').strip()
-    
-    # Construct citation
-    citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
-    
-    return citation
-
-def extract_abstract(text_info):
-    # Extract paragraph after "Author information:" sentence and before "DOI:"
-    abstract = re.search(r'Author information:.*?\.(.*)DOI:', text_info, re.DOTALL).group(1).strip()    
-    return abstract
-            
-########################
-
 def find_PMIDs_in_text(text):
     pattern = r"StringElement\('(\d+)', attributes=\{'pub-id-type': 'doi'\}\)"
     matches = re.findall(pattern, text)
@@ -111,16 +45,125 @@ def get_xml_given_pmid(pmid):
     xmls = "https://hanoverdev.blob.core.windows.net/data/20200314_pmc_html/analysis/updates_20210803/20210803/entities/"
     pass
 
+############ Copy to _library.py ############
+def search_pubmed(query): # 1
+    id_list = find_ids_for_gene(query)
+    return build_papers(id_list)
+
+def find_ids_for_gene(query): # 2
+    handle = Entrez.esearch(db='pmc', 
+                            sort='relevance', 
+                            retmax='1',
+                            retmode='xml', 
+                            term=query)
+    id_list = Entrez.read(handle)['IdList']
+    return id_list
+
+def fetch_parse_xml(ids): # 2, previously find_doi_in_xml
+    handle = Entrez.efetch(db='pmc', id=ids, retmode = 'xml')
+    tree = ET.parse(handle)
+    root = tree.getroot()
+    all_tree_elements = list(root.iter())
+
+    # list_dois = []
+    # for elem in all_elements:
+    #     if((elem.tag == "pub-id") and ("/" in str(elem.text))==True): # doi
+    #          list_dois.append(elem.text)
+    #return(list_dois, all_elements)   
+    return(all_tree_elements)
+
+def find_pmid_in_xml(all_tree_elements): # 3
+    list_pmids = []
+    for elem in all_tree_elements:
+        if((elem.tag == "pub-id") and ("/" not in str(elem.text))==True): # pmid
+            list_pmids.append(elem.text)
+    return(list_pmids)
+
+# for loop across pmids extracted
+def get_abstract_and_citation(pmid): # 4
+    handle = Entrez.efetch(db='pubmed', id=pmid, retmode='text', rettype='abstract')
+    text_info = handle.read()
+    citation, doi, pmid = generate_citation(text_info)
+    abstract = extract_abstract(text_info)
+    return(citation, doi, pmid, abstract)
+
+def generate_citation(text_info):
+    # Extract the author's last name
+    match = re.search(r'(\n\n[^\.]*\.)\n\nAuthor information', text_info, re.DOTALL)
+    sentence = match.group(1).replace('\n', ' ')
+    author_lastname = sentence.split()[0]
+    
+    # Extract year of publication
+    year = re.search(r'\. (\d{4}) ', text_info).group(1)
+    
+    # Extract journal abbreviation
+    journal_abbr = re.search(r'\. ([^\.]*\.)', text_info).group(1).strip(".")
+    
+    # Extract DOI number for citation
+    match = re.search(r'\nDOI: (.*)\nPMID', text_info)
+    match2 = re.search(r'\nDOI: (.*)\nPMCID', text_info)
+    if match:
+        doi_number = match.group(1).strip()
+    elif match2:
+        doi_number = match2.group(1).strip()
+    else:
+        doi_number = 0.0
+    
+    # Extract PMID
+    match = re.search(r"PMID: (\d+)", text_info)
+    if match:
+        pmid_number = match.group(1)
+    else:
+        pmid_number = 0.0
+    
+    # Construct citation
+    citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
+    
+    return citation, doi_number, pmid_number
+
+def extract_abstract(text_info):
+    # Extract paragraph after "Author information:" sentence and before "DOI:"
+    abstract = re.search(r'Author information:.*?\.(.*)DOI:', text_info, re.DOTALL).group(1).strip()    
+    return abstract
+
+def build_papers(id_list):
+    #papers: List[Paper] = []
+    papers_tree = fetch_parse_xml(id_list)
+    list_pmids = find_pmid_in_xml(papers_tree)
+    papers_dict = {}
+    for pmid in list_pmids:
+        citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
+        papers_dict[doi] = {'abstract': abstract, 'citation': citation, 'pmid': pmid}
+        
+    # for key, value in papers_xml.values():
+    #     papers.append(Paper(id=key, **value))
+    return papers_dict
+        
+########################
+
 if __name__ == '__main__':
     Entrez.email = "ashleyconard@microsoft.com"
+    # result = search_pubmed('PRKCG')
+    # print(result) # of the form DOI: {abstract:___, citation:___, pmid:___}
     
-    # Get ids for gene name
+    # Testing Papers code :)
     email = "ashleyconard@microsoft.com"
-    results = search('PRKCG', email)
-    id_list = results['IdList']
-    print(id_list)
-    papers_xml = fetch_details(id_list, email)
-    print(papers_xml)
+    id_list = find_ids_for_gene('PRKCG')
+    papers_tree = fetch_parse_xml(id_list)
+    list_pmids = find_pmid_in_xml(papers_tree)
+    print(len(list_pmids))
+    papers_dict = {}
+    count=0
+    for pmid in list_pmids:
+        count+=1
+        print(count, pmid)
+        citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
+        papers_dict[doi] = {'abstract': abstract, 'citation': citation, 'pmid': pmid}
+        if count==3:
+            break
+    print(papers_dict['10.1038/ncpneuro0289'])
+    # papers_xml = fetch_details(id_list, email)
+    # print(papers_xml)
     
     # Get info from ids
     # ids = ['7294636', '8045942', '8857164', '5525338']
@@ -135,11 +178,16 @@ if __name__ == '__main__':
     # # Use abstract to determine rare disease papers.
     
     # Get abstract information only
-    text_info = get_abstract("22545246")
-    print( get_abstract("22545246"))
-    print("_____________________________")
-    print(extract_abstract(text_info))
-        
+    #handle = Entrez.efetch(db='pubmed', id="22545246", retmode='text', rettype='abstract')
+    #text_info = handle.read()
+    #print(text_info)
+    #print("_____________________________")
+    #text_info = get_abstract_and_citation("22545246")
+    #citation, pmid, abstract = get_abstract_and_citation("22545246")
+    #print(citation)
+    #print("_____________________________")
+    #print(extract_abstract(text_info))
+    
     # Get XML from hanoverdev given PMID
     #get_xml_given_pmid(37071997)
     
