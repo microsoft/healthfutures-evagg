@@ -5,6 +5,7 @@ import pytest
 
 from lib.evagg import SemanticKernelContentExtractor, SimpleContentExtractor
 from lib.evagg.lit import IFindVariantMentions
+from lib.evagg.ref import INcbiSnpClient
 from lib.evagg.sk import ISemanticKernelClient
 from lib.evagg.types import IPaperQuery, Paper, Query
 
@@ -40,19 +41,34 @@ class MockSemanticKernelClient(ISemanticKernelClient):
         return json.dumps({function: "test"})
 
 
+class MockNcbiSnpClient(INcbiSnpClient):
+    def __init__(self, hgvsc: str, hgvsp: str) -> None:
+        self._hgvsc = hgvsc
+        self._hgvsp = hgvsp
+
+    def hgvs_from_rsid(self, rsid: str) -> Dict[str, str | None]:
+        return {
+            "hgvsc": self._hgvsc,
+            "hgvsp": self._hgvsp,
+        }
+
+
 def test_sk_content_extractor_valid_fields():
     fields = {
         "gene": "CHI3L1",
         "paper_id": "12345678",
-        "hgvsc": "unknown",
-        "hgvsp": "unknown",
+        "hgvsc": "c.A100G",
+        "hgvsp": "g.Py34C",
         "phenotype": "test",
         "zygosity": "test",
         "inheritance": "test",
     }
 
     content_extractor = SemanticKernelContentExtractor(
-        list(fields.keys()), MockSemanticKernelClient(), MockMentionFinder()
+        list(fields.keys()),
+        MockSemanticKernelClient(),
+        MockMentionFinder(),
+        MockNcbiSnpClient(hgvsc=fields["hgvsc"], hgvsp=fields["hgvsp"]),
     )
     paper = Paper(id=fields["paper_id"], citation="citation", abstract="This is a test paper.", pmcid="PMC123")
     content = content_extractor.extract(paper, Query(f"{fields['gene']}:p.Y34C"))
@@ -73,7 +89,12 @@ def test_sk_content_extractor_valid_fields():
 def test_sk_content_extractor_invalid_fields():
     fields = ["not a field"]
 
-    content_extractor = SemanticKernelContentExtractor(fields, MockSemanticKernelClient(), MockMentionFinder())
+    content_extractor = SemanticKernelContentExtractor(
+        fields,
+        MockSemanticKernelClient(),
+        MockMentionFinder(),
+        MockNcbiSnpClient(hgvsc="irrelevant", hgvsp="irrelevant"),
+    )
     paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
 
     with pytest.raises(ValueError):

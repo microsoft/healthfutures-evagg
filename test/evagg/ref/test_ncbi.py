@@ -212,8 +212,17 @@ def invalid_variant():
     return ""
 
 
-def test_variant(mocker, valid_variant, entrez_client):
-    mocker.patch("lib.evagg.ref._ncbi.NcbiSnpClient._entrez_fetch", return_value=valid_variant)
+class MockEntrezClient(IEntrezClient):
+    def __init__(self, response: str) -> None:
+        self._response = response
+
+    def efetch(self, db: str, id: str, retmode: str | None, rettype: str | None) -> str:
+        return self._response
+
+
+def test_variant(valid_variant):
+    entrez_client = MockEntrezClient(valid_variant)
+
     result = NcbiSnpClient(entrez_client).hgvs_from_rsid("146010120")
     assert result == {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}
 
@@ -221,12 +230,15 @@ def test_variant(mocker, valid_variant, entrez_client):
     assert result == {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}
 
 
-def test_missing_variant(mocker, invalid_variant, entrez_client):
-    mocker.patch("lib.evagg.ref._ncbi.NcbiSnpClient._entrez_fetch", return_value=invalid_variant)
+def test_missing_variant(invalid_variant):
+    entrez_client = MockEntrezClient(invalid_variant)
+
     result = NcbiSnpClient(entrez_client).hgvs_from_rsid("123456789")
     assert result == {}
 
 
-def test_non_rsid(entrez_client):
+def test_non_rsid():
+    entrez_client = MockEntrezClient("")
+
     result = NcbiSnpClient(entrez_client).hgvs_from_rsid("not a rsid")
     assert result == {}
