@@ -2,6 +2,9 @@ from Bio import Entrez # Biopython
 #from bs4 import BeautifulSoup as BS
 import re
 import xml.etree.ElementTree as ET
+from typing import Set, Dict
+from lib.evagg.types import IPaperQuery, Paper, Variant
+
 
 def fetch_details(id_list, email):
     ids = ','.join(id_list)
@@ -46,7 +49,7 @@ def get_xml_given_pmid(pmid):
     pass
 
 ############ Copy to _library.py ############
-def search_pubmed(query): # 1
+def search(query): # 1
     id_list = find_ids_for_gene(query)
     return build_papers(id_list)
 
@@ -130,20 +133,29 @@ def build_papers(id_list):
     #papers: List[Paper] = []
     papers_tree = fetch_parse_xml(id_list)
     list_pmids = find_pmid_in_xml(papers_tree)
-    papers_dict = {}
+    
+    # Create a dictionary of papers, not part of Papers object
+    # papers_dict = {}
+    # for pmid in list_pmids:
+    #     citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
+    #     papers_dict[doi] = {'abstract': abstract, 'citation': citation, 'pmid': pmid}
+
+    # Generate a set of Paper objects
+    papers_set = set()
     for pmid in list_pmids:
         citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
-        papers_dict[doi] = {'abstract': abstract, 'citation': citation, 'pmid': pmid}
-        
+        paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid) # make a new Paper object for each entry
+        papers_set.add(paper) # add Paper object to set
+    
     # for key, value in papers_xml.values():
     #     papers.append(Paper(id=key, **value))
-    return papers_dict
+    return papers_set
         
 ########################
 
 if __name__ == '__main__':
     Entrez.email = "ashleyconard@microsoft.com"
-    # result = search_pubmed('PRKCG')
+    # result = search('PRKCG')
     # print(result) # of the form DOI: {abstract:___, citation:___, pmid:___}
     
     # Testing Papers code :)
@@ -152,16 +164,20 @@ if __name__ == '__main__':
     papers_tree = fetch_parse_xml(id_list)
     list_pmids = find_pmid_in_xml(papers_tree)
     print(len(list_pmids))
-    papers_dict = {}
     count=0
+    papers_set = set()
     for pmid in list_pmids:
         count+=1
         print(count, pmid)
+        
         citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
-        papers_dict[doi] = {'abstract': abstract, 'citation': citation, 'pmid': pmid}
+        paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid) # make a new Paper object for each entry
+        papers_set.add(paper) # add Paper object to set
         if count==3:
             break
-    print(papers_dict['10.1038/ncpneuro0289'])
+    print(papers_set)
+    print(type(papers_set))
+    #print(papers_dict['10.1038/ncpneuro0289'])
     # papers_xml = fetch_details(id_list, email)
     # print(papers_xml)
     

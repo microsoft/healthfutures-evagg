@@ -1,7 +1,7 @@
 import csv, json, os, re
 from collections import defaultdict
 from functools import cache
-from typing import Dict, Sequence, Set
+from typing import Dict, Sequence, Set, List
 from Bio import Entrez # Biopython
 import xml.etree.ElementTree as ET
 
@@ -104,9 +104,6 @@ class TruthsetFileLibrary(IGetPapers):
         # Filter to just the papers with variant terms that have evidence
         return {p for p in all_papers if query.terms() & p.evidence.keys()}
 
-from Bio import Entrez
-import re
-from typing import List
 
 class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
     
@@ -115,7 +112,7 @@ class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
         Entrez.email = email
         self._max_papers = max_papers
     
-    def search_pubmed(self, query: IPaperQuery) -> Set[Paper]: # 1
+    def search(self, query: IPaperQuery) -> Set[Paper]: # 1 TODO: or Dict[str, Paper]?
         term = query.terms()[0]
         id_list = self._find_ids_for_gene(gene=term[:term.find(":")])
         return self._build_papers(id_list)
@@ -129,7 +126,7 @@ class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
         id_list = Entrez.read(handle)['IdList']
         return id_list
 
-    def _fetch_parse_xml(self, id_list: Sequence[str]) -> Dict[str, Dict[str, str]]:
+    def _fetch_parse_xml(self, id_list: Sequence[str]):
         ids = ','.join(id_list)
         handle = Entrez.efetch(db='pmc',
                             retmode='xml',
@@ -156,9 +153,9 @@ class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
     def _get_abstract_and_citation(self, pmid):
         handle = Entrez.efetch(db='pubmed', id=pmid, retmode='text', rettype='abstract')
         text_info = handle.read()
-        citation, doi, pmid = self._generate_citation(text_info)
+        citation, doi = self._generate_citation(text_info)
         abstract = self._extract_abstract(text_info)
-        return(citation, doi, pmid, abstract)
+        return(citation, doi, abstract)
 
     def _generate_citation(self, text_info):
         # Extract the author's last name
@@ -181,45 +178,35 @@ class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
             doi_number = 0.0
         
         # Extract PMID
-        match = re.search(r"PMID: (\d+)", text_info)
-        if match:
-            pmid_number = match.group(1)
-        else:
-            pmid_number = 0.0
+        # match = re.search(r"PMID: (\d+)", text_info)
+        # if match:
+        #     pmid_number = match.group(1)
+        # else:
+        #     pmid_number = 0.0
         
         # Construct citation
         citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
         
-        return citation, doi_number, pmid_number
+        return citation, doi_number
 
     def _extract_abstract(self, text_info):
         # Extract paragraph after "Author information:" sentence and before "DOI:"
         abstract = re.search(r'Author information:.*?\.(.*)DOI:', text_info, re.DOTALL).group(1).strip()    
         return abstract
 
-    def _build_papers(self, id_list): # 3
+    def _build_papers(self, id_list) -> Set[Paper]: #Dict[str, Dict[str, str]]: # 3
         #papers: List[Paper] = []
         papers_tree = self._fetch_parse_xml(id_list)
         list_pmids = self._find_pmid_in_xml(papers_tree)
-        papers_dict = {}
+
+        # Generate a set of Paper objects
+        papers_set = set()
         for pmid in list_pmids:
-            citation, doi, pmid, abstract = self._get_abstract_and_citation(pmid)
-            papers_dict[doi] = {'abstract': abstract, 'citation': citation, 'pmid': pmid}
+            citation, doi, abstract = self._get_abstract_and_citation(pmid)
+            paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid) # make a new Paper object for each entry
+            papers_set.add(paper) # add Paper object to set
         
-         # For each paper (DOI), we want to know PMCID, Abstract, Citation.
-        # return_dict = {}
-        # for result in results:
-        #     return_dict[result.doi] = {
-        #         "abstract": result.abstract,
-        #         "citation": result.citation,
-        #         "pmcid": result.pmcid
-        #     }
-        # # TODO: return a dict key:"DOI", dicts everything else about the paper ()
-        # # those would get passed to the contructor of paper
-        
-        # for key, value in papers_xml.values():
-        #     papers.append(Paper(id=key, **value))
-        return papers_dict
+        return papers_set
         
     
 class HanoverFileLibrary(IGetPapers):
