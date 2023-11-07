@@ -2,8 +2,9 @@ import json
 import os
 import tempfile
 from typing import Any, Dict
+from unittest.mock import MagicMock, patch
 
-from lib.evagg import SimpleFileLibrary
+from lib.evagg import PubMedFileLibrary, SimpleFileLibrary
 from lib.evagg.types import Paper, Query
 
 
@@ -42,8 +43,24 @@ def test_search():
         assert paper2 in results
         assert paper3 in results
 
-def test_temp_pubmed():
+
+@patch.object(PubMedFileLibrary, "_find_ids_for_gene")
+@patch.object(PubMedFileLibrary, "_build_papers")
+def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene):
     # what are the reasonable things to test for in search function only, no private functions
     # dont touch external resources (e.g. Entrez)
-    assert False
-     
+    # arrange
+    library = PubMedFileLibrary(email="ashleyconard@microsoft.com", max_papers=5)
+    mock_query = MagicMock()
+    mock_query.terms.return_value = ["term1:variant1"]
+    mock_find_ids_for_gene.return_value = ["id1", "id2", "id3"]
+    mock_build_papers.return_value = set()
+
+    # act
+    result = library.search(mock_query)
+
+    # assert statements
+    mock_query.terms.assert_called_once()
+    mock_find_ids_for_gene.assert_called_once_with(gene="term1")
+    mock_build_papers.assert_called_once_with(["id1", "id2", "id3"])
+    assert isinstance(result, set)
