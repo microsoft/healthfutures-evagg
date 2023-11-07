@@ -42,8 +42,8 @@ def test_annotation(mocked_get):
 def test_failed_annotation(mocked_get):
     paper = Paper(id="123", pmcid="PMC7654321")
     annotator = PubtatorEntityAnnotator()
-    with pytest.raises(ValueError):
-        annotator.annotate(paper)
+    annotations = annotator.annotate(paper)
+    assert annotations == {}
 
     paper_no_pmcid = Paper(id="123")
     with pytest.raises(ValueError):
