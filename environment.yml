@@ -19,10 +19,11 @@ dependencies:
 
   # General utilities.
   - pydantic==1.10
+  - defusedxml
+  - ratelimit
 
   # Bioinformatics.
   - biopython
-  - defusedxml
 
   # Dependencies used for code development (linting, testing, etc.)
   - black

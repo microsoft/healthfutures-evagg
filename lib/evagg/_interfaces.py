@@ -1,5 +1,4 @@
-from typing import Dict, Protocol, Sequence, Set
-from Bio import Entrez # Biopython
+from typing import Dict, Mapping, Protocol, Sequence, Set
 
 from lib.evagg.types import IPaperQuery, Paper
 
@@ -12,9 +11,9 @@ class IEvAggApp(Protocol):
 class IGetPapers(Protocol):
     def search(self, query: IPaperQuery) -> Set[Paper]:
         ...
-        # 
+        #
         # Set of papers that mention the gene
-        # 
+        #
 
 
 class IExtractFields(Protocol):
@@ -23,5 +22,5 @@ class IExtractFields(Protocol):
 
 
 class IWriteOutput(Protocol):
-    def write(self, fields: Dict[str, Sequence[Dict[str, str]]]) -> None:
+    def write(self, fields: Mapping[str, Sequence[Mapping[str, str]]]) -> None:
         ...
