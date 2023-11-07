@@ -50,7 +50,10 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene):
     # what are the reasonable things to test for in search function only, no private functions
     # dont touch external resources (e.g. Entrez)
     # arrange
-    library = PubMedFileLibrary(email="ashleyconard@microsoft.com", max_papers=5)
+    library = PubMedFileLibrary(email="ashleyconard@microsoft.com", max_papers=2)
+    results = library.search(Query("COQ2:variant"))
+    print("here, ", results)
+
     mock_query = MagicMock()
     mock_query.terms.return_value = ["term1:variant1"]
     mock_find_ids_for_gene.return_value = ["id1", "id2", "id3"]
