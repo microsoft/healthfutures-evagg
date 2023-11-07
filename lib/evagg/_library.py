@@ -1,9 +1,13 @@
-import csv, json, os, re
+import csv
+import json
+import os
+import re
+import xml.etree.ElementTree as Et
 from collections import defaultdict
 from functools import cache
-from typing import Dict, Sequence, Set, List
-from Bio import Entrez # Biopython
-import xml.etree.ElementTree as ET
+from typing import Dict, List, Sequence, Set
+
+from Bio import Entrez  # Biopython
 
 from lib.evagg.types import IPaperQuery, Paper, Variant
 
@@ -105,97 +109,75 @@ class TruthsetFileLibrary(IGetPapers):
         return {p for p in all_papers if query.terms() & p.evidence.keys()}
 
 
-class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
-    
+class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
     def __init__(self, email: str, max_papers: int = 5) -> None:
         self._email = email
         Entrez.email = email
         self._max_papers = max_papers
-    
-    def search(self, query: IPaperQuery) -> Set[Paper]: # 1 TODO: or Dict[str, Paper]?
+
+    def search(self, query: IPaperQuery) -> Set[Paper]:  # 1 TODO: or Dict[str, Paper]?
         term = query.terms()[0]
-        id_list = self._find_ids_for_gene(gene=term[:term.find(":")])
+        id_list = self._find_ids_for_gene(gene=term[: term.find(":")])
         return self._build_papers(id_list)
-    
-    def _find_ids_for_gene(self, query): # 2
-        handle = Entrez.esearch(db='pmc', 
-                                sort='relevance', 
-                                retmax= self._max_papers,
-                                retmode='xml', 
-                                term=query)
-        id_list = Entrez.read(handle)['IdList']
+
+    def _find_ids_for_gene(self, query):  # 2
+        handle = Entrez.esearch(db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query)
+        id_list = Entrez.read(handle)["IdList"]
         return id_list
 
-    def _fetch_parse_xml(self, id_list: Sequence[str]):
-        ids = ','.join(id_list)
-        handle = Entrez.efetch(db='pmc',
-                            retmode='xml',
-                            id=ids)
-        #results = Entrez.read(handle)
-        tree = ET.parse(handle)
+    def _fetch_parse_xml(self, id_list: Sequence[str]) -> list:
+        ids = ",".join(id_list)
+        handle = Entrez.efetch(db="pmc", retmode="xml", id=ids)
+        tree = Et.parse(handle)  # or without tree: results = Entrez.read(handle)
         root = tree.getroot()
         all_tree_elements = list(root.iter())
+        return all_tree_elements
 
-        # list_dois = []
-        # for elem in all_tree_elements:
-        #     if((elem.tag == "pub-id") and ("/" in str(elem.text))==True):
-        #         list_dois.append(elem.text)
-        # return(list_dois, all_tree_elements) # returns DOI, XML
-        return(all_tree_elements)
-    
-    def _find_pmid_in_xml(self, all_tree_elements):
+    def _find_pmid_in_xml(self, all_tree_elements) -> list:
         list_pmids = []
         for elem in all_tree_elements:
-            if((elem.tag == "pub-id") and ("/" not in str(elem.text))==True): # doi
+            if (elem.tag == "pub-id") and ("/" not in str(elem.text)) == True:  # doi
                 list_pmids.append(elem.text)
-        return(list_pmids) # returns PMIDs
-            
-    def _get_abstract_and_citation(self, pmid):
-        handle = Entrez.efetch(db='pubmed', id=pmid, retmode='text', rettype='abstract')
+        return list_pmids  # returns PMIDs
+
+    def _get_abstract_and_citation(self, pmid) -> tuple:
+        handle = Entrez.efetch(db="pubmed", id=pmid, retmode="text", rettype="abstract")
         text_info = handle.read()
         citation, doi = self._generate_citation(text_info)
         abstract = self._extract_abstract(text_info)
-        return(citation, doi, abstract)
+        return (citation, doi, abstract)
 
-    def _generate_citation(self, text_info):
+    def _generate_citation(self, text_info) -> tuple:
         # Extract the author's last name
-        match = re.search(r'(\n\n[^\.]*\.)\n\nAuthor information', text_info, re.DOTALL)
-        sentence = match.group(1).replace('\n', ' ')
+        match = re.search(r"(\n\n[^\.]*\.)\n\nAuthor information", text_info, re.DOTALL)
+        sentence = match.group(1).replace("\n", " ")
         author_lastname = sentence.split()[0]
-        
+
         # Extract year and journal abbr.
-        year = re.search(r'\. (\d{4}) ', text_info).group(1) # Extract pub. year
-        journal_abbr = re.search(r'\. ([^\.]*\.)', text_info).group(1).strip(".") # Extract journal abbreviation
-        
+        year = re.search(r"\. (\d{4}) ", text_info).group(1)  # Extract pub. year
+        journal_abbr = re.search(r"\. ([^\.]*\.)", text_info).group(1).strip(".")  # Extract journal abbreviation
+
         # Extract DOI number for citation, TODO: modify to pull key
-        match = re.search(r'\nDOI: (.*)\nPMID', text_info)
-        match2 = re.search(r'\nDOI: (.*)\nPMCID', text_info) # TODO: consider embedding into elif
+        match = re.search(r"\nDOI: (.*)\nPMID", text_info)
+        match2 = re.search(r"\nDOI: (.*)\nPMCID", text_info)  # TODO: consider embedding into elif
         if match:
             doi_number = match.group(1).strip()
         elif match2:
             doi_number = match2.group(1).strip()
         else:
             doi_number = 0.0
-        
-        # Extract PMID
-        # match = re.search(r"PMID: (\d+)", text_info)
-        # if match:
-        #     pmid_number = match.group(1)
-        # else:
-        #     pmid_number = 0.0
-        
+
         # Construct citation
         citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
-        
+
         return citation, doi_number
 
-    def _extract_abstract(self, text_info):
+    def _extract_abstract(self, text_info) -> str:
         # Extract paragraph after "Author information:" sentence and before "DOI:"
-        abstract = re.search(r'Author information:.*?\.(.*)DOI:', text_info, re.DOTALL).group(1).strip()    
+        abstract = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL).group(1).strip()
         return abstract
 
-    def _build_papers(self, id_list) -> Set[Paper]: #Dict[str, Dict[str, str]]: # 3
-        #papers: List[Paper] = []
+    def _build_papers(self, id_list) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
         papers_tree = self._fetch_parse_xml(id_list)
         list_pmids = self._find_pmid_in_xml(papers_tree)
 
@@ -203,17 +185,17 @@ class PubMedFileLibrary(IGetPapers): # TODO: consider gene:variant info next
         papers_set = set()
         for pmid in list_pmids:
             citation, doi, abstract = self._get_abstract_and_citation(pmid)
-            paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid) # make a new Paper object for each entry
-            papers_set.add(paper) # add Paper object to set
-        
+            paper = Paper(
+                id=doi, citation=citation, abstract=abstract, pmid=pmid
+            )  # make a new Paper object for each entry
+            papers_set.add(paper)  # add Paper object to set
+
         return papers_set
-        
-    
+
+
 class HanoverFileLibrary(IGetPapers):
-    
     def __init__(self, file_path: str) -> None:
         self._file_path = file_path
-    
+
     def search(self, query: IPaperQuery) -> Set[Paper]:
         return None
-    
