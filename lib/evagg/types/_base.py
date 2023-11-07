@@ -29,6 +29,9 @@ class Variant:
         self.gene = gene
         self.variant = variant
 
+    def get_gene(self) -> str:
+        return self.gene
+
     def __hash__(self) -> int:
         return hash(self.gene + self.variant)
 
