@@ -7,7 +7,7 @@ class Paper:
     def __init__(self, **kwargs: Any) -> None:
         self.id = kwargs["id"]  # id is required, DOI
         self.evidence = kwargs.pop("evidence", {})
-        self.citation = kwargs.get("citation") # determine format
+        self.citation = kwargs.get("citation")  # TODO: determine format
         self.abstract = kwargs.get("abstract")
         self.props = kwargs
 
