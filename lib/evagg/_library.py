@@ -44,7 +44,7 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link"]
+TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa"]
 # These are the columns in the truthset that are specific to the variant.
 TRUTHSET_VARIANT_KEYS = [
     "gene",
@@ -105,8 +105,10 @@ class TruthsetFileLibrary(IGetPapers):
 
     def search(self, query: IPaperQuery) -> Set[Paper]:
         all_papers = self._load_truthset()
-        # Filter to just the papers with variant terms that have evidence
-        return {p for p in all_papers if query.terms() & p.evidence.keys()}
+        query_genes = {v.gene for v in query.terms()}
+
+        # Filter to just the papers with variant terms that have evidence for the genes specified in the query.
+        return {p for p in all_papers if query_genes & {v.gene for v in p.evidence.keys()}}
 
 
 class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next

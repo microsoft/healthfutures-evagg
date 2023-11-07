@@ -10,10 +10,14 @@ import requests
 
 # These PMIDS are drawn from variant_examples.xlsx.
 PMIDS = ["31453292", "34758253"]
-library_path = "/home/azureuser/data/evagg_local"
+library_path = ".data/evagg_local"
 
 
 # %% Fetch the full paper text using BioC.
+
+
+def _get_doi(d: dict) -> str:
+    return d["passages"][0]["infons"]["article-id_doi"]
 
 
 def _get_abstract(d: dict) -> str:
@@ -47,7 +51,7 @@ def _get_authors(d: dict) -> str:
 
 
 def _get_pmcid(d: dict) -> str:
-    raise NotImplementedError
+    return f"PMC{d['id']}"
 
 
 def fetch_paper_bioc(pmid: str) -> dict:
@@ -57,7 +61,13 @@ def fetch_paper_bioc(pmid: str) -> dict:
     )
     r.raise_for_status()
     d = r.json()["documents"][0]
-    return {"abstract": _get_abstract(d), "title": _get_title(d), "citation": _get_authors(d), "pmcid": _get_pmcid(d)}
+    return {
+        "id": _get_doi(d),
+        "abstract": _get_abstract(d),
+        "title": _get_title(d),
+        "citation": _get_authors(d),
+        "pmcid": _get_pmcid(d),
+    }
 
 
 # %% Generate the library of PMIDs.

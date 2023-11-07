@@ -49,6 +49,7 @@ import openpyxl
 import pandas as pd
 import requests
 from Bio import Entrez, Medline
+from defusedxml import ElementTree
 
 from lib.config import PydanticYamlModel
 
@@ -134,6 +135,8 @@ def _call_converter(ids_cat: str) -> dict[str, Any]:
 
 
 def convert_ids(ids: pd.Series, tgt: str) -> pd.Series | None:
+    # Note: this will fail to find the article if it's not in PMC.
+
     # Example syntax
     # https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?tool=my_tool&email=my_email@example.com&ids=PMC1193645
     # See https://www.ncbi.nlm.nih.gov/pmc/tools/id-converter-api/ for API documentation
@@ -152,24 +155,58 @@ def convert_ids(ids: pd.Series, tgt: str) -> pd.Series | None:
 
 
 df["pmcid"] = convert_ids(df["pmid"], "pmcid")
-df["doi"] = convert_ids(df["pmid"], "doi")
 
 
-# %% Build paper_id
+# %% Build doi and paper title
 
 
-# %% Fetch paper title
+def _parse_id_dict(raw: list[str]) -> dict[str, str]:
+    # each identifier is of the form 'value [key]', parse to dict {key: value}
+    retval: dict[str, str] = {}
+
+    for line in raw:
+        tokens = line.split(" [")
+        if len(tokens) == 2:
+            retval[tokens[1][:-1]] = tokens[0]
+
+    return retval
 
 
-def fetch_paper_title(pmids: pd.Series) -> pd.Series:
-    ids = set(pmids.dropna().tolist())
-    handle = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
-    records = Medline.parse(handle)
-    lookup = {record.get("PMID", ""): record.get("TI", "") for record in records}
-    return pd.Series(pmids.map(lookup))
+ids = set(df["pmid"].dropna().tolist())
+handle = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
+records = Medline.parse(handle)
+lookup = {record.get("PMID", ""): record.get("TI", "") for record in records}
+df["paper_title"] = pd.Series(df["pmid"].map(lookup))
+
+handle = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
+records = Medline.parse(handle)
+lookup = {record.get("PMID", ""): _parse_id_dict(record.get("AID", "")).get("doi", None) for record in records}
+
+df["doi"] = pd.Series(df["pmid"].map(lookup))
+
+# %% determine whether the paper is in PMC-OA, only need to do this in cases where there's a PMCID
 
 
-df["paper_title"] = fetch_paper_title(df["pmid"])
+def _is_pmc_oa(pmcid: str) -> bool:
+    url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()
+
+    root = ElementTree.fromstring(response.text)
+    if root.find("error") is not None:
+        error = root.find("error")
+        if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
+            return False
+        else:
+            raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
+    match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
+    if match:
+        return True
+    else:
+        raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
+
+
+df["is_pmc_oa"] = df["pmcid"].dropna().map(_is_pmc_oa)
 
 # %% Reformat and reorder dataframe
 
@@ -200,6 +237,7 @@ df = df[
         "doi",
         "pmid",
         "pmcid",
+        "is_pmc_oa",
         "phenotype",
         "variant_inheritance",
         "condition_inheritance",
