@@ -118,14 +118,14 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
         self._max_papers = max_papers
 
     def search(self, query: IPaperQuery) -> Set[Paper]:  # 1 TODO: or Dict[str, Paper]?
-        term = query.terms()[0]
-        id_list = self._find_ids_for_gene(gene=term[: term.find(":")])
+        term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
+        id_list = self._find_ids_for_gene(query=term)
         return self._build_papers(id_list)
 
     def _find_ids_for_gene(self, query):  # 2
         handle = Entrez.esearch(db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query)
-        id_list = Entrez.read(handle)["IdList"]
-        return id_list
+        id_list = Entrez.read(handle)
+        return id_list  # ["IdList"]
 
     def _fetch_parse_xml(self, id_list: Sequence[str]) -> list:
         ids = ",".join(id_list)
