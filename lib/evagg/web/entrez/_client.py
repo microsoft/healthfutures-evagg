@@ -1,5 +1,6 @@
 import os
 from functools import cache
+from typing import Dict
 
 from Bio import Entrez
 from dotenv import load_dotenv
@@ -13,21 +14,30 @@ from ._interfaces import IEntrezClient
 class BioEntrezConfig(PydanticYamlModel):
     api_key: str | None
     email: str
+    max_tries: str = "10"
 
 
 class BioEntrezDotEnvConfig(BioEntrezConfig):
     def __init__(self) -> None:
         load_dotenv()
-        super().__init__(
-            api_key=os.environ["NCBI_EUTILS_API_KEY"] if "NCBI_EUTILS_API_KEY" in os.environ else None,
-            email=os.environ["NCBI_EUTILS_EMAIL"],
-        )
+
+        bag: Dict[str, str] = {}
+        for k, v in os.environ.items():
+            if k.startswith("NCBI_EUTILS_"):
+                new_key = k.replace("NCBI_EUTILS_", "").lower()
+                bag[new_key] = v
+        super().__init__(**bag)
 
 
 class BioEntrezClient(IEntrezClient):
     def __init__(self, config: BioEntrezConfig) -> None:
         if config.api_key:
             Entrez.api_key = config.api_key
+
+        # This isn't particularly clear from the documentation, but it looks like
+        # we're getting 400s when max_tries is set too low.
+        # see https://biopython.org/docs/1.75/api/Bio.Entrez.html
+        Entrez.max_tries = int(config.max_tries)
         Entrez.email = config.email
 
     @cache
