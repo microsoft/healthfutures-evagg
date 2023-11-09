@@ -37,10 +37,14 @@ class SemanticKernelContentExtractor(IExtractFields):
 
         print(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
 
+        # Build a cached list of hgvs formats for dbsnp identifiers.
+        hgvs_cache = self._ncbi_snp_client.hgvs_from_rsid([v for v in variant_mentions.keys() if v.startswith("rs")])
+
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
         for variant_id in variant_mentions.keys():
+            print(f"Processing {variant_id}")
             mentions = variant_mentions[variant_id]
             variant_results: Dict[str, str] = {"variant": variant_id}
 
@@ -51,7 +55,15 @@ class SemanticKernelContentExtractor(IExtractFields):
                 "variant": variant_id,
                 "gene": mentions[0].get("gene_symbol", "unknown"),  # Mentions should never be empty.
             }
-            hgvs = self._ncbi_snp_client.hgvs_from_rsid(variant_id)
+
+            # If we have a cached hgvs value, use it.
+            hgvs: Dict[str, str] = {}
+            if variant_id in hgvs_cache:
+                hgvs = hgvs_cache[variant_id]
+            elif variant_id.startswith("c."):
+                hgvs = {"hgvsc": variant_id}
+            elif variant_id.startswith("p."):
+                hgvs = {"hgvsp": variant_id}
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
