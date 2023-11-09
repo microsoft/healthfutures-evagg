@@ -16,7 +16,7 @@ class VariantMentionFinder(IFindVariantMentions):
         if len(annotations) == 0:
             return variants_in_query_gene
 
-        # TODO: this is too strict - the annotator may have identified a variant but failed to associate it with a geme.
+        # TODO: this is too strict - the annotator may have identified a variant but failed to associate it with a gene.
         # Specifically PubTator uses tmVar which often misses this annotation. As a result, we miss the variant.
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
