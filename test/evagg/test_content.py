@@ -26,8 +26,8 @@ def test_simple_content_extractor():
 
 class MockMentionFinder(IFindVariantMentions):
     mentions: Dict[str, Sequence[Dict[str, Any]]] = {
-        "var1": [{"text": "This is a test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"}],
-        "var2": [
+        "rs1234": [{"text": "This is a test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"}],
+        "rs5678": [
             {"text": "This is another test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"},
         ],
     }
@@ -42,15 +42,11 @@ class MockSemanticKernelClient(ISemanticKernelClient):
 
 
 class MockNcbiSnpClient(INcbiSnpClient):
-    def __init__(self, hgvsc: str, hgvsp: str) -> None:
-        self._hgvsc = hgvsc
-        self._hgvsp = hgvsp
+    def __init__(self, response: Dict[str, Dict[str, str]]) -> None:
+        self._response = response
 
-    def hgvs_from_rsid(self, rsid: str) -> Dict[str, str | None]:
-        return {
-            "hgvsc": self._hgvsc,
-            "hgvsp": self._hgvsp,
-        }
+    def hgvs_from_rsid(self, rsid: Sequence[str]) -> Dict[str, Dict[str, str]]:
+        return self._response
 
 
 def test_sk_content_extractor_valid_fields():
@@ -64,16 +60,19 @@ def test_sk_content_extractor_valid_fields():
         "inheritance": "test",
     }
 
+    mention_finder = MockMentionFinder()
+    ncbi_snp_client = MockNcbiSnpClient(
+        {k: {"hgvsc": fields["hgvsc"], "hgvsp": fields["hgvsp"]} for k in mention_finder.mentions.keys()}
+    )
     content_extractor = SemanticKernelContentExtractor(
         list(fields.keys()),
-        MockSemanticKernelClient(),
-        MockMentionFinder(),
-        MockNcbiSnpClient(hgvsc=fields["hgvsc"], hgvsp=fields["hgvsp"]),
+        sk_client=MockSemanticKernelClient(),
+        mention_finder=mention_finder,
+        ncbi_snp_client=ncbi_snp_client,
     )
     paper = Paper(id=fields["paper_id"], citation="citation", abstract="This is a test paper.", pmcid="PMC123")
     content = content_extractor.extract(paper, Query(f"{fields['gene']}:p.Y34C"))
 
-    print(content)
     # Based on the above, there should be two elements in `content`, each containing a dict keyed by fields, with a
     # fake value.
     for k in MockMentionFinder().mentions.keys():
@@ -93,7 +92,7 @@ def test_sk_content_extractor_invalid_fields():
         fields,
         MockSemanticKernelClient(),
         MockMentionFinder(),
-        MockNcbiSnpClient(hgvsc="irrelevant", hgvsp="irrelevant"),
+        MockNcbiSnpClient(response={}),
     )
     paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
 
