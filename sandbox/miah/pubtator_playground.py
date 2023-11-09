@@ -32,7 +32,7 @@ for p in result["passages"]:
 # %%
 
 
-result = NcbiSnpClient(BioEntrezClient(BioEntrezDotEnvConfig()))._entrez_fetch_json("snp", "150345688")
-print(json.dumps(result, indent=2))
+result2 = NcbiSnpClient(BioEntrezClient(BioEntrezDotEnvConfig()))._entrez_fetch_xml("snp", "150345688")
+print(result2)
 
 # %%
