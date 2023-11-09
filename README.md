@@ -66,30 +66,38 @@ You should see a help message displayed providing usage for the `run_query_sync`
 
 ## Configuration
 
-At this point, no additional configuration is needed, when we start using the Azure OpenAI service and/or other cloud services, we will need to put additional configuration detail here.
+To communicate with various cloud resources, some additional configuration is necessary, including providing relevant 
+secrets to the application.
+
+Create a `.env` file in the repository root with the following format:
+
+```text
+AZURE_OPENAI_DEPLOYMENT_NAME=<your AOAI deployment name>
+AZURE_OPENAI_ENDPOINT=<your AOAI endpoint>
+AZURE_OPENAI_API_KEY=<your AOAI key>
+
+NCBI_EUTILS_API_KEY=<your NCBI eutils API key (optional)>
+NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
+NCBI_EUTILS_MAX_TRIES=<max number of retries for retry-able calls to the NCBI eutils API (optional)>
+```
 
 ## Code organization
 
 The repository contains the following subdirectories:
 
+```text
 root
 |-- deploy: infrastructure as code for the deployment and management of necessary cloud resources.
 |-- docs: additional documentation beyond what is in scope for this README.
 |-- lib: source code for scripts and core libraries.
 |-- notebooks: shared notebooks for interactive development.
+|-- sandbox: scratch area for developers.
 |-- test: unit tests for core libraries.
+```
 
 ## Running Benchmarks
 
-### run_single_query_sync.py
-
-`run_single_query_sync.py` is intended to be a standalone, synchronous benchmark for the full evidence aggregation pipeline. Given a single query (i.e., gene-variant pair, accepted nomenclatures TBD), this script will attempt to find all papers relevant to the query and extract a set of structured fields for all relevant variants within those papers.
-
-As currently implemented, this script is pretty dumb. It leverages a local library of papers backed by one or more directories of json files, each one represnting a paper (see data pre-requisites below). When asked for papers relevant to a query, all papers in the library are returned.
-
-Further, this script leverages an implementation of content extraction that has a fixed set of fields of interest (e.g., MOI, phenotype) and returns a static value for each of those fields for exactly one variant in each paper.
-
-Once the set of structured content has been extracted from the paper, it can either be written to disk or displayed as console output, as an exercise to demonstrate how dependencies are injected into the app.
+`run_query_sync` -- TODO
 
 #### Data pre-requisites
 
@@ -121,9 +129,6 @@ No implementation of comparing this pipeline's output to ground truth has been i
 
 ## Questions and todos
 
-- Consider specifying injected dependencies in config files? Seems like a PITA, but will ultimately be much more flexible.
 - Consider writing script for literature library localization? Likely only necessary if we don't see ourselves moving directly to PMC API requests.
-- TODO: notebook for processing the current literature spreadsheet
 - Consider dataset organization, online access
 - Consider base types for the results that we're pulling out of a paper, using primitives is ugly?
-- Consider pydantic for configs, get the config plan figured out first though
