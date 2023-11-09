@@ -1,7 +1,7 @@
-import json
 from typing import Any, Dict, Sequence
 
 import requests
+from defusedxml import ElementTree as ElementTree
 
 from lib.evagg.web.entrez import IEntrezClient
 
@@ -68,82 +68,85 @@ class NcbiSnpClient(INcbiSnpClient):
     def _entrez_fetch(self, db: str, id_str: str, retmode: str | None, rettype: str | None) -> str:
         return self._entrez_client.efetch(db=db, id=id_str, retmode=retmode, rettype=rettype)
 
-    def _entrez_fetch_json(self, db: str, id_str: str) -> Dict[str, Any]:
-        string_response = self._entrez_fetch(db=db, id_str=id_str, retmode="json", rettype="json")
+    def _entrez_fetch_xml(self, db: str, id_str: str) -> Any | None:
+        string_response = self._entrez_fetch(db=db, id_str=id_str, retmode="xml", rettype="xml")
         if len(string_response) == 0:
-            return {}
-        return json.loads(string_response)
+            return None
+        # fromstring returns type Any, but it's actually an ElementTree.Element. Using this approach to avoid
+        # making bandit cranky with xml.* imports.
+        return ElementTree.fromstring(string_response)
 
-    def _validate_snp_response(self, response: Dict[str, Any]) -> bool:
-        if "primary_snapshot_data" not in response:
+    def _validate_snp_response_xml(self, response: Any) -> bool:
+        if not response.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}ExchangeSet":
             return False
-        if "placements_with_allele" not in response["primary_snapshot_data"]:
+        if len(response) < 1:
             return False
-        if len(response["primary_snapshot_data"]["placements_with_allele"]) == 0:
-            return False
+        for child in response:
+            if not child.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}DocumentSummary":
+                return False
         return True
 
-    def _find_alt_allele(self, placement: Dict[str, Any]) -> Dict[str, Any]:
-        if len(placement["alleles"]) > 2:
-            print(f"WARNING: Multiple alleles listed for {placement['seq_id']}. Using first alternate.")
-        return placement["alleles"][1]
+    def _find_hgvs_xml(self, response: Any, id: str) -> Dict[str, str]:
+        result = {}
 
-    def _find_hgvsc(self, response: Dict[str, Any]) -> str | None:
-        mrna_seqs = [
-            p
-            for p in response["primary_snapshot_data"]["placements_with_allele"]
-            if p["placement_annot"]["mol_type"] == "rna"
-        ]
+        for child in response:
+            if not child.get("uid") == id:
+                continue
 
-        if len(mrna_seqs) == 0:
-            print(f"WARNING: No RNA sequences found for variant {response['refsnp_id']}.")
-            return None
+            for nested_child in child:
+                if not nested_child.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}DOCSUM":
+                    continue
 
-        # Prioritize any MANE select transcripts.
-        if "mane_select_ids" in response and len(response["mane_select_ids"]) > 0:
-            if len(response["mane_select_ids"]) > 1:
-                print(f"WARNING: Multiple MANE select transcripts for {response['refsnp_id']}.")
-            mane_select = response["mane_select_ids"][0]
-            mane_select_seqs = [p for p in mrna_seqs if p["seq_id"] == mane_select]
-            if len(mane_select_seqs) == 0:
-                print(
-                    f"WARNING: MANE select transcripts listed for variant {response['refsnp_id']}",
-                    "but none found in sequences.",
-                )
-            else:
-                if len(mane_select_seqs) > 1:
-                    print(f"WARNING: Same MANE transcript sequence listed multiple times for {response['refsnp_id']}.")
-                return self._find_alt_allele(mane_select_seqs[0])["hgvs"]
+                if not nested_child.text:
+                    break
 
-        # Otherwise, just use the first RNA sequence.
-        return self._find_alt_allele(mrna_seqs[0])["hgvs"]
+                values = {}
+                for tok in nested_child.text.split("|"):
+                    eq_delim = tok.split("=")
+                    if len(eq_delim) != 2:
+                        continue
+                    values[eq_delim[0]] = eq_delim[1]
 
-    def _find_hgvsp(self, response: Dict[str, Any]) -> str | None:
-        protein_seqs = [
-            p
-            for p in response["primary_snapshot_data"]["placements_with_allele"]
-            if p["placement_annot"]["mol_type"] == "protein"
-        ]
+                if "HGVS" not in values:
+                    break
 
-        if len(protein_seqs) == 0:
-            print(f"WARNING: No protein sequences found for variant {response['refsnp_id']}.")
-            return None
+                hgvs_values = values["HGVS"].split(",")
 
-        # Otherwise, just use the first protein sequence.
-        return self._find_alt_allele(protein_seqs[0])["hgvs"]
+                # Just take the first one.
+                hgvsp = next((v for v in hgvs_values if v.startswith("NP_")), None)
+                hgvsc = next((v for v in hgvs_values if v.startswith("NM_")), None)
 
-    def hgvs_from_rsid(self, rsid: str) -> Dict[str, str | None]:
-        if rsid.startswith("rs"):
+                if hgvsp:
+                    result["hgvsp"] = hgvsp
+                if hgvsc:
+                    result["hgvsc"] = hgvsc
+                break
+        return result
+
+    def hgvs_from_rsid(self, rsids: Sequence[str]) -> Dict[str, Dict[str, str]]:
+        """Provided rsids should be a list of strings, each of which is a valid rsid, prefixed with `rs`."""
+        if isinstance(rsids, str):
+            rsids = [rsids]
+
+        keys = set()
+        for rsid in rsids:
+            if not rsid.startswith("rs"):
+                raise ValueError(f"Invalid rsid: {rsid}. Did you forget to include an 'rs' prefix?")
             rsid = rsid[2:]
 
-        # Remaining rsid must be only numeric.
-        if not rsid.isnumeric():
+            # Remaining rsid must be only numeric.
+            if not rsid.isnumeric():
+                raise ValueError(f"Invalid rsid: {rsid}: only rs followed by a string of numeric characters allowed.")
+
+            keys.add(rsid)
+
+        rsids_str = ",".join(keys)
+        response = self._entrez_fetch_xml(db="snp", id_str=rsids_str)
+
+        if not response or not self._validate_snp_response_xml(response):
             return {}
 
-        print(f"hgvs query for {rsid}")
-        response = self._entrez_fetch_json(db="snp", id_str=rsid)
-
-        if not self._validate_snp_response(response):
-            return {}
-
-        return {"hgvsc": self._find_hgvsc(response), "hgvsp": self._find_hgvsp(response)}
+        result = {}
+        for rsid in keys:
+            result["rs" + rsid] = self._find_hgvs_xml(response, rsid)
+        return result

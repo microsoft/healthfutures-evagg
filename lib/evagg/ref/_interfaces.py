@@ -2,7 +2,7 @@ from typing import Dict, Protocol, Sequence
 
 
 class INcbiSnpClient(Protocol):
-    def hgvs_from_rsid(self, rsid: str) -> Dict[str, str | None]:
+    def hgvs_from_rsid(self, rsid: Sequence[str]) -> Dict[str, Dict[str, str]]:
         ...
 
 
