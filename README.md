@@ -81,7 +81,45 @@ NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
 NCBI_EUTILS_MAX_TRIES=<max number of retries for retry-able calls to the NCBI eutils API (optional)>
 ```
 
-## Code organization
+## Running scripts
+
+At this point, the only script that exists is `lib/scripts/run_query_sync`. It is fairly generic and can be used to run
+a variety of apps, as long as they implement the protocol `lib.evagg.IEvaggApp`. Execution of the script is configured
+entirely from within YAML files, examples for which are contained in `lib/scripts/config`. These files describe both the
+wiring between dependencies and the parameterization of each dependency.
+
+The script `run_query_sync` can be invoked as follows:
+
+```bash
+run_query_sync -c <path_to_config_file>
+```
+
+As a simple smoke test of script execution, one can run the following specific commands:
+
+```bash
+python sandbox/miah/make_local_library.py
+run_query_sync -c lib/scripts/config/simple_config.py
+```
+
+This will create a fake local library of papers, extract content from those papers using a dummy implementation, and
+print the results of these operations to stdout. While this doesn't actually do anything useful, it's a good way to
+verify that the pipeline and dependencies are configured correctly.
+
+For a more full-featured execution, after configuring your `.env` file with the correct secrets, you can run the
+following:
+
+```bash
+mkdir -p .data/truth
+azcopy login
+azcopy cp "https://$SA.blob.core.windows.net/truth/truth_set_tiny.tsv" .data/truth/truth_set_tiny.tsv
+run_query_sync -c lib/scripts/config/tiny_config.yaml
+```
+
+Where `$SA` is the Azure Blob Storage Account where your team stores test files.
+
+## Contributing
+
+### Code organization
 
 The repository contains the following subdirectories:
 
@@ -95,39 +133,7 @@ root
 |-- test: unit tests for core libraries.
 ```
 
-## Running Benchmarks
-
-`run_query_sync` -- TODO
-
-#### Data pre-requisites
-
-Execution of this script currently depends on a local library of papers, we have a simple script to create that "library" based on a collection of pubmed IDs (pmids)
-
-```bash
-python sandbox/miah/make_local_library.py
-```
-
-By default this notebook will create a library in `/home/azureuser/data/evagg_local/`. If you place the local paper library in a different location, note you will need to modify `lib/scripts/run_single_query_sync/config/example_config.json` accordingly for `run_single_query_sync` to be able to run.
-
-#### Running the script
-
-This script is configured in pyproject.toml as an installed script. It can be run using the following command, executed from the repository root directory:
-
-```bash
-run_single_query_sync -c lib/scripts/run_single_query_sync/config/example_config.yaml
-```
-
-Successful execution should result in the following output and a JSON file should be written to the `.out` directory in your repository root.
-
-```text
-Writing output to: .out/run_single_query_sync.json
-```
-
-#### Evaluating results
-
-No implementation of comparing this pipeline's output to ground truth has been implemented yet, but when one exists, it will probably exist in notebooks.
-
-## Questions and todos
+### Questions and todos
 
 - Consider writing script for literature library localization? Likely only necessary if we don't see ourselves moving directly to PMC API requests.
 - Consider dataset organization, online access
