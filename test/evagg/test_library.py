@@ -47,23 +47,27 @@ def test_search():
 @patch.object(PubMedFileLibrary, "_find_ids_for_gene")
 @patch.object(PubMedFileLibrary, "_build_papers")
 def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene):
-    # what are the reasonable things to test for in search function only, no private functions
-    # dont touch external resources (e.g. Entrez)
-    # arrange
-    library = PubMedFileLibrary(email="ashleyconard@microsoft.com", max_papers=2)
-    results = library.search(Query("COQ2:variant"))
-    print("here, ", results)
+    # TODO: If we cannot call external resources, we need content from somewhere.
+    #       Thus, consider collections=[tmpdir]?
+    paper1 = Paper(id="doi_1", citation="Test Paper 1", abstract="This is a test paper.", pmcid="PMC123")
+
+    # Call library class
+    library = PubMedFileLibrary(email="ashleyconard@microsoft.com", max_papers=1)
 
     mock_query = MagicMock()
-    mock_query.terms.return_value = ["term1:variant1"]
-    mock_find_ids_for_gene.return_value = ["id1", "id2", "id3"]
-    mock_build_papers.return_value = set()
+    mock_query.terms.return_value = ["gene_A"]
+    mock_find_ids_for_gene.return_value = [
+        "id_A"
+    ]  # Replaces _find_ids_for_gene. Isolates testing search method. No external resource calls.
+    mock_build_papers.return_value = (
+        paper1  # Replaces _build_papers. Isolates testing search method. No external resource calls.
+    )
 
-    # act
+    # Run search
     result = library.search(mock_query)
 
-    # assert statements
+    # Assert statements
     mock_query.terms.assert_called_once()
-    mock_find_ids_for_gene.assert_called_once_with(gene="term1")
-    mock_build_papers.assert_called_once_with(["id1", "id2", "id3"])
-    assert isinstance(result, set)
+    mock_find_ids_for_gene.assert_called_once_with(query="gene_A")
+    mock_build_papers.assert_called_once_with(["id_A"])
+    assert paper1 == result
