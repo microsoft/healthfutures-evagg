@@ -1,12 +1,12 @@
 di_class: lib.evagg.SynchronousLocalApp
 query:
   di_class: lib.evagg.types.Query
-  gene: "COQ2"
+  gene: "RGSL1"
   variant: "p.R55*"
 library:
   di_class: lib.evagg.PubMedFileLibrary
   email: ashleyconard@microsoft.com
-  max_papers: 5
+  max_papers: 1
 extractor:
   di_class: lib.evagg.SemanticKernelContentExtractor
   fields:

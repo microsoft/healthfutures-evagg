@@ -92,22 +92,33 @@ def find_pmid_in_xml(all_tree_elements):  # 3
 def get_abstract_and_citation(pmid):  # 4
     handle = Entrez.efetch(db="pubmed", id=pmid, retmode="text", rettype="abstract")
     text_info = handle.read()
-    citation, doi, pmid = generate_citation(text_info)
     abstract = extract_abstract(text_info)
-    return (citation, doi, pmid, abstract)
+    citation, doi = generate_citation(text_info)
+    return (citation, doi, abstract)
 
 
 def generate_citation(text_info):
     # Extract the author's last name
     match = re.search(r"(\n\n[^\.]*\.)\n\nAuthor information", text_info, re.DOTALL)
-    sentence = match.group(1).replace("\n", " ")
-    author_lastname = sentence.split()[0]
+    if match:
+        sentence = match.group(1).replace("\n", " ")
+        author_lastname = sentence.split()[0]
+    else:
+        author_lastname = "NA"
 
     # Extract year of publication
-    year = re.search(r"\. (\d{4}) ", text_info).group(1)
+    match = re.search(r"\. (\d{4}) ", text_info)
+    if match:
+        year = match.group(1)
+    else:
+        year = "NA"
 
     # Extract journal abbreviation
-    journal_abbr = re.search(r"\. ([^\.]*\.)", text_info).group(1).strip(".")
+    match = re.search(r"\. ([^\.]*\.)", text_info)
+    if match:
+        journal_abbr = match.group(1).strip(".")
+    else:
+        journal_abbr = "NA"
 
     # Extract DOI number for citation
     match = re.search(r"\nDOI: (.*)\nPMID", text_info)
@@ -117,28 +128,32 @@ def generate_citation(text_info):
     elif match2:
         doi_number = match2.group(1).strip()
     else:
-        doi_number = 0.0
+        doi_number = "0.0"
 
     # Extract PMID
-    match = re.search(r"PMID: (\d+)", text_info)
-    if match:
-        pmid_number = match.group(1)
-    else:
-        pmid_number = 0.0
+    # match = re.search(r"PMID: (\d+)", text_info)
+    # if match:
+    #     pmid_number = match.group(1)
+    # else:
+    #     pmid_number = 0.0
 
     # Construct citation
     citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
 
-    return citation, doi_number, pmid_number
+    return citation, doi_number  # , pmid_number
 
 
 def extract_abstract(text_info):
     # Extract paragraph after "Author information:" sentence and before "DOI:"
-    abstract = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL).group(1).strip()
+    match = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL)
+    if match:
+        abstract = match.group(1).strip()
+    else:
+        abstract = "NA"
     return abstract
 
 
-def build_papers(id_list):
+def build_papers_not_set_papers(id_list):
     # papers: List[Paper] = []
     papers_tree = fetch_parse_xml(id_list)
     list_pmids = find_pmid_in_xml(papers_tree)
@@ -152,7 +167,7 @@ def build_papers(id_list):
     # Generate a set of Paper objects
     papers_set = set()
     for pmid in list_pmids:
-        citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
+        citation, doi, abstract = get_abstract_and_citation(pmid)
         paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid)  # make a new Paper object for each entry
         papers_set.add(paper)  # add Paper object to set
 
@@ -161,7 +176,31 @@ def build_papers(id_list):
     return papers_set
 
 
+def build_papers(id_list):  # -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
+    print(id_list)
+    papers_tree = fetch_parse_xml(id_list)
+    list_pmids = find_pmid_in_xml(papers_tree)
+    # print(list_pmids)
+
+    # Generate a set of Paper objects
+    papers_set = set()
+    for pmid in list_pmids:
+        # print("PMID ", pmid)
+        # if pmid == "22215539":
+        citation, doi, abstract = get_abstract_and_citation(pmid)
+        # print("doi", doi, "\n")
+        # print("citation", citation, "\n")
+        # print("abstract", abstract, "\n")
+        # print("PMID", pmid, "\n\n")
+        paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid)  # make a new Paper object for each entry
+        papers_set.add(paper)  # add Paper object to set
+
+    return papers_set
+
+
 ########################
+
+from pprint import pprint
 
 if __name__ == "__main__":
     Entrez.email = "ashleyconard@microsoft.com"
@@ -170,80 +209,87 @@ if __name__ == "__main__":
 
     # Testing Papers code :)
     email = "ashleyconard@microsoft.com"
-    id_list = find_ids_for_gene("PRKCG")
-    papers_tree = fetch_parse_xml(id_list)
-    print(type(papers_tree))
-    # list_pmids = find_pmid_in_xml(papers_tree)
-    # print(len(list_pmids))
-    # count = 0
-    # papers_set = set()
-    # for pmid in list_pmids:
-    #     count += 1
-    #     print(count, pmid)
-
-    #     citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
-    #     paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid)  # make a new Paper object for each entry
-    #     papers_set.add(paper)  # add Paper object to set
-    #     if count == 3:
-    #         break
-    # print(papers_set)
-    # print(type(papers_set))
-
-    # print(papers_dict['10.1038/ncpneuro0289'])
-    # papers_xml = fetch_details(id_list, email)
-    # print(papers_xml)
-
-    # Get info from ids
-    # ids = ['7294636', '8045942', '8857164', '5525338']
-    # handle = Entrez.efetch(db='pmc', id=ids, retmode = 'xml')
-    # results = handle.read()
-    # #print(results)
-
-    # Find PMIDs in papers XML
-    # find_PMIDs_in_text(str(papers_xml))
-    # print("hi")
-    # abstract = get_abstract('24134140')
-    # # Use abstract to determine rare disease papers.
-
-    # Get abstract information only
-    # handle = Entrez.efetch(db="pubmed", id="22545246", retmode="text", rettype="abstract")
-    # text_info = handle.read()
-    # print(text_info)
-    # print("_____________________________")
-    # text_info = get_abstract_and_citation("22545246")
-    # citation, pmid, abstract = get_abstract_and_citation("22545246")
-    # print(citation)
-    # print("_____________________________")
-    # print(extract_abstract(text_info))
-    # print(type(text_info))
-
-    # Get XML from hanoverdev given PMID
-    # get_xml_given_pmid(37071997)
-
-    #### Other code no need to read ####
-    # Print summary of paper
-    # print("summary")
-    # summary_handle = Entrez.esummary(db="pubmed", id="19923")
-    # summary = Entrez.read(summary_handle)
-    # summary_handle.close()
-    # print(summary)
-
-    # Get PubMed ID given gene name
-    # get_pubmed_id("SRSF1")
-
-    # Beautiful Soup
-    # soup = BS(papers, 'xml')
-    # D = {}
-    # intro = soup.RecordSet.DocumentSummary.Project
-    # if intro.ProjectDescr.Name:
-    #     D['Name'] = intro.ProjectDescr.Name
-
-    # print(D)
-
-    # print("papers")
+    # id_list = find_ids_for_gene("TWNK")
     # print(id_list)
-    # print(papers)
-    # print(papers[0]['body'])
-    # for paper in papers['PubmedArticle']:
-    #    print(paper['MedlineCitation']['Article']['ArticleTitle'])
-    #    print(paper)\
+    built_papers = search("RGSL1")
+
+    # for key, value in built_papers.props.items():
+    #     print(key, value)
+
+#    pprint(next(iter(built_papers)))
+# papers_tree = fetch_parse_xml(id_list)
+# print(type(papers_tree))
+# list_pmids = find_pmid_in_xml(papers_tree)
+# print(len(list_pmids))
+# count = 0
+# papers_set = set()
+# for pmid in list_pmids:
+#     count += 1
+#     print(count, pmid)
+
+#     citation, doi, pmid, abstract = get_abstract_and_citation(pmid)
+#     paper = Paper(id=doi, citation=citation, abstract=abstract, pmid=pmid)  # make a new Paper object for each entry
+#     papers_set.add(paper)  # add Paper object to set
+#     if count == 3:
+#         break
+# print(papers_set)
+# print(type(papers_set))
+
+# print(papers_dict['10.1038/ncpneuro0289'])
+# papers_xml = fetch_details(id_list, email)
+# print(papers_xml)
+
+# Get info from ids
+# ids = ['7294636', '8045942', '8857164', '5525338']
+# handle = Entrez.efetch(db='pmc', id=ids, retmode = 'xml')
+# results = handle.read()
+# #print(results)
+
+# Find PMIDs in papers XML
+# find_PMIDs_in_text(str(papers_xml))
+# print("hi")
+# abstract = get_abstract('24134140')
+# # Use abstract to determine rare disease papers.
+
+# Get abstract information only
+# handle = Entrez.efetch(db="pubmed", id="22545246", retmode="text", rettype="abstract")
+# text_info = handle.read()
+# print(text_info)
+# print("_____________________________")
+# text_info = get_abstract_and_citation("22545246")
+# citation, pmid, abstract = get_abstract_and_citation("22545246")
+# print(citation)
+# print("_____________________________")
+# print(extract_abstract(text_info))
+# print(type(text_info))
+
+# Get XML from hanoverdev given PMID
+# get_xml_given_pmid(37071997)
+
+#### Other code no need to read ####
+# Print summary of paper
+# print("summary")
+# summary_handle = Entrez.esummary(db="pubmed", id="19923")
+# summary = Entrez.read(summary_handle)
+# summary_handle.close()
+# print(summary)
+
+# Get PubMed ID given gene name
+# get_pubmed_id("SRSF1")
+
+# Beautiful Soup
+# soup = BS(papers, 'xml')
+# D = {}
+# intro = soup.RecordSet.DocumentSummary.Project
+# if intro.ProjectDescr.Name:
+#     D['Name'] = intro.ProjectDescr.Name
+
+# print(D)
+
+# print("papers")
+# print(id_list)
+# print(papers)
+# print(papers[0]['body'])
+# for paper in papers['PubmedArticle']:
+#    print(paper['MedlineCitation']['Article']['ArticleTitle'])
+#    print(paper)\
