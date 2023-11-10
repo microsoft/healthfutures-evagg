@@ -152,12 +152,25 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
     def _generate_citation(self, text_info) -> tuple:
         # Extract the author's last name
         match = re.search(r"(\n\n[^\.]*\.)\n\nAuthor information", text_info, re.DOTALL)
-        sentence = match.group(1).replace("\n", " ")
-        author_lastname = sentence.split()[0]
+        if match:
+            sentence = match.group(1).replace("\n", " ")
+            author_lastname = sentence.split()[0]
+        else:
+            author_lastname = "NA"
 
-        # Extract year and journal abbr.
-        year = re.search(r"\. (\d{4}) ", text_info).group(1)  # Extract pub. year
-        journal_abbr = re.search(r"\. ([^\.]*\.)", text_info).group(1).strip(".")  # Extract journal abbreviation
+        # Extract year of publication
+        match = re.search(r"\. (\d{4}) ", text_info)
+        if match:
+            year = match.group(1)
+        else:
+            year = "NA"
+
+        # Extract journal abbreviation
+        match = re.search(r"\. ([^\.]*\.)", text_info)
+        if match:
+            journal_abbr = match.group(1).strip(".")
+        else:
+            journal_abbr = "NA"
 
         # Extract DOI number for citation, TODO: modify to pull key
         match = re.search(r"\nDOI: (.*)\nPMID", text_info)
@@ -176,7 +189,11 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
 
     def _extract_abstract(self, text_info) -> str:
         # Extract paragraph after "Author information:" sentence and before "DOI:"
-        abstract = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL).group(1).strip()
+        match = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL)
+        if match:
+            abstract = match.group(1).strip()
+        else:
+            abstract = "NA"
         return abstract
 
     def _build_papers(self, id_list) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
