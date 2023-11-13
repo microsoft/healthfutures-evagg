@@ -63,7 +63,7 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene):
     library = PubMedFileLibrary(email="ashleyconard@microsoft.com", max_papers=1)
 
     # Isolating testing search method. No external resource calls.
-    mock_query = MagicMock() 
+    mock_query = MagicMock()
     mock_query.terms.return_value = ["gene_A"]
     mock_find_ids_for_gene.return_value = ["id_A"]  # Replaces _find_ids_for_gene.
     mock_build_papers.return_value = (paper1)  # Replaces _build_papers.
