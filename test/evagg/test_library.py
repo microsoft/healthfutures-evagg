@@ -47,21 +47,26 @@ def test_search():
 @patch.object(PubMedFileLibrary, "_find_ids_for_gene")
 @patch.object(PubMedFileLibrary, "_build_papers")
 def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene):
-    # TODO: If we cannot call external resources, we need content from somewhere.
-    #       Thus, consider collections=[tmpdir]?
-    paper1 = Paper(id="doi_1", citation="Test Paper 1", abstract="This is a test paper.", pmcid="PMC123")
+    # TODO: If we can't call external resources, we need content from
+    # somewhere. Thus, consider collections=[tmpdir]?
+    # Generating paper
+    paper1 = Paper(
+        id="doi_1",
+        citation="Test Paper 1",
+        abstract="This is a test paper.",
+        pmid="PMID123",
+        pmcid="PMC123",
+        is_pmc_oa="False"
+    )
 
     # Call library class
     library = PubMedFileLibrary(email="ashleyconard@microsoft.com", max_papers=1)
 
-    mock_query = MagicMock()
+    # Isolating testing search method. No external resource calls.
+    mock_query = MagicMock() 
     mock_query.terms.return_value = ["gene_A"]
-    mock_find_ids_for_gene.return_value = [
-        "id_A"
-    ]  # Replaces _find_ids_for_gene. Isolates testing search method. No external resource calls.
-    mock_build_papers.return_value = (
-        paper1  # Replaces _build_papers. Isolates testing search method. No external resource calls.
-    )
+    mock_find_ids_for_gene.return_value = ["id_A"]  # Replaces _find_ids_for_gene.
+    mock_build_papers.return_value = (paper1)  # Replaces _build_papers.
 
     # Run search
     result = library.search(mock_query)

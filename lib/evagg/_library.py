@@ -145,9 +145,9 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
     def _get_abstract_and_citation(self, pmid) -> tuple:
         handle = Entrez.efetch(db="pubmed", id=pmid, retmode="text", rettype="abstract")
         text_info = handle.read()
-        citation, doi = self._generate_citation(text_info)
+        citation, doi, pmcid_number = self._generate_citation(text_info)
         abstract = self._extract_abstract(text_info)
-        return (citation, doi, abstract)
+        return (citation, doi, abstract, pmcid_number)
 
     def _generate_citation(self, text_info) -> tuple:
         # Extract the author's last name
@@ -156,21 +156,21 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
             sentence = match.group(1).replace("\n", " ")
             author_lastname = sentence.split()[0]
         else:
-            author_lastname = "NA"
+            author_lastname = None
 
         # Extract year of publication
         match = re.search(r"\. (\d{4}) ", text_info)
         if match:
             year = match.group(1)
         else:
-            year = "NA"
+            year = None
 
         # Extract journal abbreviation
         match = re.search(r"\. ([^\.]*\.)", text_info)
         if match:
             journal_abbr = match.group(1).strip(".")
         else:
-            journal_abbr = "NA"
+            journal_abbr = None
 
         # Extract DOI number for citation, TODO: modify to pull key
         match = re.search(r"\nDOI: (.*)\nPMID", text_info)
@@ -180,12 +180,22 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
         elif match2:
             doi_number = match2.group(1).strip()
         else:
-            doi_number = 0.0
+            doi_number = None
+            
+        # Extract PMCID
+        match = re.search(r"\PMCID: (.*)\nPMID", text_info)
+       
+        if match:
+            pmcid_number = match.group(1).strip()
+        elif match2:
+            pmcid_number = match2.group(1).strip()
+        else:
+            pmcid_number = 0.0
 
         # Construct citation
         citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
 
-        return citation, doi_number
+        return citation, doi_number, pmcid_number
 
     def _extract_abstract(self, text_info) -> str:
         # Extract paragraph after "Author information:" sentence and before "DOI:"
@@ -193,19 +203,23 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
         if match:
             abstract = match.group(1).strip()
         else:
-            abstract = "NA"
+            abstract = None
         return abstract
 
+    def _check_is_pmc_oa(self) -> False:
+        return False
+    
     def _build_papers(self, id_list) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
         papers_tree = self._fetch_parse_xml(id_list)
         list_pmids = self._find_pmid_in_xml(papers_tree)
-
+        
         # Generate a set of Paper objects
         papers_set = set()
         for pmid in list_pmids:
-            citation, doi, abstract = self._get_abstract_and_citation(pmid)
+            citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
+            is_pmc_oa = self._check_is_pmc_oa()
             paper = Paper(
-                id=doi, citation=citation, abstract=abstract, pmid=pmid
+                id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
             )  # make a new Paper object for each entry
             papers_set.add(paper)  # add Paper object to set
 
