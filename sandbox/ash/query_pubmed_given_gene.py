@@ -211,7 +211,7 @@ if __name__ == "__main__":
     email = "ashleyconard@microsoft.com"
     # id_list = find_ids_for_gene("TWNK")
     # print(id_list)
-    built_papers = search("RGSL1")
+    # built_papers = search("RGSL1")
 
     # for key, value in built_papers.props.items():
     #     print(key, value)
@@ -252,9 +252,9 @@ if __name__ == "__main__":
 # # Use abstract to determine rare disease papers.
 
 # Get abstract information only
-# handle = Entrez.efetch(db="pubmed", id="22545246", retmode="text", rettype="abstract")
-# text_info = handle.read()
-# print(text_info)
+handle = Entrez.efetch(db="pubmed", id="22545246", retmode="text", rettype="abstract")
+text_info = handle.read()
+print(text_info)
 # print("_____________________________")
 # text_info = get_abstract_and_citation("22545246")
 # citation, pmid, abstract = get_abstract_and_citation("22545246")
