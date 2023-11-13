@@ -5,8 +5,9 @@ import re
 import xml.etree.ElementTree as Et
 from collections import defaultdict
 from functools import cache
-from typing import Dict, List, Sequence, Set
+from typing import Dict, Sequence, Set
 
+import requests
 from Bio import Entrez  # Biopython
 
 from lib.evagg.types import IPaperQuery, Paper, Variant
@@ -111,18 +112,36 @@ class TruthsetFileLibrary(IGetPapers):
         return {p for p in all_papers if query_genes & {v.gene for v in p.evidence.keys()}}
 
 
-class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
+class PubMedFileLibrary(IGetPapers):
+    """A class for retrieving papers from PubMed."""
+
     def __init__(self, email: str, max_papers: int = 5) -> None:
+        """
+        Initialize a new instance of the PubMedFileLibrary class.
+
+        Args:
+            email (str): The email address to use for the Entrez API.
+            max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
+        """
         self._email = email
         Entrez.email = email
         self._max_papers = max_papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:  # 1 TODO: or Dict[str, Paper]?
+    def search(self, query: IPaperQuery) -> Set[Paper]:
+        """
+        Search for papers based on the given query.
+
+        Args:
+            query (IPaperQuery): The query to search for.
+
+        Returns:
+            Set[Paper]: The set of papers that match the query.
+        """
         term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
         id_list = self._find_ids_for_gene(query=term)
         return self._build_papers(id_list)
 
-    def _find_ids_for_gene(self, query):  # 2
+    def _find_ids_for_gene(self, query):
         handle = Entrez.esearch(db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query)
         id_list = Entrez.read(handle)
         return id_list  # ["IdList"]
@@ -138,7 +157,7 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
     def _find_pmid_in_xml(self, all_tree_elements) -> list:
         list_pmids = []
         for elem in all_tree_elements:
-            if (elem.tag == "pub-id") and ("/" not in str(elem.text)) == True:  # doi
+            if (elem.tag == "pub-id") and ("/" not in str(elem.text)) is True:  # doi
                 list_pmids.append(elem.text)
         return list_pmids  # returns PMIDs
 
@@ -205,9 +224,24 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
         else:
             abstract = None
         return abstract
+    
+    def _is_pmc_oa(self, pmcid: str) -> bool:
+        url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
 
-    def _check_is_pmc_oa(self) -> False:
-        return False
+        root = Et.fromstring(response.text)
+        if root.find("error") is not None:
+            error = root.find("error")
+            if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
+                return False
+            else:
+                raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
+        match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
+        if match:
+            return True
+        else:
+            raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
     
     def _build_papers(self, id_list) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
         papers_tree = self._fetch_parse_xml(id_list)
@@ -217,7 +251,7 @@ class PubMedFileLibrary(IGetPapers):  # TODO: consider gene:variant info next
         papers_set = set()
         for pmid in list_pmids:
             citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
-            is_pmc_oa = self._check_is_pmc_oa()
+            is_pmc_oa = self._is_pmc_oa()
             paper = Paper(
                 id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
             )  # make a new Paper object for each entry
