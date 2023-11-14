@@ -163,4 +163,5 @@ cython_debug/
 .out
 .config
 .data
-papers.xml
+/home/azureuser/ev-agg-exp/sandbox/ash/query_pubmed_given_gene.py
+/home/azureuser/ev-agg-exp/sandbox/ash/query_pubmed_given_gene.ipynb
