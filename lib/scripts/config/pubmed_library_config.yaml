@@ -1,8 +1,7 @@
 di_class: lib.evagg.SynchronousLocalApp
 query:
   di_class: lib.evagg.types.Query
-  gene: "RGSL1"
-  variant: "p.R55*"
+  variant: "RGSL1:p.R55*"
 library:
   di_class: lib.evagg.PubMedFileLibrary
   email: ashleyconard@microsoft.com
