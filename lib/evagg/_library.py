@@ -144,7 +144,7 @@ class PubMedFileLibrary(IGetPapers):
     def _find_ids_for_gene(self, query):
         handle = Entrez.esearch(db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query)
         id_list = Entrez.read(handle)
-        return id_list  # ["IdList"]
+        return id_list["IdList"]
 
     def _fetch_parse_xml(self, id_list: Sequence[str]) -> list:
         ids = ",".join(id_list)
@@ -202,7 +202,7 @@ class PubMedFileLibrary(IGetPapers):
             doi_number = None
             
         # Extract PMCID
-        match = re.search(r"\PMCID: (.*)\nPMID", text_info)
+        match = re.search(r"\nPMCID: (.*)\nPMID", text_info)
        
         if match:
             pmcid_number = match.group(1).strip()
@@ -233,10 +233,15 @@ class PubMedFileLibrary(IGetPapers):
         root = Et.fromstring(response.text)
         if root.find("error") is not None:
             error = root.find("error")
-            if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
+            if 'idDoesNotExist' in error.attrib['code']:
+                print(f"PMC OA ID {pmcid} does not exist.")
                 return False
             else:
                 raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
+            # if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
+            #     return False
+            # else:
+            #     raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
         match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
         if match:
             return True
@@ -251,7 +256,7 @@ class PubMedFileLibrary(IGetPapers):
         papers_set = set()
         for pmid in list_pmids:
             citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
-            is_pmc_oa = self._is_pmc_oa()
+            is_pmc_oa = self._is_pmc_oa(pmid)
             paper = Paper(
                 id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
             )  # make a new Paper object for each entry
