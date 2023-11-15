@@ -1,6 +1,7 @@
 from typing import Any, Dict, Sequence, Tuple
 
 from lib.evagg.lit import IAnnotateEntities, VariantMentionFinder
+from lib.evagg.ref import INcbiGeneClient
 from lib.evagg.types import MultiQuery, Paper, Query
 
 GENE_ID_PAIRS = {
@@ -35,13 +36,22 @@ class MockAnnotator(IAnnotateEntities):
         return passages
 
 
+class MockNcbiGeneClient(INcbiGeneClient):
+    def __init__(self, symbol_gene_id_tuples: Sequence[Tuple[str, int]]) -> None:
+        self._gene_id_variant_tuples = symbol_gene_id_tuples
+
+    def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
+        return {symbol: gene_id for symbol, gene_id in self._gene_id_variant_tuples if symbol in symbols}
+
+
 def test_find_single_mention_single_query():
     gene_symbol = list(GENE_ID_PAIRS.keys())[0]
     gene_id = GENE_ID_PAIRS[gene_symbol]
     query = Query(f"{gene_symbol}:varX")
 
     mock_annotator = MockAnnotator([(gene_id, "var1")])
-    finder = VariantMentionFinder(mock_annotator)
+    mock_ncbi_gene_client = MockNcbiGeneClient([(gene_symbol, gene_id)])
+    finder = VariantMentionFinder(mock_annotator, mock_ncbi_gene_client)
 
     paper = Paper(id="123")
 
@@ -62,7 +72,8 @@ def test_find_multiple_mentions_single_query():
     query = Query(f"{gene_symbol}:varX")
 
     mock_annotator = MockAnnotator([(gene_id, "var1"), (gene_id, "var2")])
-    finder = VariantMentionFinder(mock_annotator)
+    mock_ncbi_gene_client = MockNcbiGeneClient([(gene_symbol, gene_id)])
+    finder = VariantMentionFinder(mock_annotator, mock_ncbi_gene_client)
 
     paper = Paper(id="123")
 
@@ -87,7 +98,10 @@ def test_find_multiple_mentions_multi_query():
 
     # Ensure that variant ids are unique across genes.
     mock_annotator = MockAnnotator([(gene_id, f"var{gene_id}") for gene_id in gene_ids])
-    finder = VariantMentionFinder(mock_annotator)
+    mock_ncbi_gene_client = MockNcbiGeneClient(
+        [(gene_symbol, gene_id) for gene_symbol, gene_id in GENE_ID_PAIRS.items()]
+    )
+    finder = VariantMentionFinder(mock_annotator, mock_ncbi_gene_client)
 
     paper = Paper(id="123")
 
@@ -110,7 +124,8 @@ def test_find_no_mentions():
     query = Query("FAM111B:varX")
 
     mock_annotator = MockAnnotator([(gene_id, "var1")])
-    finder = VariantMentionFinder(mock_annotator)
+    mock_ncbi_gene_client = MockNcbiGeneClient([(gene_symbol, gene_id)])
+    finder = VariantMentionFinder(mock_annotator, mock_ncbi_gene_client)
 
     paper = Paper(id="123")
 
