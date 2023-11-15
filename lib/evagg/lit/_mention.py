@@ -26,7 +26,8 @@ class VariantMentionFinder(IFindVariantMentions):
                         # just the HGVS id without the protein context. The former isn't specific to the actual variant
                         # (e.g., could have two alt alleles), the latter is specific to the gene (e.g., multiple genes)
                         # might have the same variant.
-                        variants_in_query_gene.add(annotation["infons"]["identifier"])
+                        if annotation["infons"]["identifier"] is not None:
+                            variants_in_query_gene.add(annotation["infons"]["identifier"])
         return variants_in_query_gene
 
     def _gather_mentions(self, annotations: Dict[str, Any], variant_id: str) -> Sequence[Dict[str, Any]]:
