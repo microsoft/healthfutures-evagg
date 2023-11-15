@@ -12,7 +12,8 @@ from lib.evagg.web.entrez import IEntrezClient
 from lib.evagg.types import IPaperQuery, Paper, Variant
 
 from ._interfaces import IGetPapers
-from Bio import Entrez 
+from Bio import Entrez
+
 
 class SimpleFileLibrary(IGetPapers):
     def __init__(self, collections: Sequence[str]) -> None:
@@ -162,8 +163,6 @@ class PubMedFileLibrary(IGetPapers):
 
     def _get_abstract_and_citation(self, pmid) -> tuple:
         text_info = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="text", rettype="abstract")
-        print(type(text_info))
-        print(text_info)
         citation, doi, pmcid_number = self._generate_citation(text_info)
         abstract = self._extract_abstract(text_info)
         return (citation, doi, abstract, pmcid_number)
@@ -200,14 +199,12 @@ class PubMedFileLibrary(IGetPapers):
             doi_number = match2.group(1).strip()
         else:
             doi_number = None
-            
+
         # Extract PMCID
         match = re.search(r"\nPMCID: (.*)\nPMID", text_info)
-       
+
         if match:
             pmcid_number = match.group(1).strip()
-        elif match2:
-            pmcid_number = match2.group(1).strip()
         else:
             pmcid_number = 0.0
 
@@ -224,18 +221,16 @@ class PubMedFileLibrary(IGetPapers):
         else:
             abstract = None
         return abstract
-    
+
     def _is_pmc_oa(self, pmcid: str) -> bool:
         url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
         response = requests.get(url, timeout=15)
         response.raise_for_status()
-        print(response.text)
-        exit()
 
         root = Et.fromstring(response.text)
         if root.find("error") is not None:
             error = root.find("error")
-            if 'idDoesNotExist' in error.attrib['code']:
+            if "idDoesNotExist" in error.attrib["code"]:
                 print(f"PMC OA ID {pmcid} does not exist.")
                 return False
             else:
@@ -246,19 +241,23 @@ class PubMedFileLibrary(IGetPapers):
             #     raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
         match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
         if match:
+            print("PMC paper", pmcid,"is in PMCOA")
             return True
         else:
             raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
-    
+
     def _build_papers(self, id_list) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
         papers_tree = self._fetch_parse_xml(id_list)
         list_pmids = self._find_pmid_in_xml(papers_tree)
 
         # Generate a set of Paper objects
         papers_set = set()
+        count = 0
         for pmid in list_pmids:
             citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
-            is_pmc_oa = self._is_pmc_oa(pmid)
+            is_pmc_oa = self._is_pmc_oa(pmcid)
+            count += 1
+            print(count, " Citation: ", citation)
             paper = Paper(
                 id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
             )  # make a new Paper object for each entry
