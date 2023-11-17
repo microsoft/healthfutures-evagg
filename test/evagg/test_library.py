@@ -56,7 +56,7 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene):
         abstract="This is a test paper.",
         pmid="PMID123",
         pmcid="PMC123",
-        is_pmc_oa="False"
+        is_pmc_oa="False",
     )
 
     # Call library class
@@ -66,7 +66,7 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene):
     mock_query = MagicMock()
     mock_query.terms.return_value = ["gene_A"]
     mock_find_ids_for_gene.return_value = ["id_A"]  # Replaces _find_ids_for_gene.
-    mock_build_papers.return_value = (paper1)  # Replaces _build_papers.
+    mock_build_papers.return_value = paper1  # Replaces _build_papers.
 
     # Run search
     result = library.search(mock_query)
