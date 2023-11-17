@@ -5,14 +5,14 @@ import re
 import xml.etree.ElementTree as Et
 from collections import defaultdict
 from functools import cache
-from typing import Dict, Sequence, Set, List, Any
+from typing import Any, Dict, List, Sequence, Set
 
 import requests
-from lib.evagg.web.entrez import IEntrezClient
+
 from lib.evagg.types import IPaperQuery, Paper, Variant
+from lib.evagg.web.entrez import IEntrezClient
 
 from ._interfaces import IGetPapers
-from Bio import Entrez
 
 
 class SimpleFileLibrary(IGetPapers):
@@ -116,8 +116,7 @@ class PubMedFileLibrary(IGetPapers):
     """A class for retrieving papers from PubMed."""
 
     def __init__(self, entrez_client: IEntrezClient, max_papers: int = 5) -> None:
-        """
-        Initialize a new instance of the PubMedFileLibrary class.
+        """Initialize a new instance of the PubMedFileLibrary class.
 
         Args:
             entrez_client (IEntrezClient): A class for interacting with the Entrez API.
@@ -127,8 +126,7 @@ class PubMedFileLibrary(IGetPapers):
         self._max_papers = max_papers
 
     def search(self, query: IPaperQuery) -> Set[Paper]:
-        """
-        Search for papers based on the given query.
+        """Search for papers based on the given query.
 
         Args:
             query (IPaperQuery): The query to search for.
@@ -141,10 +139,15 @@ class PubMedFileLibrary(IGetPapers):
         id_list = self._find_ids_for_gene(query=term)
         return self._build_papers(id_list)
 
-    def _find_ids_for_gene(self, query):
-        handle = Entrez.esearch(db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query)
-        id_list = Entrez.read(handle)
-        return id_list["IdList"]
+    def _find_ids_for_gene(self, query: str) -> List[str]:
+        id_list_xml = self._entrez_client.esearch(
+            db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query
+        )
+        tree = Et.fromstring(id_list_xml)
+        if (id_list_elt := tree.find("IdList")) is None:
+            return []
+        id_list = [c.text for c in id_list_elt.iter("Id") if c.text is not None]
+        return id_list
 
     def _fetch_parse_xml(self, id_list: Sequence[str]) -> list:
         ids = ",".join(id_list)
@@ -219,29 +222,23 @@ class PubMedFileLibrary(IGetPapers):
         if match:
             abstract = match.group(1).strip()
         else:
-            abstract = None
+            abstract = ""
         return abstract
 
     def _is_pmc_oa(self, pmcid: str) -> bool:
         url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
-        response = requests.get(url, timeout=15)
+        response = requests.get(url, timeout=5)
         response.raise_for_status()
 
         root = Et.fromstring(response.text)
         if root.find("error") is not None:
             error = root.find("error")
-            if "idDoesNotExist" in error.attrib["code"]:
-                print(f"PMC OA ID {pmcid} does not exist.")
+            if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
                 return False
             else:
                 raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
-            # if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
-            #     return False
-            # else:
-            #     raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
         match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
         if match:
-            print("PMC paper", pmcid,"is in PMCOA")
             return True
         else:
             raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
@@ -271,4 +268,4 @@ class HanoverFileLibrary(IGetPapers):
         self._file_path = file_path
 
     def search(self, query: IPaperQuery) -> Set[Paper]:
-        return None
+        return None  # type: ignore
