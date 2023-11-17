@@ -1,0 +1,5 @@
+Below is an unstructured list of subject identifiers. Reformat this list to be in valid JSON format as an array of 
+strings. Do not output any additional characters, just the valid JSON array. In the case where the list doesn't contain
+any valid identifiers, just return an empty list (e.g., "[]").
+
+{{$input}}

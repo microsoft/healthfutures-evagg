@@ -9,7 +9,7 @@ library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_tiny.tsv
 extractor:
-  di_class: lib.evagg.SemanticKernelContentExtractor
+  di_class: lib.evagg.SubjectBasedContentExtractor
   fields:
     - gene
     - paper_id
@@ -22,22 +22,6 @@ extractor:
     di_class: lib.evagg.sk.SemanticKernelClient
     config:
       di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
-  mention_finder:
-    di_class: lib.evagg.lit.VariantMentionFinder
-    entity_annotator:
-      di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
-    ncbi_gene_client: 
-      di_class: lib.evagg.ref.NcbiGeneClient
-      entrez_client: 
-        di_class: lib.evagg.web.entrez.BioEntrezClient
-        config: 
-          di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
-  ncbi_snp_client: 
-    di_class: lib.evagg.ref.NcbiSnpClient
-    entrez_client: 
-      di_class: lib.evagg.web.entrez.BioEntrezClient
-      config: 
-        di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
   di_class: lib.evagg.TableOutputWriter
   output_path: /home/azureuser/repos/ev-agg-exp/.out/batch_tiny.tsv

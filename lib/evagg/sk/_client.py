@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from typing import Dict, Tuple
 
@@ -7,6 +8,10 @@ from dotenv import load_dotenv
 from semantic_kernel.connectors.ai.open_ai import AzureTextCompletion
 
 from lib.config import PydanticYamlModel
+
+# Configure basic logger.
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger()
 
 
 # Assume AOAI.
@@ -35,7 +40,7 @@ class SemanticKernelClient:
     _functions: Dict[Tuple[str, str], sk.SKFunctionBase]
 
     def __init__(self, config: SemanticKernelConfig) -> None:
-        self._kernel = sk.Kernel()
+        self._kernel = sk.Kernel(log=logging.getLogger())
         self._functions = {}
         # Assume AOAI.
         self._kernel.add_text_completion_service(
@@ -63,10 +68,8 @@ class SemanticKernelClient:
             self._functions[key] = self._import_function(skill, function)
             return self._functions[key]
 
-    def _invoke_function(
-        self, sk_function: sk.SKFunctionBase, input: str | None, variables: sk.ContextVariables
-    ) -> str:
-        result = asyncio.run(self._kernel.run_async(sk_function, input_vars=variables, input_str=input))
+    def _invoke_function(self, sk_function: sk.SKFunctionBase, variables: sk.ContextVariables | None) -> str:
+        result = asyncio.run(self._kernel.run_async(sk_function, input_vars=variables))
         if result.error_occurred:
             raise ValueError(f"Error: {result.last_error_description}")
         return result.result
@@ -76,6 +79,5 @@ class SemanticKernelClient:
         # TODO handle token limits?
 
         function_obj = self._get_function(skill, function)
-        input = context_variables.pop("input", None)
-        vars = sk.ContextVariables(variables=context_variables)
-        return self._invoke_function(function_obj, input, vars)
+        vars = sk.ContextVariables(variables=context_variables) if context_variables else None
+        return self._invoke_function(function_obj, vars)

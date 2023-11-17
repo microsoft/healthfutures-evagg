@@ -1,0 +1,21 @@
+{
+    "schema": 1,
+    "description": "Determine the list of subject identifiers mentioned in the input text",
+    "type": "completion",
+    "completion": {
+        "max_tokens": 1000,
+        "temperature": 0.1,
+        "top_p": 0.5,
+        "presence_penalty": 0,
+        "frequency_penalty": 0
+    },
+    "input": {
+        "parameters": [
+            {
+                "name": "input",
+                "description": "Text from which the subject identifiers should be extracted",
+                "defaultValue": ""
+            }
+        ]
+    }
+}

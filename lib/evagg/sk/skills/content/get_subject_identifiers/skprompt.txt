@@ -1,0 +1,12 @@
+The following text may or may not discuss the genomic analysis of one or more patients. List the identifiers for the 
+patients discussed in this text. Many papers will have the names of patients as row or column headings in tables,
+others may mention them in the text directly. Patient identifiers can take many forms, including "Patient 1", "Pt1", 
+"P1", "Subject 1", "Sub1", "S1", etc. Use of additional context may be helpful in disambiguating subject identifiers 
+from other terms, e.g., association of a subject identifier with a phenotype, a clinical outcome, a genomic variant, 
+etc.
+
+If it appears that there are subject identifiers in the paper, please tell me that instead of inventing subject 
+identifiers.
+
+--- begin text ---
+{{$input}}
