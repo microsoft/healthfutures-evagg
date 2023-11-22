@@ -151,9 +151,25 @@ class PubMedFileLibrary(IGetPapers):
 
     def _fetch_parse_xml(self, id_list: Sequence[str]) -> list:
         ids = ",".join(id_list)
-        response = self._entrez_client.efetch(db="pmc", retmode="xml", id=ids)
-        tree = Et.fromstring(response)
-        return tree.findall("article")
+
+        response = self._entrez_client.efetch(db="pmc", retmode="xml", rettype=None, id=ids)
+        root = Et.fromstring(response)
+
+        # Find all 'article' elements
+        articles = root.findall("article")
+
+        # Create a new root element
+        new_root = Et.Element("root")
+
+        # Append the 'article' elements to the new root
+        for article in articles:
+            new_root.append(article)
+
+        # Create an ElementTree object for the new root and write it to a file
+        new_tree = Et.ElementTree(new_root)
+        new_tree.write("articles.xml")
+
+        return articles
 
     def _find_pmid_in_xml(self, article_elements: List[Any]) -> list:
         list_pmids = []
