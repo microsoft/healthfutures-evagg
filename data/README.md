@@ -4,8 +4,8 @@ Sample data files are available in this repo for development and testing.
 
 ## Data files
 
-- **v1_truth_set_small.tsv**: a collection of 10 genes of interest with a few variants extracted from a small number of papers for each of these genes.
-- **v1_truth_set_tiny.tsv**: a subset of the small truth set.
+- **truth_set_small.tsv**: a collection of 10 genes of interest with a few variants extracted from a small number of papers for each of these genes.
+- **truth_set_tiny.tsv**: a subset of the small truth set.
 
 Both of these data files are tab-separated files with the following columns:
 
