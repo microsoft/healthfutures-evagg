@@ -158,17 +158,6 @@ class PubMedFileLibrary(IGetPapers):
         # Find all 'article' elements
         articles = root.findall("article")
 
-        # Create a new root element
-        new_root = Et.Element("root")
-
-        # Append the 'article' elements to the new root
-        for article in articles:
-            new_root.append(article)
-
-        # Create an ElementTree object for the new root and write it to a file
-        new_tree = Et.ElementTree(new_root)
-        new_tree.write("articles.xml")
-
         return articles
 
     def _find_pmid_in_xml(self, article_elements: List[Any]) -> list:
@@ -180,13 +169,13 @@ class PubMedFileLibrary(IGetPapers):
                     list_pmids.append(pub_id.text)
         return list_pmids  # returns PMIDs
 
-    def _get_abstract_and_citation(self, pmid) -> tuple:
+    def _get_abstract_and_citation(self, pmid: str) -> tuple:
         text_info = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="text", rettype="abstract")
         citation, doi, pmcid_number = self._generate_citation(text_info)
         abstract = self._extract_abstract(text_info)
         return (citation, doi, abstract, pmcid_number)
 
-    def _generate_citation(self, text_info) -> tuple:
+    def _generate_citation(self, text_info: str) -> tuple:
         # Extract the author's last name
         match = re.search(r"(\n\n[^\.]*\.)\n\nAuthor information", text_info, re.DOTALL)
         if match:
@@ -232,7 +221,7 @@ class PubMedFileLibrary(IGetPapers):
 
         return citation, doi_number, pmcid_number
 
-    def _extract_abstract(self, text_info) -> str:
+    def _extract_abstract(self, text_info: str) -> str:
         # Extract paragraph after "Author information:" sentence and before "DOI:"
         match = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL)
         if match:
@@ -259,7 +248,7 @@ class PubMedFileLibrary(IGetPapers):
         else:
             raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
 
-    def _build_papers(self, id_list) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
+    def _build_papers(self, id_list: list[str]) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
         papers_tree = self._fetch_parse_xml(id_list)
         list_pmids = self._find_pmid_in_xml(papers_tree)
 
