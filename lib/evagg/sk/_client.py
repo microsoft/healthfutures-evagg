@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Dict, Tuple
 
@@ -65,7 +66,7 @@ class SemanticKernelClient:
     def _invoke_function(
         self, sk_function: sk.SKFunctionBase, input: str | None, variables: sk.ContextVariables
     ) -> str:
-        result = sk_function.invoke(input=input, variables=variables)
+        result = asyncio.run(self._kernel.run_async(sk_function, input_vars=variables, input_str=input))
         if result.error_occurred:
             raise ValueError(f"Error: {result.last_error_description}")
         return result.result
@@ -73,6 +74,7 @@ class SemanticKernelClient:
     def run_completion_function(self, skill: str, function: str, context_variables: Dict[str, str]) -> str:
         # TODO handle errors
         # TODO handle token limits?
+
         function_obj = self._get_function(skill, function)
         input = context_variables.pop("input", None)
         vars = sk.ContextVariables(variables=context_variables)
