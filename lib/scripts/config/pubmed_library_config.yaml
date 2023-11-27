@@ -1,7 +1,7 @@
 di_class: lib.evagg.SynchronousLocalApp
 query:
   di_class: lib.evagg.types.Query
-  variant: RGSL1:M539V # "FAM111B:Thr625Asn" # "RGSL1:M539V" # R55*
+  variant: "UBR5:E1991K" # RGSL1:M539V # "FAM111B:Thr625Asn" # "RGSL1:M539V" #  RGSL1:R55*
 library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
