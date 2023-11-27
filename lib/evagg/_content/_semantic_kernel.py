@@ -50,7 +50,11 @@ class SemanticKernelContentExtractor(IExtractFields):
 
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = self._excerpt_from_mentions(mentions)
-            gene_symbol = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
+            context_variables = {
+                "input": paper_excerpts,
+                "variant": variant_id,
+                "gene": mentions[0].get("gene_symbol", "unknown"),  # Mentions should never be empty.
+            }
 
             # If we have a cached hgvs value, use it.
             hgvs: Dict[str, str] = {}
@@ -66,7 +70,7 @@ class SemanticKernelContentExtractor(IExtractFields):
                     raise ValueError(f"Unsupported field: {field}")
 
                 if field == "gene":
-                    result = gene_symbol
+                    result = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
                 elif field == "paper_id":
                     result = paper.id
                 elif field == "hgvsc":
@@ -74,8 +78,6 @@ class SemanticKernelContentExtractor(IExtractFields):
                 elif field == "hgvsp":
                     result = hgvs["hgvsp"] if ("hgvsp" in hgvs and hgvs["hgvsp"]) else "unknown"
                 else:
-                    context_variables = {"input": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
-
                     raw = self._sk_client.run_completion_function(
                         skill="content", function=field, context_variables=context_variables
                     )

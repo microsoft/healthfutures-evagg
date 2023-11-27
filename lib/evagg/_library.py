@@ -1,16 +1,11 @@
 import csv
 import json
 import os
-import re
-import xml.etree.ElementTree as Et
 from collections import defaultdict
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set
-
-import requests
+from typing import Dict, Sequence, Set
 
 from lib.evagg.types import IPaperQuery, Paper, Variant
-from lib.evagg.web.entrez import IEntrezClient
 
 from ._interfaces import IGetPapers
 
@@ -106,171 +101,8 @@ class TruthsetFileLibrary(IGetPapers):
 
     def search(self, query: IPaperQuery) -> Set[Paper]:
         all_papers = self._load_truthset()
+
         query_genes = {v.gene for v in query.terms()}
 
         # Filter to just the papers with variant terms that have evidence for the genes specified in the query.
         return {p for p in all_papers if query_genes & {v.gene for v in p.evidence.keys()}}
-
-
-class PubMedFileLibrary(IGetPapers):
-    """A class for retrieving papers from PubMed."""
-
-    def __init__(self, entrez_client: IEntrezClient, max_papers: int = 5) -> None:
-        """Initialize a new instance of the PubMedFileLibrary class.
-
-        Args:
-            entrez_client (IEntrezClient): A class for interacting with the Entrez API.
-            max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
-        """
-        self._entrez_client = entrez_client
-        self._max_papers = max_papers
-
-    def search(self, query: IPaperQuery) -> Set[Paper]:
-        """Search for papers based on the given query.
-
-        Args:
-            query (IPaperQuery): The query to search for.
-
-        Returns:
-            Set[Paper]: The set of papers that match the query.
-        """
-        term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
-
-        id_list = self._find_ids_for_gene(query=term)
-        return self._build_papers(id_list)
-
-    def _find_ids_for_gene(self, query: str) -> List[str]:
-        id_list_xml = self._entrez_client.esearch(
-            db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query
-        )
-        tree = Et.fromstring(id_list_xml)
-        if (id_list_elt := tree.find("IdList")) is None:
-            return []
-        id_list = [c.text for c in id_list_elt.iter("Id") if c.text is not None]
-        return id_list
-
-    def _fetch_parse_xml(self, id_list: Sequence[str]) -> list:
-        ids = ",".join(id_list)
-
-        response = self._entrez_client.efetch(db="pmc", retmode="xml", rettype=None, id=ids)
-        root = Et.fromstring(response)
-
-        # Find all 'article' elements
-        articles = root.findall("article")
-
-        return articles
-
-    def _find_pmid_in_xml(self, article_elements: List[Any]) -> list:
-        list_pmids = []
-        for article in article_elements:
-            pub_id_elements = article.iter("article-id")
-            for pub_id in pub_id_elements:
-                if pub_id.get("pub-id-type") == "pmid":
-                    list_pmids.append(pub_id.text)
-        return list_pmids  # returns PMIDs
-
-    def _get_abstract_and_citation(self, pmid: str) -> tuple:
-        text_info = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="text", rettype="abstract")
-        citation, doi, pmcid_number = self._generate_citation(text_info)
-        abstract = self._extract_abstract(text_info)
-        return (citation, doi, abstract, pmcid_number)
-
-    def _generate_citation(self, text_info: str) -> tuple:
-        # Extract the author's last name
-        match = re.search(r"(\n\n[^\.]*\.)\n\nAuthor information", text_info, re.DOTALL)
-        if match:
-            sentence = match.group(1).replace("\n", " ")
-            author_lastname = sentence.split()[0]
-        else:
-            author_lastname = None
-
-        # Extract year of publication
-        match = re.search(r"\. (\d{4}) ", text_info)
-        if match:
-            year = match.group(1)
-        else:
-            year = None
-
-        # Extract journal abbreviation
-        match = re.search(r"\. ([^\.]*\.)", text_info)
-        if match:
-            journal_abbr = match.group(1).strip(".")
-        else:
-            journal_abbr = None
-
-        # Extract DOI number for citation, TODO: modify to pull key
-        match = re.search(r"\nDOI: (.*)\nPMID", text_info)
-        match2 = re.search(r"\nDOI: (.*)\nPMCID", text_info)  # TODO: consider embedding into elif
-        if match:
-            doi_number = match.group(1).strip()
-        elif match2:
-            doi_number = match2.group(1).strip()
-        else:
-            doi_number = None
-
-        # Extract PMCID
-        match = re.search(r"\nPMCID: (.*)\nPMID", text_info)
-
-        if match:
-            pmcid_number = match.group(1).strip()
-        else:
-            pmcid_number = 0.0
-
-        # Construct citation
-        citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
-
-        return citation, doi_number, pmcid_number
-
-    def _extract_abstract(self, text_info: str) -> str:
-        # Extract paragraph after "Author information:" sentence and before "DOI:"
-        match = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL)
-        if match:
-            abstract = match.group(1).strip()
-        else:
-            abstract = ""
-        return abstract
-
-    def _is_pmc_oa(self, pmcid: str) -> bool:
-        url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-
-        root = Et.fromstring(response.text)
-        if root.find("error") is not None:
-            error = root.find("error")
-            if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
-                return False
-            else:
-                raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
-        match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
-        if match:
-            return True
-        else:
-            raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
-
-    def _build_papers(self, id_list: list[str]) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
-        papers_tree = self._fetch_parse_xml(id_list)
-        list_pmids = self._find_pmid_in_xml(papers_tree)
-
-        # Generate a set of Paper objects
-        papers_set = set()
-        count = 0
-        for pmid in list_pmids:
-            citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
-            is_pmc_oa = self._is_pmc_oa(pmcid)
-            count += 1
-            print(count, " Citation: ", citation)
-            paper = Paper(
-                id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
-            )  # make a new Paper object for each entry
-            papers_set.add(paper)  # add Paper object to set
-
-        return papers_set
-
-
-class HanoverFileLibrary(IGetPapers):
-    def __init__(self, file_path: str) -> None:
-        self._file_path = file_path
-
-    def search(self, query: IPaperQuery) -> Set[Paper]:
-        return None  # type: ignore

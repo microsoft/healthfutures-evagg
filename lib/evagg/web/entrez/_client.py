@@ -43,7 +43,3 @@ class BioEntrezClient(IEntrezClient):
     @cache
     def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
         return Entrez.efetch(db=db, id=id, retmode=retmode, rettype=rettype).read()
-
-    @cache
-    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
-        return Entrez.esearch(db=db, term=term, sort=sort, retmax=retmax, retmode=retmode).read()
