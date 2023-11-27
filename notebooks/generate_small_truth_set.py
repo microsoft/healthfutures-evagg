@@ -2,7 +2,8 @@
 
 This script takes as input a manually generated spreadsheet of evidence relevant to the assessment of a collection of
 gene/variant pairs. It outputs a dataframe containing the same information as the spreadsheet, but in a format that
-can be easily consumed by downstream scripts.
+can be easily consumed by downstream scripts. It will also output a subset of the same dataframe, for smoke testing
+purposes.
 
 The output dataframe will contain the columns described in data/README.md
 
@@ -21,7 +22,8 @@ papers, there will be a separate row in the dataframe for each mention of the va
 #
 # To use the Entrez APIs you'll also need to point CONFIG_PATH to a config file that contains an attribute "email"
 # at the root level, e.g.
-# email: your_email_address
+# email: <your email address>
+# It is recommended to place this config file in a .config folder in the same directory as this script.
 
 # %% Imports.
 
@@ -40,10 +42,10 @@ from lib.config import PydanticYamlModel
 
 # %% Constants.
 # Goofy joins to support both running interactive and as a script.
-SPREADSHEET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".data", "truth", "variant_examples.xlsx")
+SPREADSHEET_PATH = os.path.join(os.path.dirname(__file__), "..", ".data", "truth", "variant_examples.xlsx")
 WORKSHEET_NAME = "pilot study variants"
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), ".config", "parse_spreadsheet_small_config.yaml")
-OUTPUT_PATH_TEMPLATE = os.path.join(os.path.dirname(__file__), "..", "..", "data", "truth_set_SIZE.tsv")
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), ".config", "generate_small_truth_set.yaml")
+OUTPUT_PATH_TEMPLATE = os.path.join(os.path.dirname(__file__), "..", "data", "truth_set_SIZE.tsv")
 TINY_GENE_SET = ["COQ2", "JPH1"]
 
 # %% Handle configuration.
@@ -196,10 +198,6 @@ def _get_oa_info(pmcid: str) -> pd.Series:
 
 df = pd.concat([df, df["pmcid"].dropna().apply(_get_oa_info)], axis=1)
 df.fillna({"is_pmc_oa": False, "license": "unknown"}, inplace=True)
-
-# df["pmcid"].dropna().map(_get_oa_info)
-
-# pd.concat([df, temp_df], axis=1)
 
 # %% Reformat and reorder dataframe
 
