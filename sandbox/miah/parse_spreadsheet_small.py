@@ -230,6 +230,7 @@ df = df[
         "pmid",
         "pmcid",
         "is_pmc_oa",
+        "license",
         "phenotype",
         "zygosity",
         "variant_inheritance",
