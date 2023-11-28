@@ -17,12 +17,13 @@ extractor:
     - HGVS.C: hgvsc
     - HGVS.P: hgvsp
     - phenotype: phenotype
-    - variant_inheritance: zygosity
-    - condition_inheritance: inheritance
-    #- citation
+    - zygosity: zygosity
+    - variant_inheritance: variant_inheritance
     - study_type: study_type
-    - functional_info: functional_info
-    - mutation_type: mutation_type
+    - functional_study: functional_study
+    - variant_type: variant_type
+    - paper_title: paper_title
+    - link: link
 writer:
   di_class: lib.evagg.TableOutputWriter
   # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
