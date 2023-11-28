@@ -134,6 +134,10 @@ class PubMedFileLibrary(IGetPapers):
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
+
+        # if len(query.terms()) > 1:
+        #     raise NotImplementedError("Multiple term extraction not yet implemented.")
+
         term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
 
         id_list = self._find_ids_for_gene(query=term)
@@ -266,11 +270,3 @@ class PubMedFileLibrary(IGetPapers):
             papers_set.add(paper)  # add Paper object to set
 
         return papers_set
-
-
-class HanoverFileLibrary(IGetPapers):
-    def __init__(self, file_path: str) -> None:
-        self._file_path = file_path
-
-    def search(self, query: IPaperQuery) -> Set[Paper]:
-        return None  # type: ignore
