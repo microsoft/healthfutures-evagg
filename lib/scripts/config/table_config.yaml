@@ -8,7 +8,7 @@ query:
     - "PRKCG:p.A24S"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_small.tsv
+  file_path: data/truth_set_small.tsv
 extractor:
   di_class: lib.evagg.TruthsetContentExtractor
   field_map:
