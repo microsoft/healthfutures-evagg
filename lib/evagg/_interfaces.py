@@ -11,6 +11,9 @@ class IEvAggApp(Protocol):
 class IGetPapers(Protocol):
     def search(self, query: IPaperQuery) -> Set[Paper]:
         ...
+        #
+        # Set of papers that mention the gene
+        #
 
 
 class IExtractFields(Protocol):

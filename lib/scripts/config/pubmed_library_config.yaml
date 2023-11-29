@@ -1,0 +1,44 @@
+di_class: lib.evagg.SynchronousLocalApp
+query:
+  di_class: lib.evagg.types.Query
+  variant: "UBR5:E1991K"
+library:
+  di_class: lib.evagg.PubMedFileLibrary
+  entrez_client: 
+    di_class: lib.evagg.web.entrez.BioEntrezClient
+    config: 
+      di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
+  max_papers: 1
+extractor:
+  di_class: lib.evagg.SemanticKernelContentExtractor
+  fields:
+    - gene
+    - paper_id
+    - hgvsc
+    - hgvsp
+    - phenotype
+    - zygosity
+    - inheritance
+  sk_client:
+    di_class: lib.evagg.sk.SemanticKernelClient
+    config:
+      di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
+  mention_finder:
+    di_class: lib.evagg.lit.VariantMentionFinder
+    entity_annotator:
+      di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
+    ncbi_gene_client: 
+      di_class: lib.evagg.ref.NcbiGeneClient
+      entrez_client: 
+        di_class: lib.evagg.web.entrez.BioEntrezClient
+        config: 
+          di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
+  ncbi_snp_client: 
+    di_class: lib.evagg.ref.NcbiSnpClient
+    entrez_client: 
+      di_class: lib.evagg.web.entrez.BioEntrezClient
+      config: 
+        di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
+writer:
+  di_class: lib.evagg.TableOutputWriter
+  # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
