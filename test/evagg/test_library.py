@@ -199,29 +199,3 @@ def test_init(entrez_client):
     library = PubMedFileLibrary(entrez_client, max_papers)
     assert library._entrez_client == entrez_client
     assert library._max_papers == max_papers
-
-
-# NOTE that the following test assumes information of private PubMedFileLibrary methods. This is not ideal, but does
-# improve test coverage. I removed others and can certainly remove this.
-# I placed this here for further discussion about the discussion around optimizing test coverage vs. testing public
-# facing methods (e.g. search).
-
-
-# Mock the esearch method to return a valid XML string
-def test_find_pmids_for_gene(mocker, entrez_client):
-    byte_string = b"""<?xml version="1.0" encoding="UTF-8" ?>
-    <!DOCTYPE eSearchResult PUBLIC "-//NLM//DTD esearch 20060628//EN" "https://eutils.ncbi.nlm.nih.gov/eutils/dtd/20060628/esearch.dtd">
-    <eSearchResult><Count>48</Count><RetMax>1</RetMax><RetStart>0</RetStart><IdList><Id>8491582</Id></IdList><TranslationSet/><TranslationStack><TermSet><Term>RGSL1[All Fields]</Term><Field>All Fields</Field><Count>48</Count><Explode>N</Explode></TermSet><OP>GROUP</OP></TranslationStack><QueryTranslation>RGSL1[All Fields]</QueryTranslation></eSearchResult>"""
-    string = byte_string.decode("utf-8")
-
-    mock_esearch = mocker.patch("lib.evagg._library.IEntrezClient.esearch", return_value=string)
-
-    # Create a PubMedFileLibrary instance
-    library = PubMedFileLibrary(entrez_client, max_papers=1)
-
-    # Call the _find_pmids_for_gene method and check the result
-    result = library._find_pmids_for_gene("RGSL1")
-    assert result == ["8491582"]
-
-    # Check that the esearch method was called with the correct arguments
-    mock_esearch.assert_called_once_with(db="pubmed", sort="relevance", retmax=1, term="RGSL1")
