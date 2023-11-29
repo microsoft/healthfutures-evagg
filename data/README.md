@@ -18,6 +18,7 @@ Both of these data files are tab-separated files with the following columns:
 - **pmid**: pmid for the paper discussing this variant
 - **pmcid**: pmcid for the paper discussing this variant, if one exists
 - **is_pmc_oa**: boolean indicator for whether the paper is in the PubMed Central Open Access set, assume false if not provided
+- **license**: if available, the license type for the paper
 - **phenotype**: free text description of observed phenotype for this variant
 - **variant_inheritance**: Mendelian inheritance patterns observed for this variant [inherited, de novo, unknown]
 - **zygosity**: observed zygosity for this variant [homozygous, heterozygous]
