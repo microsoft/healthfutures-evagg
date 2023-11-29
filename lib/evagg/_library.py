@@ -134,9 +134,8 @@ class PubMedFileLibrary(IGetPapers):
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
-
-        # if len(query.terms()) > 1:
-        #     raise NotImplementedError("Multiple term extraction not yet implemented.")
+        if len(query.terms()) > 1:
+            raise NotImplementedError("Multiple term extraction not yet implemented.")
 
         term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
 
