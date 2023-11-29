@@ -5,7 +5,7 @@ import re
 import xml.etree.ElementTree as Et
 from collections import defaultdict
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set
+from typing import Dict, List, Sequence, Set, Tuple
 
 import requests
 
@@ -139,90 +139,71 @@ class PubMedFileLibrary(IGetPapers):
 
         term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
 
-        id_list = self._find_ids_for_gene(query=term)
-        return self._build_papers(id_list)
+        pmid_list = self._find_pmids_for_gene(query=term)
+        return self._build_papers(pmid_list)
 
-    def _find_ids_for_gene(self, query: str) -> List[str]:
-        id_list_xml = self._entrez_client.esearch(
-            db="pmc", sort="relevance", retmax=self._max_papers, retmode="xml", term=query
-        )
-        tree = Et.fromstring(id_list_xml)
+    def _find_pmids_for_gene(self, query: str) -> List[str]:
+        # Search the pubmed database
+        pmid_list_xml = self._entrez_client.esearch(db="pubmed", sort="relevance", retmax=self._max_papers, term=query)
+
+        # Extract the IDs
+        tree = Et.fromstring(pmid_list_xml)
         if (id_list_elt := tree.find("IdList")) is None:
             return []
-        id_list = [c.text for c in id_list_elt.iter("Id") if c.text is not None]
-        return id_list
+        pmid_list = [c.text for c in id_list_elt.iter("Id") if c.text is not None]
+        return pmid_list
 
-    def _fetch_parse_xml(self, id_list: Sequence[str]) -> list:
-        ids = ",".join(id_list)
+    def _get_abstract_and_citation(self, pmid: str) -> Tuple[str, str | None, str | None, str | None]:
+        xml_info = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="xml", rettype="abstract")
+        records = Et.fromstring(xml_info)
 
-        response = self._entrez_client.efetch(db="pmc", retmode="xml", rettype=None, id=ids)
-        root = Et.fromstring(response)
-
-        # Find all 'article' elements
-        articles = root.findall("article")
-
-        return articles
-
-    def _find_pmid_in_xml(self, article_elements: List[Any]) -> list:
-        list_pmids = []
-        for article in article_elements:
-            pub_id_elements = article.iter("article-id")
-            for pub_id in pub_id_elements:
-                if pub_id.get("pub-id-type") == "pmid":
-                    list_pmids.append(pub_id.text)
-        return list_pmids  # returns PMIDs
-
-    def _get_abstract_and_citation(self, pmid: str) -> tuple:
-        text_info = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="text", rettype="abstract")
-        citation, doi, pmcid_number = self._generate_citation(text_info)
-        abstract = self._extract_abstract(text_info)
-        return (citation, doi, abstract, pmcid_number)
-
-    def _generate_citation(self, text_info: str) -> tuple:
-        # Extract the author's last name
-        match = re.search(r"(\n\n[^\.]*\.)\n\nAuthor information", text_info, re.DOTALL)
-        if match:
-            authors_sentence = match.group(1).replace("\n", " ")
-            first_author_lastname = authors_sentence.split()[0]
+        # get abstract
+        abstract_elem = records.find(".//AbstractText")
+        if abstract_elem is not None:
+            abstract = abstract_elem.text
         else:
-            first_author_lastname = None
+            abstract = None
+
+        # generate citation
+        # get first author last name info
+        first_author_elem = records.find(".//Author/LastName")
+        if first_author_elem is not None:
+            first_author_last_name = first_author_elem.text
+        else:
+            first_author_last_name = None
 
         # Extract year of publication
-        match = re.search(r"(\d{4}).*;", text_info)
-        if match:
-            year = match.group(1)
+        pub_year_elem = records.find(".//PubDate/Year")
+        if pub_year_elem is not None:
+            pub_year = pub_year_elem.text
         else:
-            year = None
+            pub_year = "0.0"
 
-        # Extract journal abbreviation
-        match = re.search(r"\. ([^\.]*\.)", text_info)
-        if match:
-            journal_abbr = match.group(1).strip(".")
+        # extract journal abbreviation
+        journal_abbreviation_elem = records.find(".//ISOAbbreviation")
+        if journal_abbreviation_elem is not None:
+            journal_abbreviation = journal_abbreviation_elem.text
         else:
-            journal_abbr = None
+            journal_abbreviation = None
 
-        # Extract DOI number for citation, TODO: modify to pull key
-        match = re.search(r"\nDOI: (.*)\nPMID", text_info)
-        match2 = re.search(r"\nDOI: (.*)\nPMCID", text_info)  # TODO: consider embedding into elif
-        if match:
-            doi_number = match.group(1).strip()
-        elif match2:
-            doi_number = match2.group(1).strip()
+        # extract DOI
+        doi_elem = records.find(".//ELocationID[@EIdType='doi']")
+        if doi_elem is not None:
+            doi = doi_elem.text
         else:
-            doi_number = None
+            doi = "0.0"
 
-        # Extract PMCID
-        match = re.search(r"\nPMCID: (.*)\nPMID", text_info)
-
-        if match:
-            pmcid_number = match.group(1).strip()
+        # extract PMCID
+        pmcid_elem = records.find(".//ArticleId[@IdType='pmc']")
+        if pmcid_elem is not None:
+            pmcid = pmcid_elem.text
         else:
-            pmcid_number = 0.0
+            pmcid = "0.0"
 
-        # Construct citation
-        citation = f"{first_author_lastname} ({year}), {journal_abbr}., {doi_number}"
+        # generate citation
+        citation = f"{first_author_last_name} ({pub_year}) {journal_abbreviation}, {doi}"
 
-        return citation, doi_number, pmcid_number
+        return citation, doi, abstract, pmcid
 
     def _extract_abstract(self, text_info: str) -> str:
         # Extract paragraph after "Author information:" sentence and before "DOI:"
@@ -251,16 +232,13 @@ class PubMedFileLibrary(IGetPapers):
         else:
             raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
 
-    def _build_papers(self, id_list: list[str]) -> Set[Paper]:  # Dict[str, Dict[str, str]], #3
-        papers_tree = self._fetch_parse_xml(id_list)
-        list_pmids = self._find_pmid_in_xml(papers_tree)
-
+    def _build_papers(self, pmid_list: list[str]) -> Set[Paper]:  # Dict[str, Dict[str, str]]
         # Generate a set of Paper objects
         papers_set = set()
         count = 0
-        for pmid in list_pmids:
+        for pmid in pmid_list:
             citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
-            is_pmc_oa = self._is_pmc_oa(pmcid)
+            is_pmc_oa = self._is_pmc_oa(pmcid) if pmcid is not None else False
             count += 1
             print(count, " Citation: ", citation)
             paper = Paper(
