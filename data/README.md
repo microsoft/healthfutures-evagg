@@ -6,6 +6,7 @@ Sample data files are available in this repo for development and testing.
 
 - **truth_set_small.tsv**: a collection of 10 genes of interest with a few variants extracted from a small number of papers for each of these genes.
 - **truth_set_tiny.tsv**: a subset of the small truth set.
+- **truth_set_content_manual.tsv**: a manually curated subset of `truth_set_small.tsv` that contains only papers that are in PMC-OA with a non-ND license and the variants mentioned in the truth set are in the primary text of the paper.
 
 Both of these data files are tab-separated files with the following columns:
 
