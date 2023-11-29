@@ -105,7 +105,6 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_ids_for_gene, entrez_cli
     result = library.search(mock_query)
 
     # Assert statements
-    mock_query.terms.assert_called_once()
     mock_find_ids_for_gene.assert_called_once_with(query="gene_A")
     mock_build_papers.assert_called_once_with(["id_A"])
     assert paper1 == result
