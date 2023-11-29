@@ -1,7 +1,7 @@
 di_class: lib.evagg.SynchronousLocalApp
 query:
   di_class: lib.evagg.types.Query
-  variant: "UBR5:E1991K"
+  variant: "UBR5:E1991K"  # "CHI3L1:Y34C" # COQ2:R55*
 library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
