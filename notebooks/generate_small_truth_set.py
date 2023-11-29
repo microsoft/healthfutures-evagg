@@ -2,45 +2,32 @@
 
 This script takes as input a manually generated spreadsheet of evidence relevant to the assessment of a collection of
 gene/variant pairs. It outputs a dataframe containing the same information as the spreadsheet, but in a format that
-can be easily consumed by downstream scripts.
+can be easily consumed by downstream scripts. It will also output a subset of the same dataframe, for smoke testing
+purposes.
 
-The output dataframe will contain the following columns:
-- query_gene
-- query_variant (Optional)
-- gene
-- HGVS.C
-- HGVS.P
-- doi
-- pmid
-- pmcid
-- phenotype
-- variant_inheritance
-- condition_inheritance
-- study_type
-- functional_info
-- mutation_type
-- paper_title
-- link
-- notes
+The output dataframe will contain the columns described in data/README.md
 
 Note, each row will be uniqely identified by gene, variant, doi. That means if a paper mentions multiple variants,
 there will be a separate row in the dataframe for each mention within the paper. If a variant is mentioned in multiple
 papers, there will be a separate row in the dataframe for each mention of the variant.
 """
+
 # %% Pre-requisites.
-# Before running this script you will need to localize the spreadsheet to your local machine.
+# Before running this script you will need to localize the source spreadsheet to your local machine.
 # Currently there is a copy of this spreadsheet located at https://$SA.blob.core.windows.net/tmp/variant_examples.xlsx
 # It can be localized with the following commands:
-# sudo mkdir -p -m 0777 /mnt/data
+# sudo mkdir -p .data/truth
 # azcopy login (only works with azcopy < 10.20, more recent versions need export AZCOPY_AUTO_LOGIN_TYPE=DEVICE)
-# azcopy cp "https://$SA.blob.core.windows.net/tmp/variant_examples.xlsx" "/mnt/data/variant_examples.xlsx"
+# azcopy cp "https://$SA.blob.core.windows.net/tmp/variant_examples.xlsx" ".data/truth/variant_examples.xlsx"
 #
 # To use the Entrez APIs you'll also need to point CONFIG_PATH to a config file that contains an attribute "email"
 # at the root level, e.g.
-# email: your_email_address
+# email: <your email address>
+# It is recommended to place this config file in a .config folder in the same directory as this script.
 
 # %% Imports.
 
+import os
 from functools import cache
 from typing import Any, Tuple
 
@@ -54,9 +41,11 @@ from defusedxml import ElementTree
 from lib.config import PydanticYamlModel
 
 # %% Constants.
-SPREADSHEET_PATH = "/mnt/data/variant_examples.xlsx"
-CONFIG_PATH = "/home/azureuser/repos/ev-agg-exp/sandbox/miah/.config/parse_spreadsheet_small_config.yaml"
-OUTPUT_PATH_TEMPLATE = "/mnt/data/truth_set_SIZE.tsv"
+# Goofy joins to support both running interactive and as a script.
+SPREADSHEET_PATH = os.path.join(os.path.dirname(__file__), "..", ".data", "truth", "variant_examples.xlsx")
+WORKSHEET_NAME = "pilot study variants"
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), ".config", "generate_small_truth_set.yaml")
+OUTPUT_PATH_TEMPLATE = os.path.join(os.path.dirname(__file__), "..", "data", "truth_set_SIZE.tsv")
 TINY_GENE_SET = ["COQ2", "JPH1"]
 
 # %% Handle configuration.
@@ -72,7 +61,7 @@ config = Config.parse_yaml(CONFIG_PATH)
 Entrez.email = config.email
 
 # %% Read in the spreadsheet as a dataframe.
-df = pd.read_excel(SPREADSHEET_PATH, sheet_name="user study variants")
+df = pd.read_excel(SPREADSHEET_PATH, sheet_name=WORKSHEET_NAME)
 
 # Quick cleanup of spreadsheet, remove all empty rows. Remove all rows corresponding to Family IDs.
 df = df.dropna(how="all")
@@ -89,8 +78,8 @@ df["HGVS.P"] = df["HGVS.P"].str.strip()
 # directly to recover them.
 
 wb = openpyxl.load_workbook(SPREADSHEET_PATH)
-ws = wb["user study variants"]
-link_index = 7
+ws = wb[WORKSHEET_NAME]
+link_index = 6
 
 links: dict[Tuple, str | None] = {}
 
@@ -187,7 +176,7 @@ df["doi"] = pd.Series(df["pmid"].map(lookup))
 # %% determine whether the paper is in PMC-OA, only need to do this in cases where there's a PMCID
 
 
-def _is_pmc_oa(pmcid: str) -> bool:
+def _get_oa_info(pmcid: str) -> pd.Series:
     url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
     response = requests.get(url, timeout=5)
     response.raise_for_status()
@@ -196,17 +185,19 @@ def _is_pmc_oa(pmcid: str) -> bool:
     if root.find("error") is not None:
         error = root.find("error")
         if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
-            return False
+            return pd.Series({"is_pmc_oa": False, "license": "unknown"})
         else:
-            raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
+            raise ValueError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
     match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
     if match:
-        return True
+        license = match.attrib["license"] if "license" in match.attrib else "unknown"
+        return pd.Series({"is_pmc_oa": True, "license": license})
     else:
         raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
 
 
-df["is_pmc_oa"] = df["pmcid"].dropna().map(_is_pmc_oa)
+df = pd.concat([df, df["pmcid"].dropna().apply(_get_oa_info)], axis=1)
+df.fillna({"is_pmc_oa": False, "license": "unknown"}, inplace=True)
 
 # %% Reformat and reorder dataframe
 
@@ -219,10 +210,9 @@ df.rename(
         "Condition/ Phenotype": "phenotype",
         "Zygosity": "zygosity",
         "Reported Variant Inheritance": "variant_inheritance",
-        "Condition Inheritance ": "condition_inheritance",
         "Study type": "study_type",
-        "Functional info": "functional_info",
-        "Mutation type": "mutation_type",
+        "Functional info": "functional_study",
+        "Variant type": "variant_type",
         "Notes": "notes",
     },
     inplace=True,
@@ -238,12 +228,13 @@ df = df[
         "pmid",
         "pmcid",
         "is_pmc_oa",
+        "license",
         "phenotype",
+        "zygosity",
         "variant_inheritance",
-        "condition_inheritance",
         "study_type",
-        "functional_info",
-        "mutation_type",
+        "functional_study",
+        "variant_type",
         "paper_title",
         "link",
         "notes",
@@ -256,3 +247,5 @@ df.to_csv(OUTPUT_PATH_TEMPLATE.replace("SIZE", "small"), index=False, sep="\t")
 # %% Write tiny truth set to TSV
 df = df[df["gene"].isin(TINY_GENE_SET)]
 df.to_csv(OUTPUT_PATH_TEMPLATE.replace("SIZE", "tiny"), index=False, sep="\t")
+
+# %%
