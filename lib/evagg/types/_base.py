@@ -5,9 +5,9 @@ from typing import Any
 
 class Paper:
     def __init__(self, **kwargs: Any) -> None:
-        self.id = kwargs["id"]  # id is required
+        self.id = kwargs["id"]  # id is required, DOI
         self.evidence = kwargs.pop("evidence", {})
-        self.citation = kwargs.get("citation")
+        self.citation = kwargs.get("citation")  # TODO: determine format
         self.abstract = kwargs.get("abstract")
         self.props = kwargs
 
@@ -28,6 +28,9 @@ class Variant:
     def __init__(self, gene: str, variant: str) -> None:
         self.gene = gene
         self.variant = variant
+
+    def get_gene(self) -> str:
+        return self.gene
 
     def __hash__(self) -> int:
         return hash(self.gene + self.variant)
