@@ -182,13 +182,13 @@ class PubMedFileLibrary(IGetPapers):
         # Extract the author's last name
         match = re.search(r"(\n\n[^\.]*\.)\n\nAuthor information", text_info, re.DOTALL)
         if match:
-            sentence = match.group(1).replace("\n", " ")
-            author_lastname = sentence.split()[0]
+            authors_sentence = match.group(1).replace("\n", " ")
+            first_author_lastname = authors_sentence.split()[0]
         else:
-            author_lastname = None
+            first_author_lastname = None
 
         # Extract year of publication
-        match = re.search(r"\. (\d{4}) ", text_info)
+        match = re.search(r"(\d{4}).*;", text_info)
         if match:
             year = match.group(1)
         else:
@@ -220,7 +220,7 @@ class PubMedFileLibrary(IGetPapers):
             pmcid_number = 0.0
 
         # Construct citation
-        citation = f"{author_lastname} ({year}), {journal_abbr}., {doi_number}"
+        citation = f"{first_author_lastname} ({year}), {journal_abbr}., {doi_number}"
 
         return citation, doi_number, pmcid_number
 
