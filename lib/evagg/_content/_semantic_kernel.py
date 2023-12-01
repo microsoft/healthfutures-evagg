@@ -10,7 +10,7 @@ from .._interfaces import IExtractFields
 
 
 class SemanticKernelContentExtractor(IExtractFields):
-    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvsc", "hgvsp", "phenotype", "zygosity", "inheritance"}
+    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvsc", "hgvsp", "phenotype", "zygosity", "variant_inheritance"}
 
     def __init__(
         self,
@@ -44,7 +44,6 @@ class SemanticKernelContentExtractor(IExtractFields):
         results: List[Dict[str, str]] = []
 
         for variant_id in variant_mentions.keys():
-            print(f"Processing {variant_id}")
             mentions = variant_mentions[variant_id]
             variant_results: Dict[str, str] = {"variant": variant_id}
 
@@ -79,7 +78,10 @@ class SemanticKernelContentExtractor(IExtractFields):
                     raw = self._sk_client.run_completion_function(
                         skill="content", function=field, context_variables=context_variables
                     )
-                    result = json.loads(raw)[field]
+                    try:
+                        result = json.loads(raw)[field]
+                    except Exception:
+                        result = "failed"
                 variant_results[field] = result
             results.append(variant_results)
         return results
