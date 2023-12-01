@@ -80,27 +80,29 @@ df["HGVS.P"] = df["HGVS.P"].str.strip()
 wb = openpyxl.load_workbook(SPREADSHEET_PATH)
 ws = wb[WORKSHEET_NAME]
 link_index = 6
-
+pmid_index = 7
 links: dict[Tuple, str | None] = {}
 
 count = 0
 for row in ws.iter_rows():
     if not row[0].value or not row[1].value:
         continue
-    key = (str(row[0].value).strip(), str(row[1].value).strip())
     if row[link_index].hyperlink:
+        key = int(float(str(row[pmid_index].value).split(";")[0]))  # type: ignore
+        if key in links and links[key] != row[link_index].hyperlink.target:  # type: ignore
+            raise ValueError(f"Duplicate key {key} with different values")
         links[key] = row[link_index].hyperlink.target  # type: ignore
 
 # Recover the links
 df = pd.merge(
     df,
     pd.Series(links).reset_index(),  # type: ignore
-    left_on=["Gene", "HGVS.C"],
-    right_on=["level_0", "level_1"],
+    left_on=["PMID"],
+    right_on=["index"],
     how="left",
 )
 df = df.rename(columns={0: "link"})
-df = df.drop(columns=["level_0", "level_1"])
+df = df.drop(columns=["index"])
 
 # %% Extract the PMID from the links.
 df["pmid"] = df["link"].str.extract(r"https://pubmed.ncbi.nlm.nih.gov/(\d+)")
@@ -207,6 +209,8 @@ df["query_variant"] = np.nan
 df.rename(
     columns={
         "Gene": "gene",
+        "HGVS.C": "hgvs_c",
+        "HGVS.P": "hgvs_p",
         "Condition/ Phenotype": "phenotype",
         "Zygosity": "zygosity",
         "Reported Variant Inheritance": "variant_inheritance",
@@ -222,8 +226,8 @@ df = df[
         "query_gene",
         "query_variant",
         "gene",
-        "HGVS.C",
-        "HGVS.P",
+        "hgvs_c",
+        "hgvs_p",
         "doi",
         "pmid",
         "pmcid",
