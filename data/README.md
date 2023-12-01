@@ -13,8 +13,8 @@ Both of these data files are tab-separated files with the following columns:
 - **query_gene**: the query gene which should result in finding this record
 - **query_variant**: the query variant which should result in finding this record
 - **gene**: the gene impacted by the variant
-- **HGVS.C**: the HGVS.C representation of the variant
-- **HGVS.P**: the HGVS.P representation of the variant
+- **hgvs_c**: the HGVS.C representation of the variant
+- **hgvs_p**: the HGVS.P representation of the variant
 - **doi**: doi for the paper discussing this variant
 - **pmid**: pmid for the paper discussing this variant
 - **pmcid**: pmcid for the paper discussing this variant, if one exists
