@@ -14,13 +14,13 @@ def test_simple_content_extractor():
     paper = Paper(
         id="12345678", citation="Doe, J. et al. Test Journal 2021", abstract="This is a test paper.", pmcid="PMC123"
     )
-    fields = ["gene", "hgvsp", "inheritance", "phenotype"]
+    fields = ["gene", "hgvsp", "variant_inheritance", "phenotype"]
     extractor = SimpleContentExtractor(fields)
     result = extractor.extract(paper, Query("CHI3L1:p.Y34C"))
     assert len(result) == 1
     assert result[0]["gene"] == "CHI3L1"
     assert result[0]["hgvsp"] == "p.Y34C"
-    assert result[0]["inheritance"] == "AD"
+    assert result[0]["variant_inheritance"] == "AD"
     assert result[0]["phenotype"] == "Long face (HP:0000276)"
 
 
@@ -57,7 +57,7 @@ def test_sk_content_extractor_valid_fields():
         "hgvs_p": "g.Py34C",
         "phenotype": "test",
         "zygosity": "test",
-        "inheritance": "test",
+        "variant_inheritance": "test",
     }
 
     mention_finder = MockMentionFinder()

@@ -22,7 +22,7 @@ class SimpleContentExtractor(IExtractFields):
             return "Long face (HP:0000276)"
         if field == "zygosity":
             return "Heterozygous"
-        if field == "inheritance":
+        if field == "variant_inheritance":
             return "AD"
         if field == "functional data":
             return "No"
