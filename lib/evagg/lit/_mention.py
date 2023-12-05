@@ -19,7 +19,7 @@ class VariantMentionFinder(IFindVariantMentions):
         if len(annotations) == 0:
             return variants_in_query_gene
 
-        # TODO: filtering based on gene_id is probably too strict - the annotator may have identified a variant but 
+        # TODO: filtering based on gene_id is probably too strict - the annotator may have identified a variant but
         # failed to associate it with a gene. This is particularly the case for novel variants if the annotator relies
         # on curated references for variant-gene association.
 
@@ -68,7 +68,7 @@ class VariantMentionFinder(IFindVariantMentions):
             variant_ids = self._get_variant_ids(annotations, gene_id, gene_symbol)
             variant_gene_tuples = {(gene_symbol, gene_id, v) for v in variant_ids}
             variant_gene_ids.update(variant_gene_tuples)
-       
+
         # Now collect all the text chunks that mention each variant.
         # Record the gene id for each variant as well.
         mentions: Dict[str, Sequence[Dict[str, Any]]] = {}
@@ -154,6 +154,7 @@ class TruthsetVariantMentionFinder(VariantMentionFinder):
                 if save:
                     to_add = passage.copy()
                     to_add.pop("annotations")
+                    to_add["gene_symbol"] = evidence["gene"]
                     mentions.append(to_add)
                     break
 

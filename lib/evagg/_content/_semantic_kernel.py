@@ -43,6 +43,15 @@ class SemanticKernelContentExtractor(IExtractFields):
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
+        # TODO, variant_id can currently be any of the following:
+        # - rsid (e.g., rs123456789)
+        # - hgvs_c (e.g., c.123A>T)
+        # - hgvs_p (e.g., p.Ala123Thr)
+        # - gene+hgvs (e.g., BRCA1:c.123A>T || BRCA1:p.Ala123Thr)
+        #
+        # Currently handling this below in a hacky way temporarily. Need to figure out
+        # the correct story for variant nomenclature.
+
         for variant_id in variant_mentions.keys():
             mentions = variant_mentions[variant_id]
             variant_results: Dict[str, str] = {"variant": variant_id}
@@ -51,7 +60,7 @@ class SemanticKernelContentExtractor(IExtractFields):
             paper_excerpts = self._excerpt_from_mentions(mentions)
             gene_symbol = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
 
-            # If we have a cached hgvs value, use it.
+            # If we have a cached hgvs value, use it. This means variant_id is an rsid.
             hgvs: Dict[str, str] = {}
             if variant_id in hgvs_cache:
                 hgvs = hgvs_cache[variant_id]
