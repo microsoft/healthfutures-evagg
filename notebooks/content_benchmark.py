@@ -18,16 +18,15 @@ import pandas as pd
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "truth_set_content_manual.tsv")
 TEST_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
 
-# Note, since hgvs_c is an index column, it's not included in content columns.
-# TODO: based on how we change variant nomenclature and variant based indexing, we may want to update this.
-CONTENT_COLUMNS = {"hgvs_p", "phenotype", "zygosity", "variant_inheritance"}
+# TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
+CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"}
 INDEX_COLUMNS = {"gene", "hgvs_c", "paper_id"}
 
 # %% Read in the truth and test tables.
 
 truth_df = pd.read_csv(TRUTH_PATH, sep="\t")
 if "doi" in truth_df.columns:
-    print("Converting doi to paper_id")
+    print("Warning: converting doi to paper_id")
     truth_df.rename(columns={"doi": "paper_id"}, inplace=True)
 
 test_df = pd.read_csv(TEST_PATH, sep="\t")
@@ -70,15 +69,19 @@ merged_df.in_truth.fillna(False, inplace=True)
 precision = merged_df.in_truth[merged_df.in_test == True].mean()
 recall = merged_df.in_test[merged_df.in_truth == True].mean()
 
+print("---- Variant finding performance ----")
 print(f"Variant finding precision: {precision}")
 print(f"Variant finding recall: {recall}")
+print()
 
 # %% Assess content extraction.
 
 shared_df = merged_df[merged_df.in_truth & merged_df.in_test]
 
+print("---- Content extraction performance ----")
+
 for column in CONTENT_COLUMNS:
-    match = (shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_test"].str.lower())
+    match = shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_test"].str.lower()
     print(f"Content extraction accuracy for {column}: {match.mean()}")
 
     for idx, row in shared_df[~match].iterrows():
