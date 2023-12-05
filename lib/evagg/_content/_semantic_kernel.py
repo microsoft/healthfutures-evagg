@@ -10,7 +10,7 @@ from .._interfaces import IExtractFields
 
 
 class SemanticKernelContentExtractor(IExtractFields):
-    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvsc", "hgvsp", "phenotype", "zygosity", "variant_inheritance"}
+    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvs_c", "hgvs_p", "phenotype", "zygosity", "variant_inheritance"}
 
     def __init__(
         self,
@@ -56,9 +56,9 @@ class SemanticKernelContentExtractor(IExtractFields):
             if variant_id in hgvs_cache:
                 hgvs = hgvs_cache[variant_id]
             elif variant_id.startswith("c."):
-                hgvs = {"hgvsc": variant_id}
+                hgvs = {"hgvs_c": variant_id}
             elif variant_id.startswith("p."):
-                hgvs = {"hgvsp": variant_id}
+                hgvs = {"hgvs_p": variant_id}
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
@@ -68,10 +68,10 @@ class SemanticKernelContentExtractor(IExtractFields):
                     result = gene_symbol
                 elif field == "paper_id":
                     result = paper.id
-                elif field == "hgvsc":
-                    result = hgvs["hgvsc"] if ("hgvsc" in hgvs and hgvs["hgvsc"]) else "unknown"
-                elif field == "hgvsp":
-                    result = hgvs["hgvsp"] if ("hgvsp" in hgvs and hgvs["hgvsp"]) else "unknown"
+                elif field == "hgvs_c":
+                    result = hgvs["hgvs_c"] if ("hgvs_c" in hgvs and hgvs["hgvs_c"]) else "unknown"
+                elif field == "hgvs_p":
+                    result = hgvs["hgvs_p"] if ("hgvs_p" in hgvs and hgvs["hgvs_p"]) else "unknown"
                 else:
                     context_variables = {"input": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
 
