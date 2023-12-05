@@ -7,7 +7,7 @@ query_iterator:
     - "JPH1:p.R213P"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_tiny.tsv
+  file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_tiny.tsv
 extractor:
   di_class: lib.evagg.SemanticKernelContentExtractor
   fields:
