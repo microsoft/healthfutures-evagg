@@ -19,10 +19,11 @@ extractor:
     - phenotype: phenotype
     - zygosity: zygosity
     - variant_inheritance: variant_inheritance
-    #- citation
     - study_type: study_type
     - functional_study: functional_study
     - variant_type: variant_type
+    - paper_title: paper_title
+    - link: link
 writer:
   di_class: lib.evagg.TableOutputWriter
   # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
