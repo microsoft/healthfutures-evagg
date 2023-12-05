@@ -45,18 +45,18 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa"]
+TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa", "license"]
 # These are the columns in the truthset that are specific to the variant.
 TRUTHSET_VARIANT_KEYS = [
     "gene",
     "hgvs_c",
     "hgvs_p",
     "phenotype",
+    "zygosity",
     "variant_inheritance",
-    "condition_inheritance",
     "study_type",
-    "functional_info",
-    "mutation_type",
+    "functional_study",
+    "variant_type",
     "notes",
 ]
 
