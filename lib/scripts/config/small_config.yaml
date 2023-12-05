@@ -15,7 +15,7 @@ query_iterator:
     - "UBR5:p.P1228S"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_small.tsv
+  file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_small.tsv
 extractor:
   di_class: lib.evagg.SemanticKernelContentExtractor
   fields:
@@ -25,7 +25,7 @@ extractor:
     - hgvs_p
     - phenotype
     - zygosity
-    - inheritance
+    - variant_inheritance
   sk_client:
     di_class: lib.evagg.sk.SemanticKernelClient
     config:

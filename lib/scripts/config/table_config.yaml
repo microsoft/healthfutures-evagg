@@ -8,7 +8,7 @@ query:
     - "PRKCG:p.A24S"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_small.tsv
+  file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_small.tsv
 extractor:
   di_class: lib.evagg.TruthsetContentExtractor
   field_map:
@@ -17,12 +17,12 @@ extractor:
     - hgvs_c: hgvs_c
     - hgvs_p: hgvs_p
     - phenotype: phenotype
-    - variant_inheritance: zygosity
-    - condition_inheritance: inheritance
+    - zygosity: zygosity
+    - variant_inheritance: variant_inheritance
     #- citation
     - study_type: study_type
-    - functional_info: functional_info
-    - mutation_type: mutation_type
+    - functional_study: functional_study
+    - variant_type: variant_type
 writer:
   di_class: lib.evagg.TableOutputWriter
   # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
