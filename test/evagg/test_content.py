@@ -53,8 +53,8 @@ def test_sk_content_extractor_valid_fields():
     fields = {
         "gene": "CHI3L1",
         "paper_id": "12345678",
-        "hgvsc": "c.A100G",
-        "hgvsp": "g.Py34C",
+        "hgvs_c": "c.A100G",
+        "hgvs_p": "g.Py34C",
         "phenotype": "test",
         "zygosity": "test",
         "inheritance": "test",
@@ -62,7 +62,7 @@ def test_sk_content_extractor_valid_fields():
 
     mention_finder = MockMentionFinder()
     ncbi_snp_client = MockNcbiSnpClient(
-        {k: {"hgvsc": fields["hgvsc"], "hgvsp": fields["hgvsp"]} for k in mention_finder.mentions.keys()}
+        {k: {"hgvs_c": fields["hgvs_c"], "hgvs_p": fields["hgvs_p"]} for k in mention_finder.mentions.keys()}
     )
     content_extractor = SemanticKernelContentExtractor(
         list(fields.keys()),

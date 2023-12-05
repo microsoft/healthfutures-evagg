@@ -146,10 +146,10 @@ def test_variant(valid_variant):
     entrez_client = MockEntrezClient(valid_variant)
 
     result = NcbiSnpClient(entrez_client).hgvs_from_rsid(["rs146010120"])
-    assert result == {"rs146010120": {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}}
+    assert result == {"rs146010120": {"hgvs_c": "NM_001276.4:c.104G>A", "hgvs_p": "NP_001267.2:p.Arg35Gln"}}
 
     result = NcbiSnpClient(entrez_client).hgvs_from_rsid("rs146010120")
-    assert result == {"rs146010120": {"hgvsc": "NM_001276.4:c.104G>A", "hgvsp": "NP_001267.2:p.Arg35Gln"}}
+    assert result == {"rs146010120": {"hgvs_c": "NM_001276.4:c.104G>A", "hgvs_p": "NP_001267.2:p.Arg35Gln"}}
 
 
 def test_multi_variant(valid_multi_variant):
@@ -157,8 +157,8 @@ def test_multi_variant(valid_multi_variant):
 
     result = NcbiSnpClient(entrez_client).hgvs_from_rsid(["rs146010120", "rs113488022"])
     assert result == {
-        "rs113488022": {"hgvsp": "NP_004324.2:p.Val600Gly", "hgvsc": "NM_004333.6:c.1799T>G"},
-        "rs146010120": {"hgvsp": "NP_001267.2:p.Arg35Gln", "hgvsc": "NM_001276.4:c.104G>A"},
+        "rs113488022": {"hgvs_p": "NP_004324.2:p.Val600Gly", "hgvs_c": "NM_004333.6:c.1799T>G"},
+        "rs146010120": {"hgvs_p": "NP_001267.2:p.Arg35Gln", "hgvs_c": "NM_001276.4:c.104G>A"},
     }
 
 

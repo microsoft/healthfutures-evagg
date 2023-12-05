@@ -14,8 +14,8 @@ extractor:
   field_map:
     - gene: gene_symbol
     - id: paper_id
-    - hgvs_c: hgvsc
-    - hgvs_p: hgvsp
+    - hgvs_c: hgvs_c
+    - hgvs_p: hgvs_p
     - phenotype: phenotype
     - variant_inheritance: zygosity
     - condition_inheritance: inheritance
