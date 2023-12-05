@@ -1,6 +1,6 @@
 # # from bs4 import BeautifulSoup as BS
 # import re
-# import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as Et
 # from typing import Dict, Set
 
 # from Bio import Entrez  # Biopython
@@ -62,7 +62,7 @@
 
 # def find_ids_for_gene_old(query):  # 2
 #     handle = Entrez.esearch(db="pmc", sort="relevance", retmax="1", retmode="xml", term=query)
-#     id_list = Entrez.read(handle)["IdList"]
+#     id_list = Entrez.read(handle)
 #     return id_list
 
 
@@ -77,18 +77,26 @@
 #     return id_list
 
 
-# def fetch_parse_xml(ids):  # 2, previously find_doi_in_xml
-#     handle = Entrez.efetch(db="pmc", id=ids, retmode="xml")
-#     tree = ET.parse(handle)
-#     root = tree.getroot()
-#     all_tree_elements = list(root.iter())
+# def fetch_parse_xml(id_list):  # 2, previously find_doi_in_xml
+#     ids = ",".join(id_list)
+#     handle = Entrez.efetch(db="pmc", retmode="xml", rettype=None, id=ids)
+#     # tree = ET.parse(handle)
+#     # root = tree.getroot()
+#     # all_tree_elements = list(root.iter())
 
-#     # list_dois = []
-#     # for elem in all_elements:
-#     #     if((elem.tag == "pub-id") and ("/" in str(elem.text))==True): # doi
-#     #          list_dois.append(elem.text)
-#     # return(list_dois, all_elements)
-#     return all_tree_elements
+#     # # list_dois = []
+#     # # for elem in all_elements:
+#     # #     if((elem.tag == "pub-id") and ("/" in str(elem.text))==True): # doi
+#     # #          list_dois.append(elem.text)
+#     # # return(list_dois, all_elements)
+#     # return all_tree_elements
+#     content = handle.read()
+#     root = Et.fromstring(content)
+
+#     # Find all 'article' elements
+#     articles = root.findall("article")
+
+#     return articles
 
 
 # def find_pmid_in_xml(all_tree_elements):  # 3
@@ -220,7 +228,7 @@
 
 #     # Testing Papers code :)
 #     email = "ashleyconard@microsoft.com"
-#     # id_list = find_ids_for_gene("TWNK")
+#     id_list = find_ids_for_gene("TWNK")
 #     # print(id_list)
 #     # built_papers = search("RGSL1")
 
@@ -228,8 +236,8 @@
 #     #     print(key, value)
 
 # #    pprint(next(iter(built_papers)))
-# # papers_tree = fetch_parse_xml(id_list)
-# # print(type(papers_tree))
+# papers_tree = fetch_parse_xml(id_list)
+# print(type(papers_tree))
 # # list_pmids = find_pmid_in_xml(papers_tree)
 # # print(len(list_pmids))
 # # count = 0
