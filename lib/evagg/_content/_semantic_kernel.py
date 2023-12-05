@@ -68,6 +68,13 @@ class SemanticKernelContentExtractor(IExtractFields):
                 hgvs = {"hgvs_c": variant_id}
             elif variant_id.startswith("p."):
                 hgvs = {"hgvs_p": variant_id}
+            else:  # assume variant_id is gene+hgvs
+                hgvs_unk = variant_id.split(":")
+                if len(hgvs_unk) == 2:                    
+                    if hgvs_unk[1].startswith("c."):
+                        hgvs = {"hgvs_c": hgvs_unk[1]}
+                    elif hgvs_unk[1].startswith("p."):
+                        hgvs = {"hgvs_p": hgvs_unk[1]}
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
