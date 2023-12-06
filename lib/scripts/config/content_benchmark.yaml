@@ -10,7 +10,7 @@ query_iterator:
     - "UBR5:irrelevant"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_content_manual.tsv
+  file_path: data/truth_set_content_manual.tsv
 extractor:
   di_class: lib.evagg.SemanticKernelContentExtractor
   fields:
@@ -43,4 +43,4 @@ extractor:
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
   di_class: lib.evagg.TableOutputWriter
-  output_path: /home/azureuser/repos/ev-agg-exp/.out/content_benchmark.tsv
+#  output_path: /home/azureuser/repos/ev-agg-exp/.out/content_benchmark.tsv
