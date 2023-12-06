@@ -14,13 +14,10 @@ class PubtatorEntityAnnotator(IAnnotateEntities):
     def annotate(self, paper: Paper) -> Dict[str, Any]:
         """Annotate the paper with entities from PubTator.
 
-        Returns paper annotations. If the paper does not have a PMC ID, a value error is raised. If the paper is not in
-        PMC-OA then an empty dict is returned.
+        Returns paper annotations. If the paper is not in PMC-OA then an empty dict is returned.
         """
-        if "pmcid" not in paper.props or paper.props["pmcid"] is None:
-            raise ValueError("Paper must have a PMC ID to be annotated by PubTator.")
-        if "is_pmc_oa" not in paper.props or paper.props["is_pmc_oa"] == "False":
-            # TODO, better way to check for PMC-OA?
+        if not paper.props.get("pmcid") or not paper.props.get("is_pmc_oa"):
+            print(f"warning: cannot annotate, paper {paper.id} is not in PMC-OA")
             return {}
 
         paper_id = paper.props["pmcid"]

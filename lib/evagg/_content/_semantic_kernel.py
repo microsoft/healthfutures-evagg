@@ -10,7 +10,7 @@ from .._interfaces import IExtractFields
 
 
 class SemanticKernelContentExtractor(IExtractFields):
-    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvsc", "hgvsp", "phenotype", "zygosity", "inheritance"}
+    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvs_c", "hgvs_p", "phenotype", "zygosity", "variant_inheritance"}
 
     def __init__(
         self,
@@ -43,8 +43,16 @@ class SemanticKernelContentExtractor(IExtractFields):
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
+        # TODO, variant_id can currently be any of the following:
+        # - rsid (e.g., rs123456789)
+        # - hgvs_c (e.g., c.123A>T)
+        # - hgvs_p (e.g., p.Ala123Thr)
+        # - gene+hgvs (e.g., BRCA1:c.123A>T || BRCA1:p.Ala123Thr)
+        #
+        # Currently handling this below in a hacky way temporarily. Need to figure out
+        # the correct story for variant nomenclature.
+
         for variant_id in variant_mentions.keys():
-            print(f"Processing {variant_id}")
             mentions = variant_mentions[variant_id]
             variant_results: Dict[str, str] = {"variant": variant_id}
 
@@ -52,14 +60,21 @@ class SemanticKernelContentExtractor(IExtractFields):
             paper_excerpts = self._excerpt_from_mentions(mentions)
             gene_symbol = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
 
-            # If we have a cached hgvs value, use it.
+            # If we have a cached hgvs value, use it. This means variant_id is an rsid.
             hgvs: Dict[str, str] = {}
             if variant_id in hgvs_cache:
                 hgvs = hgvs_cache[variant_id]
             elif variant_id.startswith("c."):
-                hgvs = {"hgvsc": variant_id}
+                hgvs = {"hgvs_c": variant_id}
             elif variant_id.startswith("p."):
-                hgvs = {"hgvsp": variant_id}
+                hgvs = {"hgvs_p": variant_id}
+            else:  # assume variant_id is gene+hgvs
+                hgvs_unk = variant_id.split(":")
+                if len(hgvs_unk) == 2:
+                    if hgvs_unk[1].startswith("c."):
+                        hgvs = {"hgvs_c": hgvs_unk[1]}
+                    elif hgvs_unk[1].startswith("p."):
+                        hgvs = {"hgvs_p": hgvs_unk[1]}
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
@@ -69,17 +84,20 @@ class SemanticKernelContentExtractor(IExtractFields):
                     result = gene_symbol
                 elif field == "paper_id":
                     result = paper.id
-                elif field == "hgvsc":
-                    result = hgvs["hgvsc"] if ("hgvsc" in hgvs and hgvs["hgvsc"]) else "unknown"
-                elif field == "hgvsp":
-                    result = hgvs["hgvsp"] if ("hgvsp" in hgvs and hgvs["hgvsp"]) else "unknown"
+                elif field == "hgvs_c":
+                    result = hgvs["hgvs_c"] if ("hgvs_c" in hgvs and hgvs["hgvs_c"]) else "unknown"
+                elif field == "hgvs_p":
+                    result = hgvs["hgvs_p"] if ("hgvs_p" in hgvs and hgvs["hgvs_p"]) else "unknown"
                 else:
                     context_variables = {"input": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
 
                     raw = self._sk_client.run_completion_function(
                         skill="content", function=field, context_variables=context_variables
                     )
-                    result = json.loads(raw)[field]
+                    try:
+                        result = json.loads(raw)[field]
+                    except Exception:
+                        result = "failed"
                 variant_results[field] = result
             results.append(variant_results)
         return results

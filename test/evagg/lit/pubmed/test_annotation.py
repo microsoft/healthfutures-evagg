@@ -1,7 +1,6 @@
 import json
 from unittest import mock
 
-import pytest
 from requests import HTTPError
 
 from lib.evagg.lit.pubmed import PubtatorEntityAnnotator
@@ -32,10 +31,11 @@ def mocked_requests_get(url, params=None, **kwargs):
 
 @mock.patch("requests.get", side_effect=mocked_requests_get)
 def test_annotation(mocked_get):
-    paper = Paper(id="123", pmcid="PMC1234567")
+    paper = Paper(id="123", pmcid="PMC1234567", is_pmc_oa=True)
     annotator = PubtatorEntityAnnotator()
     annotations = annotator.annotate(paper)
     assert isinstance(annotations, dict)
+    assert annotations.get("foo") == "bar"
 
 
 @mock.patch("requests.get", side_effect=mocked_requests_get)
@@ -46,5 +46,9 @@ def test_failed_annotation(mocked_get):
     assert annotations == {}
 
     paper_no_pmcid = Paper(id="123")
-    with pytest.raises(ValueError):
-        annotator.annotate(paper_no_pmcid)
+    annotations = annotator.annotate(paper_no_pmcid)
+    assert annotations == {}
+
+    paper_no_oa = Paper(id="123", pmcid="PMC1234567", is_pmc_oa=False)
+    annotations = annotator.annotate(paper_no_oa)
+    assert annotations == {}

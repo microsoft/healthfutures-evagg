@@ -1,13 +1,16 @@
 di_class: lib.evagg.SynchronousLocalBatchApp
 query_iterator:
   di_class: lib.evagg.types.QueryIterator
-  # When querying based on gene only, this should cover the full "tiny" truth set.
+  # When querying based on gene only, this should cover the full "small" truth set.
   variants: 
-    - "COQ2:p.T39S"
-    - "JPH1:p.R213P"
+    - "COQ2:irrelevant"
+    - "PRKCG:irrelevant"
+    - "TWNK:irrelevant"
+    - "FAM111B:irrelevant"
+    - "UBR5:irrelevant"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: data/truth_set_tiny.tsv
+  file_path: data/truth_set_content_manual.tsv
 extractor:
   di_class: lib.evagg.SemanticKernelContentExtractor
   fields:
@@ -17,13 +20,13 @@ extractor:
     - hgvs_p
     - phenotype
     - zygosity
-    - inheritance
+    - variant_inheritance
   sk_client:
     di_class: lib.evagg.sk.SemanticKernelClient
     config:
       di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
   mention_finder:
-    di_class: lib.evagg.lit.VariantMentionFinder
+    di_class: lib.evagg.lit.TruthsetVariantMentionFinder
     entity_annotator:
       di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
     ncbi_gene_client: 
@@ -40,4 +43,4 @@ extractor:
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
   di_class: lib.evagg.TableOutputWriter
-#  output_path: /home/azureuser/repos/ev-agg-exp/.out/batch_tiny.tsv
+#  output_path: /home/azureuser/repos/ev-agg-exp/.out/content_benchmark.tsv

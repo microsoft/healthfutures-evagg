@@ -113,13 +113,13 @@ class NcbiSnpClient(INcbiSnpClient):
                 hgvs_values = values["HGVS"].split(",")
 
                 # Just take the first one.
-                hgvsp = next((v for v in hgvs_values if v.startswith("NP_")), None)
-                hgvsc = next((v for v in hgvs_values if v.startswith("NM_")), None)
+                hgvs_p = next((v for v in hgvs_values if v.startswith("NP_")), None)
+                hgvs_c = next((v for v in hgvs_values if v.startswith("NM_")), None)
 
-                if hgvsp:
-                    result["hgvsp"] = hgvsp
-                if hgvsc:
-                    result["hgvsc"] = hgvsc
+                if hgvs_p:
+                    result["hgvs_p"] = hgvs_p
+                if hgvs_c:
+                    result["hgvs_c"] = hgvs_c
                 break
         return result
 

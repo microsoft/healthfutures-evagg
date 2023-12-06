@@ -14,15 +14,15 @@ class SimpleContentExtractor(IExtractFields):
             return "CHI3L1"
         if field == "paper_id":
             return "10.1016/j.dib.2019.104311"
-        if field == "hgvsc":
+        if field == "hgvs_c":
             return "c.101A>G"
-        if field == "hgvsp":
+        if field == "hgvs_p":
             return "p.Y34C"
         if field == "phenotype":
             return "Long face (HP:0000276)"
         if field == "zygosity":
             return "Heterozygous"
-        if field == "inheritance":
+        if field == "variant_inheritance":
             return "AD"
         if field == "functional data":
             return "No"
