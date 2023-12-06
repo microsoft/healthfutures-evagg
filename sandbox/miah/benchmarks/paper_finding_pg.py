@@ -30,7 +30,7 @@ def paper_to_dict(paper: Paper) -> Dict[str, Any]:
         "doi": paper.id,
         "pmid": paper.props["pmid"],
         "pmcid": paper.props["pmcid"],
-        "is_pmc_oa": True if paper.props["is_pmc_oa"] == "True" else False,
+        "is_pmc_oa": paper.props["is_pmc_oa"],
     }
 
 

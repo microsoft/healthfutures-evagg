@@ -45,12 +45,12 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "is_pmc_oa", "license", "paper_title", "link"]
+TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa", "license"]
 # These are the columns in the truthset that are specific to the variant.
 TRUTHSET_VARIANT_KEYS = [
     "gene",
-    "HGVS.C",
-    "HGVS.P",
+    "hgvs_c",
+    "hgvs_p",
     "phenotype",
     "zygosity",
     "variant_inheritance",
@@ -94,11 +94,11 @@ class TruthsetFileLibrary(IGetPapers):
                     if paper_data[key] != row[key]:
                         print(f"WARNING: multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
                 # Make sure the gene/variant columns are not empty.
-                if not row["gene"] or not row["HGVS.P"]:
+                if not row["gene"] or not row["hgvs_p"]:
                     print(f"WARNING: missing gene or variant for {paper_id}.")
 
             # For each paper, extract the variant-specific key/value pairs into a new dict of dicts.
-            variants = {Variant(r["gene"], r["HGVS.P"]): {k: r.get(k, "") for k in TRUTHSET_VARIANT_KEYS} for r in rows}
+            variants = {Variant(r["gene"], r["hgvs_p"]): {k: r.get(k, "") for k in TRUTHSET_VARIANT_KEYS} for r in rows}
             # Create a Paper object with the extracted fields.
             papers.add(Paper(id=paper_id, evidence=variants, **paper_data))
 
@@ -198,7 +198,7 @@ class PubMedFileLibrary(IGetPapers):
         if pmcid_elem is not None:
             pmcid = pmcid_elem.text
         else:
-            pmcid = "0.0"
+            pmcid = None
 
         # generate citation
         citation = f"{first_author_last_name} ({pub_year}) {journal_abbreviation}, {doi}"

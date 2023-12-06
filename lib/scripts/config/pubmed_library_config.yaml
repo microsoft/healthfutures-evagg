@@ -14,11 +14,11 @@ extractor:
   fields:
     - gene
     - paper_id
-    - hgvsc
-    - hgvsp
+    - hgvs_c
+    - hgvs_p
     - phenotype
     - zygosity
-    - inheritance
+    - variant_inheritance
   sk_client:
     di_class: lib.evagg.sk.SemanticKernelClient
     config:

@@ -14,13 +14,13 @@ def test_simple_content_extractor():
     paper = Paper(
         id="12345678", citation="Doe, J. et al. Test Journal 2021", abstract="This is a test paper.", pmcid="PMC123"
     )
-    fields = ["gene", "hgvsp", "inheritance", "phenotype"]
+    fields = ["gene", "hgvs_p", "variant_inheritance", "phenotype"]
     extractor = SimpleContentExtractor(fields)
     result = extractor.extract(paper, Query("CHI3L1:p.Y34C"))
     assert len(result) == 1
     assert result[0]["gene"] == "CHI3L1"
-    assert result[0]["hgvsp"] == "p.Y34C"
-    assert result[0]["inheritance"] == "AD"
+    assert result[0]["hgvs_p"] == "p.Y34C"
+    assert result[0]["variant_inheritance"] == "AD"
     assert result[0]["phenotype"] == "Long face (HP:0000276)"
 
 
@@ -53,16 +53,16 @@ def test_sk_content_extractor_valid_fields():
     fields = {
         "gene": "CHI3L1",
         "paper_id": "12345678",
-        "hgvsc": "c.A100G",
-        "hgvsp": "g.Py34C",
+        "hgvs_c": "c.A100G",
+        "hgvs_p": "g.Py34C",
         "phenotype": "test",
         "zygosity": "test",
-        "inheritance": "test",
+        "variant_inheritance": "test",
     }
 
     mention_finder = MockMentionFinder()
     ncbi_snp_client = MockNcbiSnpClient(
-        {k: {"hgvsc": fields["hgvsc"], "hgvsp": fields["hgvsp"]} for k in mention_finder.mentions.keys()}
+        {k: {"hgvs_c": fields["hgvs_c"], "hgvs_p": fields["hgvs_p"]} for k in mention_finder.mentions.keys()}
     )
     content_extractor = SemanticKernelContentExtractor(
         list(fields.keys()),
