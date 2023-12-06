@@ -72,7 +72,7 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, entrez_c
         abstract="This is a test paper.",
         pmid="PMID123",
         pmcid="PMC123",
-        is_pmc_oa="False",
+        is_pmc_oa=False,
     )
 
     library = PubMedFileLibrary(entrez_client, max_papers=1)
