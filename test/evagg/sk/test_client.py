@@ -26,7 +26,7 @@ def test_run_completion_function(mocker, fake_config):
     context_variables = {"input": "my_input", "gene": "gene", "variant": "variant"}
 
     # Test all functions in the content skill/plugin
-    for function_name in ["inheritance", "phenotype", "zygosity"]:
+    for function_name in ["variant_inheritance", "phenotype", "zygosity"]:
         result = client.run_completion_function("content", function_name, context_variables)
         assert result == "my_expected_result"
 
@@ -39,11 +39,11 @@ def test_cached_function(mocker, fake_config):
     context_variables = {"input": "my_input", "gene": "gene", "variant": "variant"}
 
     # This should load the function from disk
-    result = client.run_completion_function("content", "inheritance", context_variables)
+    result = client.run_completion_function("content", "variant_inheritance", context_variables)
     assert result == "my_expected_result"
 
     # This should use the cached function
-    result = client.run_completion_function("content", "inheritance", context_variables)
+    result = client.run_completion_function("content", "variant_inheritance", context_variables)
     assert result == "my_expected_result"
 
     assert SemanticKernelClient._import_function.call_count == 1
