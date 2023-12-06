@@ -7,7 +7,7 @@ query_iterator:
     - "JPH1:p.R213P"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_tiny.tsv
+  file_path: data/truth_set_tiny.tsv
 extractor:
   di_class: lib.evagg.SemanticKernelContentExtractor
   fields:
@@ -40,4 +40,4 @@ extractor:
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
   di_class: lib.evagg.TableOutputWriter
-  output_path: /home/azureuser/repos/ev-agg-exp/.out/batch_tiny.tsv
+#  output_path: /home/azureuser/repos/ev-agg-exp/.out/batch_tiny.tsv
