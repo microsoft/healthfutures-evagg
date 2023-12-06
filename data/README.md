@@ -6,14 +6,15 @@ Sample data files are available in this repo for development and testing.
 
 - **truth_set_small.tsv**: a collection of 10 genes of interest with a few variants extracted from a small number of papers for each of these genes.
 - **truth_set_tiny.tsv**: a subset of the small truth set.
+- **truth_set_content_manual.tsv**: a manually curated subset of `truth_set_small.tsv` that contains only papers that are in PMC-OA with a non-ND license and the variants mentioned in the truth set are in the primary text of the paper.
 
 Both of these data files are tab-separated files with the following columns:
 
 - **query_gene**: the query gene which should result in finding this record
 - **query_variant**: the query variant which should result in finding this record
 - **gene**: the gene impacted by the variant
-- **HGVS.C**: the HGVS.C representation of the variant
-- **HGVS.P**: the HGVS.P representation of the variant
+- **hgvs_c**: the HGVS.C representation of the variant
+- **hgvs_p**: the HGVS.P representation of the variant
 - **doi**: doi for the paper discussing this variant
 - **pmid**: pmid for the paper discussing this variant
 - **pmcid**: pmcid for the paper discussing this variant, if one exists

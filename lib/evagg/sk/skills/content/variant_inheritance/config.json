@@ -1,6 +1,6 @@
 {
     "schema": 1,
-    "description": "Determine mode of inheritance (MOI) described in a block of text for a condition associated with a given variant-gene pair",
+    "description": "Determine the observed mode of inheritance (MOI) described in a block of text for a particular genetic variant.",
     "type": "completion",
     "completion": {
         "max_tokens": 1000,

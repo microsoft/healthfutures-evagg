@@ -4,17 +4,17 @@ query:
   variant: "COQ2:p.R55*"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
-  file_path: /home/azureuser/repos/ev-agg-exp/.data/truth/truth_set_small.tsv
+  file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_content_manual.tsv
 extractor:
   di_class: lib.evagg.SemanticKernelContentExtractor
   fields:
     - gene
     - paper_id
-    - hgvsc
-    - hgvsp
+    - hgvs_c
+    - hgvs_p
     - phenotype
     - zygosity
-    - inheritance
+    - variant_inheritance
   sk_client:
     di_class: lib.evagg.sk.SemanticKernelClient
     config:
