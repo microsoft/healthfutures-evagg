@@ -198,7 +198,7 @@ class PubMedFileLibrary(IGetPapers):
         if pmcid_elem is not None:
             pmcid = pmcid_elem.text
         else:
-            pmcid = "0.0"
+            pmcid = None
 
         # generate citation
         citation = f"{first_author_last_name} ({pub_year}) {journal_abbreviation}, {doi}"
