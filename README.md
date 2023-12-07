@@ -20,6 +20,7 @@ Ubuntu 20.04 VM/WSL
 - azure cli (install script)
 - git (install script)
 - make (install script)
+- docker (install script, only necessary if you're going to develop with devcontainers/codespaces)
 - Miniconda
 
     ```bash
