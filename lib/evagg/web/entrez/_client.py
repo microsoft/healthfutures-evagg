@@ -18,8 +18,16 @@ class BioEntrezConfig(PydanticYamlModel):
 
 
 class BioEntrezDotEnvConfig(BioEntrezConfig):
+    _REQUIRED_ENV_VARS = ["NCBI_EUTILS_EMAIL"]
+
     def __init__(self) -> None:
-        load_dotenv()
+        if not load_dotenv():
+            print("Warning: no .env file found, using pre-existing environment variables.")
+
+        if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
+            raise ValueError(
+                f"Missing one or more required environment variables: {', '.join(self._REQUIRED_ENV_VARS)}"
+            )
 
         bag: Dict[str, str] = {}
         for k, v in os.environ.items():

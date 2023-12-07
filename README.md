@@ -2,7 +2,11 @@
 
 This is an environment for experimentation on LLM prompts and related application code relevant to evidence aggregation for molecular diagnosis of mendelian disease.
 
-## Compute environment pre-requisites
+## Manual development environment setup
+
+The following sections walk through the manual setup of a Linux development environment, either a virtual machine or WSL2 install.
+
+### Compute environment pre-requisites
 
 **Note: this environment has only been tested on Ubuntu 20.04 in WSL and an Azure VM. Behavior on other operating systems may vary. If you run into issues, please submit them on Github.**
 
@@ -41,7 +45,7 @@ Open this newly cloned repository in VSCode with "File -> Open Folder"
 
 You will be prompted to install recommended extensions for this repository, accept these recommendations.
 
-## Environment setup
+### Environment setup
 
 Create a conda environment. All shell commands in this section should be executed from the repository's root directory.
 
@@ -65,7 +69,7 @@ run_query_sync -h
 
 You should see a help message displayed providing usage for the `run_query_sync` script.
 
-## Configuration
+### Configuration
 
 To communicate with various cloud resources, some additional configuration is necessary, including providing relevant 
 secrets to the application.
@@ -81,6 +85,38 @@ NCBI_EUTILS_API_KEY=<your NCBI eutils API key (optional)>
 NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
 NCBI_EUTILS_MAX_TRIES=<max number of retries for retry-able calls to the NCBI eutils API (optional)>
 ```
+
+## Codespaces environment setup
+
+The following sections walk through the setup of a GitHub Codespaces-based development environment. In order to do this
+you will need a GitHub account.
+
+### Setting up secrets
+
+This repository leverages connections to a few different web services, some of which require configuration. This is done
+through setting environment variables, either by creating the file `<REPO_ROOT>/.env` as discussed above or by manually
+creating the environment variables specified in that .env file.
+
+For development on this repo from within GitHub Codespaces, create the GitHub secrets listed below by following
+[these instructions](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-secrets-for-your-codespaces)
+and grant the ev-agg-exp repo access to those secrets.
+
+```text
+AZURE_OPENAI_DEPLOYMENT_NAME=<your AOAI deployment name>
+AZURE_OPENAI_ENDPOINT=<your AOAI endpoint>
+AZURE_OPENAI_API_KEY=<your AOAI key>
+
+NCBI_EUTILS_API_KEY=<your NCBI eutils API key (optional)>
+NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
+NCBI_EUTILS_MAX_TRIES=<max number of retries for retry-able calls to the NCBI eutils API (optional)>
+```
+
+### Starting a Codespaces environment
+
+### Stopping a Codespaces environment
+
+### Managing Codespaces costs
+
 
 ## Running scripts
 
