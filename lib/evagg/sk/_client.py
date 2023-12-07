@@ -18,9 +18,21 @@ class SemanticKernelConfig(PydanticYamlModel):
 
 
 class SemanticKernelDotEnvConfig(SemanticKernelConfig):
+    _REQUIRED_ENV_VARS = [
+        "AZURE_OPENAI_DEPLOYMENT_NAME",
+        "AZURE_OPENAI_ENDPOINT",
+        "AZURE_OPENAI_API_KEY",
+    ]
+
     def __init__(self) -> None:
-        load_dotenv()
-        # Assume AOAI.
+        if not load_dotenv():
+            print("Warning: no .env file found, using pre-existing environment variables.")
+
+        if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
+            raise ValueError(
+                f"Missing one or more required environment variables: {', '.join(self._REQUIRED_ENV_VARS)}"
+            )
+
         super().__init__(
             deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
             endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
