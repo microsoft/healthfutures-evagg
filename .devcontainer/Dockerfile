@@ -1,22 +1,26 @@
 FROM mcr.microsoft.com/devcontainers/miniconda:0-3
 
+ARG USERNAME="vscode"
+ENV USER_HOME=/home/${USERNAME}
+ARG ENV_NAME="evagg"
+
 # Copy environment.yml (if found) to a temp location so we update the environment. Also
 # copy "noop.txt" so the COPY instruction does not fail if no environment.yml exists.
 COPY environment.yml* .devcontainer/noop.txt /tmp/conda-tmp/
-RUN if [ -f "/tmp/conda-tmp/environment.yml" ]; then umask 0002 \
-    && /opt/conda/bin/conda update -n base -c defaults conda \
-    && /opt/conda/bin/conda config --add channels conda-forge \
+
+# Run remaining commands as non-root user.
+USER ${USERNAME}
+
+# Force ${USER_HOME}/.bashrc to update.
+RUN /opt/conda/bin/conda init bash
+
+# Build the environment.
+RUN /opt/conda/bin/conda config --add channels conda-forge \
     && /opt/conda/bin/conda install -n base conda-libmamba-solver \
     && /opt/conda/bin/conda config --set solver libmamba \
-    && /opt/conda/bin/conda env update -n base -f /tmp/conda-tmp/environment.yml; fi \
-    && rm -rf /tmp/conda-tmp
+    && /opt/conda/bin/conda env create -n ${ENV_NAME} -f /tmp/conda-tmp/environment.yml
 
-# [Optional] Uncomment to install a different version of Python than the default
-# RUN conda install -y python=3.6 \
-#     && pip install --no-cache-dir pipx \
-#     && pipx reinstall-all
-
-# [Optional] Uncomment this section to install additional OS packages.
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
+# Tilde is ok because we've set the user above.
+RUN echo "conda activate ${ENV_NAME}" >> ~/.bashrc \
+    && echo "poetry install --no-interaction" >> ~/.bashrc
 

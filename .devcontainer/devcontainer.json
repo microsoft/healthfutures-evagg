@@ -24,12 +24,11 @@
 				"mechatroner.rainbow-csv"				
 			],
 			"settings": {
-				"extensions.ignoreRecommendations": true
+				"extensions.ignoreRecommendations": true,
+				"python.defaultInterpreterPath": "/opt/conda/envs/evagg/bin/python"
 			}
 		}
-	},
-
-	"postCreateCommand": "poetry install"
+	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
