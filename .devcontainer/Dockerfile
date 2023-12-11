@@ -18,8 +18,7 @@ RUN /opt/conda/bin/conda init bash
 RUN /opt/conda/bin/conda config --add channels conda-forge \
     && /opt/conda/bin/conda install -n base conda-libmamba-solver \
     && /opt/conda/bin/conda config --set solver libmamba \
-    && /opt/conda/bin/conda env create -n ${ENV_NAME} -f /tmp/conda-tmp/environment.yml \
-    && rm -rf /tmp/conda-tmp
+    && /opt/conda/bin/conda env create -n ${ENV_NAME} -f /tmp/conda-tmp/environment.yml
 
 # Tilde is ok because we've set the user above.
 RUN echo "conda activate ${ENV_NAME}" >> ${USER_HOME}/.bashrc \
