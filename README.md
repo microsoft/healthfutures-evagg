@@ -113,10 +113,26 @@ NCBI_EUTILS_MAX_TRIES=<max number of retries for retry-able calls to the NCBI eu
 
 ### Starting a Codespaces environment
 
+Open [the evagg repository](https://github.com/jeremiahwander/ev-agg-exp) in a web browser and use these instructions to
+[create a new codespace with options](https://docs.github.com/en/codespaces/developing-in-a-codespace/creating-a-codespace-for-a-repository).
+
+When selecting options, you should choose a suitable branch from the repository (likely `main`), and a region where you
+want to do your work. As currently architected, the evagg pipeline doesn't directly interact with region-specific cloud
+resources, but this may change in the future. A 2-core machine is currently suitable for pipeline execution. You will want
+to select `evagg` as your devcontainer configuration.
+
+Initial build of the codespaces environment can take a few minutes.
+
 ### Stopping a Codespaces environment
+
+By default, codespaces environments will stop automatically after 30 minutes of inactivity. If you want to manually stop
+a codespace navigate to [codespaces management](https://github.com/codespaces) and manually stop the instance.
 
 ### Managing Codespaces costs
 
+See this document on [codespaces costs](https://docs.github.com/en/billing/managing-billing-for-github-codespaces/about-billing-for-github-codespaces)
+for how to manage costs and billing for github codespaces usage. This repository is currently set up for user payment for
+codespaces. Github personal free accounts include 120 core hours and 15 GiB per month.
 
 ## Running scripts
 
