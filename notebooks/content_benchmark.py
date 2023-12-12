@@ -32,8 +32,8 @@ if "doi" in truth_df.columns:
 test_df = pd.read_csv(TEST_PATH, sep="\t")
 
 # TODO: temporary, sample the both dfs so we have some missing/extra rows.
-truth_df = truth_df.sample(frac=0.9, replace=False)
-test_df = test_df.sample(frac=0.7, replace=False)
+# truth_df = truth_df.sample(frac=0.9, replace=False)
+# test_df = test_df.sample(frac=0.7, replace=False)
 
 # %% Sanity check the dataframes.
 
