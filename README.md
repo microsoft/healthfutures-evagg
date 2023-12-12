@@ -71,7 +71,7 @@ You should see a help message displayed providing usage for the `run_query_sync`
 
 ### Configuration
 
-To communicate with various cloud resources, some additional configuration is necessary, including providing relevant 
+To communicate with various cloud resources, some additional configuration is necessary, including providing relevant
 secrets to the application.
 
 Create a `.env` file in the repository root with the following format:
@@ -144,14 +144,14 @@ wiring between dependencies and the parameterization of each dependency.
 The script `run_query_sync` can be invoked as follows:
 
 ```bash
-run_query_sync -c <path_to_config_file>
+run_query_sync <path_to_config_file>
 ```
 
 As a simple smoke test of script execution, one can run the following specific commands:
 
 ```bash
 python sandbox/miah/make_local_library.py
-run_query_sync -c lib/scripts/config/simple_config.py
+run_query_sync lib/scripts/config/simple_config.py
 ```
 
 This will create a fake local library of papers, extract content from those papers using a dummy implementation, and
@@ -165,10 +165,16 @@ following:
 mkdir -p .data/truth
 azcopy login
 azcopy cp "https://$SA.blob.core.windows.net/truth/truth_set_tiny.tsv" .data/truth/truth_set_tiny.tsv
-run_query_sync -c lib/scripts/config/tiny_config.yaml
+run_query_sync lib/scripts/config/tiny_config.yaml
 ```
 
 Where `$SA` is the Azure Blob Storage Account where your team stores test files.
+
+You can optionally override any particular non-dictionary leaf value within a config using the following syntax:
+
+```bash
+run_query_sync lib/scripts/config/table_config.yaml -o writer.outputpath:.out/override.tsv
+```
 
 ## Contributing
 
