@@ -18,7 +18,7 @@ dependencies:
   - seaborn
 
   # General utilities.
-  - pydantic==1.10
+  - pydantic==1.10.*
   - defusedxml
   - ratelimit
 
@@ -51,3 +51,5 @@ dependencies:
   - pip
   - pip:
     - semantic-kernel
+    # do not change the pydantic version here, this is specified identically to the pydantic req above, forcing pip to leave it alone.
+    - pydantic==1.10.*
