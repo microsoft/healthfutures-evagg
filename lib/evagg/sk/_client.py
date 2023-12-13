@@ -52,12 +52,13 @@ class SemanticKernelClient:
 
     def __init__(self, config: SemanticKernelConfig, verbose: bool = False) -> None:
         if verbose:
-            logging.basicConfig(level=logging.DEBUG)
+            logging.basicConfig(level=logging.INFO)
         else:
             logging.basicConfig(level=logging.WARN)
 
         self._logger = logging.getLogger(__name__)
-        self._kernel = sk.Kernel(log=self._logger)
+        # self._kernel = sk.Kernel(log=self._logger)
+        self._kernel = sk.Kernel()
 
         self._functions = {}
         # Assume AOAI.
@@ -90,6 +91,7 @@ class SemanticKernelClient:
         self, sk_function: sk.SKFunctionBase, input: str | None, variables: sk.ContextVariables
     ) -> str:
         self._logger.info(f"Running function {sk_function.name}")
+        self._logger.info(f"Variables: {variables}")
         result = asyncio.run(self._kernel.run_async(sk_function, input_vars=variables, input_str=input))
         if result.error_occurred:
             raise ValueError(f"Error: {result.last_error_description}")
