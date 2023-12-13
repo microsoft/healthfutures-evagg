@@ -93,6 +93,7 @@ class SemanticKernelClient:
         result = asyncio.run(self._kernel.run_async(sk_function, input_vars=variables, input_str=input))
         if result.error_occurred:
             raise ValueError(f"Error: {result.last_error_description}")
+        self._logger.info("Response received: " + result.result)
         return result.result
 
     def run_completion_function(self, skill: str, function: str, context_variables: Dict[str, str]) -> str:
