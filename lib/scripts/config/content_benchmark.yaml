@@ -25,6 +25,7 @@ extractor:
     di_class: lib.evagg.sk.SemanticKernelClient
     config:
       di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
+    verbose: true
   mention_finder:
     di_class: lib.evagg.lit.TruthsetVariantMentionFinder
     entity_annotator:

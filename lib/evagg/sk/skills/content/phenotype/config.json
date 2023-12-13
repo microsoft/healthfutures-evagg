@@ -12,7 +12,7 @@
     "input": {
         "parameters": [
             {
-                "name": "text",
+                "name": "input",
                 "description": "Text from which the phenotype should be extracted",
                 "defaultValue": ""
             },
