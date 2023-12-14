@@ -17,7 +17,7 @@ library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_small.tsv
 extractor:
-  di_class: lib.evagg.SemanticKernelContentExtractor
+  di_class: lib.evagg.PromptBasedContentExtractor
   fields:
     - gene
     - paper_id
