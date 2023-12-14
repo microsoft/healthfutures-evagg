@@ -9,7 +9,7 @@ from lib.evagg.types import IPaperQuery, Paper
 from .._interfaces import IExtractFields
 
 
-class SemanticKernelContentExtractor(IExtractFields):
+class PromptBasedContentExtractor(IExtractFields):
     _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvs_c", "hgvs_p", "phenotype", "zygosity", "variant_inheritance"}
 
     def __init__(
