@@ -74,15 +74,15 @@ result.drop(columns=["_merge"], inplace=True)
 # %% Compare the results to the truth table.
 
 # Coarse recall analysis
-print(f"Coarse recall: {result.loc[result['in_truthset']==True]['in_found'].mean()}")
+print(f"Coarse recall: {result.loc[result['in_truthset'] == True]['in_found'].mean()}")  # noqa: E712
 print(
-    f"  Of {len(result.loc[result['in_truthset']==True])} papers in truthset, {result.loc[result['in_truthset']==True]['in_found'].sum()} were found."
+    f"  Of {len(result.loc[result['in_truthset'] == True])} papers in truthset, {result.loc[result['in_truthset'] == True]['in_found'].sum()} were found."  # noqa: E712
 )
 
 # Coarse precision analysis
-print(f"Coarse precision: {result.loc[result['in_found']==True]['in_truthset'].mean()}")
+print(f"Coarse precision: {result.loc[result['in_found'] == True]['in_truthset'].mean()}")  # noqa: E712
 print(
-    f" Of {len(result.loc[result['in_found']==True])} papers found, {result.loc[result['in_found']==True]['in_truthset'].sum()} were in truthset."
+    f" Of {len(result.loc[result['in_found'] == True])} papers found, {result.loc[result['in_found'] == True]['in_truthset'].sum()} were in truthset."  # noqa: E712
 )
 
 # %% Full results
