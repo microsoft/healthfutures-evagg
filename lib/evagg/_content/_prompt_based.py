@@ -104,8 +104,7 @@ class PromptBasedContentExtractor(IExtractFields):
                         system_prompt="Extract field",
                         params=params,
                     )
-                    raw = response.result.choices[0].message.content  # type: ignore
-
+                    raw = response.output
                     try:
                         result = json.loads(raw)[field]
                     except Exception:
