@@ -21,6 +21,11 @@ dependencies:
   - pydantic==1.10.*
   - defusedxml
   - ratelimit
+  - retry
+  - python-dotenv
+
+  # AI/ML.
+  - openai
 
   # Bioinformatics.
   - biopython
@@ -42,14 +47,15 @@ dependencies:
   # - types-python-dateutil
   - types-requests
   - types-pyyaml
+  - types-retry
   - pytest
   - pytest-cov
   - pytest-mock
   #? - snakeviz
 
-  # pip dependencies. Before adding a package to this list, make sure it's not available in conda.
-  - pip
-  - pip:
-    - semantic-kernel
-    # do not change the pydantic version here, this is specified identically to the pydantic req above, forcing pip to leave it alone.
-    - pydantic==1.10.*
+  # # pip dependencies. Before adding a package to this list, make sure it's not available in conda.
+  # - pip
+  # - pip:
+  #   - semantic-kernel
+  #   # do not change the pydantic version here, this is specified identically to the pydantic req above, forcing pip to leave it alone.
+  #   - pydantic==1.10.*
