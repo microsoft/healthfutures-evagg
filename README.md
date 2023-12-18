@@ -77,9 +77,10 @@ secrets to the application.
 Create a `.env` file in the repository root with the following format:
 
 ```text
-AZURE_OPENAI_DEPLOYMENT_NAME=<your AOAI deployment name>
+AZURE_OPENAI_DEPLOYMENT=<your AOAI deployment name>
 AZURE_OPENAI_ENDPOINT=<your AOAI endpoint>
 AZURE_OPENAI_API_KEY=<your AOAI key>
+AZURE_OPENAI_API_VERSION=<your AOAI API version>
 
 NCBI_EUTILS_API_KEY=<your NCBI eutils API key (optional)>
 NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
@@ -102,9 +103,10 @@ For development on this repo from within GitHub Codespaces, create the GitHub se
 and grant the ev-agg-exp repo access to those secrets.
 
 ```text
-AZURE_OPENAI_DEPLOYMENT_NAME=<your AOAI deployment name>
+AZURE_OPENAI_DEPLOYMENT=<your AOAI deployment name>
 AZURE_OPENAI_ENDPOINT=<your AOAI endpoint>
 AZURE_OPENAI_API_KEY=<your AOAI key>
+AZURE_OPENAI_API_VERSION=<your AOAI API version>
 
 NCBI_EUTILS_API_KEY=<your NCBI eutils API key (optional)>
 NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
@@ -191,9 +193,3 @@ root
 |-- sandbox: scratch area for developers.
 |-- test: unit tests for core libraries.
 ```
-
-### Questions and todos
-
-- Consider writing script for literature library localization? Likely only necessary if we don't see ourselves moving directly to PMC API requests.
-- Consider dataset organization, online access
-- Consider base types for the results that we're pulling out of a paper, using primitives is ugly?
