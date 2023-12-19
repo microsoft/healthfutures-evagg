@@ -18,9 +18,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
-    - phenotype
     - zygosity
-    - variant_inheritance
   llm_client:
     di_class: lib.evagg.llm.openai.OpenAIClient
     config:
