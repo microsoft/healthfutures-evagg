@@ -1,7 +1,7 @@
 Here is some text from a paper describing genetic variants in the gene {{$gene}}.
 What is the described zygosity for the patient with the variant: {{$variant}}?
 
-{{$input}}
+{{$passage}}
 
 Provide your response in the following format:
 {

@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import Any, Dict, Sequence
 
 from lib.di import DiContainer
 from lib.evagg import IEvAggApp
@@ -28,7 +28,7 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict:
     if overrides is None:
         return {}
 
-    override_dict = {}
+    override_dict: Dict[Any, Any] = {}
     for override in overrides:
         key_path, _, value = override.partition(":")
         keys = key_path.split(".")
