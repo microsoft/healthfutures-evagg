@@ -1,26 +1,32 @@
 import json
+import os
 from typing import Any, Dict, List, Sequence
 
 from lib.evagg.lit import IFindVariantMentions
+from lib.evagg.llm.openai import IOpenAIClient
 from lib.evagg.ref import INcbiSnpClient
-from lib.evagg.sk import ISemanticKernelClient
 from lib.evagg.types import IPaperQuery, Paper
 
 from .._interfaces import IExtractFields
 
 
-class SemanticKernelContentExtractor(IExtractFields):
+class PromptBasedContentExtractor(IExtractFields):
     _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvs_c", "hgvs_p", "phenotype", "zygosity", "variant_inheritance"}
+    _PROMPTS = {
+        "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
+        "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
+        "phenotype": os.path.dirname(__file__) + "/prompts/phenotype.txt",
+    }
 
     def __init__(
         self,
         fields: Sequence[str],
-        sk_client: ISemanticKernelClient,
+        llm_client: IOpenAIClient,
         mention_finder: IFindVariantMentions,
         ncbi_snp_client: INcbiSnpClient,
     ) -> None:
         self._fields = fields
-        self._sk_client = sk_client
+        self._llm_client = llm_client
         self._mention_finder = mention_finder
         self._ncbi_snp_client = ncbi_snp_client
 
@@ -56,6 +62,8 @@ class SemanticKernelContentExtractor(IExtractFields):
             mentions = variant_mentions[variant_id]
             variant_results: Dict[str, str] = {"variant": variant_id}
 
+            print(f"### Extracting fields for {variant_id} in {paper.id}")
+
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = self._excerpt_from_mentions(mentions)
             gene_symbol = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
@@ -89,11 +97,14 @@ class SemanticKernelContentExtractor(IExtractFields):
                 elif field == "hgvs_p":
                     result = hgvs["hgvs_p"] if ("hgvs_p" in hgvs and hgvs["hgvs_p"]) else "unknown"
                 else:
-                    context_variables = {"input": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
+                    params = {"passage": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
 
-                    raw = self._sk_client.run_completion_function(
-                        skill="content", function=field, context_variables=context_variables
+                    response = self._llm_client.chat_oneshot_file(
+                        user_prompt_file=self._PROMPTS[field],
+                        system_prompt="Extract field",
+                        params=params,
                     )
+                    raw = response.output
                     try:
                         result = json.loads(raw)[field]
                     except Exception:

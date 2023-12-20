@@ -143,7 +143,7 @@ class NcbiSnpClient(INcbiSnpClient):
         rsids_str = ",".join(keys)
         response = self._entrez_fetch_xml(db="snp", id_str=rsids_str)
 
-        if not response or not self._validate_snp_response_xml(response):
+        if response is None or not self._validate_snp_response_xml(response):
             return {}
 
         result = {}

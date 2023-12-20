@@ -12,7 +12,7 @@ library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_content_manual.tsv
 extractor:
-  di_class: lib.evagg.SemanticKernelContentExtractor
+  di_class: lib.evagg.PromptBasedContentExtractor
   fields:
     - gene
     - paper_id
@@ -21,10 +21,10 @@ extractor:
     - phenotype
     - zygosity
     - variant_inheritance
-  sk_client:
-    di_class: lib.evagg.sk.SemanticKernelClient
+  llm_client:
+    di_class: lib.evagg.llm.openai.OpenAIClient
     config:
-      di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
+      di_class: lib.evagg.llm.openai.OpenAIDotEnvConfig
   mention_finder:
     di_class: lib.evagg.lit.TruthsetVariantMentionFinder
     entity_annotator:

@@ -1,7 +1,7 @@
 Here is some text from a paper describing genetic variants in the gene {{$gene}}.
 What is the described mode of inheritance observed for the patient with the following variant  in {{$gene}}: {{$variant}}?
 
-{{$input}}
+{{$passage}}
 
 Provide your response in the following format:
 {
