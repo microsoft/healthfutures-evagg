@@ -1,16 +1,18 @@
 import json
-from typing import Any, Dict, Sequence
+import os
+from typing import Any, Dict, Optional, Sequence
 
 import pytest
 
-from lib.evagg import SemanticKernelContentExtractor, SimpleContentExtractor
+from lib.evagg import PromptBasedContentExtractor, SimpleContentExtractor
 from lib.evagg.lit import IFindVariantMentions
+from lib.evagg.llm.openai import IOpenAIClient
+from lib.evagg.llm.openai._interfaces import OpenAIClientResponse
 from lib.evagg.ref import INcbiSnpClient
-from lib.evagg.sk import ISemanticKernelClient
 from lib.evagg.types import IPaperQuery, Paper, Query
 
 
-def test_simple_content_extractor():
+def test_simple_content_extractor() -> None:
     paper = Paper(
         id="12345678", citation="Doe, J. et al. Test Journal 2021", abstract="This is a test paper.", pmcid="PMC123"
     )
@@ -36,9 +38,17 @@ class MockMentionFinder(IFindVariantMentions):
         return self.mentions
 
 
-class MockSemanticKernelClient(ISemanticKernelClient):
-    def run_completion_function(self, skill: str, function: str, context_variables: Any) -> str:
-        return json.dumps({function: "test"})
+class MockOpenAIClient(IOpenAIClient):  # type: ignore
+    def chat_oneshot_file(
+        self,
+        user_prompt_file: str,
+        system_prompt: str | None,
+        params: Dict[str, str] | None = None,
+        settings: Dict[str, Any] | None = None,
+    ) -> OpenAIClientResponse:
+        # Infer function name from prompt filename
+        function = os.path.split(user_prompt_file)[1].replace(".txt", "")
+        return OpenAIClientResponse(result={}, settings={}, output=json.dumps({function: "test"}))
 
 
 class MockNcbiSnpClient(INcbiSnpClient):
@@ -49,7 +59,7 @@ class MockNcbiSnpClient(INcbiSnpClient):
         return self._response
 
 
-def test_sk_content_extractor_valid_fields():
+def test_prompt_based_content_extractor_valid_fields() -> None:
     fields = {
         "gene": "CHI3L1",
         "paper_id": "12345678",
@@ -64,9 +74,9 @@ def test_sk_content_extractor_valid_fields():
     ncbi_snp_client = MockNcbiSnpClient(
         {k: {"hgvs_c": fields["hgvs_c"], "hgvs_p": fields["hgvs_p"]} for k in mention_finder.mentions.keys()}
     )
-    content_extractor = SemanticKernelContentExtractor(
+    content_extractor = PromptBasedContentExtractor(
         list(fields.keys()),
-        sk_client=MockSemanticKernelClient(),
+        llm_client=MockOpenAIClient(),
         mention_finder=mention_finder,
         ncbi_snp_client=ncbi_snp_client,
     )
@@ -85,12 +95,12 @@ def test_sk_content_extractor_valid_fields():
             assert row[f] == fields[f]
 
 
-def test_sk_content_extractor_invalid_fields():
+def test_prompt_based_content_extractor_invalid_fields() -> None:
     fields = ["not a field"]
 
-    content_extractor = SemanticKernelContentExtractor(
+    content_extractor = PromptBasedContentExtractor(
         fields,
-        MockSemanticKernelClient(),
+        MockOpenAIClient(),
         MockMentionFinder(),
         MockNcbiSnpClient(response={}),
     )

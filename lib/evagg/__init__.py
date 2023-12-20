@@ -1,7 +1,7 @@
 """The evagg core library."""
 
 from ._app import SynchronousLocalApp, SynchronousLocalBatchApp
-from ._content._semantic_kernel import SemanticKernelContentExtractor
+from ._content._prompt_based import PromptBasedContentExtractor
 from ._content._simple import SimpleContentExtractor
 from ._content._truth_set import TruthsetContentExtractor
 from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
@@ -26,7 +26,7 @@ __all__ = [
     "TruthsetFileLibrary",
     "PubMedFileLibrary",
     # Content.
-    "SemanticKernelContentExtractor",
+    "PromptBasedContentExtractor",
     "SimpleContentExtractor",
     "TruthsetContentExtractor",
 ]
