@@ -224,6 +224,9 @@ class PubMedFileLibrary(IGetPapers):
             error = root.find("error")
             if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
                 return False
+            elif error.attrib["code"] == "idDoesNotExist":  # type: ignore
+                print(f"PMC ID {pmcid} does not exist.")
+                return False
             else:
                 raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
         match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
