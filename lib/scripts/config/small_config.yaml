@@ -1,5 +1,5 @@
-di_class: lib.evagg.SynchronousLocalBatchApp
-query_iterator:
+di_class: lib.evagg.SynchronousLocalApp
+queries:
   di_class: lib.evagg.types.QueryIterator
   # When querying based on gene only, this should cover the full "small" truth set.
   variants: 
