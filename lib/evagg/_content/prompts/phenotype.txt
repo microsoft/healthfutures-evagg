@@ -1,9 +1,8 @@
-Here is some text from a paper describing genetic variants in the gene {{$gene}}.
-What is the described phenotype for patients with the variant: {{$variant}}?
+# Task
+Given some text from a paper describing genetic variants a the gene, please output the reported phenotype for a specific variant.
 
-{{$passage}}
-
-Provide your response in the following format:
+# Output format
+If you can determine the phenotype from the text provided, please respond:
 {
   "phenotype": [
     "first phenotypic description",
@@ -12,9 +11,48 @@ Provide your response in the following format:
   ]
 }
 
-If you cannot determine the phenotype from the text provided please respond:
+If not, please respond:
 {
   "phenotype": [
     "unknown"
   ]
 }
+
+# Examples
+
+In the following text, what is the reported phenotype for patients with the variant: c.208G>A in gene SRSF1?
+
+The identification of nonsense, frameshift, and deletion variants suggested that haploinsufficiency of SRSF1 is the most likely common pathogenic mechanism in SRSF1-related NDD; therefore, we hypothesized that pathogenic missense variants likely also behave as LoF alleles. Functional in silico and in vivo evidence supporting LoF was thus essential to classify these missense variants as being (likely) pathogenic. We therefore first used eight in silico meta-predictors (BayesDel with AF, BayesDel without AF, MetaLR, MetaRNN, MetaSVM, REVEL, Eigen, CADD) embedded in the human genomic search engine VarSome to obtain functional prediction scores of the seven missense variants (Figure 2A). Recent studies indicate that BayesDel outperforms most other meta-predictors for clinical missense variant classification. Although the eight tools were not unanimous for any of the seven missense variants, c.548A>G (p.His183Arg) and c.130G>A (p.Asp44Asn) (Table 1) obtained lower prediction scores with most meta-predictors, suggesting a reduced pathogenic potential and perhaps hypomorphic nature for these two variants. Higher scores were obtained for the five other missense variants, c.119G>T (p.Gly40Val), c.251T>G (p.Leu84Arg), c.208G>A (p.Ala70Thr), c.71C>T (p.Pro24Leu), and c.478G>A (p.Val160Met) (Table 1), with BayesDel supporting potential pathogenicity for all five.
+
+Molecular data of individuals with SRSF1 variants
+Subjects Genomic changeg Coding changeh Protein change Variant type Inheritance Polyphen-2 score Varsome predictiona,b,c,d,e,f I1 g.56083708_56083709del c.377_378del p.Ser126Trpfs*17 Frameshift Not inherited from the mother - Pathogenic: PVS1 PM2 PS2 I2, I3, I4 g.56083236C>T c.478G>A p.Val160Met Missense De novo Probably damaging 0.999 Likely pathogenic: PS2 PM2 PP3 I5 g.56082937dup c.579dup p.Val194Serfs*2 Frameshift De novo - Pathogenic: PVS1 PM2 PS2 I6 g.55806534_56540597del Not applicable Not applicable Deletion De novo - - I7 g.56084417G>A c.82C>T p.Arg28* Nonsense De novo - Pathogenic: PVS1 PM2 PS2 I8 g.56083166T>C c.548A>G p.His183Arg Missense De novo Probably damaging 1 Likely pathogenic: PS2 PM2 PP3 I9 g.56084380C>A c.119G>T p.Gly40Val Missense De novo Probably damaging 1 Likely pathogenic: PS2 PM2 PP3 I10 g.56084402C>A c.97G>T p.Glu33* Nonsense De novo - Pathogenic: PVS1 PM2 PS2 I11 g.56082914del c.601del p.Ser201Valfs*87 Frameshift De novo - Pathogenic: PVS1 PM2 PS2 I12 g.56083875C>T c.208G>A p.Ala70Thr Missense De novo Probably damaging 1 Likely pathogenic: PS2 PM2 PP3 I13 g.56084428G>A c.71C>T p.Pro24Leu Missense De novo Probably damaging 1 Likely pathogenic: PP3 PM2 PP2 PS2 I14 g.56083852A>C c.231T>G p.Tyr77* Nonsense De novo - Pathogenic: PVS1 PM2 PS2 I15 g.56083832A>C c.251T>G p.Leu84Arg Missense De novo Probably damaging 1 Likely pathogenic: PS2 PM2 PP3 I16 g.56084369C>T c.130G>A p.Asp44Asn Missense De novo Benign 0.029 Uncertain significance: PP2 PM2 PS2 BP4 I17 g.55442363_56309063del Not applicable Not applicable Deletion De novo - -
+PVS1, predicted loss-of-function variant.
+PS2, de novo (both maternity and paternity confirmed) in an individual with the disease and no family history.
+PM2, absent from controls (or at extremely low frequency if recessive) in Exome Sequencing Project, 1000 Genomes Project, or Exome Aggregation Consortium.
+PP2, missense variant in a gene that has a low rate of benign missense variation and where missense variants are a common mechanism of disease.
+PP3, multiple lines of computational evidence support a deleterious effect on the gene or gene product.
+BP4, multiple lines of computational evidence suggest no impact on gene or gene product.
+GenBank: NC_000017.10
+GenBank: NM_006924.5
+
+Subjects I1 I2 I3 I4 I5 I6 I7 I8 I9 I10 I11 I12 I13 I14 I15 I16 I17 Sex F F M M F F M F M M F F F M M F F Pregnancy/Birth Pregnancy complications + + - - - - + - - - - - - + + - + Gestational weeks 36 40 38 Full term 39 37 31 38 Full term ND Full term 41 39 41 39 38 ND Birth weight (g) (SD) 1,700 (-2.6) 3,300 (-0.5) 3,180 (0) 2,920 (-1.5) 3,100 (-0.5) 2,550 (-0.6) 1,765 (+0.6) 2,790 (-0.6) 3,827 (+0.5) ND 3,430 (0) 3,700 (+0.6) 3,997 (+1.7) ND 2,980 (-1) 3,065 (+0.1) ND Birth length (cm) (SD) 39 (-3.6) 49.5 (-0.4) 51 (+1) 45.5 (-2.8) 63 (-0.2) 46 (-0.7) 40.5 (-0.2) 45 (-1.8) 53.5 (+1.3) ND ND 51 (+0.4) 50.8 (+0.9) ND 50 (0) 51 (+1.3) ND Birth OFC (cm) (SD) 30.5 (-1.5) 35 (+0.4) 35 (+0.4) 35 (-0.1) 34 (-0.3) 32 (-1) 30 (+0.4) 33.5 (-0.2) 35 (-0.2) ND ND 34 (-0.5) ND ND 35 (+0.2) 34 (+0.2) ND Neonatal complications + - + + - + - - + - + - + + - + + Growth Age at last visit 18 years 4 years 9 months 2 years 34 years 6 years 8 months 4 years 5 years 2 months 3 years 1 month 8 years 5 months 23 years 9 months 5 years 3 years 8 months 2 years 2 months 28 years 18 years 1 year 2 months 13 years 6 months Weight last visit (kg) (SD) 54.2 (-0.3) 17.5 (+0.2) 11.6 (-0.8) 65.6 (-0.4) 20 (-0.5) 14.5 (-0.8) 19 (+0.1) 10 (-2.8) 128 (+0.1) 41 (-3.3) 19.7 (+0.5) 17.8 (+1) 12.7 (+0.2) 57.7 (-1.4) 57.6 (-1) 8.9 (-1.2) ND Height last visit (cm) (SD) 152 (-1.8) 103 (-0.5) 86 (-0.4) 189.5 (+2) 119.5 (+0.1) 98.3 (-0.6) 112.8 (+0.7) 84 (-2.7) 28 (+0.4) 156 (-2.9) 109 (+0.3) 99 (+0.7) 84.2 (+0.9) 174 (-0.4) 180.5 (+0.7) 77.4 (+0.5) 144 (-2) BMI last visit (kg/m2) 23.5 (+0.6) 16.5 (+0.8) 15.7 (-0.2) 18.3 (-1.6) 14 (-0.9) 15 (-0.2) 14.9 (-0.3) 14.2 (-1) 17.1 (+0.7) 16.8 (-2.4) 16.6 (+0.8) 18.2 (+1.8) 17.9 (+1.6) 19.1 (-0.9) 17.7 (-1.4) 14.9 (-0.9) ND OFC last visit (cm) (SD) 55 (+0.6) 51 (+0.6) 50 (+1) 59 (+2.7) 52.5 (+0.6) 48.5 (-0.7) 51 (-0.1) 45.5 (-2.9) 51.8 (-0.4) 54.5 (-0.4) 48.7 (-1.1) 49 (-1) 47.8 (+0.1) 56 (+0.6) 55 (-0.1) 47 (+1.1) 50 (-2.6) Failure to thrive + - - - - ND - + - + - + - + - - + Truncal overweight + - Trunk adiposity - - - - - - - - - + - - - - Neurological abnormalities ID/DD Mild to moderate Mild to moderate Mild to moderate LD Mild Yes Severe Severe Borderline Severe Moderate Moderate Yes Mild Mild Yes Yes Motor delay + + + - + + + + - + - + + + - + + Speech delay + + + + + + + + + + - + + + + + + Behavioral disorders + + - + + - + - + + + + - + + + + Hypotonia + + + + Buccal hypotonia - - + - + - - + + + + ND Seizures - - - - - - - - - + - - - + - + - Brain abnormalities MRI + + - - - ND + + - - - - + ND ND + ND Neurosensory abnormalities Hearing loss - - - - - ND - - + - - - - - - - - Vision problems + + - ND - + - + - + - ND + - + - + Congenital Malformations Cardiac + + - - - + - ND + + - - - + - - ND Urogenital/kidney - - + + - ND - - + + - ND - - + - ND Others Polycystic spleen - - - - - - - - - - - - Hernia, diastasis - - - Skeletal abnormalities Scoliosis + - + + - - - - - - - - - + + - - Pectus deformity - - - + - + - - - - - - - + + - - Other Genu varum, Equinova-rus - - Arachno-dactyly BrachymetatarsiaFallen arches - - - L1 vertebral hypoplasiaKyphosis Asymme-tric chest - - - DolichostenomeliaEquinova-rusPostaxial hexa-dactyly Metatarsus varusArachnodactyly - Genu valgum Others Facial features + + + + + + + - + + + + + + + + + Cutaneous abnormalities + - - - + + - - - - - - + - - - - Other diagnosis - - - - - - - - - Diagnosed Hermansky Pudlak Syndrome - MBD6 variant - - - - 15q11.2 BP1-BP2 microdeletion
+ND, no data; OFC, occipito-frontal circumference; BMI, body mass index.
+
+{
+  "phenotype": [
+    "developmental disorder",
+    "intellectual disability",
+    "motor delay",
+    "speech delay",
+    "behavioral disorders",
+    "hypotonia",
+    "brain abnormalities",
+    "vision problems",
+    "cardiac congenital malformations"
+  ]
+}
+
+# Request
+In the following text, what is the reported phenotype for patients with the variant: {{$variant}} in gene {{$gene}}?
+
+{{$passage}}
