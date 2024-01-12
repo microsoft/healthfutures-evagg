@@ -1,6 +1,6 @@
-di_class: lib.evagg.SynchronousLocalApp
-query:
-  di_class: lib.evagg.types.MultiQuery
+di_class: lib.evagg.SynchronousLocalBatchApp
+query_iterator:
+  di_class: lib.evagg.types.QueryIterator
   variants:
     - "TUBB3:p.E410K"
 library: 

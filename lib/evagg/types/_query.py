@@ -13,14 +13,6 @@ class Query(IPaperQuery):
         return {self._variant}
 
 
-class MultiQuery(IPaperQuery):
-    def __init__(self, variants: Sequence[str]) -> None:
-        self._variants = {Variant(g, v) for g, v in [v.split(":") for v in variants]}
-
-    def terms(self) -> Set[Variant]:
-        return self._variants
-
-
 class QueryIterator(IPaperQueryIterator):
     def __init__(self, variants: Sequence[str]) -> None:
         self._queries = [Query(v) for v in variants]
