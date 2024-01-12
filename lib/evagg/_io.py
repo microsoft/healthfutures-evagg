@@ -2,6 +2,7 @@ import csv
 import json
 import os
 import sys
+from datetime import datetime
 from typing import Mapping, Optional, Sequence
 
 from ._interfaces import IWriteOutput
@@ -50,6 +51,7 @@ class TableOutputWriter(IWriteOutput):
 
         output_stream = open(self._path, "w") if self._path else sys.stdout
         writer = csv.writer(output_stream, delimiter="\t", lineterminator="\n")
+        writer.writerow([f"# Created {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}"])
         writer.writerow(table_lines[0].keys())
         for line in table_lines:
             writer.writerow(line.values())

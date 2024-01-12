@@ -2,7 +2,7 @@ from typing import Any, Dict, Sequence, Tuple
 
 from lib.evagg.lit import IAnnotateEntities, VariantMentionFinder
 from lib.evagg.ref import INcbiGeneClient
-from lib.evagg.types import MultiQuery, Paper, Query
+from lib.evagg.types import Paper, Query, QueryIterator
 
 GENE_ID_PAIRS = {
     "COQ2": 27235,
@@ -94,7 +94,7 @@ def test_find_multiple_mentions_multi_query():
     gene_symbols = list(GENE_ID_PAIRS.keys())
     gene_ids = list(GENE_ID_PAIRS.values())
 
-    query = MultiQuery([f"{gene_symbol}:varX" for gene_symbol in gene_symbols])
+    queries = QueryIterator([f"{gene_symbol}:varX" for gene_symbol in gene_symbols])
 
     # Ensure that variant ids are unique across genes.
     mock_annotator = MockAnnotator([(gene_id, f"var{gene_id}") for gene_id in gene_ids])
@@ -105,7 +105,9 @@ def test_find_multiple_mentions_multi_query():
 
     paper = Paper(id="123")
 
-    mentions = finder.find_mentions(query, paper)
+    mentions = {}
+    for query in queries:
+        mentions.update(finder.find_mentions(query, paper))
 
     # There should be one mention per query gene.
     assert len(mentions) == len(gene_symbols)

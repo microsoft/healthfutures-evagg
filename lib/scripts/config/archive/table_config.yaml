@@ -1,6 +1,6 @@
 di_class: lib.evagg.SynchronousLocalApp
-query:
-  di_class: lib.evagg.types.MultiQuery
+queries:
+  di_class: lib.evagg.types.QueryIterator
   variants:
     - "CHI3L1:p.R116C"
     - "TWNK:p.S369F"
