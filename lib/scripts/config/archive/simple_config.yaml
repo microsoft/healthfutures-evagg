@@ -1,5 +1,5 @@
 di_class: lib.evagg.SynchronousLocalApp
-query_iterator:
+queries:
   di_class: lib.evagg.types.QueryIterator
   variants:
     - "TUBB3:p.E410K"
