@@ -1,6 +1,6 @@
 """The evagg core library."""
 
-from ._app import SynchronousLocalBatchApp
+from ._app import SynchronousLocalApp
 from ._content._prompt_based import PromptBasedContentExtractor
 from ._content._simple import SimpleContentExtractor
 from ._content._truth_set import TruthsetContentExtractor
@@ -15,7 +15,7 @@ __all__ = [
     "IExtractFields",
     "IWriteOutput",
     # App.
-    "SynchronousLocalBatchApp",
+    "SynchronousLocalApp",
     # IO.
     "ConsoleOutputWriter",
     "FileOutputWriter",
