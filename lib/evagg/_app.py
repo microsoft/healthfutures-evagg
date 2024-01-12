@@ -5,7 +5,7 @@ from lib.evagg.types import IPaperQueryIterator
 from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 
 
-class SynchronousLocalBatchApp(IEvAggApp):
+class SynchronousLocalApp(IEvAggApp):
     def __init__(
         self, query_iterator: IPaperQueryIterator, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput
     ) -> None:
