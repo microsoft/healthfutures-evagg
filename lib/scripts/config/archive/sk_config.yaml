@@ -1,5 +1,5 @@
 di_class: lib.evagg.SynchronousLocalApp
-query_iterator:
+queries:
   di_class: lib.evagg.types.QueryIterator
   variants:
     - "COQ2:p.R55*"
