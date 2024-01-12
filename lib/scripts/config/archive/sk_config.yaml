@@ -38,4 +38,3 @@ extractor:
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
   di_class: lib.evagg.TableOutputWriter
-  # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
