@@ -1,7 +1,8 @@
-di_class: lib.evagg.SynchronousLocalApp
-query:
-  di_class: lib.evagg.types.Query
-  variant: "CPA6:R46C" # note R46C is a variant I made up.
+di_class: lib.evagg.SynchronousLocalBatchApp
+query_iterator:
+  di_class: lib.evagg.types.QueryIterator
+  variants:
+    - "CPA6:R46C" # note R46C is a variant I made up.
 library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
