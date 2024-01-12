@@ -1,5 +1,5 @@
 di_class: lib.evagg.SynchronousLocalApp
-query_iterator:
+queries:
   di_class: lib.evagg.types.QueryIterator
   variants:
     - "CPA6:R46C" # note R46C is a variant I made up.
