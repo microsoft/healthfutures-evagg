@@ -1,7 +1,8 @@
-di_class: lib.evagg.SynchronousLocalApp
-query:
-  di_class: lib.evagg.types.Query
-  variant: "COQ2:p.R55*"
+di_class: lib.evagg.SynchronousLocalBatchApp
+query_iterator:
+  di_class: lib.evagg.types.QueryIterator
+  variants:
+    - "COQ2:p.R55*"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_content_manual.tsv
