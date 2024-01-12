@@ -7,9 +7,9 @@ from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 
 class SynchronousLocalApp(IEvAggApp):
     def __init__(
-        self, query_iterator: IPaperQueryIterator, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput
+        self, queries: IPaperQueryIterator, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput
     ) -> None:
-        self._query_factory = query_iterator
+        self._query_factory = queries
         self._library = library
         self._extractor = extractor
         self._writer = writer
