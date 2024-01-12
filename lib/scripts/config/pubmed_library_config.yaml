@@ -1,7 +1,8 @@
 di_class: lib.evagg.SynchronousLocalApp
-query:
-  di_class: lib.evagg.types.Query
-  variant: "CPA6:R46C" # note R46C is a variant I made up.
+queries:
+  di_class: lib.evagg.types.QueryIterator
+  variants:
+    - "CPA6:R46C" # note R46C is a variant I made up.
 library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
@@ -41,4 +42,3 @@ extractor:
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
   di_class: lib.evagg.TableOutputWriter
-  # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
