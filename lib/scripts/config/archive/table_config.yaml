@@ -1,4 +1,4 @@
-di_class: lib.evagg.SynchronousLocalBatchApp
+di_class: lib.evagg.SynchronousLocalApp
 query_iterator:
   di_class: lib.evagg.types.QueryIterator
   variants:
