@@ -14,7 +14,6 @@ from lib.config import PydanticYamlModel
 
 from ._interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
