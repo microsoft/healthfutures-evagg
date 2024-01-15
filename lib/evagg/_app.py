@@ -1,18 +1,25 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from lib.evagg.types import IPaperQueryIterator
 
 from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
+from ._logging import configure_logging
 
 
 class SynchronousLocalApp(IEvAggApp):
     def __init__(
-        self, queries: IPaperQueryIterator, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput
+        self,
+        queries: IPaperQueryIterator,
+        library: IGetPapers,
+        extractor: IExtractFields,
+        writer: IWriteOutput,
+        log: Optional[Dict[str, str]] = None,
     ) -> None:
         self._query_factory = queries
         self._library = library
         self._extractor = extractor
         self._writer = writer
+        configure_logging(log)
 
     def execute(self) -> None:
         all_fields: Dict[str, List[Dict[str, str]]] = {}
