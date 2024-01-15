@@ -228,7 +228,7 @@ class PubMedFileLibrary(IGetPapers):
             if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
                 return False
             elif error.attrib["code"] == "idDoesNotExist":  # type: ignore
-                print(f"PMC ID {pmcid} does not exist.")
+                logger.warn(f"PMC ID {pmcid} does not exist.")
                 return False
             else:
                 raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
@@ -246,7 +246,7 @@ class PubMedFileLibrary(IGetPapers):
             citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
             is_pmc_oa = self._is_pmc_oa(pmcid) if pmcid is not None else False
             count += 1
-            logger.info(count, " Citation: ", citation)
+            logger.debug(count, " Citation: ", citation)
             paper = Paper(
                 id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
             )  # make a new Paper object for each entry
