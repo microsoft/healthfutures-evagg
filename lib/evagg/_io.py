@@ -1,11 +1,14 @@
 import csv
 import json
+import logging
 import os
 import sys
 from datetime import datetime
 from typing import Mapping, Optional, Sequence
 
 from ._interfaces import IWriteOutput
+
+logger = logging.getLogger(__name__)
 
 
 class ConsoleOutputWriter(IWriteOutput):
@@ -21,9 +24,8 @@ class FileOutputWriter(IWriteOutput):
         self._path = path
 
     def write(self, fields: Mapping[str, Sequence[Mapping[str, str]]]) -> None:
-        print(f"Writing output to: {self._path}")
+        logger.info(f"Writing output to: {self._path}")
 
-        # TODO create parent if doesn't exist.
         parent = os.path.dirname(self._path)
         if not os.path.exists(parent):
             os.makedirs(parent)
@@ -37,11 +39,11 @@ class TableOutputWriter(IWriteOutput):
         self._path = output_path
 
     def write(self, fields: Mapping[str, Sequence[Mapping[str, str]]]) -> None:
-        print(f"Writing output to: {self._path or 'stdout'}")
+        logger.info(f"Writing output to: {self._path or 'stdout'}")
 
         table_lines = [variant for variant_list in fields.values() for variant in variant_list]
         if len(table_lines) == 0:
-            print("No results to write")
+            logger.warn("No results to write")
             return
 
         if self._path:

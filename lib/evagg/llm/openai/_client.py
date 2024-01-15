@@ -34,7 +34,7 @@ class OpenAIDotEnvConfig(OpenAIConfig):
 
     def __init__(self) -> None:
         if not load_dotenv():
-            print("Warning: no .env file found, using pre-existing environment variables.")
+            logger.warn("No .env file found, using pre-existing environment variables.")
 
         if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
             raise ValueError(
@@ -74,7 +74,7 @@ class OpenAIClient(IOpenAIClient):
 
     @lru_cache
     def _get_client_instance(self) -> OpenAI:
-        logger.info("Using Azure OpenAI API")
+        logger.debug("Using Azure OpenAI API")
         # Can configure a default model deployment here, but model is still required in the settings, so there's
         # no point in doing so. Instead we'll just put the deployment from the config into the default settings.
         return AzureOpenAI(
@@ -93,7 +93,7 @@ class OpenAIClient(IOpenAIClient):
         start_ts = time.time()
         settings = self._clean_completion_settings(settings)
         result = self._client.completions.create(**settings)  # type: ignore
-        logger.info(f"Completion took {time.time() - start_ts} seconds")
+        logger.debug(f"Completion took {time.time() - start_ts} seconds")
         return result
 
     # TODO, return type?
@@ -101,7 +101,7 @@ class OpenAIClient(IOpenAIClient):
         start_ts = time.time()
         settings = self._clean_completion_settings(settings)
         result = self._client.chat.completions.create(**settings)  # type: ignore
-        logger.info(f"Chat completion took {time.time() - start_ts} seconds")
+        logger.debug(f"Chat completion took {time.time() - start_ts} seconds")
         return result
 
     def run(self, prompt: str, settings: Optional[Dict[str, Any]] = None) -> OpenAIClientResponse:
@@ -122,12 +122,12 @@ class OpenAIClient(IOpenAIClient):
 
         settings["prompt"] = prompt
 
-        logger.info(f"Running completion with settings: {settings}")
+        logger.debug(f"Running completion with settings: {settings}")
 
         result = self._completion_create(settings)
         output = result.choices[0].text.strip()
 
-        logger.info(f"Completion output: {output}")
+        logger.debug(f"Completion output: {output}")
 
         return OpenAIClientResponse(result=result, settings=settings, output=output)
 
@@ -163,12 +163,12 @@ class OpenAIClient(IOpenAIClient):
 
         settings["messages"] = messages
 
-        logger.info(f"Running chat completion with settings: {settings}")
+        logger.debug(f"Running chat completion with settings: {settings}")
 
         result = self._chat_completion_create(settings)
         output = result.choices[0].message.content
 
-        logger.info(f"Chat completion output: {output}")
+        logger.debug(f"Chat completion output: {output}")
 
         return OpenAIClientResponse(result=result, settings=settings, output=output)
 
@@ -231,7 +231,7 @@ class OpenAIClient(IOpenAIClient):
             futures = [executor.submit(_run_single_embedding, self._client, input, settings) for input in inputs]
             results = [f.result() for f in futures]
 
-        logger.info(f"Overall time for {len(inputs)} embeddings: {time.time() - start_overall}")
+        logger.debug(f"Overall time for {len(inputs)} embeddings: {time.time() - start_overall}")
 
         embeddings = {}
         tokens_used = 0

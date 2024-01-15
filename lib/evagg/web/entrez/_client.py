@@ -1,3 +1,4 @@
+import logging
 import os
 from functools import cache
 from typing import Dict
@@ -8,6 +9,8 @@ from dotenv import load_dotenv
 from lib.config import PydanticYamlModel
 
 from ._interfaces import IEntrezClient
+
+logger = logging.getLogger(__name__)
 
 
 # Assume AOAI.
@@ -22,7 +25,7 @@ class BioEntrezDotEnvConfig(BioEntrezConfig):
 
     def __init__(self) -> None:
         if not load_dotenv():
-            print("Warning: no .env file found, using pre-existing environment variables.")
+            logger.warn("No .env file found, using pre-existing environment variables.")
 
         if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
             raise ValueError(
