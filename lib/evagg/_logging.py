@@ -2,8 +2,6 @@ import logging
 import logging.config
 from typing import Dict, Optional
 
-logger = logging.getLogger(__name__)
-
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -31,7 +29,7 @@ class ColorConsoleFormatter(logging.Formatter):
     yellow = "\x1b[38;5;11m"
     red = "\x1b[31;20m"
     reset = "\x1b[0m"
-    # verbose: "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+    # verbose "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
     formatting = "%(levelname)s:%(name)s:%(message)s"
 
     FORMATS = {
@@ -59,6 +57,6 @@ def configure_logging(log_config: Optional[Dict[str, str]]) -> None:
     LOGGING_CONFIG["root"]["level"] = level
     logging.config.dictConfig(LOGGING_CONFIG)
 
-    # logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
     level_name = logging.getLevelName(logger.getEffectiveLevel())
     logger.info(f"Level:{level_name}")
