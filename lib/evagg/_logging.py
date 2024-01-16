@@ -43,6 +43,8 @@ class ColorConsoleFormatter(logging.Formatter):
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
+        # Strip "lib." prefix off of the record name.
+        record.name = record.name.replace("lib.", "")
         return formatter.format(record)
 
 
