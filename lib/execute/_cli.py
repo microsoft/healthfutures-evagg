@@ -54,7 +54,7 @@ def _nested_update(d: Dict, u: Dict) -> Dict:
     return d
 
 
-def main() -> None:
+def run_sync() -> None:
     args = _parse_args()
     config: Dict[str, Any]
 
@@ -71,4 +71,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_sync()
