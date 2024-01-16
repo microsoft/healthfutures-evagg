@@ -1,8 +1,8 @@
-"""Package defining run_query_sync.
+"""Package defining execute.
 
-Takes as input a yaml configuration file and runs the evidence aggregation pipeline synchronously.
+Takes as input a yaml configuration file and runs the evidence aggregation pipeline.
 """
 
-from ._cli import main
+from ._cli import run_sync
 
-__all__ = ["main"]
+__all__ = ["run_sync"]

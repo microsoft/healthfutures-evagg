@@ -138,10 +138,10 @@ codespaces. Github personal free accounts include 120 core hours and 15 GiB per 
 
 ## Running scripts
 
-At this point, the only script that exists is `lib/scripts/run_query_sync`. It is fairly generic and can be used to run
-a variety of apps, as long as they implement the protocol `lib.evagg.IEvaggApp`. Execution of the script is configured
-entirely from within YAML files, examples for which are contained in `lib/scripts/config`. These files describe both the
-wiring between dependencies and the parameterization of each dependency.
+At this point, the only script that exists is `run_query_sync`, implemented within the `lib.execute` module. It is fairly
+generic and can be used to run a variety of apps, as long as they implement the protocol `lib.evagg.IEvaggApp`. Execution
+of the script is configured entirely from within YAML files, examples for which are contained in `lib/config`. These files
+describe both the wiring between dependencies and the parameterization of each dependency.
 
 The script `run_query_sync` can be invoked as follows:
 
@@ -153,7 +153,7 @@ As a simple smoke test of script execution, one can run the following specific c
 
 ```bash
 python sandbox/miah/make_local_library.py
-run_query_sync lib/scripts/config/simple_config.py
+run_query_sync lib/config/simple_config.yaml
 ```
 
 This will create a fake local library of papers, extract content from those papers using a dummy implementation, and
@@ -167,7 +167,7 @@ following:
 mkdir -p .data/truth
 azcopy login
 azcopy cp "https://$SA.blob.core.windows.net/truth/truth_set_tiny.tsv" .data/truth/truth_set_tiny.tsv
-run_query_sync lib/scripts/config/tiny_config.yaml
+run_query_sync lib/config/tiny_config.yaml
 ```
 
 Where `$SA` is the Azure Blob Storage Account where your team stores test files.
@@ -175,7 +175,7 @@ Where `$SA` is the Azure Blob Storage Account where your team stores test files.
 You can optionally override any particular non-dictionary leaf value within a config using the following syntax:
 
 ```bash
-run_query_sync lib/scripts/config/table_config.yaml -o writer.outputpath:.out/override.tsv
+run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv -o log.log_level:DEBUG
 ```
 
 ## Contributing
