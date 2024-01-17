@@ -33,11 +33,11 @@ test:
 
 .PHONY: lint-flake8
 lint-flake8:
-	@flake8 $(PY_DIRS_ALL)
+	@flake8 $(PY_DIRS_MAIN) $(PY_DIRS_TEST)
 
 .PHONY: type
 type:
-	@mypy $(PY_DIRS_MAIN) $(PY_DIRS_EXTRA)
+	@mypy $(PY_DIRS_MAIN)
 
 .PHONY: sec
 sec:

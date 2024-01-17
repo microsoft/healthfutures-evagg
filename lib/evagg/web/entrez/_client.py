@@ -25,7 +25,7 @@ class BioEntrezDotEnvConfig(BioEntrezConfig):
 
     def __init__(self) -> None:
         if not load_dotenv():
-            logger.warn("No .env file found, using pre-existing environment variables.")
+            logger.warning("No .env file found, using pre-existing environment variables.")
 
         if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
             raise ValueError(
