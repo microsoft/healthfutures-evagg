@@ -83,7 +83,7 @@ class TruthsetFileLibrary(IGetPapers):
         papers: Set[Paper] = set()
         for paper_id, rows in paper_groups.items():
             if paper_id == "MISSING_ID":
-                logger.warn(f"Skipped {len(rows)} rows with no paper ID.")
+                logger.warning(f"Skipped {len(rows)} rows with no paper ID.")
                 continue
 
             # For each paper, extract the paper-specific key/value pairs into a new dict.
@@ -95,10 +95,10 @@ class TruthsetFileLibrary(IGetPapers):
                 # Doublecheck if every row has the same values for the paper-specific keys.
                 for key in TRUTHSET_PAPER_KEYS:
                     if paper_data[key] != row[key]:
-                        logger.warn(f"Multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
+                        logger.warning(f"Multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
                 # Make sure the gene/variant columns are not empty.
                 if not row["gene"] or not row["hgvs_p"]:
-                    logger.warn(f"Missing gene or variant for {paper_id}.")
+                    logger.warning(f"Missing gene or variant for {paper_id}.")
 
             # For each paper, extract the variant-specific key/value pairs into a new dict of dicts.
             variants = {Variant(r["gene"], r["hgvs_p"]): {k: r.get(k, "") for k in TRUTHSET_VARIANT_KEYS} for r in rows}
@@ -228,7 +228,7 @@ class PubMedFileLibrary(IGetPapers):
             if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
                 return False
             elif error.attrib["code"] == "idDoesNotExist":  # type: ignore
-                logger.warn(f"PMC ID {pmcid} does not exist.")
+                logger.warning(f"PMC ID {pmcid} does not exist.")
                 return False
             else:
                 raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore

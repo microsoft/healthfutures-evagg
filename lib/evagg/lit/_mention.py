@@ -180,7 +180,7 @@ class TruthsetVariantMentionFinder(VariantMentionFinder):
         for variant_dict in truth_rows:
             gene_symbol = variant_dict["gene"]
             if gene_symbol not in query_gene_ids:
-                logger.warn("Gene symbol not found in query gene ids")
+                logger.warning("Gene symbol not found in query gene ids")
                 continue
 
             identifier = f"{gene_symbol}:{variant_dict['hgvs_c']}"
