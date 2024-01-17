@@ -16,20 +16,6 @@
         "files.eol": "\n"
     },
     "python.analysis.typeCheckingMode": "basic",
-    "python.linting.enabled": true,
-    "python.linting.ignorePatterns": [
-        "**/site-packages/**/*.py",
-        ".vscode/*.py",
-        "test/**/*.py"
-    ],
-    "python.linting.flake8Enabled": true,
-    "python.linting.mypyEnabled": true,
-    "python.linting.mypyCategorySeverity.error": "Warning",
-    "python.linting.banditEnabled": true,
-    "python.linting.banditArgs": [
-        "-c",
-        "${workspaceFolder}/pyproject.toml"
-    ],
     "python.terminal.activateEnvironment": false,
     "[python]": {
         "editor.tabSize": 4,
@@ -44,5 +30,8 @@
         "**/__pycache__": true,
         ".mypy_cache": true,
         ".pytest_cache": true
+    },
+    "files.watcherExclude": {
+        "**/target": true
     }
 }

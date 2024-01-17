@@ -43,7 +43,7 @@ class TableOutputWriter(IWriteOutput):
 
         table_lines = [variant for variant_list in fields.values() for variant in variant_list]
         if len(table_lines) == 0:
-            logger.warn("No results to write")
+            logger.warning("No results to write")
             return
 
         if self._path:

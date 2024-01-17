@@ -2,7 +2,7 @@ import logging
 import logging.config
 from typing import Dict, Optional
 
-LOGGING_CONFIG = {
+LOGGING_CONFIG: Dict = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
@@ -40,7 +40,7 @@ class ColorConsoleFormatter(logging.Formatter):
         logging.CRITICAL: red + formatting + reset,
     }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         # Strip "lib." prefix off of the record name.
