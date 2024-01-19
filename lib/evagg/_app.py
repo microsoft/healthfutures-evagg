@@ -1,18 +1,28 @@
-from typing import Dict, List
+import logging
+from typing import Dict, List, Optional
 
 from lib.evagg.types import IPaperQueryIterator
 
 from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
+from ._logging import configure_logging
+
+logger = logging.getLogger(__name__)
 
 
 class SynchronousLocalApp(IEvAggApp):
     def __init__(
-        self, queries: IPaperQueryIterator, library: IGetPapers, extractor: IExtractFields, writer: IWriteOutput
+        self,
+        queries: IPaperQueryIterator,
+        library: IGetPapers,
+        extractor: IExtractFields,
+        writer: IWriteOutput,
+        log: Optional[Dict[str, str]] = None,
     ) -> None:
         self._query_factory = queries
         self._library = library
         self._extractor = extractor
         self._writer = writer
+        configure_logging(log)
 
     def execute(self) -> None:
         all_fields: Dict[str, List[Dict[str, str]]] = {}
@@ -20,10 +30,10 @@ class SynchronousLocalApp(IEvAggApp):
         for query in self._query_factory:
             # Get the papers that match this query.
             papers = self._library.search(query)
-            print(f"Found {len(papers)} papers for {query.terms()}")
+            logger.info(f"Found {len(papers)} papers for {query.terms()}")
 
             for index, paper in enumerate(papers):
-                print(f"{index}: {paper.id} - {paper.props['pmcid']}")
+                logger.debug(f"{index}: {paper.id} - {paper.props['pmcid']}")
 
             # For all papers that match, extract the fields we want.
             fields = {paper.id: self._extractor.extract(paper, query) for paper in papers}
