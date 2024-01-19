@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 
 from lib.evagg.types import IPaperQueryIterator
 
-from ._interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
-from ._logging import configure_logging
+from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
+from .logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
