@@ -2,7 +2,7 @@ from typing import Dict, Sequence
 
 from lib.evagg.types import IPaperQuery, Paper
 
-from .._interfaces import IExtractFields
+from ..interfaces import IExtractFields
 
 
 class TruthsetContentExtractor(IExtractFields):

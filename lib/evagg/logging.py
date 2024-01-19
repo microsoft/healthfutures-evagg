@@ -7,7 +7,7 @@ LOGGING_CONFIG: Dict = {
     "disable_existing_loggers": False,
     "formatters": {
         "color_log_formatter": {
-            "()": "lib.evagg._logging.ColorConsoleFormatter",
+            "()": "lib.evagg.logging.ColorConsoleFormatter",
         },
     },
     "handlers": {

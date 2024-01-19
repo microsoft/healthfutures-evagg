@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from lib.config import PydanticYamlModel
 
-from ._interfaces import IEntrezClient
+from .interfaces import IEntrezClient
 
 logger = logging.getLogger(__name__)
 
