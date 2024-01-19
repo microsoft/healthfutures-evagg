@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Sequence
 
 import pytest
 
