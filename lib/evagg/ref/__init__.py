@@ -1,8 +1,8 @@
 """Package for interacting with reference resources."""
 
-from ._interfaces import INcbiGeneClient, INcbiSnpClient
-from ._litvar import LitVarReference
-from ._ncbi import NcbiGeneClient, NcbiSnpClient
+from .interfaces import INcbiGeneClient, INcbiSnpClient
+from .litvar import LitVarReference
+from .ncbi import NcbiGeneClient, NcbiSnpClient
 
 __all__ = [
     # Litvar.
