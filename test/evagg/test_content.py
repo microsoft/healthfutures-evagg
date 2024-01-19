@@ -7,7 +7,7 @@ import pytest
 from lib.evagg import PromptBasedContentExtractor, SimpleContentExtractor
 from lib.evagg.lit import IFindVariantMentions
 from lib.evagg.llm.openai import IOpenAIClient
-from lib.evagg.llm.openai._interfaces import OpenAIClientResponse
+from lib.evagg.llm.openai.interfaces import OpenAIClientResponse
 from lib.evagg.ref import INcbiSnpClient
 from lib.evagg.types import IPaperQuery, Paper, Query
 

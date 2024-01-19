@@ -74,14 +74,14 @@ def entrez_client():
 
 
 def test_single_gene_direct(mocker, single_gene_direct_match, entrez_client):
-    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
+    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
 
     result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FAM111B")
     assert result == {"FAM111B": 374393}
 
 
 def test_single_gene_indirect(mocker, single_gene_indirect_match, entrez_client):
-    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_indirect_match)
+    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_indirect_match)
 
     result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FEB11")
     assert result == {}
@@ -95,19 +95,19 @@ def test_single_gene_indirect(mocker, single_gene_indirect_match, entrez_client)
 
 
 def test_single_gene_miss(mocker, single_gene_miss, single_gene_direct_match, entrez_client):
-    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_miss)
+    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_miss)
 
     result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FAM11B")
     assert result == {}
 
-    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
+    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
 
     result = NcbiGeneClient(entrez_client).gene_id_for_symbol("not a gene")
     assert result == {}
 
 
 def test_multi_gene(mocker, multi_gene, entrez_client):
-    mocker.patch("lib.evagg.ref._ncbi.NcbiGeneClient._get_json", return_value=multi_gene)
+    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=multi_gene)
 
     result = NcbiGeneClient(entrez_client).gene_id_for_symbol(["FAM111B", "FEB11"])
     assert result == {"FAM111B": 374393}

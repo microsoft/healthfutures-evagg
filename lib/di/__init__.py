@@ -1,5 +1,5 @@
 """The DI library."""
 
-from ._di import DiContainer
+from .di import DiContainer
 
 __all__ = ["DiContainer"]
