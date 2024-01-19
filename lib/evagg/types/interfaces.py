@@ -1,6 +1,6 @@
 from typing import Protocol, Set
 
-from ._base import Variant
+from .base import Variant
 
 
 class IPaperQuery(Protocol):

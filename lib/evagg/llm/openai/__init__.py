@@ -1,5 +1,5 @@
-from ._client import OpenAIClient, OpenAIConfig, OpenAIDotEnvConfig
-from ._interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
+from .client import OpenAIClient, OpenAIConfig, OpenAIDotEnvConfig
+from .interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
 
 __all__ = [
     # Client.
