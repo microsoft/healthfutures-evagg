@@ -37,13 +37,13 @@ extractor:
     ncbi_gene_client: 
       di_class: lib.evagg.ref.NcbiGeneClient
       entrez_client: 
-        di_class: lib.evagg.web.entrez.BioEntrezClient
+        di_class: lib.evagg.web.entrez.NcbiUtilsClient
         config: 
           di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
   ncbi_snp_client: 
     di_class: lib.evagg.ref.NcbiSnpClient
     entrez_client: 
-      di_class: lib.evagg.web.entrez.BioEntrezClient
+      di_class: lib.evagg.web.entrez.NcbiUtilsClient
       config: 
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
