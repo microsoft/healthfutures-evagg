@@ -246,7 +246,7 @@ class PubMedFileLibrary(IGetPapers):
             citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
             is_pmc_oa = self._is_pmc_oa(pmcid) if pmcid is not None else False
             count += 1
-            logger.debug(count, " Citation: ", citation)
+            logger.debug(f"{count} Citation: {citation}")
             paper = Paper(
                 id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
             )  # make a new Paper object for each entry
