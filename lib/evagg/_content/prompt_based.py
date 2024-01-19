@@ -8,7 +8,7 @@ from lib.evagg.llm.openai import IOpenAIClient
 from lib.evagg.ref import INcbiSnpClient
 from lib.evagg.types import IPaperQuery, Paper
 
-from .._interfaces import IExtractFields
+from ..interfaces import IExtractFields
 
 logger = logging.getLogger(__name__)
 
