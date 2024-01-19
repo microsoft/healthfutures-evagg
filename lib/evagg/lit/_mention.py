@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
@@ -6,6 +7,8 @@ import Bio.SeqUtils
 from lib.evagg.lit import IAnnotateEntities, IFindVariantMentions
 from lib.evagg.ref import INcbiGeneClient
 from lib.evagg.types import IPaperQuery, Paper
+
+logger = logging.getLogger(__name__)
 
 
 class VariantMentionFinder(IFindVariantMentions):
@@ -177,7 +180,7 @@ class TruthsetVariantMentionFinder(VariantMentionFinder):
         for variant_dict in truth_rows:
             gene_symbol = variant_dict["gene"]
             if gene_symbol not in query_gene_ids:
-                print("Warning: gene symbol not found in query gene ids")
+                logger.warning("Gene symbol not found in query gene ids")
                 continue
 
             identifier = f"{gene_symbol}:{variant_dict['hgvs_c']}"
