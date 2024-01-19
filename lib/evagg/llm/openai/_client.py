@@ -14,7 +14,6 @@ from lib.config import PydanticYamlModel
 
 from ._interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -35,7 +34,7 @@ class OpenAIDotEnvConfig(OpenAIConfig):
 
     def __init__(self) -> None:
         if not load_dotenv():
-            print("Warning: no .env file found, using pre-existing environment variables.")
+            logger.warning("No .env file found, using pre-existing environment variables.")
 
         if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
             raise ValueError(
@@ -295,6 +294,6 @@ def _run_single_embedding(
 
     result = openai_client.embeddings.create(input=[input], **settings)  # type: ignore
 
-    logger.debug(f"Embedding took {time.time() - start_ts} seconds")
+    logger.info(f"Embedding took {time.time() - start_ts} seconds")
 
     return (input, result)

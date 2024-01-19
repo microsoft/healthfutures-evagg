@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import Any, Dict, List, Sequence
 
@@ -8,6 +9,8 @@ from lib.evagg.ref import INcbiSnpClient
 from lib.evagg.types import IPaperQuery, Paper
 
 from .._interfaces import IExtractFields
+
+logger = logging.getLogger(__name__)
 
 
 class PromptBasedContentExtractor(IExtractFields):
@@ -41,7 +44,7 @@ class PromptBasedContentExtractor(IExtractFields):
         # Find all the variant mentions in the paper relating to the query.
         variant_mentions = self._mention_finder.find_mentions(query, paper)
 
-        print(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
+        logger.info(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
 
         # Build a cached list of hgvs formats for dbsnp identifiers.
         hgvs_cache = self._ncbi_snp_client.hgvs_from_rsid([v for v in variant_mentions.keys() if v.startswith("rs")])
@@ -62,7 +65,7 @@ class PromptBasedContentExtractor(IExtractFields):
             mentions = variant_mentions[variant_id]
             variant_results: Dict[str, str] = {"variant": variant_id}
 
-            print(f"### Extracting fields for {variant_id} in {paper.id}")
+            logger.info(f"### Extracting fields for {variant_id} in {paper.id}")
 
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = self._excerpt_from_mentions(mentions)
