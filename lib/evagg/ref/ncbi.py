@@ -5,7 +5,7 @@ from defusedxml import ElementTree as ElementTree
 
 from lib.evagg.web.entrez import IEntrezClient
 
-from ._interfaces import INcbiGeneClient, INcbiSnpClient
+from .interfaces import INcbiGeneClient, INcbiSnpClient
 
 
 class NcbiGeneClient(INcbiGeneClient):

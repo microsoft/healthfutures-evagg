@@ -1,7 +1,7 @@
 from typing import Sequence, Set
 
-from ._base import Variant
-from ._interfaces import IPaperQuery, IPaperQueryIterator
+from .base import Variant
+from .interfaces import IPaperQuery, IPaperQueryIterator
 
 
 class Query(IPaperQuery):
