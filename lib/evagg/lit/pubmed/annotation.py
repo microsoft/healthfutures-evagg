@@ -5,7 +5,7 @@ import requests
 
 from lib.evagg.types import Paper
 
-from .._interfaces import IAnnotateEntities
+from ..interfaces import IAnnotateEntities
 
 logger = logging.getLogger(__name__)
 

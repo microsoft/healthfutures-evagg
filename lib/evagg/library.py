@@ -13,7 +13,7 @@ import requests
 from lib.evagg.types import IPaperQuery, Paper, Variant
 from lib.evagg.web.entrez import IEntrezClient
 
-from ._interfaces import IGetPapers
+from .interfaces import IGetPapers
 
 logger = logging.getLogger(__name__)
 
