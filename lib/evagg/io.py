@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 from typing import Mapping, Optional, Sequence
 
-from ._interfaces import IWriteOutput
+from .interfaces import IWriteOutput
 
 logger = logging.getLogger(__name__)
 

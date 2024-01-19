@@ -12,7 +12,7 @@ from retry import retry as Retry  # noqa
 
 from lib.config import PydanticYamlModel
 
-from ._interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
+from .interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
 
 logger = logging.getLogger(__name__)
 

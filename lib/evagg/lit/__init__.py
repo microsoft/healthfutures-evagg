@@ -1,7 +1,7 @@
 """Package for interacting with literature sources."""
 
-from ._interfaces import IAnnotateEntities, IFindVariantMentions
-from ._mention import TruthsetVariantMentionFinder, VariantMentionFinder
+from .interfaces import IAnnotateEntities, IFindVariantMentions
+from .mention import TruthsetVariantMentionFinder, VariantMentionFinder
 
 __all__ = [
     # Interfaces.
