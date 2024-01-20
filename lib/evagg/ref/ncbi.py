@@ -5,10 +5,10 @@ from defusedxml import ElementTree as ElementTree
 
 from lib.evagg.web.entrez import IEntrezClient
 
-from .interfaces import INcbiGeneClient, INcbiSnpClient
+from .interfaces import IGeneLookupClient, IVariantLookupClient
 
 
-class NcbiGeneClient(INcbiGeneClient):
+class NcbiGeneClient(IGeneLookupClient):
     def __init__(self, entrez_client: IEntrezClient) -> None:
         self._entrez_client = entrez_client
 
@@ -61,7 +61,7 @@ class NcbiGeneClient(INcbiGeneClient):
         return result
 
 
-class NcbiSnpClient(INcbiSnpClient):
+class NcbiSnpClient(IVariantLookupClient):
     def __init__(self, entrez_client: IEntrezClient) -> None:
         self._entrez_client = entrez_client
 
