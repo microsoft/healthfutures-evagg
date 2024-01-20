@@ -49,14 +49,7 @@ class ColorConsoleFormatter(logging.Formatter):
 
 
 class LogProvider:
-    def __init__(self, level: str = "WARNING") -> None:
-        global _log_provider
-        if _log_provider:
-            logger = logging.getLogger(__name__)
-            logger.warning("LogProvider service already initialized - ignoring new initialization.")
-            return
-        _log_provider = self
-
+    def __init__(self, level: str = "WARNING", **kwargs) -> None:
         # Get the base log level from the config (default to WARNING).
         level_number = getattr(logging, level, None)
         if not isinstance(level_number, int):
@@ -71,3 +64,13 @@ class LogProvider:
 
 
 _log_provider: Optional[LogProvider] = None
+
+
+def init_logger_service(**kwargs) -> LogProvider:
+    global _log_provider
+    if not _log_provider:
+        _log_provider = LogProvider(**kwargs)
+    else:
+        logger = logging.getLogger(__name__)
+        logger.warning("Logging service already initialized - ignoring new initialization.")
+    return _log_provider
