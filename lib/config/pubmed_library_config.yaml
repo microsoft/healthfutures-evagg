@@ -6,7 +6,7 @@ queries:
 library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
-    di_class: lib.evagg.web.entrez.NcbiUtilsClient
+    di_class: lib.evagg.web.entrez.BioEntrezClient
     config: 
       di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
   max_papers: 1
@@ -31,13 +31,13 @@ extractor:
     gene_lookup_client: 
       di_class: lib.evagg.ref.NcbiGeneClient
       entrez_client: 
-        di_class: lib.evagg.web.entrez.NcbiUtilsClient
+        di_class: lib.evagg.web.entrez.BioEntrezClient
         config: 
           di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
   variant_lookup_client: 
     di_class: lib.evagg.ref.NcbiSnpClient
     entrez_client: 
-      di_class: lib.evagg.web.entrez.NcbiUtilsClient
+      di_class: lib.evagg.web.entrez.BioEntrezClient
       config: 
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
