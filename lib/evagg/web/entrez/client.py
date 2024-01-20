@@ -60,29 +60,3 @@ class BioEntrezClient(IEntrezClient):
     @cache
     def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
         return Entrez.esearch(db=db, term=term, sort=sort, retmax=retmax, retmode=retmode).read()
-
-
-class NcbiUtilsClient(IEntrezClient):
-    _config: BioEntrezConfig
-
-    HOST = "https://eutils.ncbi.nlm.nih.gov"
-    FETCH_TEMPLATE = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
-    SEARCH_TEMPLATE = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
-    KEY_TEMPLATE = "&email={email}&api_key={key}"
-
-    def __init__(self, config: BioEntrezConfig) -> None:
-        self._config = config
-
-    @cache
-    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
-        key = self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
-        url = self.FETCH_TEMPLATE.format(db=db, id=id, retmode=retmode, rettype=rettype)
-        response = requests.get(f"{self.HOST}{url}{key}")
-        return response.text
-
-    @cache
-    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
-        key = self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
-        url = self.SEARCH_TEMPLATE.format(db=db, term=term, sort=sort, retmax=retmax)
-        response = requests.get(f"{self.HOST}{url}{key}")
-        return response.text
