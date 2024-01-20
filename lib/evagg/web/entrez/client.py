@@ -1,10 +1,8 @@
 import logging
 import os
-import urllib.parse as urlparse
 from functools import cache
 from typing import Dict
 
-import requests
 from Bio import Entrez
 from dotenv import load_dotenv
 
