@@ -1,9 +1,10 @@
+import urllib.parse as urlparse
 from typing import Any, Dict, Sequence
 
 import requests
 from defusedxml import ElementTree as ElementTree
 
-from lib.evagg.web.entrez import IEntrezClient
+from lib.evagg.web.entrez import BioEntrezConfig, IEntrezClient
 
 from .interfaces import IGeneLookupClient, IVariantLookupClient
 
@@ -145,6 +146,78 @@ class NcbiSnpClient(IVariantLookupClient):
 
         rsids_str = ",".join(keys)
         response = self._entrez_fetch_xml(db="snp", id_str=rsids_str)
+
+        if response is None or not _validate_snp_response_xml(response):
+            return {}
+
+        result = {}
+        for rsid in keys:
+            result["rs" + rsid] = _find_hgvs_xml(response, rsid)
+        return result
+
+
+class NcbiLookupClient(IGeneLookupClient, IVariantLookupClient):
+    HOST = "https://eutils.ncbi.nlm.nih.gov"
+    FETCH_TEMPLATE = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
+    SEARCH_TEMPLATE = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
+    KEY_TEMPLATE = "&email={email}&api_key={key}"
+
+    def __init__(self, config: BioEntrezConfig) -> None:
+        self._config = config
+
+    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
+        key = self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
+        url = self.FETCH_TEMPLATE.format(db=db, id=id, retmode=retmode, rettype=rettype)
+        response = requests.get(f"{self.HOST}{url}{key}")
+        return response.text
+
+    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
+        key = self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
+        url = self.SEARCH_TEMPLATE.format(db=db, term=term, sort=sort, retmax=retmax)
+        response = requests.get(f"{self.HOST}{url}{key}")
+        return response.text
+
+    def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
+        """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
+
+        If `allow_synonyms` is True, then this will attempt to return the most relevant gene_id for each symbol, if
+        there are multiple matches to a sybol, the direct match (where the query symbol is the official symbol) will
+        be returned. If there are no direct matches, then the first synonym match will be returned.
+        """
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
+        # TODO, caching
+        url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{','.join(symbols)}/taxon/Human"
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        raw = {} if len(r.content) == 0 else r.json()
+
+        return _extract_gene_data(raw, symbols, allow_synonyms)
+
+    def hgvs_from_rsid(self, rsids: Sequence[str]) -> Dict[str, Dict[str, str]]:
+        """Provided rsids should be a list of strings, each of which is a valid rsid, prefixed with `rs`."""
+        if isinstance(rsids, str):
+            rsids = [rsids]
+
+        keys = set()
+        for rsid in rsids:
+            if not rsid.startswith("rs"):
+                raise ValueError(f"Invalid rsid: {rsid}. Did you forget to include an 'rs' prefix?")
+            rsid = rsid[2:]
+
+            # Remaining rsid must be only numeric.
+            if not rsid.isnumeric():
+                raise ValueError(f"Invalid rsid: {rsid}: only rs followed by a string of numeric characters allowed.")
+
+            keys.add(rsid)
+
+        rsids_str = ",".join(keys)
+        string_response = self.efetch(db="snp", id=rsids_str, retmode="xml", rettype="xml")
+        # fromstring returns type Any, but it's actually an ElementTree.Element. Using this approach to avoid
+        # making bandit cranky with xml.* imports.
+        response = None if len(string_response) == 0 else ElementTree.fromstring(string_response)
 
         if response is None or not _validate_snp_response_xml(response):
             return {}
