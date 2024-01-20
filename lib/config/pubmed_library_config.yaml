@@ -28,13 +28,13 @@ extractor:
     di_class: lib.evagg.lit.VariantMentionFinder
     entity_annotator:
       di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
-    ncbi_gene_client: 
+    gene_lookup_client: 
       di_class: lib.evagg.ref.NcbiGeneClient
       entrez_client: 
         di_class: lib.evagg.web.entrez.NcbiUtilsClient
         config: 
           di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
-  ncbi_snp_client: 
+  variant_lookup_client: 
     di_class: lib.evagg.ref.NcbiSnpClient
     entrez_client: 
       di_class: lib.evagg.web.entrez.NcbiUtilsClient
