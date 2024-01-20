@@ -12,28 +12,29 @@ class DiContainer:
             self._modules[module_name] = import_module(module_name)
         return self._modules[module_name]
 
-    def create_class_instance(self, spec: Dict[str, Any], type: str) -> Any:
-        # First initialize any services and remove them from the argument list.
-        services = [(key, value) for key, value in spec.items() if isinstance(value, dict) and "di_service" in value]
-        for key, value in services:
-            self.create_class_instance(value, "di_service")
-            spec.pop(key)
-
-        # Now initialize the class.
-        module_name, _, class_name = spec.pop(type).rpartition(".")
+    def create_class_instance(self, module_path: str, spec: Dict[str, Any], services: Dict[str, object]) -> Any:
+        module_name, _, callable_name = module_path.rpartition(".")
         module = self._try_import(module_name)
 
         try:
-            class_obj = getattr(module, class_name)
+            class_initializer = getattr(module, callable_name)
         except AttributeError:
-            raise TypeError(f"Module {module_name} does not define a {class_name} class")
+            raise TypeError(f"Module {module_name} does not define a {callable_name} class")
 
         # Recursively create instances of any nested classes.
         for key, value in spec.items():
             if isinstance(value, dict) and "di_class" in value:
-                spec[key] = self.create_class_instance(value, "di_class")
+                spec[key] = self.create_class_instance(value.pop("di_class"), value, services)
 
-        return class_obj(**spec)
+        return class_initializer(**spec)
 
     def build(self, config: Dict[str, Any]) -> Any:
-        return self.create_class_instance(config, "di_class")
+        services = {}
+        # First initialize any services and consolidate in the services dictionary.
+        specs = [(key, value) for key, value in config.items() if isinstance(value, dict) and "di_service" in value]
+        for key, spec in specs:
+            services[key] = self.create_class_instance(spec.pop("di_service"), spec, services)
+            config.pop(key)
+
+        # Then initialize the main class hierarchy.
+        return self.create_class_instance(config.pop("di_class"), config, services)
