@@ -29,7 +29,7 @@ class DiContainer:
         return class_initializer(**spec)
 
     def build(self, config: Dict[str, Any]) -> Any:
-        services = {}
+        services: Dict[str, object] = {}
         # First initialize any services and consolidate in the services dictionary.
         specs = [(key, value) for key, value in config.items() if isinstance(value, dict) and "di_service" in value]
         for key, spec in specs:
