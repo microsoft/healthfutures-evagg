@@ -1,6 +1,6 @@
 import logging
 import logging.config
-from typing import Dict
+from typing import Dict, Optional
 
 LOGGING_CONFIG: Dict = {
     "version": 1,
@@ -50,6 +50,13 @@ class ColorConsoleFormatter(logging.Formatter):
 
 class LogProvider:
     def __init__(self, level: str = "WARNING") -> None:
+        global _log_provider
+        if _log_provider:
+            logger = logging.getLogger(__name__)
+            logger.warning("LogProvider service already initialized - ignoring new initialization.")
+            return
+        _log_provider = self
+
         # Get the base log level from the config (default to WARNING).
         level_number = getattr(logging, level, None)
         if not isinstance(level_number, int):
@@ -61,3 +68,6 @@ class LogProvider:
         logger = logging.getLogger(__name__)
         level_name = logging.getLevelName(logger.getEffectiveLevel())
         logger.info(f"Level:{level_name}")
+
+
+_log_provider: Optional[LogProvider] = None
