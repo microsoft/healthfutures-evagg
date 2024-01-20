@@ -26,3 +26,6 @@ extractor:
     - link: link
 writer:
   di_class: lib.evagg.TableOutputWriter
+log:
+  di_service: lib.evagg.logging.LogProvider
+
