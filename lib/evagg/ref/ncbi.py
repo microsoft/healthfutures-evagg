@@ -1,12 +1,34 @@
+import logging
 import urllib.parse as urlparse
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 import requests
 from defusedxml import ElementTree as ElementTree
+from pydantic import root_validator
 
-from lib.evagg.web.entrez import BioEntrezConfig, IEntrezClient
+from lib.config import PydanticYamlModel
+from lib.evagg.web.entrez import IEntrezClient
 
 from .interfaces import IGeneLookupClient, IVariantLookupClient
+
+REQUIRED: Dict[str, str] = {
+    "api_key": "NCBI_EUTILS_API_KEY",
+    "email": "NCBI_EUTILS_EMAIL",
+}
+
+
+class NcbiApiSettings(PydanticYamlModel):
+    api_key: str
+    email: str
+    max_tries: str = "10"
+
+    @root_validator(pre=True)
+    @classmethod
+    def _validate_required(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        for k, v in REQUIRED.items():
+            if k not in values or not values[k]:
+                raise ValueError(f"Missing required setting: {v}")
+        return values
 
 
 def _validate_snp_response_xml(response: Any) -> bool:
@@ -162,19 +184,22 @@ class NcbiLookupClient(IGeneLookupClient, IVariantLookupClient):
     SEARCH_TEMPLATE = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
     KEY_TEMPLATE = "&email={email}&api_key={key}"
 
-    def __init__(self, config: BioEntrezConfig) -> None:
-        self._config = config
+    def __init__(self, settings: Optional[Dict[str, str]] = None) -> None:
+        self._config: Optional[NcbiApiSettings] = NcbiApiSettings(**settings) if settings is not None else None
+
+    def _get_key_string(self) -> str:
+        if self._config is None:
+            return ""
+        return self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
 
     def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
-        key = self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
         url = self.FETCH_TEMPLATE.format(db=db, id=id, retmode=retmode, rettype=rettype)
-        response = requests.get(f"{self.HOST}{url}{key}")
+        response = requests.get(f"{self.HOST}{url}{self._get_key_string()}")
         return response.text
 
     def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
-        key = self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
         url = self.SEARCH_TEMPLATE.format(db=db, term=term, sort=sort, retmax=retmax)
-        response = requests.get(f"{self.HOST}{url}{key}")
+        response = requests.get(f"{self.HOST}{url}{self._get_key_string()}")
         return response.text
 
     def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:

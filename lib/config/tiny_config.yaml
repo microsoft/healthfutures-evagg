@@ -41,4 +41,4 @@ extractor:
 writer:
   di_class: lib.evagg.TableOutputWriter
 log:
-  di_service: lib.evagg.logging.init_logger_service
+  di_service: lib.evagg.logging.init_logger

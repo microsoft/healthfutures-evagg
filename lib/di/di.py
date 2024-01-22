@@ -30,7 +30,7 @@ class DiContainer:
             if isinstance(value, dict) and CLASS_TAG in value:
                 spec[key] = self.create_class_instance(value.pop(CLASS_TAG), value, services)
             # Look for parameters that are services and replace them with the service instance.
-            if isinstance(value, str) and value.startswith("[[") and value.endswith("]]"):
+            if isinstance(value, str) and value.startswith("{{") and value.endswith("}}"):
                 service_name = value[2:-2]
                 if service_name not in services:
                     raise TypeError(f"Service '{service_name}' not defined.")
