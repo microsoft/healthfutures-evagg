@@ -14,9 +14,8 @@ queries:
 library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
-    di_class: lib.evagg.web.entrez.BioEntrezClient
-    config: 
-      di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
+    di_class: lib.evagg.ref.NcbiLookupClient
+    settings: "{{ncbi_settings}}"
   max_papers: 1
 extractor:
   di_class: lib.evagg.PromptBasedContentExtractor
