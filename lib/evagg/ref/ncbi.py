@@ -1,4 +1,3 @@
-import logging
 import urllib.parse as urlparse
 from typing import Any, Dict, Optional, Sequence
 
@@ -11,23 +10,17 @@ from lib.evagg.web.entrez import IEntrezClient
 
 from .interfaces import IGeneLookupClient, IVariantLookupClient
 
-REQUIRED: Dict[str, str] = {
-    "api_key": "NCBI_EUTILS_API_KEY",
-    "email": "NCBI_EUTILS_EMAIL",
-}
-
 
 class NcbiApiSettings(PydanticYamlModel):
-    api_key: str
-    email: str
+    api_key: Optional[str] = None
+    email: str = "biomedcomp@microsoft.com"
     max_tries: str = "10"
 
     @root_validator(pre=True)
     @classmethod
-    def _validate_required(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        for k, v in REQUIRED.items():
-            if k not in values or not values[k]:
-                raise ValueError(f"Missing required setting: {v}")
+    def _validate_settings(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        if values.get("api_key") and not values.get("email"):
+            raise ValueError("If NCBI_EUTILS_API_KEY is specified NCBI_EUTILS_EMAIL is required.")
         return values
 
 
@@ -178,11 +171,10 @@ class NcbiSnpClient(IVariantLookupClient):
         return result
 
 
-class NcbiLookupClient(IGeneLookupClient, IVariantLookupClient):
+class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
     HOST = "https://eutils.ncbi.nlm.nih.gov"
     FETCH_TEMPLATE = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
     SEARCH_TEMPLATE = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
-    KEY_TEMPLATE = "&email={email}&api_key={key}"
 
     def __init__(self, settings: Optional[Dict[str, str]] = None) -> None:
         self._config: Optional[NcbiApiSettings] = NcbiApiSettings(**settings) if settings is not None else None
@@ -190,7 +182,12 @@ class NcbiLookupClient(IGeneLookupClient, IVariantLookupClient):
     def _get_key_string(self) -> str:
         if self._config is None:
             return ""
-        return self.KEY_TEMPLATE.format(email=urlparse.quote(self._config.email), key=self._config.api_key)
+        key_string = ""
+        if self._config.email:
+            key_string += f"&email={urlparse.quote(self._config.email)}"
+        if self._config.api_key:
+            key_string += f"&api_key={self._config.api_key}"
+        return key_string
 
     def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
         url = self.FETCH_TEMPLATE.format(db=db, id=id, retmode=retmode, rettype=rettype)
