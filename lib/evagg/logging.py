@@ -66,7 +66,7 @@ class LogProvider:
 _log_provider: Optional[LogProvider] = None
 
 
-def init_logger_service(**kwargs: Any) -> LogProvider:
+def init_logger(**kwargs: Any) -> LogProvider:
     global _log_provider
     if not _log_provider:
         _log_provider = LogProvider(**kwargs)
