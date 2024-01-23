@@ -1,8 +1,8 @@
 # Services
 log:
-  di_service: lib.evagg.logging.init_logger
+  di_service: lib.evagg.svc.init_logger
 ncbi_settings:
-  di_service: lib.evagg.settings.get_dotenv_settings
+  di_service: lib.evagg.svc.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
 
 # Application
