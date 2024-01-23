@@ -1,12 +1,12 @@
 import urllib.parse as urlparse
 from typing import Any, Dict, Optional, Sequence
 
-import requests
 from defusedxml import ElementTree as ElementTree
 from pydantic import root_validator
 
 from lib.config import PydanticYamlModel
 from lib.evagg.ref import IEntrezClient
+from lib.evagg.svc import IWebContentClient
 
 from .interfaces import IGeneLookupClient, IVariantLookupClient
 
@@ -147,11 +147,12 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
     UTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
     UTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
     # It isn't particularly clear from the documentation, but it looks like
-    # we're getting 400s when max_tries is set too low.
+    # we're getting 400s from Entrez endpoints when max_tries is set too low.
     # see https://biopython.org/docs/1.75/api/Bio.Entrez.html
 
-    def __init__(self, settings: Optional[Dict[str, str]] = None) -> None:
+    def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         self._config: Optional[NcbiApiSettings] = NcbiApiSettings(**settings) if settings is not None else None
+        self._web_client = web_client
 
     def _get_key_string(self) -> str:
         if self._config is None:
@@ -165,19 +166,15 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
 
     def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
         url = self.UTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
-        response = requests.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
-        return response.text
+        return self._web_client.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
 
     def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
         url = self.UTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
-        response = requests.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
-        return response.text
+        return self._web_client.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
 
     def symbol_lookup(self, symbols: Sequence[str]) -> Dict[str, Any]:
         url = self.API_LOOKUP_URL.format(symbols=",".join(symbols))
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        return {} if len(response.content) == 0 else response.json()
+        return self._web_client.get(url, content_type="json")
 
     def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
         """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
