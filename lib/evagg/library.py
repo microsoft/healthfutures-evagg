@@ -10,8 +10,8 @@ from typing import Dict, List, Sequence, Set, Tuple
 
 import requests
 
+from lib.evagg.ref import IEntrezClient
 from lib.evagg.types import IPaperQuery, Paper, Variant
-from lib.evagg.web.entrez import IEntrezClient
 
 from .interfaces import IGetPapers
 
