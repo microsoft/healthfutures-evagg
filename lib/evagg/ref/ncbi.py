@@ -6,7 +6,7 @@ from defusedxml import ElementTree as ElementTree
 from pydantic import root_validator
 
 from lib.config import PydanticYamlModel
-from lib.evagg.web.entrez import IEntrezClient
+from lib.evagg.ref import IEntrezClient
 
 from .interfaces import IGeneLookupClient, IVariantLookupClient
 
