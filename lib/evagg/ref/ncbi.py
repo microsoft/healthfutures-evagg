@@ -99,37 +99,6 @@ def _extract_gene_data(raw: Dict[str, Any], symbols: Sequence[str], allow_synony
     return result
 
 
-class NcbiGeneClient(IGeneLookupClient):
-    def __init__(self, entrez_client: IEntrezClient) -> None:
-        self._entrez_client = entrez_client
-
-    @classmethod
-    def _get_json(cls, url: str, timeout: int = 10) -> Dict[str, Any]:
-        r = requests.get(url, timeout=timeout)
-        r.raise_for_status()
-        if len(r.content) == 0:
-            return {}
-        return r.json()
-
-    @classmethod
-    def gene_id_for_symbol(cls, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
-        """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
-
-        If `allow_synonyms` is True, then this will attempt to return the most relevant gene_id for each symbol, if
-        there are multiple matches to a sybol, the direct match (where the query symbol is the official symbol) will
-        be returned. If there are no direct matches, then the first synonym match will be returned.
-        """
-        if isinstance(symbols, str):
-            symbols = [symbols]
-
-        # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
-        # TODO, caching
-        url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{','.join(symbols)}/taxon/Human"
-        raw = cls._get_json(url)
-
-        return _extract_gene_data(raw, symbols, allow_synonyms)
-
-
 class NcbiSnpClient(IVariantLookupClient):
     def __init__(self, entrez_client: IEntrezClient) -> None:
         self._entrez_client = entrez_client
@@ -172,9 +141,11 @@ class NcbiSnpClient(IVariantLookupClient):
 
 
 class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
-    HOST = "https://eutils.ncbi.nlm.nih.gov"
-    FETCH_TEMPLATE = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
-    SEARCH_TEMPLATE = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
+    API_HOST = "https://eutils.ncbi.nlm.nih.gov"
+    API_LOOKUP_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
+    UTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
+    UTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
+    UTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
     # It isn't particularly clear from the documentation, but it looks like
     # we're getting 400s when max_tries is set too low.
     # see https://biopython.org/docs/1.75/api/Bio.Entrez.html
@@ -193,14 +164,20 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
         return key_string
 
     def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
-        url = self.FETCH_TEMPLATE.format(db=db, id=id, retmode=retmode, rettype=rettype)
-        response = requests.get(f"{self.HOST}{url}{self._get_key_string()}")
+        url = self.UTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
+        response = requests.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
         return response.text
 
     def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
-        url = self.SEARCH_TEMPLATE.format(db=db, term=term, sort=sort, retmax=retmax)
-        response = requests.get(f"{self.HOST}{url}{self._get_key_string()}")
+        url = self.UTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
+        response = requests.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
         return response.text
+
+    def symbol_lookup(self, symbols: Sequence[str]) -> Dict[str, Any]:
+        url = self.API_LOOKUP_URL.format(symbols=",".join(symbols))
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return {} if len(response.content) == 0 else response.json()
 
     def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
         """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
@@ -209,16 +186,8 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
         there are multiple matches to a sybol, the direct match (where the query symbol is the official symbol) will
         be returned. If there are no direct matches, then the first synonym match will be returned.
         """
-        if isinstance(symbols, str):
-            symbols = [symbols]
-
-        # TODO, wrap in Bio.Entrez library as they're better about rate limiting and such.
-        # TODO, caching
-        url = f"https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{','.join(symbols)}/taxon/Human"
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        raw = {} if len(r.content) == 0 else r.json()
-
+        symbols = [symbols] if isinstance(symbols, str) else symbols
+        raw = self.symbol_lookup(symbols)
         return _extract_gene_data(raw, symbols, allow_synonyms)
 
     def hgvs_from_rsid(self, rsids: Sequence[str]) -> Dict[str, Dict[str, str]]:

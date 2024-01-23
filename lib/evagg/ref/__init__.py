@@ -2,7 +2,7 @@
 
 from .interfaces import IEntrezClient, IGeneLookupClient, IVariantLookupClient
 from .litvar import LitVarReference
-from .ncbi import NcbiGeneClient, NcbiLookupClient, NcbiSnpClient
+from .ncbi import NcbiLookupClient, NcbiSnpClient
 
 __all__ = [
     # Litvar.
@@ -12,7 +12,6 @@ __all__ = [
     "IGeneLookupClient",
     "IVariantLookupClient",
     # NCBI.
-    "NcbiGeneClient",
     "NcbiLookupClient",
     "NcbiSnpClient",
 ]
