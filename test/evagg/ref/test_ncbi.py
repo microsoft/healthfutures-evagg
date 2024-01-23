@@ -1,6 +1,6 @@
 import pytest
 
-from lib.evagg.ref import IEntrezClient, NcbiGeneClient, NcbiSnpClient
+from lib.evagg.ref import IEntrezClient, NcbiLookupClient, NcbiSnpClient
 
 
 @pytest.fixture
@@ -72,49 +72,49 @@ def entrez_client():
     return DummyEntrezClient()
 
 
-def test_single_gene_direct(mocker, single_gene_direct_match, entrez_client):
-    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
+def test_single_gene_direct(mocker, single_gene_direct_match):
+    mocker.patch("lib.evagg.ref.ncbi.NcbiLookupClient.symbol_lookup", return_value=single_gene_direct_match)
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FAM111B")
+    result = NcbiLookupClient().gene_id_for_symbol("FAM111B")
     assert result == {"FAM111B": 374393}
 
 
-def test_single_gene_indirect(mocker, single_gene_indirect_match, entrez_client):
-    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_indirect_match)
+def test_single_gene_indirect(mocker, single_gene_indirect_match):
+    mocker.patch("lib.evagg.ref.ncbi.NcbiLookupClient.symbol_lookup", return_value=single_gene_indirect_match)
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FEB11")
+    result = NcbiLookupClient().gene_id_for_symbol("FEB11")
     assert result == {}
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FEB11", allow_synonyms=True)
+    result = NcbiLookupClient().gene_id_for_symbol("FEB11", allow_synonyms=True)
     assert result == {"FEB11": 57094}
 
     # Verify that this would also work for the direct match.
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("CPA6")
+    result = NcbiLookupClient().gene_id_for_symbol("CPA6")
     assert result == {"CPA6": 57094}
 
 
-def test_single_gene_miss(mocker, single_gene_miss, single_gene_direct_match, entrez_client):
-    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_miss)
+def test_single_gene_miss(mocker, single_gene_miss, single_gene_direct_match):
+    mocker.patch("lib.evagg.ref.ncbi.NcbiLookupClient.symbol_lookup", return_value=single_gene_miss)
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("FAM11B")
+    result = NcbiLookupClient().gene_id_for_symbol("FAM11B")
     assert result == {}
 
-    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=single_gene_direct_match)
+    mocker.patch("lib.evagg.ref.ncbi.NcbiLookupClient.symbol_lookup", return_value=single_gene_direct_match)
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol("not a gene")
+    result = NcbiLookupClient().gene_id_for_symbol("not a gene")
     assert result == {}
 
 
-def test_multi_gene(mocker, multi_gene, entrez_client):
-    mocker.patch("lib.evagg.ref.ncbi.NcbiGeneClient._get_json", return_value=multi_gene)
+def test_multi_gene(mocker, multi_gene):
+    mocker.patch("lib.evagg.ref.ncbi.NcbiLookupClient.symbol_lookup", return_value=multi_gene)
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol(["FAM111B", "FEB11"])
+    result = NcbiLookupClient().gene_id_for_symbol(["FAM111B", "FEB11"])
     assert result == {"FAM111B": 374393}
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol(["FAM111B", "FEB11"], allow_synonyms=True)
+    result = NcbiLookupClient().gene_id_for_symbol(["FAM111B", "FEB11"], allow_synonyms=True)
     assert result == {"FAM111B": 374393, "FEB11": 57094}
 
-    result = NcbiGeneClient(entrez_client).gene_id_for_symbol(["FAM111B", "FEB11", "not a gene"], allow_synonyms=True)
+    result = NcbiLookupClient().gene_id_for_symbol(["FAM111B", "FEB11", "not a gene"], allow_synonyms=True)
     assert result == {"FAM111B": 374393, "FEB11": 57094}
 
 
