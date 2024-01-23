@@ -1,3 +1,11 @@
+# Services
+log:
+  di_service: lib.evagg.logging.init_logger
+ncbi_settings:
+  di_service: lib.evagg.settings.get_dotenv_settings
+  filter_prefix: "NCBI_EUTILS_"
+
+# Application
 di_class: lib.evagg.SynchronousLocalApp
 queries:
   di_class: lib.evagg.types.QueryIterator
@@ -27,18 +35,11 @@ extractor:
     entity_annotator:
       di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
     gene_lookup_client: 
-      di_class: lib.evagg.ref.NcbiGeneClient
-      entrez_client: 
-        di_class: lib.evagg.web.entrez.BioEntrezClient
-        config: 
-          di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
+      di_class: lib.evagg.ref.NcbiLookupClient
+      settings: "{{ncbi_settings}}"
   variant_lookup_client: 
-    di_class: lib.evagg.ref.NcbiSnpClient
-    entrez_client: 
-      di_class: lib.evagg.web.entrez.BioEntrezClient
-      config: 
-        di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
+    di_class: lib.evagg.ref.NcbiLookupClient
+    settings: "{{ncbi_settings}}"
 writer:
   di_class: lib.evagg.TableOutputWriter
-log:
-  di_service: lib.evagg.logging.init_logger
+
