@@ -4,6 +4,9 @@ log:
 ncbi_settings:
   di_service: lib.evagg.svc.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
+ncbi_web:
+  di_service: lib.evagg.svc.RequestsWebContentClient
+  default_content_type: text
 
 # Application
 di_class: lib.evagg.SynchronousLocalApp
@@ -15,6 +18,7 @@ library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
     di_class: lib.evagg.ref.NcbiLookupClient
+    web_client: "{{ncbi_web}}"
     settings: "{{ncbi_settings}}"
   max_papers: 1
 extractor:
@@ -37,9 +41,11 @@ extractor:
       di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
     gene_lookup_client: 
       di_class: lib.evagg.ref.NcbiLookupClient
+      web_client: "{{ncbi_web}}"
       settings: "{{ncbi_settings}}"
   variant_lookup_client: 
     di_class: lib.evagg.ref.NcbiLookupClient
+    web_client: "{{ncbi_web}}"
     settings: "{{ncbi_settings}}"
 writer:
   di_class: lib.evagg.TableOutputWriter
