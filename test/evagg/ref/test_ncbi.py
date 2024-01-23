@@ -1,7 +1,6 @@
 import pytest
 
-from lib.evagg.ref import NcbiGeneClient, NcbiSnpClient
-from lib.evagg.web.entrez import IEntrezClient
+from lib.evagg.ref import IEntrezClient, NcbiGeneClient, NcbiSnpClient
 
 
 @pytest.fixture

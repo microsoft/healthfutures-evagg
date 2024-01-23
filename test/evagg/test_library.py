@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from lib.evagg import PubMedFileLibrary, SimpleFileLibrary
+from lib.evagg.ref import IEntrezClient
 from lib.evagg.types import Paper, Query
-from lib.evagg.web.entrez import IEntrezClient
 
 # TODO: focus on critical functions
 
