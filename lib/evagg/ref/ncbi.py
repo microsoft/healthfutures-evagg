@@ -175,6 +175,9 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
     HOST = "https://eutils.ncbi.nlm.nih.gov"
     FETCH_TEMPLATE = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
     SEARCH_TEMPLATE = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
+    # It isn't particularly clear from the documentation, but it looks like
+    # we're getting 400s when max_tries is set too low.
+    # see https://biopython.org/docs/1.75/api/Bio.Entrez.html
 
     def __init__(self, settings: Optional[Dict[str, str]] = None) -> None:
         self._config: Optional[NcbiApiSettings] = NcbiApiSettings(**settings) if settings is not None else None
