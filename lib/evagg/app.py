@@ -1,10 +1,9 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from lib.evagg.types import IPaperQueryIterator
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
-from .logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -16,13 +15,11 @@ class SynchronousLocalApp(IEvAggApp):
         library: IGetPapers,
         extractor: IExtractFields,
         writer: IWriteOutput,
-        log: Optional[Dict[str, str]] = None,
     ) -> None:
         self._query_factory = queries
         self._library = library
         self._extractor = extractor
         self._writer = writer
-        configure_logging(log)
 
     def execute(self) -> None:
         all_fields: Dict[str, List[Dict[str, str]]] = {}

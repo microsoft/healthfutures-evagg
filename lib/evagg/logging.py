@@ -1,6 +1,6 @@
 import logging
 import logging.config
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 LOGGING_CONFIG: Dict = {
     "version": 1,
@@ -48,17 +48,29 @@ class ColorConsoleFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def configure_logging(log_config: Optional[Dict[str, str]]) -> None:
-    log_config = log_config or {}
+class LogProvider:
+    def __init__(self, level: str = "WARNING") -> None:
+        # Get the base log level from the config (default to WARNING).
+        level_number = getattr(logging, level, None)
+        if not isinstance(level_number, int):
+            raise ValueError(f"Invalid log.level: {level}")
 
-    # Get the base log level from the config (default to WARNING).
-    level = getattr(logging, log_config.get("log_level", "WARNING"), None)
-    if not isinstance(level, int):
-        raise ValueError(f"Invalid log.log_level: {log_config['log_level']}")
+        LOGGING_CONFIG["root"]["level"] = level_number
+        logging.config.dictConfig(LOGGING_CONFIG)
 
-    LOGGING_CONFIG["root"]["level"] = level
-    logging.config.dictConfig(LOGGING_CONFIG)
+        logger = logging.getLogger(__name__)
+        level_name = logging.getLevelName(logger.getEffectiveLevel())
+        logger.info(f"Level:{level_name}")
 
-    logger = logging.getLogger(__name__)
-    level_name = logging.getLevelName(logger.getEffectiveLevel())
-    logger.info(f"Level:{level_name}")
+
+_log_provider: Optional[LogProvider] = None
+
+
+def init_logger(**kwargs: Any) -> LogProvider:
+    global _log_provider
+    if not _log_provider:
+        _log_provider = LogProvider(**kwargs)
+    else:
+        logger = logging.getLogger(__name__)
+        logger.warning("Logging service already initialized - ignoring new initialization.")
+    return _log_provider
