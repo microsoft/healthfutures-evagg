@@ -26,13 +26,13 @@ extractor:
     di_class: lib.evagg.lit.VariantMentionFinder
     entity_annotator:
       di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
-    ncbi_gene_client: 
+    gene_lookup_client: 
       di_class: lib.evagg.ref.NcbiGeneClient
       entrez_client: 
         di_class: lib.evagg.web.entrez.BioEntrezClient
         config: 
           di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
-  ncbi_snp_client: 
+  variant_lookup_client: 
     di_class: lib.evagg.ref.NcbiSnpClient
     entrez_client: 
       di_class: lib.evagg.web.entrez.BioEntrezClient
@@ -40,4 +40,5 @@ extractor:
         di_class: lib.evagg.web.entrez.BioEntrezDotEnvConfig
 writer:
   di_class: lib.evagg.TableOutputWriter
-#  output_path: /home/azureuser/repos/ev-agg-exp/.out/batch_tiny.tsv
+log:
+  di_service: lib.evagg.logging.init_logger

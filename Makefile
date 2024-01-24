@@ -15,13 +15,13 @@ ANSI_RESET := \033[0;0m
 # Run all CI checks.
 .DEFAULT_GOAL := ci
 .PHONY: ci
-ci: lint test
+ci: lint test sec
 	@echo
 	@echo "$(ANSI_GREEN)====== All linters and tests PASS ======$(ANSI_RESET)"
 
 # Run all linters.
 .PHONY: lint
-lint: lint-flake8 type sec
+lint: lint-flake8 type
 	@echo
 	@echo "$(ANSI_GREEN)====== All linters PASS ======$(ANSI_RESET)"
 
