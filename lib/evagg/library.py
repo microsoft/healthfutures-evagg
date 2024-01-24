@@ -147,18 +147,18 @@ class PubMedFileLibrary(IGetPapers):
 
     def _find_pmids_for_gene(self, query: str) -> List[str]:
         # Search the pubmed database
-        pmid_list_xml = self._entrez_client.esearch(db="pubmed", sort="relevance", retmax=self._max_papers, term=query)
+        tree = self._entrez_client.esearch(
+            db="pubmed", sort="relevance", retmax=self._max_papers, retmode="xml", term=query
+        )
 
         # Extract the IDs
-        tree = Et.fromstring(pmid_list_xml)
         if (id_list_elt := tree.find("IdList")) is None:
             return []
         pmid_list = [c.text for c in id_list_elt.iter("Id") if c.text is not None]
         return pmid_list
 
     def _get_abstract_and_citation(self, pmid: str) -> Tuple[str, str | None, str | None, str | None]:
-        xml_info = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="xml", rettype="abstract")
-        records = Et.fromstring(xml_info)
+        records = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="xml", rettype="abstract")
 
         # get abstract
         abstract_elem = records.find(".//AbstractText")

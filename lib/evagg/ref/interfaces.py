@@ -1,4 +1,4 @@
-from typing import Dict, Protocol, Sequence
+from typing import Any, Dict, Protocol, Sequence
 
 
 class IVariantLookupClient(Protocol):
@@ -12,10 +12,10 @@ class IGeneLookupClient(Protocol):
 
 
 class IEntrezClient(Protocol):
-    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
+    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
         """Call the Entrez EFetch API. `id` can be a comma-separated list of IDs."""
         ...
 
-    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
+    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
         """Call the Entrez ESearch API."""
         ...
