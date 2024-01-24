@@ -23,81 +23,6 @@ class NcbiApiSettings(PydanticYamlModel):
         return values
 
 
-def _validate_snp_response_xml(response: Any) -> bool:
-    if not response.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}ExchangeSet":
-        return False
-    if len(response) < 1:
-        return False
-    for child in response:
-        if not child.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}DocumentSummary":
-            return False
-    return True
-
-
-def _find_hgvs_xml(response: Any, id: str) -> Dict[str, str]:
-    result = {}
-
-    for child in response:
-        if not child.get("uid") == id:
-            continue
-
-        for nested_child in child:
-            if not nested_child.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}DOCSUM":
-                continue
-
-            if not nested_child.text:
-                break
-
-            values = {}
-            for tok in nested_child.text.split("|"):
-                eq_delim = tok.split("=")
-                if len(eq_delim) != 2:
-                    continue
-                values[eq_delim[0]] = eq_delim[1]
-
-            if "HGVS" not in values:
-                break
-
-            hgvs_values = values["HGVS"].split(",")
-
-            # Just take the first one.
-            hgvs_p = next((v for v in hgvs_values if v.startswith("NP_")), None)
-            hgvs_c = next((v for v in hgvs_values if v.startswith("NM_")), None)
-
-            if hgvs_p:
-                result["hgvs_p"] = hgvs_p
-            if hgvs_c:
-                result["hgvs_c"] = hgvs_c
-            break
-    return result
-
-
-def _extract_gene_data(raw: Dict[str, Any], symbols: Sequence[str], allow_synonyms: bool) -> Dict[str, int]:
-    if "reports" not in raw:
-        return {}
-
-    if allow_synonyms:
-        result: Dict[str, int] = {}
-
-        for g in raw["reports"]:
-            if g["gene"]["symbol"] in symbols:
-                result[g["gene"]["symbol"]] = int(g["gene"]["gene_id"])
-
-        missing_symbols = [s for s in symbols if s not in result.keys()]
-        for symbol in missing_symbols:
-            # find the first query match.
-            for g in raw["reports"]:
-                if symbol in g["query"]:
-                    result[symbol] = int(g["gene"]["gene_id"])
-                    break
-    else:
-        result = {
-            g["gene"]["symbol"]: int(g["gene"]["gene_id"]) for g in raw["reports"] if g["gene"]["symbol"] in symbols
-        }
-
-    return result
-
-
 class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
     API_HOST = "https://eutils.ncbi.nlm.nih.gov"
     API_LOOKUP_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
@@ -172,3 +97,78 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
         for rsid in keys:
             result["rs" + rsid] = _find_hgvs_xml(response, rsid)
         return result
+
+
+def _validate_snp_response_xml(response: Any) -> bool:
+    if not response.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}ExchangeSet":
+        return False
+    if len(response) < 1:
+        return False
+    for child in response:
+        if not child.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}DocumentSummary":
+            return False
+    return True
+
+
+def _find_hgvs_xml(response: Any, id: str) -> Dict[str, str]:
+    result = {}
+
+    for child in response:
+        if not child.get("uid") == id:
+            continue
+
+        for nested_child in child:
+            if not nested_child.tag == "{https://www.ncbi.nlm.nih.gov/SNP/docsum}DOCSUM":
+                continue
+
+            if not nested_child.text:
+                break
+
+            values = {}
+            for tok in nested_child.text.split("|"):
+                eq_delim = tok.split("=")
+                if len(eq_delim) != 2:
+                    continue
+                values[eq_delim[0]] = eq_delim[1]
+
+            if "HGVS" not in values:
+                break
+
+            hgvs_values = values["HGVS"].split(",")
+
+            # Just take the first one.
+            hgvs_p = next((v for v in hgvs_values if v.startswith("NP_")), None)
+            hgvs_c = next((v for v in hgvs_values if v.startswith("NM_")), None)
+
+            if hgvs_p:
+                result["hgvs_p"] = hgvs_p
+            if hgvs_c:
+                result["hgvs_c"] = hgvs_c
+            break
+    return result
+
+
+def _extract_gene_data(raw: Dict[str, Any], symbols: Sequence[str], allow_synonyms: bool) -> Dict[str, int]:
+    if "reports" not in raw:
+        return {}
+
+    if allow_synonyms:
+        result: Dict[str, int] = {}
+
+        for g in raw["reports"]:
+            if g["gene"]["symbol"] in symbols:
+                result[g["gene"]["symbol"]] = int(g["gene"]["gene_id"])
+
+        missing_symbols = [s for s in symbols if s not in result.keys()]
+        for symbol in missing_symbols:
+            # find the first query match.
+            for g in raw["reports"]:
+                if symbol in g["query"]:
+                    result[symbol] = int(g["gene"]["gene_id"])
+                    break
+    else:
+        result = {
+            g["gene"]["symbol"]: int(g["gene"]["gene_id"]) for g in raw["reports"] if g["gene"]["symbol"] in symbols
+        }
+
+    return result
