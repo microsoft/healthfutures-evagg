@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import xml.etree.ElementTree as Et
 from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
@@ -95,7 +96,7 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, entrez_c
 # Test if an incorrect gene name is being passed in. If so, return an empty list.
 def test_find_pmids_for_gene_invalid_gene(mocker, entrez_client):
     # Mock the esearch method to return an XML string without an "IdList" element
-    mock_esearch = mocker.patch("lib.evagg.library.IEntrezClient.esearch", return_value="<root></root>")
+    mock_esearch = mocker.patch("lib.evagg.library.IEntrezClient.esearch", return_value=Et.fromstring("<root></root>"))
 
     # PubMedFileLibrary instance
     library = PubMedFileLibrary(entrez_client, max_papers=1)
@@ -107,14 +108,14 @@ def test_find_pmids_for_gene_invalid_gene(mocker, entrez_client):
     assert result == []
 
     # Check that the esearch method was called with the correct arguments
-    mock_esearch.assert_called_once_with(db="pubmed", sort="relevance", retmax=1, term="invalid_gene")
+    mock_esearch.assert_called_once_with(db="pubmed", sort="relevance", retmax=1, term="invalid_gene", retmode="xml")
 
 
 # Test if a valid gene name is being passed in yet there are no papers returned, to return an empty list.
 def test_find_pmids_for_gene_no_papers(mocker, entrez_client):
     # Mock the esearch method to return an XML string without any "Id" elements
     mock_esearch = mocker.patch(
-        "lib.evagg.library.IEntrezClient.esearch", return_value="<root><IdList></IdList></root>"
+        "lib.evagg.library.IEntrezClient.esearch", return_value=Et.fromstring("<root><IdList></IdList></root>")
     )
 
     # PubMedFileLibrary instance
@@ -127,7 +128,7 @@ def test_find_pmids_for_gene_no_papers(mocker, entrez_client):
     assert result == []
 
     # Check that the esearch method was called with the correct arguments
-    mock_esearch.assert_called_once_with(db="pubmed", sort="relevance", retmax=1, term="valid_gene")
+    mock_esearch.assert_called_once_with(db="pubmed", sort="relevance", retmax=1, term="valid_gene", retmode="xml")
 
 
 # Test if query is not in the right format (gene:variant)

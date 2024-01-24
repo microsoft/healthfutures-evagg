@@ -1,4 +1,5 @@
 import logging
+import xml.etree.ElementTree as Et
 from typing import Any, Optional
 
 import requests
@@ -34,8 +35,8 @@ class RequestsWebContentClient(IWebContentClient):
         elif content_type == "binary":
             return response.content
         elif content_type == "json":
-            return response.json()
+            return response.json() if len(response.content) > 0 else {}
         elif content_type == "xml":
-            return response.content
+            return Et.fromstring(response.content) if len(response.content) > 0 else None
         else:
             raise ValueError(f"Invalid content type: {content_type}")

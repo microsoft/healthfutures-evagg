@@ -1,7 +1,6 @@
 import urllib.parse as urlparse
 from typing import Any, Dict, Optional, Sequence
 
-from defusedxml import ElementTree as ElementTree
 from pydantic import root_validator
 
 from lib.config import PydanticYamlModel
@@ -99,47 +98,6 @@ def _extract_gene_data(raw: Dict[str, Any], symbols: Sequence[str], allow_synony
     return result
 
 
-class NcbiSnpClient(IVariantLookupClient):
-    def __init__(self, entrez_client: IEntrezClient) -> None:
-        self._entrez_client = entrez_client
-
-    def _entrez_fetch_xml(self, db: str, id_str: str) -> Any | None:
-        string_response = self._entrez_client.efetch(db=db, id=id_str, retmode="xml", rettype="xml")
-        if len(string_response) == 0:
-            return None
-        # fromstring returns type Any, but it's actually an ElementTree.Element. Using this approach to avoid
-        # making bandit cranky with xml.* imports.
-        return ElementTree.fromstring(string_response)
-
-    def hgvs_from_rsid(self, rsids: Sequence[str]) -> Dict[str, Dict[str, str]]:
-        """Provided rsids should be a list of strings, each of which is a valid rsid, prefixed with `rs`."""
-        if isinstance(rsids, str):
-            rsids = [rsids]
-
-        keys = set()
-        for rsid in rsids:
-            if not rsid.startswith("rs"):
-                raise ValueError(f"Invalid rsid: {rsid}. Did you forget to include an 'rs' prefix?")
-            rsid = rsid[2:]
-
-            # Remaining rsid must be only numeric.
-            if not rsid.isnumeric():
-                raise ValueError(f"Invalid rsid: {rsid}: only rs followed by a string of numeric characters allowed.")
-
-            keys.add(rsid)
-
-        rsids_str = ",".join(keys)
-        response = self._entrez_fetch_xml(db="snp", id_str=rsids_str)
-
-        if response is None or not _validate_snp_response_xml(response):
-            return {}
-
-        result = {}
-        for rsid in keys:
-            result["rs" + rsid] = _find_hgvs_xml(response, rsid)
-        return result
-
-
 class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
     API_HOST = "https://eutils.ncbi.nlm.nih.gov"
     API_LOOKUP_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
@@ -164,13 +122,13 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
             key_string += f"&api_key={self._config.api_key}"
         return key_string
 
-    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
+    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
         url = self.UTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
-        return self._web_client.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
+        return self._web_client.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}", content_type=retmode)
 
-    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> str:
+    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
         url = self.UTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
-        return self._web_client.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}")
+        return self._web_client.get(f"{self.UTILS_HOST}{url}{self._get_key_string()}", content_type=retmode)
 
     def symbol_lookup(self, symbols: Sequence[str]) -> Dict[str, Any]:
         url = self.API_LOOKUP_URL.format(symbols=",".join(symbols))
@@ -205,10 +163,7 @@ class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
             keys.add(rsid)
 
         rsids_str = ",".join(keys)
-        string_response = self.efetch(db="snp", id=rsids_str, retmode="xml", rettype="xml")
-        # fromstring returns type Any, but it's actually an ElementTree.Element. Using this approach to avoid
-        # making bandit cranky with xml.* imports.
-        response = None if len(string_response) == 0 else ElementTree.fromstring(string_response)
+        response = self.efetch(db="snp", id=rsids_str, retmode="xml", rettype="xml")
 
         if response is None or not _validate_snp_response_xml(response):
             return {}
