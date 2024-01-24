@@ -10,21 +10,26 @@ from lib.evagg.svc import IWebContentClient
 def single_gene_miss():
     return {}
 
+
 @pytest.fixture
 def single_gene_direct_match(json_load):
     return json_load("ncbi_symbol_single.json")
+
 
 @pytest.fixture
 def single_gene_indirect_match(json_load):
     return json_load("ncbi_symbol_synonym.json")
 
+
 @pytest.fixture
 def multi_gene(json_load):
     return json_load("ncbi_symbol_multi.json")
 
+
 @pytest.fixture
 def single_variant(xml_load):
     return xml_load("efetch_snp_single_variant.xml")
+
 
 @pytest.fixture
 def multi_variant(xml_load):
