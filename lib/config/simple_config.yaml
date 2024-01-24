@@ -17,3 +17,5 @@ extractor:
     - functional data
 writer:
   di_class: lib.evagg.ConsoleOutputWriter
+log:
+  di_service: lib.evagg.logging.init_logger
