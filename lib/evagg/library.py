@@ -10,7 +10,7 @@ from typing import Dict, List, Sequence, Set, Tuple
 
 import requests
 
-from lib.evagg.ref import IPubMedLookupClient
+from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import IPaperQuery, Paper, Variant
 
 from .interfaces import IGetPapers
@@ -118,14 +118,14 @@ class TruthsetFileLibrary(IGetPapers):
 class PubMedFileLibrary(IGetPapers):
     """A class for retrieving papers from PubMed."""
 
-    def __init__(self, entrez_client: IPubMedLookupClient, max_papers: int = 5) -> None:
+    def __init__(self, paper_client: IPaperLookupClient, max_papers: int = 5) -> None:
         """Initialize a new instance of the PubMedFileLibrary class.
 
         Args:
-            entrez_client (IPubMedLookupClient): A class for interacting with the Entrez API.
+            paper_client (IPaperLookupClient): A class for interacting with the Entrez API.
             max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
         """
-        self._entrez_client = entrez_client
+        self._paper_client = paper_client
         self._max_papers = max_papers
 
     def search(self, query: IPaperQuery) -> Set[Paper]:
@@ -147,7 +147,7 @@ class PubMedFileLibrary(IGetPapers):
 
     def _find_pmids_for_gene(self, query: str) -> List[str]:
         # Search the pubmed database
-        tree = self._entrez_client.esearch(
+        tree = self._paper_client.esearch(
             db="pubmed", sort="relevance", retmax=self._max_papers, retmode="xml", term=query
         )
 
@@ -158,7 +158,7 @@ class PubMedFileLibrary(IGetPapers):
         return pmid_list
 
     def _get_abstract_and_citation(self, pmid: str) -> Tuple[str, str | None, str | None, str | None]:
-        records = self._entrez_client.efetch(db="pubmed", id=pmid, retmode="xml", rettype="abstract")
+        records = self._paper_client.efetch(db="pubmed", id=pmid, retmode="xml", rettype="abstract")
 
         # get abstract
         abstract_elem = records.find(".//AbstractText")
