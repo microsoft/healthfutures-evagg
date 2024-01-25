@@ -20,7 +20,7 @@ queries:
     - "CPA6:R46C" # note R46C is a variant I made up.
 library:
   di_class: lib.evagg.PubMedFileLibrary
-  entrez_client: "{{ncbi_client}}"
+  paper_client: "{{ncbi_client}}"
   max_papers: 1
 extractor:
   di_class: lib.evagg.PromptBasedContentExtractor

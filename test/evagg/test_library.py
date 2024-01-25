@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from lib.evagg import PubMedFileLibrary, SimpleFileLibrary
-from lib.evagg.ref import IPubMedLookupClient
+from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper, Query
 
 # TODO: focus on critical functions
@@ -25,8 +25,8 @@ def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
 
 
 @pytest.fixture
-def entrez_client():
-    class DummyEntrezClient(IPubMedLookupClient):
+def paper_client():
+    class DummyEntrezClient(IPaperLookupClient):
         def efetch(self, db: str, id: str, retmode: str | None, rettype: str | None) -> str:
             return ""
 
@@ -63,7 +63,7 @@ def test_search():
 @patch.object(PubMedFileLibrary, "_build_papers")
 # Test if query is in the right format (gene:variant) and there are papers returned
 # This is considered the normal functioning of the search method in the PubMedFileLibrary class.
-def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, entrez_client):
+def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, paper_client):
     # TODO: If we can't call external resources, we need content from
     # somewhere. Thus, consider collections=[tmpdir]?
 
@@ -76,7 +76,7 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, entrez_c
         is_pmc_oa=False,
     )
 
-    library = PubMedFileLibrary(entrez_client, max_papers=1)
+    library = PubMedFileLibrary(paper_client, max_papers=1)
 
     # Isolating testing search method. No external resource calls.
     mock_query = MagicMock()
@@ -94,12 +94,14 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, entrez_c
 
 
 # Test if an incorrect gene name is being passed in. If so, return an empty list.
-def test_find_pmids_for_gene_invalid_gene(mocker, entrez_client):
+def test_find_pmids_for_gene_invalid_gene(mocker, paper_client):
     # Mock the esearch method to return an XML string without an "IdList" element
-    mock_esearch = mocker.patch("lib.evagg.library.IPubMedLookupClient.esearch", return_value=Et.fromstring("<root></root>"))
+    mock_esearch = mocker.patch(
+        "lib.evagg.library.IPaperLookupClient.esearch", return_value=Et.fromstring("<root></root>")
+    )
 
     # PubMedFileLibrary instance
-    library = PubMedFileLibrary(entrez_client, max_papers=1)
+    library = PubMedFileLibrary(paper_client, max_papers=1)
 
     # Call the _find_pmids_for_gene method with an invalid gene name
     result = library._find_pmids_for_gene("invalid_gene")
@@ -112,14 +114,14 @@ def test_find_pmids_for_gene_invalid_gene(mocker, entrez_client):
 
 
 # Test if a valid gene name is being passed in yet there are no papers returned, to return an empty list.
-def test_find_pmids_for_gene_no_papers(mocker, entrez_client):
+def test_find_pmids_for_gene_no_papers(mocker, paper_client):
     # Mock the esearch method to return an XML string without any "Id" elements
     mock_esearch = mocker.patch(
-        "lib.evagg.library.IPubMedLookupClient.esearch", return_value=Et.fromstring("<root><IdList></IdList></root>")
+        "lib.evagg.library.IPaperLookupClient.esearch", return_value=Et.fromstring("<root><IdList></IdList></root>")
     )
 
     # PubMedFileLibrary instance
-    library = PubMedFileLibrary(entrez_client, max_papers=1)
+    library = PubMedFileLibrary(paper_client, max_papers=1)
 
     # Call the _find_pmids_for_gene method with a valid gene name
     result = library._find_pmids_for_gene("valid_gene")
@@ -132,9 +134,9 @@ def test_find_pmids_for_gene_no_papers(mocker, entrez_client):
 
 
 # Test if query is not in the right format (gene:variant)
-def test_search_invalid_query_format(entrez_client, mocker):
+def test_search_invalid_query_format(paper_client, mocker):
     # Create a PubMedFileLibrary instance
-    library = PubMedFileLibrary(entrez_client, max_papers=1)
+    library = PubMedFileLibrary(paper_client, max_papers=1)
 
     # Mock the _find_pmids_for_gene and _build_papers methods
     mocker.patch.object(library, "_find_pmids_for_gene", return_value=[])
@@ -152,9 +154,9 @@ def test_search_invalid_query_format(entrez_client, mocker):
 
 
 # Test if query is in the right format (gene:variant)
-def test_search_valid_query_format(entrez_client, mocker):
+def test_search_valid_query_format(paper_client, mocker):
     # Create a PubMedFileLibrary instance
-    library = PubMedFileLibrary(entrez_client, max_papers=1)
+    library = PubMedFileLibrary(paper_client, max_papers=1)
 
     # Mock the _find_pmids_for_gene and _build_papers methods
     mocker.patch.object(library, "_find_pmids_for_gene", return_value=[])
@@ -175,9 +177,9 @@ def test_search_valid_query_format(entrez_client, mocker):
 
 
 # Test if query is in the right format (gene:variant) but there are no papers returned
-def test_search_no_papers_returned(entrez_client, mocker):
+def test_search_no_papers_returned(paper_client, mocker):
     # Create a PubMedFileLibrary instance
-    library = PubMedFileLibrary(entrez_client, max_papers=1)
+    library = PubMedFileLibrary(paper_client, max_papers=1)
 
     # Mock the _find_pmids_for_gene and _build_papers methods
     mocker.patch.object(library, "_find_pmids_for_gene", return_value=[])
@@ -195,8 +197,8 @@ def test_search_no_papers_returned(entrez_client, mocker):
 
 
 # Test the init method of the PubMedFileLibrary class
-def test_init(entrez_client):
+def test_init(paper_client):
     max_papers = 5
-    library = PubMedFileLibrary(entrez_client, max_papers)
-    assert library._entrez_client == entrez_client
+    library = PubMedFileLibrary(paper_client, max_papers)
+    assert library._paper_client == paper_client
     assert library._max_papers == max_papers
