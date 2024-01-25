@@ -84,7 +84,7 @@ class VariantMentionFinder(IFindVariantMentions):
         return mentions
 
 
-class TruthsetVariantMentionFinder(VariantMentionFinder):
+class TruthsetVariantMentionFinder(IFindVariantMentions):
     def __init__(self, entity_annotator: IAnnotateEntities, gene_lookup_client: IGeneLookupClient) -> None:
         self._entity_annotator = entity_annotator
         self._gene_lookup_client = gene_lookup_client
