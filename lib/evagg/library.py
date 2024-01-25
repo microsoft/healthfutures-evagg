@@ -10,7 +10,7 @@ from typing import Dict, List, Sequence, Set, Tuple
 
 import requests
 
-from lib.evagg.ref import IEntrezClient
+from lib.evagg.ref import IPubMedLookupClient
 from lib.evagg.types import IPaperQuery, Paper, Variant
 
 from .interfaces import IGetPapers
@@ -118,11 +118,11 @@ class TruthsetFileLibrary(IGetPapers):
 class PubMedFileLibrary(IGetPapers):
     """A class for retrieving papers from PubMed."""
 
-    def __init__(self, entrez_client: IEntrezClient, max_papers: int = 5) -> None:
+    def __init__(self, entrez_client: IPubMedLookupClient, max_papers: int = 5) -> None:
         """Initialize a new instance of the PubMedFileLibrary class.
 
         Args:
-            entrez_client (IEntrezClient): A class for interacting with the Entrez API.
+            entrez_client (IPubMedLookupClient): A class for interacting with the Entrez API.
             max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
         """
         self._entrez_client = entrez_client
