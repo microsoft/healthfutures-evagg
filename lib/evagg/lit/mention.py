@@ -1,17 +1,20 @@
+import logging
 import re
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
 import Bio.SeqUtils
 
 from lib.evagg.lit import IAnnotateEntities, IFindVariantMentions
-from lib.evagg.ref import INcbiGeneClient
+from lib.evagg.ref import IGeneLookupClient
 from lib.evagg.types import IPaperQuery, Paper
+
+logger = logging.getLogger(__name__)
 
 
 class VariantMentionFinder(IFindVariantMentions):
-    def __init__(self, entity_annotator: IAnnotateEntities, ncbi_gene_client: INcbiGeneClient) -> None:
+    def __init__(self, entity_annotator: IAnnotateEntities, gene_lookup_client: IGeneLookupClient) -> None:
         self._entity_annotator = entity_annotator
-        self._ncbi_gene_client = ncbi_gene_client
+        self._gene_lookup_client = gene_lookup_client
 
     def _get_variant_ids(self, annotations: Dict[str, Any], query_gene_id: int, query_gene_symbol: str) -> Set[str]:
         variants_in_query_gene: Set[str] = set()
@@ -54,7 +57,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
     def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
         # Get the gene_id(s) for the query gene(s).
-        query_gene_ids = self._ncbi_gene_client.gene_id_for_symbol([v.gene for v in query.terms()])
+        query_gene_ids = self._gene_lookup_client.gene_id_for_symbol([v.gene for v in query.terms()])
 
         # Annotate entities in the paper.
         annotations = self._entity_annotator.annotate(paper)
@@ -82,9 +85,9 @@ class VariantMentionFinder(IFindVariantMentions):
 
 
 class TruthsetVariantMentionFinder(VariantMentionFinder):
-    def __init__(self, entity_annotator: IAnnotateEntities, ncbi_gene_client: INcbiGeneClient) -> None:
+    def __init__(self, entity_annotator: IAnnotateEntities, gene_lookup_client: IGeneLookupClient) -> None:
         self._entity_annotator = entity_annotator
-        self._ncbi_gene_client = ncbi_gene_client
+        self._gene_lookup_client = gene_lookup_client
 
     SHORTHAND_HGVS_PATTERN = re.compile(r"^p\.([A-Za-z])(\d+)([A-Za-z\*]|fs|del)$")
     LONGHAND_HGVS_PATTERN = re.compile(r"^p\.([A-Za-z]{3})(\d+)([A-Za-z]{3}|\*|fs|del)$")
@@ -167,7 +170,7 @@ class TruthsetVariantMentionFinder(VariantMentionFinder):
         truth_rows = [d for d in paper.evidence.values() if d["gene"] in query_genes]
 
         # Get the gene ids.
-        query_gene_ids = self._ncbi_gene_client.gene_id_for_symbol([v["gene"] for v in truth_rows])
+        query_gene_ids = self._gene_lookup_client.gene_id_for_symbol([v["gene"] for v in truth_rows])
 
         # Get the annotated paper.
         annotations = self._entity_annotator.annotate(paper)
@@ -177,7 +180,7 @@ class TruthsetVariantMentionFinder(VariantMentionFinder):
         for variant_dict in truth_rows:
             gene_symbol = variant_dict["gene"]
             if gene_symbol not in query_gene_ids:
-                print("Warning: gene symbol not found in query gene ids")
+                logger.warning("Gene symbol not found in query gene ids")
                 continue
 
             identifier = f"{gene_symbol}:{variant_dict['hgvs_c']}"

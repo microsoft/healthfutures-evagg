@@ -1,13 +1,16 @@
 import json
+import logging
 import os
 from typing import Any, Dict, List, Sequence
 
 from lib.evagg.lit import IFindVariantMentions
 from lib.evagg.llm.openai import IOpenAIClient
-from lib.evagg.ref import INcbiSnpClient
+from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import IPaperQuery, Paper
 
-from .._interfaces import IExtractFields
+from ..interfaces import IExtractFields
+
+logger = logging.getLogger(__name__)
 
 
 class PromptBasedContentExtractor(IExtractFields):
@@ -23,12 +26,12 @@ class PromptBasedContentExtractor(IExtractFields):
         fields: Sequence[str],
         llm_client: IOpenAIClient,
         mention_finder: IFindVariantMentions,
-        ncbi_snp_client: INcbiSnpClient,
+        variant_lookup_client: IVariantLookupClient,
     ) -> None:
         self._fields = fields
         self._llm_client = llm_client
         self._mention_finder = mention_finder
-        self._ncbi_snp_client = ncbi_snp_client
+        self._variant_lookup_client = variant_lookup_client
 
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
@@ -41,10 +44,12 @@ class PromptBasedContentExtractor(IExtractFields):
         # Find all the variant mentions in the paper relating to the query.
         variant_mentions = self._mention_finder.find_mentions(query, paper)
 
-        print(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
+        logger.info(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
 
         # Build a cached list of hgvs formats for dbsnp identifiers.
-        hgvs_cache = self._ncbi_snp_client.hgvs_from_rsid([v for v in variant_mentions.keys() if v.startswith("rs")])
+        hgvs_cache = self._variant_lookup_client.hgvs_from_rsid(
+            [v for v in variant_mentions.keys() if v.startswith("rs")]
+        )
 
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
@@ -62,7 +67,7 @@ class PromptBasedContentExtractor(IExtractFields):
             mentions = variant_mentions[variant_id]
             variant_results: Dict[str, str] = {"variant": variant_id}
 
-            print(f"### Extracting fields for {variant_id} in {paper.id}")
+            logger.info(f"### Extracting fields for {variant_id} in {paper.id}")
 
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = self._excerpt_from_mentions(mentions)

@@ -1,3 +1,4 @@
+import logging
 import os
 from functools import cache
 from typing import Dict
@@ -7,7 +8,9 @@ from dotenv import load_dotenv
 
 from lib.config import PydanticYamlModel
 
-from ._interfaces import IEntrezClient
+from .interfaces import IEntrezClient
+
+logger = logging.getLogger(__name__)
 
 
 # Assume AOAI.
@@ -22,7 +25,7 @@ class BioEntrezDotEnvConfig(BioEntrezConfig):
 
     def __init__(self) -> None:
         if not load_dotenv():
-            print("Warning: no .env file found, using pre-existing environment variables.")
+            logger.warning("No .env file found, using pre-existing environment variables.")
 
         if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
             raise ValueError(
@@ -40,13 +43,13 @@ class BioEntrezDotEnvConfig(BioEntrezConfig):
 class BioEntrezClient(IEntrezClient):
     def __init__(self, config: BioEntrezConfig) -> None:
         if config.api_key:
-            Entrez.api_key = config.api_key
+            Entrez.api_key = config.api_key  # type: ignore
 
         # This isn't particularly clear from the documentation, but it looks like
         # we're getting 400s when max_tries is set too low.
         # see https://biopython.org/docs/1.75/api/Bio.Entrez.html
         Entrez.max_tries = int(config.max_tries)
-        Entrez.email = config.email
+        Entrez.email = config.email  # type: ignore
 
     @cache
     def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> str:
