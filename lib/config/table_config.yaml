@@ -26,4 +26,6 @@ extractor:
     - link: link
 writer:
   di_class: lib.evagg.TableOutputWriter
-  # output_path: /home/gregsmi/sources/seqr/ev-agg-exp/.out/run_query_sync.tsv
+log:
+  di_service: lib.evagg.logging.init_logger
+  level: INFO

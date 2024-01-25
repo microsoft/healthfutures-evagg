@@ -23,6 +23,7 @@ dependencies:
   - ratelimit
   - retry
   - python-dotenv
+  - urllib3
 
   # AI/ML.
   - openai

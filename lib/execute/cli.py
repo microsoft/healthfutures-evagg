@@ -2,6 +2,8 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Any, Dict, Sequence
 
+import yaml
+
 from lib.di import DiContainer
 from lib.evagg import IEvAggApp
 
@@ -42,14 +44,31 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict:
     return override_dict
 
 
-def main() -> None:
-    args = _parse_args()
+def _nested_update(d: Dict, u: Dict) -> Dict:
+    """Recursively update a nested dictionary."""
+    for k, v in u.items():
+        if isinstance(v, dict):
+            d[k] = _nested_update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
-    config_override = _parse_override_args(args.override)
-    di = DiContainer(config=Path(args.config), overrides=config_override)
-    app: IEvAggApp = di.build()
+
+def run_sync() -> None:
+    args = _parse_args()
+    config: Dict[str, Any]
+
+    # Read in the config dictionary.
+    with open(Path(args.config), "r") as f:
+        config = yaml.safe_load(f)
+
+    # Merge in any overrides.
+    config = _nested_update(config, _parse_override_args(args.override))
+
+    # Instantiate and run the app.
+    app: IEvAggApp = DiContainer().build(config)
     app.execute()
 
 
 if __name__ == "__main__":
-    main()
+    run_sync()

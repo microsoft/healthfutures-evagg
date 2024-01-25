@@ -76,21 +76,21 @@ def pmids_for_variant_fail():
 
 
 def test_variant_autocomplete(mocker, autocomplete_success):
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=autocomplete_success)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=autocomplete_success)
 
     result = LitVarReference.variant_autocomplete("irrelevant search string")
     assert result == json.loads(autocomplete_success)
 
 
 def test_variant_autocomplete_fail(mocker, autocomplete_fail):
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=autocomplete_fail)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=autocomplete_fail)
 
     result = LitVarReference.variant_autocomplete("irrelevant search string")
     assert result == json.loads(autocomplete_fail)
 
 
 def test_variants_for_gene(mocker, variants_for_gene_success):
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=variants_for_gene_success)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=variants_for_gene_success)
 
     print(f"##{variants_for_gene_success}##")
     result = LitVarReference.variants_for_gene("irrelevant gene symbol")
@@ -100,21 +100,21 @@ def test_variants_for_gene(mocker, variants_for_gene_success):
 
 
 def test_variants_for_gene_fail(mocker, variants_for_gene_fail):
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=variants_for_gene_fail)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=variants_for_gene_fail)
 
     result = LitVarReference.variants_for_gene("irrelevant gene symbol")
     assert result == []
 
 
 def test_pmids_for_variant(mocker, pmids_for_variant_success):
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_success)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_success)
 
     result = LitVarReference.pmids_for_variant("litvar%40rs113488022%23%23")
     assert result == json.loads(pmids_for_variant_success)
 
 
 def test_pmids_for_variant_fail(mocker, pmids_for_variant_success, pmids_for_variant_fail):
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_success)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_success)
 
     # Variant validation fails.
     result = LitVarReference.pmids_for_variant("irrelevant variant id")
@@ -125,12 +125,12 @@ def test_pmids_for_variant_fail(mocker, pmids_for_variant_success, pmids_for_var
     assert result == {}
 
     # No results for variant.
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_fail)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_fail)
     result = LitVarReference.pmids_for_variant("litvar%40rs113488022%23%23")
 
 
 def test_rate_limiting(mocker, pmids_for_variant_fail):
-    mocker.patch("lib.evagg.ref._litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_fail)
+    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_fail)
 
     # Empty the call queue.
     time.sleep(1)
