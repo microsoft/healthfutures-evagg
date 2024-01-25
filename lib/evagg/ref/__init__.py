@@ -1,6 +1,6 @@
 """Package for interacting with reference resources."""
 
-from .interfaces import IEntrezClient, IGeneLookupClient, IVariantLookupClient
+from .interfaces import IGeneLookupClient, IPubMedLookupClient, IVariantLookupClient
 from .litvar import LitVarReference
 from .ncbi import NcbiLookupClient
 
@@ -8,8 +8,8 @@ __all__ = [
     # Litvar.
     "LitVarReference",
     # Interfaces.
-    "IEntrezClient",
     "IGeneLookupClient",
+    "IPubMedLookupClient",
     "IVariantLookupClient",
     # NCBI.
     "NcbiLookupClient",
