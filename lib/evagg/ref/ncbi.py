@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from pydantic import root_validator
 
 from lib.config import PydanticYamlModel
-from lib.evagg.ref import IEntrezClient
+from lib.evagg.ref import IPubMedLookupClient
 from lib.evagg.svc import IWebContentClient
 
 from .interfaces import IGeneLookupClient, IVariantLookupClient
@@ -31,7 +31,7 @@ class NcbiApiSettings(PydanticYamlModel):
         return values
 
 
-class NcbiLookupClient(IEntrezClient, IGeneLookupClient, IVariantLookupClient):
+class NcbiLookupClient(IPubMedLookupClient, IGeneLookupClient, IVariantLookupClient):
     API_LOOKUP_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"

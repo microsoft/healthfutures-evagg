@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from lib.evagg import PubMedFileLibrary, SimpleFileLibrary
-from lib.evagg.ref import IEntrezClient
+from lib.evagg.ref import IPubMedLookupClient
 from lib.evagg.types import Paper, Query
 
 # TODO: focus on critical functions
@@ -26,7 +26,7 @@ def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
 
 @pytest.fixture
 def entrez_client():
-    class DummyEntrezClient(IEntrezClient):
+    class DummyEntrezClient(IPubMedLookupClient):
         def efetch(self, db: str, id: str, retmode: str | None, rettype: str | None) -> str:
             return ""
 
@@ -96,7 +96,7 @@ def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, entrez_c
 # Test if an incorrect gene name is being passed in. If so, return an empty list.
 def test_find_pmids_for_gene_invalid_gene(mocker, entrez_client):
     # Mock the esearch method to return an XML string without an "IdList" element
-    mock_esearch = mocker.patch("lib.evagg.library.IEntrezClient.esearch", return_value=Et.fromstring("<root></root>"))
+    mock_esearch = mocker.patch("lib.evagg.library.IPubMedLookupClient.esearch", return_value=Et.fromstring("<root></root>"))
 
     # PubMedFileLibrary instance
     library = PubMedFileLibrary(entrez_client, max_papers=1)
@@ -115,7 +115,7 @@ def test_find_pmids_for_gene_invalid_gene(mocker, entrez_client):
 def test_find_pmids_for_gene_no_papers(mocker, entrez_client):
     # Mock the esearch method to return an XML string without any "Id" elements
     mock_esearch = mocker.patch(
-        "lib.evagg.library.IEntrezClient.esearch", return_value=Et.fromstring("<root><IdList></IdList></root>")
+        "lib.evagg.library.IPubMedLookupClient.esearch", return_value=Et.fromstring("<root><IdList></IdList></root>")
     )
 
     # PubMedFileLibrary instance
