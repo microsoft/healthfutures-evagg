@@ -1,14 +1,14 @@
 import json
 import os
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Sequence
 
 import pytest
 
 from lib.evagg import PromptBasedContentExtractor, SimpleContentExtractor
 from lib.evagg.lit import IFindVariantMentions
 from lib.evagg.llm.openai import IOpenAIClient
-from lib.evagg.llm.openai._interfaces import OpenAIClientResponse
-from lib.evagg.ref import INcbiSnpClient
+from lib.evagg.llm.openai.interfaces import OpenAIClientResponse
+from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import IPaperQuery, Paper, Query
 
 
@@ -51,7 +51,7 @@ class MockOpenAIClient(IOpenAIClient):  # type: ignore
         return OpenAIClientResponse(result={}, settings={}, output=json.dumps({function: "test"}))
 
 
-class MockNcbiSnpClient(INcbiSnpClient):
+class MockVariantLookupClient(IVariantLookupClient):
     def __init__(self, response: Dict[str, Dict[str, str]]) -> None:
         self._response = response
 
@@ -71,14 +71,14 @@ def test_prompt_based_content_extractor_valid_fields() -> None:
     }
 
     mention_finder = MockMentionFinder()
-    ncbi_snp_client = MockNcbiSnpClient(
+    variant_lookup_client = MockVariantLookupClient(
         {k: {"hgvs_c": fields["hgvs_c"], "hgvs_p": fields["hgvs_p"]} for k in mention_finder.mentions.keys()}
     )
     content_extractor = PromptBasedContentExtractor(
         list(fields.keys()),
         llm_client=MockOpenAIClient(),
         mention_finder=mention_finder,
-        ncbi_snp_client=ncbi_snp_client,
+        variant_lookup_client=variant_lookup_client,
     )
     paper = Paper(id=fields["paper_id"], citation="citation", abstract="This is a test paper.", pmcid="PMC123")
     content = content_extractor.extract(paper, Query(f"{fields['gene']}:p.Y34C"))
@@ -102,7 +102,7 @@ def test_prompt_based_content_extractor_invalid_fields() -> None:
         fields,
         MockOpenAIClient(),
         MockMentionFinder(),
-        MockNcbiSnpClient(response={}),
+        MockVariantLookupClient(response={}),
     )
     paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
 

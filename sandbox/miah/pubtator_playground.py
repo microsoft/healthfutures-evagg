@@ -3,7 +3,7 @@
 import json
 
 from lib.evagg.lit.pubmed import PubtatorEntityAnnotator
-from lib.evagg.ref._ncbi import NcbiSnpClient
+from evagg.ref.ncbi import NcbiSnpClient
 from lib.evagg.types import Paper
 from lib.evagg.web.entrez import BioEntrezClient, BioEntrezDotEnvConfig
 

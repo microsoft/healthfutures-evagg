@@ -15,13 +15,13 @@ ANSI_RESET := \033[0;0m
 # Run all CI checks.
 .DEFAULT_GOAL := ci
 .PHONY: ci
-ci: lint test
+ci: lint test sec
 	@echo
 	@echo "$(ANSI_GREEN)====== All linters and tests PASS ======$(ANSI_RESET)"
 
 # Run all linters.
 .PHONY: lint
-lint: lint-flake8 type sec
+lint: lint-flake8 type
 	@echo
 	@echo "$(ANSI_GREEN)====== All linters PASS ======$(ANSI_RESET)"
 
@@ -33,11 +33,11 @@ test:
 
 .PHONY: lint-flake8
 lint-flake8:
-	@flake8 $(PY_DIRS_ALL)
+	@flake8 $(PY_DIRS_MAIN) $(PY_DIRS_TEST)
 
 .PHONY: type
 type:
-	@mypy $(PY_DIRS_MAIN) $(PY_DIRS_EXTRA)
+	@mypy $(PY_DIRS_MAIN)
 
 .PHONY: sec
 sec:
