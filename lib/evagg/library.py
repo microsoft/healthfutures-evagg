@@ -1,5 +1,6 @@
 import csv
 import json
+import logging
 import os
 import re
 import xml.etree.ElementTree as Et
@@ -12,7 +13,9 @@ import requests
 from lib.evagg.types import IPaperQuery, Paper, Variant
 from lib.evagg.web.entrez import IEntrezClient
 
-from ._interfaces import IGetPapers
+from .interfaces import IGetPapers
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleFileLibrary(IGetPapers):
@@ -80,7 +83,7 @@ class TruthsetFileLibrary(IGetPapers):
         papers: Set[Paper] = set()
         for paper_id, rows in paper_groups.items():
             if paper_id == "MISSING_ID":
-                print(f"WARNING: skipped {len(rows)} rows with no paper ID.")
+                logger.warning(f"Skipped {len(rows)} rows with no paper ID.")
                 continue
 
             # For each paper, extract the paper-specific key/value pairs into a new dict.
@@ -92,10 +95,10 @@ class TruthsetFileLibrary(IGetPapers):
                 # Doublecheck if every row has the same values for the paper-specific keys.
                 for key in TRUTHSET_PAPER_KEYS:
                     if paper_data[key] != row[key]:
-                        print(f"WARNING: multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
+                        logger.warning(f"Multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
                 # Make sure the gene/variant columns are not empty.
                 if not row["gene"] or not row["hgvs_p"]:
-                    print(f"WARNING: missing gene or variant for {paper_id}.")
+                    logger.warning(f"Missing gene or variant for {paper_id}.")
 
             # For each paper, extract the variant-specific key/value pairs into a new dict of dicts.
             variants = {Variant(r["gene"], r["hgvs_p"]): {k: r.get(k, "") for k in TRUTHSET_VARIANT_KEYS} for r in rows}
@@ -225,7 +228,7 @@ class PubMedFileLibrary(IGetPapers):
             if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
                 return False
             elif error.attrib["code"] == "idDoesNotExist":  # type: ignore
-                print(f"PMC ID {pmcid} does not exist.")
+                logger.warning(f"PMC ID {pmcid} does not exist.")
                 return False
             else:
                 raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
@@ -243,7 +246,7 @@ class PubMedFileLibrary(IGetPapers):
             citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
             is_pmc_oa = self._is_pmc_oa(pmcid) if pmcid is not None else False
             count += 1
-            print(count, " Citation: ", citation)
+            logger.debug(f"{count} Citation: {citation}")
             paper = Paper(
                 id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
             )  # make a new Paper object for each entry
