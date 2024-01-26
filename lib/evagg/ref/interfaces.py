@@ -1,4 +1,6 @@
-from typing import Any, Dict, Protocol, Sequence
+from typing import Dict, Optional, Protocol, Sequence
+
+from lib.evagg.types import Paper
 
 
 class IVariantLookupClient(Protocol):
@@ -12,10 +14,10 @@ class IGeneLookupClient(Protocol):
 
 
 class IPaperLookupClient(Protocol):
-    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
-        """Call the Entrez EFetch API. `id` can be a comma-separated list of IDs."""
+    def search(self, query: str, max_papers: Optional[int] = None) -> Sequence[str]:
+        """Search the paper database for the given query."""
         ...
 
-    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
-        """Call the Entrez ESearch API."""
+    def fetch(self, paper_id: str) -> Optional[Paper]:
+        """Fetch the paper with the given id."""
         ...

@@ -2,13 +2,9 @@ import csv
 import json
 import logging
 import os
-import re
-import xml.etree.ElementTree as Et
 from collections import defaultdict
 from functools import cache
-from typing import Dict, List, Sequence, Set, Tuple
-
-import requests
+from typing import Dict, Sequence, Set
 
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import IPaperQuery, Paper, Variant
@@ -122,7 +118,7 @@ class PubMedFileLibrary(IGetPapers):
         """Initialize a new instance of the PubMedFileLibrary class.
 
         Args:
-            paper_client (IPaperLookupClient): A class for interacting with the Entrez API.
+            paper_client (IPaperLookupClient): A class for searching and fetching papers.
             max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
         """
         self._paper_client = paper_client
@@ -142,114 +138,6 @@ class PubMedFileLibrary(IGetPapers):
 
         term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
 
-        pmid_list = self._find_pmids_for_gene(query=term)
-        return self._build_papers(pmid_list)
-
-    def _find_pmids_for_gene(self, query: str) -> List[str]:
-        # Search the pubmed database
-        tree = self._paper_client.esearch(
-            db="pubmed", sort="relevance", retmax=self._max_papers, retmode="xml", term=query
-        )
-
-        # Extract the IDs
-        if (id_list_elt := tree.find("IdList")) is None:
-            return []
-        pmid_list = [c.text for c in id_list_elt.iter("Id") if c.text is not None]
-        return pmid_list
-
-    def _get_abstract_and_citation(self, pmid: str) -> Tuple[str, str | None, str | None, str | None]:
-        records = self._paper_client.efetch(db="pubmed", id=pmid, retmode="xml", rettype="abstract")
-
-        # get abstract
-        abstract_elem = records.find(".//AbstractText")
-        if abstract_elem is not None:
-            abstract = abstract_elem.text
-        else:
-            abstract = None
-
-        # generate citation
-        # get first author last name info
-        first_author_elem = records.find(".//Author/LastName")
-        if first_author_elem is not None:
-            first_author_last_name = first_author_elem.text
-        else:
-            first_author_last_name = None
-
-        # Extract year of publication
-        pub_year_elem = records.find(".//PubDate/Year")
-        if pub_year_elem is not None:
-            pub_year = pub_year_elem.text
-        else:
-            pub_year = "0.0"
-
-        # extract journal abbreviation
-        journal_abbreviation_elem = records.find(".//ISOAbbreviation")
-        if journal_abbreviation_elem is not None:
-            journal_abbreviation = journal_abbreviation_elem.text
-        else:
-            journal_abbreviation = None
-
-        # extract DOI
-        doi_elem = records.find(".//ELocationID[@EIdType='doi']")
-        if doi_elem is not None:
-            doi = doi_elem.text
-        else:
-            doi = "0.0"
-
-        # extract PMCID
-        pmcid_elem = records.find(".//ArticleId[@IdType='pmc']")
-        if pmcid_elem is not None:
-            pmcid = pmcid_elem.text
-        else:
-            pmcid = None
-
-        # generate citation
-        citation = f"{first_author_last_name} ({pub_year}) {journal_abbreviation}, {doi}"
-
-        return citation, doi, abstract, pmcid
-
-    def _extract_abstract(self, text_info: str) -> str:
-        # Extract paragraph after "Author information:" sentence and before "DOI:"
-        match = re.search(r"Author information:.*?\.(.*)DOI:", text_info, re.DOTALL)
-        if match:
-            abstract = match.group(1).strip()
-        else:
-            abstract = ""
-        return abstract
-
-    def _is_pmc_oa(self, pmcid: str) -> bool:
-        url = f"https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-
-        root = Et.fromstring(response.text)
-        if root.find("error") is not None:
-            error = root.find("error")
-            if error.attrib["code"] == "idIsNotOpenAccess":  # type: ignore
-                return False
-            elif error.attrib["code"] == "idDoesNotExist":  # type: ignore
-                logger.warning(f"PMC ID {pmcid} does not exist.")
-                return False
-            else:
-                raise NotImplementedError(f"Unexpected error code {error.attrib['code']}")  # type: ignore
-        match = next(record for record in root.find("records") if record.attrib["id"] == pmcid)  # type: ignore
-        if match:
-            return True
-        else:
-            raise ValueError(f"PMCID {pmcid} not found in response, but records were returned.")
-
-    def _build_papers(self, pmid_list: list[str]) -> Set[Paper]:  # Dict[str, Dict[str, str]]
-        # Generate a set of Paper objects
-        papers_set = set()
-        count = 0
-        for pmid in pmid_list:
-            citation, doi, abstract, pmcid = self._get_abstract_and_citation(pmid)
-            is_pmc_oa = self._is_pmc_oa(pmcid) if pmcid is not None else False
-            count += 1
-            logger.debug(f"{count} Citation: {citation}")
-            paper = Paper(
-                id=doi, citation=citation, abstract=abstract, pmid=pmid, pmcid=pmcid, is_pmc_oa=is_pmc_oa
-            )  # make a new Paper object for each entry
-            papers_set.add(paper)  # add Paper object to set
-
-        return papers_set
+        paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
+        papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
+        return papers
