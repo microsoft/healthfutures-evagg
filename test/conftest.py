@@ -20,9 +20,17 @@ def json_load(test_resources_path):
 
 
 @pytest.fixture
-def xml_load(test_resources_path):
+def xml_parse():
+    def _parser(content):
+        return Et.fromstring(content)
+
+    return _parser
+
+
+@pytest.fixture
+def xml_load(test_resources_path, xml_parse):
     def _loader(file_name):
         with open(os.path.join(test_resources_path, file_name), "r") as xml_file:
-            return Et.fromstring(xml_file.read())
+            return xml_parse(xml_file.read())
 
     return _loader
