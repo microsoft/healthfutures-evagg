@@ -1,3 +1,4 @@
+import logging
 import urllib.parse as urlparse
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -6,8 +7,11 @@ from pydantic import root_validator
 from lib.config import PydanticYamlModel
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.svc import IWebContentClient
+from lib.evagg.types import Paper
 
 from .interfaces import IGeneLookupClient, IVariantLookupClient
+
+logger = logging.getLogger(__name__)
 
 
 class NcbiApiSettings(PydanticYamlModel):
@@ -32,7 +36,8 @@ class NcbiApiSettings(PydanticYamlModel):
 
 
 class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClient):
-    API_LOOKUP_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
+    SYMBOL_LOOKUP_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
+    PMCOA_LOOKUP_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
     EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
@@ -42,44 +47,79 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
+        self._default_max_papers = 5  # TODO: make configurable?
         self._web_client = web_client
 
-    def efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
+    def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
         return self._web_client.get(f"{self.EUTILS_HOST}{url}{key_string}", content_type=retmode)
 
-    def esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
+    def _esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
         return self._web_client.get(f"{self.EUTILS_HOST}{url}{key_string}", content_type=retmode)
 
+    def _is_pmc_oa(self, pmcid: Optional[str]) -> bool:
+        """Check if a paper is open access using the PMC OA API."""
+        if not pmcid:
+            return False
+
+        root = self._web_client.get(self.PMCOA_LOOKUP_URL.format(pmcid=pmcid), content_type="xml")
+        # If the response contains a record with the given pmcid, then it is open access.
+        if root.find(f"records/record[@id='{pmcid}']") is not None:
+            logger.debug(f"PMC OA record found for {pmcid}")
+            return True
+
+        # If there is an error code, extract it from the response.
+        err_code = root.find("error").attrib["code"] if root.find("error") is not None else None
+        if err_code and err_code != "idIsNotOpenAccess":
+            logger.warning(f"PMC OA error code: {err_code}")
+        return False
+
+    # IPaperLookupClient
+    def search(self, query: str, max_papers: Optional[int] = None) -> Sequence[str]:
+        retmax = max_papers or self._default_max_papers
+        root = self._esearch(db="pubmed", term=query, sort="relevance", retmax=retmax, retmode="xml")
+        pmids = [id.text for id in root.findall("./IdList/Id") if id.text]
+        return pmids
+
+    def fetch(self, paper_id: str) -> Optional[Paper]:
+        root = self._efetch(db="pubmed", id=paper_id, retmode="xml", rettype="abstract")
+
+        props = _extract_paper_props_from_xml(root.find("PubmedArticle"))
+        props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
+        props["is_pmc_oa"] = self._is_pmc_oa("PMC68XXXX9")
+        props["pmid"] = paper_id
+
+        return Paper(id=props["doi"], **props)
+
+    # IGeneLookupClient
     def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
         """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
 
-        If `allow_synonyms` is True, then this will attempt to return the most relevant gene_id for each symbol, if
-        there are multiple matches to a sybol, the direct match (where the query symbol is the official symbol) will
+        If `allow_synonyms` is True, then this will attempt to return the most relevant gene_id for each symbol. If
+        there are multiple matches to a symbol, the direct match (where the query symbol is the official symbol) will
         be returned. If there are no direct matches, then the first synonym match will be returned.
         """
         if isinstance(symbols, str):
             symbols = [symbols]
 
-        url = self.API_LOOKUP_URL.format(symbols=",".join(symbols))
+        url = self.SYMBOL_LOOKUP_URL.format(symbols=",".join(symbols))
         root = self._web_client.get(url, content_type="json")
         return _extract_gene_symbols(root.get("reports", []), symbols, allow_synonyms)
 
+    # IVariantLookupClient
     def hgvs_from_rsid(self, rsids: Sequence[str]) -> Dict[str, Dict[str, str]]:
         """Provided rsids should be a list of strings, each of which is a valid rsid, prefixed with `rs`."""
         if isinstance(rsids, str):
             rsids = [rsids]
 
-        uids = set()
-        for rsid in rsids:
-            if not rsid.startswith("rs") or not rsid[2:].isnumeric():
-                raise ValueError(f"Invalid rsid: {rsid}: only rs followed by a string of numeric characters allowed.")
-            uids.add(rsid[2:])
+        if not rsids or not all(rsid.startswith("rs") and rsid[2:].isnumeric() for rsid in rsids):
+            raise ValueError("Invalid rsids list - must provide 'rs' followed by a string of numeric characters.")
 
-        root = self.efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
+        uids = {rsid[2:] for rsid in rsids}
+        root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
         return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids} if root is not None else {}
 
 
@@ -108,3 +148,18 @@ def _extract_gene_symbols(reports: List[Dict], symbols: Sequence[str], allow_syn
                 matches[missing_symbol] = int(synonym["gene_id"])
 
     return matches
+
+
+def _extract_paper_props_from_xml(root: Any) -> Dict[str, Any]:
+    """Extracts paper properties from an XML root element."""
+    extractions = {
+        "abstract": "./MedlineCitation/Article/Abstract/AbstractText",
+        "journal": "./MedlineCitation/Article/Journal/IsoAbbreviation",
+        "first_author": "./MedlineCitation/Article/AuthorList/Author[1]/LastName",
+        "pub_year": "./MedlineCitation/Article/Journal/JournalIssue/PubDate/Year",
+        "doi": "./PubmedData/ArticleIdList/ArticleId[@IdType='doi']",
+        "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
+    }
+
+    props = {k: (v.text if (v := root.find(path)) is not None else None) for k, path in extractions.items()}
+    return props
