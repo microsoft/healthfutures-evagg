@@ -1,0 +1,250 @@
+<?xml version="1.0"?>
+<!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2024//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_240101.dtd">
+<PubmedArticleSet>
+    <PubmedArticle>
+        <MedlineCitation Status="MEDLINE" Owner="NLM">
+            <PMID Version="1">24290490</PMID>
+            <DateCompleted>
+                <Year>2014</Year>
+                <Month>08</Month>
+                <Day>24</Day>
+            </DateCompleted>
+            <DateRevised>
+                <Year>2021</Year>
+                <Month>05</Month>
+                <Day>03</Day>
+            </DateRevised>
+            <Article PubModel="Print-Electronic">
+                <Journal>
+                    <ISSN IssnType="Electronic">1872-6844</ISSN>
+                    <JournalIssue CitedMedium="Internet">
+                        <Volume>108</Volume>
+                        <Issue>1</Issue>
+                        <PubDate>
+                            <Year>2014</Year>
+                            <Month>Jan</Month>
+                        </PubDate>
+                    </JournalIssue>
+                    <Title>Epilepsy research</Title>
+                    <ISOAbbreviation>Epilepsy Res</ISOAbbreviation>
+                </Journal>
+                <ArticleTitle>Increased CPA6 promoter methylation in focal epilepsy and in febrile
+    seizures.</ArticleTitle>
+                <Pagination>
+                    <StartPage>144</StartPage>
+                    <EndPage>148</EndPage>
+                    <MedlinePgn>144-8</MedlinePgn>
+                </Pagination>
+                <ELocationID EIdType="doi" ValidYN="Y">10.1016/j.eplepsyres.2013.10.007</ELocationID>
+                <ELocationID EIdType="pii" ValidYN="Y">S0920-1211(13)00261-1</ELocationID>
+                <Abstract>
+                    <AbstractText>Focal epilepsy (FE) is one of the most common forms of adult
+    epilepsy and is usually regarded as a multifactorial disorder. Febrile seizures (FS) often
+    appear during childhood in a subtype of FE patients, i.e. with temporal lobe epilepsy (TLE) and
+    hippocampal sclerosis (HS). FS are the most common human convulsive event associated with fever.
+    Genetic evidences for FS have suggested a complex mode of inheritance. Until now, to investigate
+    genes at the genomic level, linkage analysis of familial forms and association studies have been
+    performed, but nothing conclusive has been clearly related to FE and FS. As complex disorders,
+    environmental factors might play a crucial role through epigenetic modification of key candidate
+    genes such as CPA6, which encodes Carboxypeptidase A6, an extracellular protein. Therefore, we
+    assessed DNA methylation in promoter of CPA6. In 186 FE patients and 92 FS patients compared to
+    93 healthy controls and 42 treated controls with antiepileptic drugs (AEDs), we found
+    significant higher levels of methylation for epileptic patients. Methylation status were 3.4%
+    (&#xb1;3.2%) for FE cases and 4.3% (&#xb1;3.5%) for FS cases, whereas healthy individuals and
+    treated controls with AEDs showed a level of 0.8% (&#xb1;2.9%) and 1.5% (&#xb1;3.9%),
+    respectively (p&#x2264;0.001 for all comparisons). These results let growing evidence for DNA
+    methylation involvment in FE and FS.</AbstractText>
+                    <CopyrightInformation>Copyright &#xa9; 2013 Elsevier B.V. All rights reserved.</CopyrightInformation>
+                </Abstract>
+                <AuthorList CompleteYN="Y">
+                    <Author ValidYN="Y">
+                        <LastName>Belhedi</LastName>
+                        <ForeName>N</ForeName>
+                        <Initials>N</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Laboratory of Genetic, Immunology and Human Pathologies,
+    Department of Biology, Faculty of Sciences, Tunis, Tunisia; Neurological Department, Charles
+    Nicolle Hospital, Tunis, Tunisia.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Perroud</LastName>
+                        <ForeName>N</ForeName>
+                        <Initials>N</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva,
+    Switzerland.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Karege</LastName>
+                        <ForeName>F</ForeName>
+                        <Initials>F</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Department of Biology, National University of Rwanda,
+    Rwanda.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Vessaz</LastName>
+                        <ForeName>M</ForeName>
+                        <Initials>M</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Department of Genetic Medicine and Laboratory, University
+    Hospitals of Geneva, Geneva, Switzerland.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Malafosse</LastName>
+                        <ForeName>A</ForeName>
+                        <Initials>A</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva,
+    Switzerland; Department of Genetic Medicine and Laboratory, University Hospitals of Geneva,
+    Geneva, Switzerland.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Salzmann</LastName>
+                        <ForeName>A</ForeName>
+                        <Initials>A</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva,
+    Switzerland. Electronic address: annick.salzmann@hcuge.ch.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                </AuthorList>
+                <Language>eng</Language>
+                <PublicationTypeList>
+                    <PublicationType UI="D016428">Journal Article</PublicationType>
+                    <PublicationType UI="D016448">Multicenter Study</PublicationType>
+                </PublicationTypeList>
+                <ArticleDate DateType="Electronic">
+                    <Year>2013</Year>
+                    <Month>10</Month>
+                    <Day>24</Day>
+                </ArticleDate>
+            </Article>
+            <MedlineJournalInfo>
+                <Country>Netherlands</Country>
+                <MedlineTA>Epilepsy Res</MedlineTA>
+                <NlmUniqueID>8703089</NlmUniqueID>
+                <ISSNLinking>0920-1211</ISSNLinking>
+            </MedlineJournalInfo>
+            <ChemicalList>
+                <Chemical>
+                    <RegistryNumber>EC 3.4.17.1</RegistryNumber>
+                    <NameOfSubstance UI="C578288">CPA6 protein, human</NameOfSubstance>
+                </Chemical>
+                <Chemical>
+                    <RegistryNumber>EC 3.4.17.1</RegistryNumber>
+                    <NameOfSubstance UI="D043422">Carboxypeptidases A</NameOfSubstance>
+                </Chemical>
+            </ChemicalList>
+            <CitationSubset>IM</CitationSubset>
+            <MeshHeadingList>
+                <MeshHeading>
+                    <DescriptorName UI="D000328" MajorTopicYN="N">Adult</DescriptorName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D001483" MajorTopicYN="N">Base Sequence</DescriptorName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D043422" MajorTopicYN="N">Carboxypeptidases A</DescriptorName>
+                    <QualifierName UI="Q000235" MajorTopicYN="Y">genetics</QualifierName>
+                    <QualifierName UI="Q000378" MajorTopicYN="N">metabolism</QualifierName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D015331" MajorTopicYN="N">Cohort Studies</DescriptorName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D019175" MajorTopicYN="N">DNA Methylation</DescriptorName>
+                    <QualifierName UI="Q000235" MajorTopicYN="Y">genetics</QualifierName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D004828" MajorTopicYN="N">Epilepsies, Partial</DescriptorName>
+                    <QualifierName UI="Q000175" MajorTopicYN="N">diagnosis</QualifierName>
+                    <QualifierName UI="Q000235" MajorTopicYN="Y">genetics</QualifierName>
+                    <QualifierName UI="Q000378" MajorTopicYN="N">metabolism</QualifierName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D006801" MajorTopicYN="N">Humans</DescriptorName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D008297" MajorTopicYN="N">Male</DescriptorName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D008875" MajorTopicYN="N">Middle Aged</DescriptorName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D008969" MajorTopicYN="N">Molecular Sequence Data</DescriptorName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D011401" MajorTopicYN="N">Promoter Regions, Genetic</DescriptorName>
+                    <QualifierName UI="Q000235" MajorTopicYN="Y">genetics</QualifierName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D003294" MajorTopicYN="N">Seizures, Febrile</DescriptorName>
+                    <QualifierName UI="Q000175" MajorTopicYN="N">diagnosis</QualifierName>
+                    <QualifierName UI="Q000235" MajorTopicYN="Y">genetics</QualifierName>
+                    <QualifierName UI="Q000378" MajorTopicYN="N">metabolism</QualifierName>
+                </MeshHeading>
+                <MeshHeading>
+                    <DescriptorName UI="D055815" MajorTopicYN="N">Young Adult</DescriptorName>
+                </MeshHeading>
+            </MeshHeadingList>
+            <KeywordList Owner="NOTNLM">
+                <Keyword MajorTopicYN="N">CPA6</Keyword>
+                <Keyword MajorTopicYN="N">DNA methylation</Keyword>
+                <Keyword MajorTopicYN="N">Febrile seizures</Keyword>
+                <Keyword MajorTopicYN="N">Focal epilepsy</Keyword>
+            </KeywordList>
+        </MedlineCitation>
+        <PubmedData>
+            <History>
+                <PubMedPubDate PubStatus="received">
+                    <Year>2013</Year>
+                    <Month>3</Month>
+                    <Day>19</Day>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="revised">
+                    <Year>2013</Year>
+                    <Month>9</Month>
+                    <Day>13</Day>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="accepted">
+                    <Year>2013</Year>
+                    <Month>10</Month>
+                    <Day>13</Day>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="entrez">
+                    <Year>2013</Year>
+                    <Month>12</Month>
+                    <Day>3</Day>
+                    <Hour>6</Hour>
+                    <Minute>0</Minute>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="pubmed">
+                    <Year>2013</Year>
+                    <Month>12</Month>
+                    <Day>3</Day>
+                    <Hour>6</Hour>
+                    <Minute>0</Minute>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="medline">
+                    <Year>2014</Year>
+                    <Month>8</Month>
+                    <Day>26</Day>
+                    <Hour>6</Hour>
+                    <Minute>0</Minute>
+                </PubMedPubDate>
+            </History>
+            <PublicationStatus>ppublish</PublicationStatus>
+            <ArticleIdList>
+                <ArticleId IdType="pubmed">24290490</ArticleId>
+                <ArticleId IdType="doi">10.1016/j.eplepsyres.2013.10.007</ArticleId>
+                <ArticleId IdType="pii">S0920-1211(13)00261-1</ArticleId>
+            </ArticleIdList>
+        </PubmedData>
+    </PubmedArticle>
+</PubmedArticleSet>

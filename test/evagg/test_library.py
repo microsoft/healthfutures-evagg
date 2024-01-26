@@ -36,9 +36,9 @@ def paper_client():
 def test_search():
     # Create a temporary directory and write some test papers to it
     with tempfile.TemporaryDirectory() as tmpdir:
-        paper1 = Paper(id="1", citation="Test Paper 1", abstract="This is a test paper.", pmcid="PMC123")
-        paper2 = Paper(id="2", citation="Test Paper 2", abstract="This is another test paper.", pmcid="PMC123")
-        paper3 = Paper(id="3", citation="Test Paper 3", abstract="This is a third test paper.", pmcid="PMC123")
+        paper1 = Paper(id="1", citation="Test Paper 1", abstract="This is a test paper.", pmcid="PMC1234")
+        paper2 = Paper(id="2", citation="Test Paper 2", abstract="This is another test paper.", pmcid="PMC1235")
+        paper3 = Paper(id="3", citation="Test Paper 3", abstract="This is a third test paper.", pmcid="PMC1236")
         with open(os.path.join(tmpdir, "paper1.json"), "w") as f:
             json.dump(_paper_to_dict(paper1), f)
         with open(os.path.join(tmpdir, "paper2.json"), "w") as f:
