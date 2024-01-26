@@ -50,14 +50,14 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         self._default_max_papers = 5  # TODO: make configurable?
         self._web_client = web_client
 
-    def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
-        key_string = self._config.get_key_string()
-        url = self.EUTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
-        return self._web_client.get(f"{self.EUTILS_HOST}{url}{key_string}", content_type=retmode)
-
     def _esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
+        return self._web_client.get(f"{self.EUTILS_HOST}{url}{key_string}", content_type=retmode)
+
+    def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
+        key_string = self._config.get_key_string()
+        url = self.EUTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
         return self._web_client.get(f"{self.EUTILS_HOST}{url}{key_string}", content_type=retmode)
 
     def _is_pmc_oa(self, pmcid: Optional[str]) -> bool:
@@ -85,11 +85,15 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         return pmids
 
     def fetch(self, paper_id: str) -> Optional[Paper]:
-        root = self._efetch(db="pubmed", id=paper_id, retmode="xml", rettype="abstract")
+        if (root := self._efetch(db="pubmed", id=paper_id, retmode="xml", rettype="abstract")) is None:
+            return None
 
-        props = _extract_paper_props_from_xml(root.find("PubmedArticle"))
+        if (article := root.find(f"PubmedArticle/MedlineCitation/PMID[.='{paper_id}']/../..")) is None:
+            return None
+
+        props = _extract_paper_props_from_xml(article)
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
-        props["is_pmc_oa"] = self._is_pmc_oa("PMC68XXXX9")
+        props["is_pmc_oa"] = self._is_pmc_oa(props["pmcid"])
         props["pmid"] = paper_id
 
         return Paper(id=props["doi"], **props)
@@ -120,10 +124,12 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
         uids = {rsid[2:] for rsid in rsids}
         root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
-        return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids} if root is not None else {}
+        return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids}
 
 
 def _extract_hgvs_from_xml(root: Any, uid: str) -> Dict[str, str]:
+    if root is None:
+        return {}
     ns = "{https://www.ncbi.nlm.nih.gov/SNP/docsum}"
     # Find the first DOCSUM node under a DocumentSummary with the given rsid in the document hierarchy.
     node = next(iter(root.findall(f"./{ns}DocumentSummary[@uid='{uid}']/{ns}DOCSUM")), None)
@@ -150,16 +156,17 @@ def _extract_gene_symbols(reports: List[Dict], symbols: Sequence[str], allow_syn
     return matches
 
 
-def _extract_paper_props_from_xml(root: Any) -> Dict[str, Any]:
+def _extract_paper_props_from_xml(article: Any) -> Dict[str, Any]:
     """Extracts paper properties from an XML root element."""
     extractions = {
+        "title": "./MedlineCitation/Article/ArticleTitle",
         "abstract": "./MedlineCitation/Article/Abstract/AbstractText",
-        "journal": "./MedlineCitation/Article/Journal/IsoAbbreviation",
+        "journal": "./MedlineCitation/Article/Journal/ISOAbbreviation",
         "first_author": "./MedlineCitation/Article/AuthorList/Author[1]/LastName",
         "pub_year": "./MedlineCitation/Article/Journal/JournalIssue/PubDate/Year",
         "doi": "./PubmedData/ArticleIdList/ArticleId[@IdType='doi']",
         "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
     }
 
-    props = {k: (v.text if (v := root.find(path)) is not None else None) for k, path in extractions.items()}
+    props = {k: (v.text if (v := article.find(path)) is not None else None) for k, path in extractions.items()}
     return props
