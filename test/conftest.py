@@ -72,15 +72,21 @@ def mock_client(arg_loader):
                         def method(*args, **kwargs):
                             arg_list = list(map(str, args)) + ["=".join(map(str, item)) for item in kwargs.items()]
                             call_string = f"{name}(\n\t{',\n\t'.join(arg_list)}\n)"
-                            self._calls.append((name, args, kwargs, call_string))
+                            print(call_string)
+
+                            self._calls.append((name, *args, *[{k: v} for k, v in kwargs.items()]))
                             return next(self._responses)
 
                         return method
 
                     setattr(self, method_name, create_method(method_name))
 
-            def last_call(self):
-                return self._calls[-1]
+            def last_call(self, method_name: Optional[str] = None):
+                return (
+                    self._calls[-1]
+                    if method_name is None
+                    else next(call for call in reversed(self._calls) if call[0] == method_name)[1:]
+                )
 
             def call_count(self, method_name: Optional[str] = None):
                 return len([call for call in self._calls if method_name is None or call[0] == method_name])

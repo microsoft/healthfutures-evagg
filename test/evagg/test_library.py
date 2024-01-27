@@ -1,17 +1,58 @@
 import json
 import os
 import tempfile
-import xml.etree.ElementTree as Et
 from typing import Any, Dict
-from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lib.evagg import PubMedFileLibrary, SimpleFileLibrary
+from lib.evagg import RemoteFileLibrary, SimpleFileLibrary, TruthsetFileLibrary
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper, Query
 
-# TODO: focus on critical functions
+
+@pytest.fixture
+def mock_paper_client(mock_client):
+    return mock_client([IPaperLookupClient])
+
+
+def test_remote_init(mock_paper_client):
+    max_papers = 4
+    paper_client = mock_paper_client()
+    library = RemoteFileLibrary(paper_client, max_papers)
+    assert library._paper_client == paper_client
+    assert library._max_papers == max_papers
+
+
+def test_remote_no_paper(mock_paper_client):
+    paper_client = mock_paper_client([])
+    result = RemoteFileLibrary(paper_client).search(Query("gene:mutation"))
+    assert paper_client.last_call("search") == ({"query": "gene"}, {"max_papers": 5})
+    assert paper_client.call_count() == 1
+    assert not result
+
+
+def test_remote_multi_query_fail(mock_paper_client):
+    paper_client = mock_paper_client()
+    with pytest.raises(NotImplementedError):
+        RemoteFileLibrary(paper_client).search(Query(["gene1:mutation1", "gene2:mutation2"]))
+    assert paper_client.call_count() == 0
+
+
+def test_remote_single_paper(mock_paper_client):
+    paper = Paper(
+        id="10.1016/j.ajhg.2016.05.014",
+        citation="Makrythanasis et al. (2016) AJHG",
+        abstract="We report on five individuals who presented with intellectual disability and other...",
+        pmid="27392077",
+        pmcid="PMC5005447",
+        is_pmc_oa=True,
+    )
+    paper_client = mock_paper_client(["27392077"], paper)
+    result = RemoteFileLibrary(paper_client).search(Query("gene:mutation"))
+    assert paper_client.last_call("search") == ({"query": "gene"}, {"max_papers": 5})
+    assert paper_client.last_call("fetch") == ("27392077",)
+    assert paper_client.call_count() == 2
+    assert result and len(result) == 1 and result.pop() == paper
 
 
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
@@ -24,16 +65,7 @@ def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
     }
 
 
-@pytest.fixture
-def paper_client():
-    class DummyEntrezClient(IPaperLookupClient):
-        def efetch(self, db: str, id: str, retmode: str | None, rettype: str | None) -> str:
-            return ""
-
-    return DummyEntrezClient()
-
-
-def test_search():
+def test_simple_search():
     # Create a temporary directory and write some test papers to it
     with tempfile.TemporaryDirectory() as tmpdir:
         paper1 = Paper(id="1", citation="Test Paper 1", abstract="This is a test paper.", pmcid="PMC1234")
@@ -59,146 +91,7 @@ def test_search():
         assert paper3 in results
 
 
-@patch.object(PubMedFileLibrary, "_find_pmids_for_gene")
-@patch.object(PubMedFileLibrary, "_build_papers")
-# Test if query is in the right format (gene:variant) and there are papers returned
-# This is considered the normal functioning of the search method in the PubMedFileLibrary class.
-def test_pubmedfilelibrary(mock_build_papers, mock_find_pmids_for_gene, paper_client):
-    # TODO: If we can't call external resources, we need content from
-    # somewhere. Thus, consider collections=[tmpdir]?
-
-    paper1 = Paper(
-        id="doi_1",
-        citation="Test Paper 1",
-        abstract="This is a test paper.",
-        pmid="PMID123",
-        pmcid="PMC123",
-        is_pmc_oa=False,
-    )
-
-    library = PubMedFileLibrary(paper_client, max_papers=1)
-
-    # Isolating testing search method. No external resource calls.
-    mock_query = MagicMock()
-    mock_query.terms.return_value = ["gene_A"]  # Should be returned as the query term
-    mock_find_pmids_for_gene.return_value = ["id_A"]  # Replaces _find_pmids_for_gene.
-    mock_build_papers.return_value = paper1  # Replaces _build_papers.
-
-    # Run search
-    result = library.search(mock_query)
-
-    # Assert statements
-    mock_find_pmids_for_gene.assert_called_once_with(query="gene_A")
-    mock_build_papers.assert_called_once_with(["id_A"])
-    assert paper1 == result
-
-
-# Test if an incorrect gene name is being passed in. If so, return an empty list.
-def test_find_pmids_for_gene_invalid_gene(mocker, paper_client):
-    # Mock the esearch method to return an XML string without an "IdList" element
-    mock_esearch = mocker.patch(
-        "lib.evagg.library.IPaperLookupClient.esearch", return_value=Et.fromstring("<root></root>")
-    )
-
-    # PubMedFileLibrary instance
-    library = PubMedFileLibrary(paper_client, max_papers=1)
-
-    # Call the _find_pmids_for_gene method with an invalid gene name
-    result = library._find_pmids_for_gene("invalid_gene")
-
-    # Check that the result is an empty list
-    assert result == []
-
-    # Check that the esearch method was called with the correct arguments
-    mock_esearch.assert_called_once_with(db="pubmed", sort="relevance", retmax=1, term="invalid_gene", retmode="xml")
-
-
-# Test if a valid gene name is being passed in yet there are no papers returned, to return an empty list.
-def test_find_pmids_for_gene_no_papers(mocker, paper_client):
-    # Mock the esearch method to return an XML string without any "Id" elements
-    mock_esearch = mocker.patch(
-        "lib.evagg.library.IPaperLookupClient.esearch", return_value=Et.fromstring("<root><IdList></IdList></root>")
-    )
-
-    # PubMedFileLibrary instance
-    library = PubMedFileLibrary(paper_client, max_papers=1)
-
-    # Call the _find_pmids_for_gene method with a valid gene name
-    result = library._find_pmids_for_gene("valid_gene")
-
-    # Check that the result is an empty list
-    assert result == []
-
-    # Check that the esearch method was called with the correct arguments
-    mock_esearch.assert_called_once_with(db="pubmed", sort="relevance", retmax=1, term="valid_gene", retmode="xml")
-
-
-# Test if query is not in the right format (gene:variant)
-def test_search_invalid_query_format(paper_client, mocker):
-    # Create a PubMedFileLibrary instance
-    library = PubMedFileLibrary(paper_client, max_papers=1)
-
-    # Mock the _find_pmids_for_gene and _build_papers methods
-    mocker.patch.object(library, "_find_pmids_for_gene", return_value=[])
-    mocker.patch.object(library, "_build_papers", return_value=set())
-
-    # Create a mock IPaperQuery object with an invalid format
-    mock_query = MagicMock()
-    mock_query.terms.return_value = ["invalid_query"]
-
-    # Call the search method with the mock query
-    try:
-        library.search(mock_query)
-    except ValueError as e:
-        assert str(e) == "Query must be in the format 'gene:variant'"
-
-
-# Test if query is in the right format (gene:variant)
-def test_search_valid_query_format(paper_client, mocker):
-    # Create a PubMedFileLibrary instance
-    library = PubMedFileLibrary(paper_client, max_papers=1)
-
-    # Mock the _find_pmids_for_gene and _build_papers methods
-    mocker.patch.object(library, "_find_pmids_for_gene", return_value=[])
-    mocker.patch.object(library, "_build_papers", return_value=set())
-
-    # Create a mock IPaperQuery object with a valid format
-    mock_query = MagicMock()
-    mock_query.terms.return_value = ["gene:variant"]
-
-    # Call the search method with the mock query
-    try:
-        library.search(mock_query)
-    except ValueError:
-        raise AssertionError(
-            "Search method raised ValueError for a valid query"
-        )  # Checks that search method does not raise a ValueError with correct query. If search method does raise a
-        # ValueError, this test will fail with the message here
-
-
-# Test if query is in the right format (gene:variant) but there are no papers returned
-def test_search_no_papers_returned(paper_client, mocker):
-    # Create a PubMedFileLibrary instance
-    library = PubMedFileLibrary(paper_client, max_papers=1)
-
-    # Mock the _find_pmids_for_gene and _build_papers methods
-    mocker.patch.object(library, "_find_pmids_for_gene", return_value=[])
-    mocker.patch.object(library, "_build_papers", return_value=set())
-
-    # Create a mock IPaperQuery object with a valid format
-    mock_query = MagicMock()
-    mock_query.terms.return_value = ["gene:variant"]
-
-    # Call the search method with the mock query
-    result = library.search(mock_query)
-
-    # Check that the result is an empty set
-    assert result == set(), "search method did not return an empty set for a query with no matching papers"
-
-
-# Test the init method of the PubMedFileLibrary class
-def test_init(paper_client):
-    max_papers = 5
-    library = PubMedFileLibrary(paper_client, max_papers)
-    assert library._paper_client == paper_client
-    assert library._max_papers == max_papers
+def test_truthset_single_paper():
+    library = TruthsetFileLibrary("data/truth_set_small.tsv")
+    results = library.search(Query("COQ2:mutation"))
+    assert len(results) == 7
