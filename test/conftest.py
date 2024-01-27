@@ -1,6 +1,7 @@
 import json
 import os
 import xml.etree.ElementTree as Et
+from typing import Optional, Sequence
 
 import pytest
 
@@ -34,3 +35,56 @@ def xml_load(test_resources_path, xml_parse):
             return xml_parse(xml_file.read())
 
     return _loader
+
+
+@pytest.fixture
+def arg_loader(json_load, xml_load):
+    def _loader(arg):
+        if isinstance(arg, str) and arg.endswith(".xml"):
+            return xml_load(arg)
+        if isinstance(arg, str) and arg.endswith(".json"):
+            return json_load(arg)
+        return arg
+
+    return _loader
+
+
+@pytest.fixture
+def mock_client(arg_loader):
+    def client_creator(interfaces: Sequence[type]):
+        class MockClient:
+            def __init__(self, *args) -> None:
+                self._responses = iter(arg_loader(response) for response in args)
+                self._calls = []
+
+                # Get all the method names from the interfaces.
+                methods = [
+                    name
+                    for interface in interfaces
+                    for name, fn in vars(interface).items()
+                    if callable(fn) and not name.startswith("_")
+                ]
+
+                # For each method name, create a method that returns the next response.
+                for method_name in methods:
+
+                    def create_method(name):
+                        def method(*args, **kwargs):
+                            arg_list = list(map(str, args)) + ["=".join(map(str, item)) for item in kwargs.items()]
+                            call_string = f"{name}(\n\t{',\n\t'.join(arg_list)}\n)"
+                            self._calls.append((name, args, kwargs, call_string))
+                            return next(self._responses)
+
+                        return method
+
+                    setattr(self, method_name, create_method(method_name))
+
+            def last_call(self):
+                return self._calls[-1]
+
+            def call_count(self, method_name: Optional[str] = None):
+                return len([call for call in self._calls if method_name is None or call[0] == method_name])
+
+        return MockClient
+
+    return client_creator
