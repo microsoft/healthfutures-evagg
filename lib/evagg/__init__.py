@@ -6,7 +6,7 @@ from ._content.truth_set import TruthsetContentExtractor
 from .app import SynchronousLocalApp
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import ConsoleOutputWriter, FileOutputWriter, TableOutputWriter
-from .library import PubMedFileLibrary, SimpleFileLibrary, TruthsetFileLibrary
+from .library import RemoteFileLibrary, SimpleFileLibrary, TruthsetFileLibrary
 
 __all__ = [
     # Interfaces.
@@ -23,7 +23,7 @@ __all__ = [
     # Library.
     "SimpleFileLibrary",
     "TruthsetFileLibrary",
-    "PubMedFileLibrary",
+    "RemoteFileLibrary",
     # Content.
     "PromptBasedContentExtractor",
     "SimpleContentExtractor",
