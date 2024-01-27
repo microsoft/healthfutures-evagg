@@ -111,11 +111,11 @@ class TruthsetFileLibrary(IGetPapers):
         return {p for p in all_papers if query_genes & {v.gene for v in p.evidence.keys()}}
 
 
-class PubMedFileLibrary(IGetPapers):
+class RemoteFileLibrary(IGetPapers):
     """A class for retrieving papers from PubMed."""
 
     def __init__(self, paper_client: IPaperLookupClient, max_papers: int = 5) -> None:
-        """Initialize a new instance of the PubMedFileLibrary class.
+        """Initialize a new instance of the RemoteFileLibrary class.
 
         Args:
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
@@ -136,8 +136,7 @@ class PubMedFileLibrary(IGetPapers):
         if len(query.terms()) > 1:
             raise NotImplementedError("Multiple term extraction not yet implemented.")
 
-        term = str(list(query.terms())[0]).split(":")[0]  # TODO: modify to ensure we can extract multiple genes
-
+        term = next(iter(query.terms())).gene
         paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
         return papers
