@@ -1,13 +1,11 @@
-from typing import List, Sequence, Set, Union
+from typing import Sequence, Set
 
 from .base import Variant
 from .interfaces import IPaperQuery, IPaperQueryIterator
 
 
 class Query(IPaperQuery):
-    def __init__(self, variants: Union[str, List[str]]) -> None:
-        if isinstance(variants, str):
-            variants = [variants]
+    def __init__(self, *variants: str) -> None:
         self._variants = {Variant(g, m) for variant in variants for g, m in [variant.split(":")]}
 
     def terms(self) -> Set[Variant]:

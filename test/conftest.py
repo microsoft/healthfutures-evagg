@@ -1,7 +1,7 @@
 import json
 import os
 import xml.etree.ElementTree as Et
-from typing import Optional, Sequence
+from typing import Optional
 
 import pytest
 
@@ -51,7 +51,7 @@ def arg_loader(json_load, xml_load):
 
 @pytest.fixture
 def mock_client(arg_loader):
-    def client_creator(interfaces: Sequence[type]):
+    def client_creator(*interfaces: type):
         class MockClient:
             def __init__(self, *args) -> None:
                 self._responses = iter(arg_loader(response) for response in args)
