@@ -6,7 +6,7 @@ from lib.evagg.svc import IWebContentClient
 
 @pytest.fixture
 def mock_web_client(mock_client):
-    return mock_client([IWebContentClient])
+    return mock_client(IWebContentClient)
 
 
 def test_single_gene_direct(mock_web_client):
