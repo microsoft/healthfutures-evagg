@@ -39,8 +39,7 @@ extractor:
       di_class: lib.evagg.llm.openai.OpenAIDotEnvConfig
   mention_finder:
     di_class: lib.evagg.lit.VariantMentionFinder
-    entity_annotator:
-      di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
+    entity_annotator: "{{ncbi_client}}"
     gene_lookup_client: "{{ncbi_client}}"
   variant_lookup_client: "{{ncbi_client}}"
 writer:
