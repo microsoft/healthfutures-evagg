@@ -40,7 +40,7 @@ def process_group(group_df: pd.DataFrame) -> pd.DataFrame:
 
     gene = group_df["query_gene"].iloc[0]
 
-    papers = truthset_library.search(Query(variant=f"{gene}:*"))
+    papers = truthset_library.search(Query(f"{gene}:*"))
 
     found = pd.DataFrame.from_records([paper_to_dict(paper) for paper in papers])
     found["query_gene"] = gene
