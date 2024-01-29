@@ -12,7 +12,7 @@ from lib.evagg.types import Paper, Query
 
 @pytest.fixture
 def mock_paper_client(mock_client):
-    return mock_client([IPaperLookupClient])
+    return mock_client(IPaperLookupClient)
 
 
 def test_remote_init(mock_paper_client):
@@ -34,7 +34,7 @@ def test_remote_no_paper(mock_paper_client):
 def test_remote_multi_query_fail(mock_paper_client):
     paper_client = mock_paper_client()
     with pytest.raises(NotImplementedError):
-        RemoteFileLibrary(paper_client).search(Query(["gene1:mutation1", "gene2:mutation2"]))
+        RemoteFileLibrary(paper_client).search(Query("gene1:mutation1", "gene2:mutation2"))
     assert paper_client.call_count() == 0
 
 
