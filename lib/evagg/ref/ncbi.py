@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from pydantic import root_validator
 
 from lib.config import PydanticYamlModel
+from lib.evagg.lit import IAnnotateEntities
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
@@ -35,9 +36,10 @@ class NcbiApiSettings(PydanticYamlModel):
         return values
 
 
-class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClient):
-    SYMBOL_LOOKUP_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
-    PMCOA_LOOKUP_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClient, IAnnotateEntities):
+    SYMBOL_GET_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
+    PMCOA_GET_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+    PUBTATOR_GET_URL = "https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/bioc{fmt}?pmcids={id}"
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
     EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
@@ -65,7 +67,7 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         if not pmcid:
             return False
 
-        root = self._web_client.get(self.PMCOA_LOOKUP_URL.format(pmcid=pmcid), content_type="xml")
+        root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
         # If the response contains a record with the given pmcid, then it is open access.
         if root.find(f"records/record[@id='{pmcid}']") is not None:
             logger.debug(f"PMC OA record found for {pmcid}")
@@ -109,7 +111,7 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         if isinstance(symbols, str):
             symbols = [symbols]
 
-        url = self.SYMBOL_LOOKUP_URL.format(symbols=",".join(symbols))
+        url = self.SYMBOL_GET_URL.format(symbols=",".join(symbols))
         root = self._web_client.get(url, content_type="json")
         return _extract_gene_symbols(root.get("reports", []), symbols, allow_synonyms)
 
@@ -125,6 +127,16 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         uids = {rsid[2:] for rsid in rsids}
         root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
         return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids}
+
+    # IAnnotateEntities
+    def annotate(self, paper: Paper) -> Dict[str, Any]:
+        """Annotate the paper with entities from PubTator."""
+        if not paper.props.get("pmcid") or not paper.props.get("is_pmc_oa"):
+            logger.warning(f"Cannot annotate, paper '{paper}' is not in PMC-OA.")
+            return {}
+
+        url = self.PUBTATOR_GET_URL.format(fmt="json", id=paper.props["pmcid"])
+        return self._web_client.get(url, content_type="json")
 
 
 def _extract_hgvs_from_xml(root: Any, uid: str) -> Dict[str, str]:
