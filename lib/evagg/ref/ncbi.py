@@ -37,6 +37,10 @@ class NcbiApiSettings(PydanticYamlModel):
 
 
 class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClient, IAnnotateEntities):
+    """A client for querying the various services in the NCBI API."""
+
+    # According to https://support.nlm.nih.gov/knowledgebase/article/KA-05316/en-us the max
+    # RPS for NCBI API endpoints is 3 without an API key, and 10 with an API key.
     SYMBOL_GET_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
     PMCOA_GET_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
     PUBTATOR_GET_URL = "https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/bioc{fmt}?pmcids={id}"
