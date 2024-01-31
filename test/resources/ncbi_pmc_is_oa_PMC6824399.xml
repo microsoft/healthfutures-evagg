@@ -1,0 +1,5 @@
+<OA>
+    <responseDate>2024-01-25 18:33:40</responseDate>
+    <request>https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC6824399</request>
+    <error code="idIsNotOpenAccess">identifier \'PMC6824399\' is not Open Access</error>
+</OA>

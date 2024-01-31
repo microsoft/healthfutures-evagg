@@ -1,0 +1,11 @@
+<OA>
+    <responseDate>2024-01-25 17:40:31</responseDate>
+    <request id="PMC3564958">https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=3564958</request>
+    <records returned-count="1" total-count="1">
+        <record id="PMC6824399" citation="Nature. 2012 Jun 13; 486(7402):207-214" license="none"
+            retracted="no">
+            <link format="tgz" updated="2023-11-05 06:25:17"
+                href="ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_package/e1/18/PMC3564958.tar.gz" />
+        </record>
+    </records>
+</OA>

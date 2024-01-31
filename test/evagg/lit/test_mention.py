@@ -1,7 +1,7 @@
 from typing import Any, Dict, Sequence, Tuple
 
-from lib.evagg.lit import IAnnotateEntities, VariantMentionFinder
-from lib.evagg.ref import IGeneLookupClient
+from lib.evagg.content import VariantMentionFinder
+from lib.evagg.ref import IAnnotateEntities, IGeneLookupClient
 from lib.evagg.types import Paper, Query, QueryIterator
 
 GENE_ID_PAIRS = {

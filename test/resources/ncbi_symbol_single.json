@@ -1,0 +1,12 @@
+{
+    "reports": [
+        {
+            "gene": {
+                "gene_id": "374393",
+                "symbol": "FAM111B"
+            },
+            "query": ["FAM111B"]
+        }
+    ],
+    "total_count": 1
+}
