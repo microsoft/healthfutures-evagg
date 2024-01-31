@@ -2,7 +2,7 @@ import logging
 import urllib.parse as urlparse
 from typing import Any, Dict, List, Optional, Sequence
 
-from pydantic import root_validator
+from pydantic import Extra, root_validator
 
 from lib.config import PydanticYamlModel
 from lib.evagg.lit import IAnnotateEntities
@@ -15,10 +15,9 @@ from .interfaces import IGeneLookupClient, IVariantLookupClient
 logger = logging.getLogger(__name__)
 
 
-class NcbiApiSettings(PydanticYamlModel):
+class NcbiApiSettings(PydanticYamlModel, extra=Extra.forbid):
     api_key: Optional[str] = None
     email: str = "biomedcomp@microsoft.com"
-    max_tries: str = "10"
 
     def get_key_string(self) -> str:
         key_string = ""
