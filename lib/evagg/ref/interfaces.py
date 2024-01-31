@@ -5,11 +5,13 @@ from lib.evagg.types import Paper
 
 class IVariantLookupClient(Protocol):
     def hgvs_from_rsid(self, rsid: Sequence[str]) -> Dict[str, Dict[str, str]]:
+        """Get HGVS variants for the given rsids."""
         ...
 
 
 class IGeneLookupClient(Protocol):
     def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
+        """Get gene ids for the given gene symbols."""
         ...
 
 
@@ -25,4 +27,5 @@ class IPaperLookupClient(Protocol):
 
 class IAnnotateEntities(Protocol):
     def annotate(self, paper: Paper) -> Dict[str, Any]:
+        """Annotate entities in the paper."""
         ...
