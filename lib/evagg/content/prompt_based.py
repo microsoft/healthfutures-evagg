@@ -3,12 +3,12 @@ import logging
 import os
 from typing import Any, Dict, List, Sequence
 
-from lib.evagg.lit import IFindVariantMentions
 from lib.evagg.llm.openai import IOpenAIClient
 from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import IPaperQuery, Paper
 
 from ..interfaces import IExtractFields
+from .interfaces import IFindVariantMentions
 
 logger = logging.getLogger(__name__)
 
