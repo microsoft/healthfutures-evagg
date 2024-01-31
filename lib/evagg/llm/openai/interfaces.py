@@ -26,19 +26,23 @@ class OpenAIClientEmbeddings:
 
 class IOpenAIClient(Protocol):
     def run(self, prompt: str, settings: Optional[Dict[str, Any]] = None) -> OpenAIClientResponse:
+        """Run the model with the given prompt."""
         ...
 
     def run_file(
         self, prompt_file: str, params: Optional[Dict[str, str]] = None, settings: Optional[Dict[str, Any]] = None
     ) -> OpenAIClientResponse:
+        """Run the model with the given prompt file."""
         ...
 
     def chat(self, messages: List[Dict[str, str]], settings: Optional[Dict[str, Any]] = None) -> OpenAIClientResponse:
+        """Chat with the model."""
         ...
 
     def chat_oneshot(
         self, user_prompt: str, system_prompt: Optional[str] = None, settings: Optional[Dict[str, Any]] = None
     ) -> OpenAIClientResponse:
+        """Chat with the model, using a single prompt."""
         ...
 
     def chat_oneshot_file(
@@ -48,7 +52,9 @@ class IOpenAIClient(Protocol):
         params: Optional[Dict[str, str]] = None,
         settings: Optional[Dict[str, Any]] = None,
     ) -> OpenAIClientResponse:
+        """Chat with the model, using a single prompt file."""
         ...
 
     def embeddings(self, inputs: List[str], settings: Optional[Dict[str, Any]] = None) -> OpenAIClientEmbeddings:
+        """Get embeddings for the given inputs."""
         ...
