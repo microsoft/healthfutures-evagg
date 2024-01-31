@@ -4,9 +4,10 @@ from typing import Any, Dict, List, Sequence, Set, Tuple
 
 import Bio.SeqUtils
 
-from lib.evagg.lit import IAnnotateEntities, IFindVariantMentions
-from lib.evagg.ref import IGeneLookupClient
+from lib.evagg.ref import IAnnotateEntities, IGeneLookupClient
 from lib.evagg.types import IPaperQuery, Paper
+
+from .interfaces import IFindVariantMentions
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ class VariantMentionFinder(IFindVariantMentions):
         return mentions
 
 
-class TruthsetVariantMentionFinder(VariantMentionFinder):
+class TruthsetVariantMentionFinder(IFindVariantMentions):
     def __init__(self, entity_annotator: IAnnotateEntities, gene_lookup_client: IGeneLookupClient) -> None:
         self._entity_annotator = entity_annotator
         self._gene_lookup_client = gene_lookup_client

@@ -1,17 +1,17 @@
 """Package for interacting with reference resources."""
 
-from .interfaces import IGeneLookupClient, IVariantLookupClient
+from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient, IVariantLookupClient
 from .litvar import LitVarReference
-from .ncbi import NcbiGeneClient, NcbiLookupClient, NcbiSnpClient
+from .ncbi import NcbiLookupClient
 
 __all__ = [
     # Litvar.
     "LitVarReference",
     # Interfaces.
+    "IAnnotateEntities",
     "IGeneLookupClient",
+    "IPaperLookupClient",
     "IVariantLookupClient",
     # NCBI.
-    "NcbiGeneClient",
     "NcbiLookupClient",
-    "NcbiSnpClient",
 ]
