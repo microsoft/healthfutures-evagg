@@ -1,9 +1,16 @@
 # Services
 log:
-  di_service: lib.evagg.logging.init_logger
+  di_service: lib.evagg.svc.init_logger
 ncbi_settings:
-  di_service: lib.evagg.settings.get_dotenv_settings
+  di_service: lib.evagg.svc.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
+ncbi_web:
+  di_service: lib.evagg.svc.RequestsWebContentClient
+  default_content_type: text
+ncbi_client: 
+  di_service: lib.evagg.ref.NcbiLookupClient
+  web_client: "{{ncbi_web}}"
+  settings: "{{ncbi_settings}}"
 
 # Application
 di_class: lib.evagg.SynchronousLocalApp
@@ -12,10 +19,8 @@ queries:
   variants:
     - "CPA6:R46C" # note R46C is a variant I made up.
 library:
-  di_class: lib.evagg.PubMedFileLibrary
-  entrez_client: 
-    di_class: lib.evagg.ref.NcbiLookupClient
-    settings: "{{ncbi_settings}}"
+  di_class: lib.evagg.RemoteFileLibrary
+  paper_client: "{{ncbi_client}}"
   max_papers: 1
 extractor:
   di_class: lib.evagg.PromptBasedContentExtractor
@@ -32,14 +37,9 @@ extractor:
     config:
       di_class: lib.evagg.llm.openai.OpenAIDotEnvConfig
   mention_finder:
-    di_class: lib.evagg.lit.VariantMentionFinder
-    entity_annotator:
-      di_class: lib.evagg.lit.pubmed.PubtatorEntityAnnotator
-    gene_lookup_client: 
-      di_class: lib.evagg.ref.NcbiLookupClient
-      settings: "{{ncbi_settings}}"
-  variant_lookup_client: 
-    di_class: lib.evagg.ref.NcbiLookupClient
-    settings: "{{ncbi_settings}}"
+    di_class: lib.evagg.content.VariantMentionFinder
+    entity_annotator: "{{ncbi_client}}"
+    gene_lookup_client: "{{ncbi_client}}"
+  variant_lookup_client: "{{ncbi_client}}"
 writer:
   di_class: lib.evagg.TableOutputWriter
