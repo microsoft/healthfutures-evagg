@@ -66,14 +66,18 @@ def get_nearest_transcript(tx_matches: Sequence[Any], loc: int, max_dist: int) -
             closest_distance = distance
     return closest_str
 
-def mane_select_for_protein(gene_symbol: str):
+
+def mane_select_for_protein(gene_symbol: str) -> str:
     raise NotImplementedError()
+    return ""
+
 
 variant_tuples = []
 
 for idx, paper in enumerate(papers):
     anno = PubtatorEntityAnnotator().annotate(paper)
-
+    if not anno:
+        continue
     print(f"Analyzing paper {idx} - {paper}")
 
     # Preprocess the annotations to get a gene symbol lookup
@@ -89,7 +93,7 @@ for idx, paper in enumerate(papers):
     for p in anno["passages"]:
         tx_matches = [r for r in re.finditer(finder, p["text"])]
         for a in p["annotations"]:
-            if a["infons"]["type"] == "Mutation":
+            if a["infons"]["type"] == "Variant":
                 v = {"mutation": a["text"]}
 
                 gene_id_int = a["infons"].get("gene_id", None)
@@ -111,14 +115,13 @@ for idx, paper in enumerate(papers):
 
                 variant_tuples.append(v)
 
-    break
 # %% Let's see how well LitVar's autocomplete does.
-                
+
 from lib.evagg.ref.litvar import LitVarReference
 
 result = LitVarReference().variant_autocomplete("c.737C>T", limit=5)
 
-[r['gene'] for r in result]
+[r["gene"] for r in result]
 
 # Anecdotally, litvar isn't great at this. I've cherry picked an example here, but it's not a *rare* case
 # where litvar doesn't seem to pick up the correct gene for the variant. Interesting that pubtator seems to do better
@@ -137,12 +140,11 @@ v.validate()
 # parse based on mutation and gene
 
 
-
-
 # %%
 
-import xml.etree.ElementTree as ET
 import time
+import xml.etree.ElementTree as ET
+
 
 def check_mane_select(symbol: str) -> bool:
     url = f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&retmode=json&term={symbol}[Gene] AND refseq_select[filter] AND "Homo sapiens"[Organism]'
@@ -151,18 +153,18 @@ def check_mane_select(symbol: str) -> bool:
 
     tx_entries = response.json()
 
-    if tx_entries['esearchresult']['count'] == '0':
+    if tx_entries["esearchresult"]["count"] == "0":
         print(f"Warning ({symbol}): MANE select transcript entries")
         return False
-    elif tx_entries['esearchresult']['count'] != '1':
+    elif tx_entries["esearchresult"]["count"] != "1":
         print(f"Warning ({symbol}): multiple MANE select entries ({tx_entries['esearchresult']['idlist']})")
         return False
-    
-    tx_id = tx_entries['esearchresult']['idlist'][0]
+
+    tx_id = tx_entries["esearchresult"]["idlist"][0]
 
     # Get the whole nucleotide entry for this object ID
-    url2 = f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&rettype=native&retmode=xml&id={tx_id}'
-    
+    url2 = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&rettype=native&retmode=xml&id={tx_id}"
+
     response2 = requests.get(url2)
     response2.raise_for_status()
 
@@ -172,7 +174,8 @@ def check_mane_select(symbol: str) -> bool:
 
     return tx_result.find("<GB-block_keywords_E>MANE Select</GB-block_keywords_E>") >= 0
 
-genes = set(d['gene'] for d in variant_tuples if d['gene'])
+
+genes = set(d["gene"] for d in variant_tuples if d["gene"])
 
 for gene in list(genes):
     if check_mane_select(gene):
@@ -188,7 +191,6 @@ for gene in list(genes):
 # EVRK-1 is picked up as a synonym for CA1, which is actually mentioned in the second paper as a DOMAIN of interest in
 # PRKCG. This is a misassignment of associated gene by pubtator. Potentially we need to consider a better method for
 # gene association.
-
 
 
 # symbol="SRSF1"
