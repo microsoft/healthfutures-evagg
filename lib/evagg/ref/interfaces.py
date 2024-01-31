@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Protocol, Sequence
+from typing import Any, Dict, Optional, Protocol, Sequence
 
 from lib.evagg.types import Paper
 
@@ -20,4 +20,9 @@ class IPaperLookupClient(Protocol):
 
     def fetch(self, paper_id: str) -> Optional[Paper]:
         """Fetch the paper with the given id."""
+        ...
+
+
+class IAnnotateEntities(Protocol):
+    def annotate(self, paper: Paper) -> Dict[str, Any]:
         ...
