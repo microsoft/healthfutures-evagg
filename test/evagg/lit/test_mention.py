@@ -23,7 +23,7 @@ class MockAnnotator(IAnnotateEntities):
                     "annotations": [
                         {
                             "infons": {
-                                "type": "Mutation",
+                                "type": "Variant",
                                 "identifier": variant,
                                 "gene_id": gene_id,
                             }
