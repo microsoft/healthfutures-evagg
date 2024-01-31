@@ -2,7 +2,8 @@ name: evagg
 channels:
   - conda-forge
   - defaults
-  # - bioconda
+  - bioconda
+
 dependencies:
   - python>=3.10
   - poetry>=1.2
@@ -30,7 +31,8 @@ dependencies:
 
   # Bioinformatics.
   - biopython
-
+  - hgvs
+  
   # Dependencies used for code development (linting, testing, etc.)
   - black
   - isort
