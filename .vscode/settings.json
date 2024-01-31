@@ -33,5 +33,7 @@
     },
     "files.watcherExclude": {
         "**/target": true
-    }
+    },
+    "mypy-type-checker.ignorePatterns": ["test/*"]
+
 }

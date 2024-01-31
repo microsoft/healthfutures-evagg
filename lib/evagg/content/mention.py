@@ -29,7 +29,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
-                if annotation["infons"]["type"] == "Mutation":
+                if annotation["infons"]["type"] == "Variant":
                     if "gene_id" in annotation["infons"] and annotation["infons"]["gene_id"] == query_gene_id:
                         if annotation["infons"]["identifier"] is not None:
                             variants_in_query_gene.add(annotation["infons"]["identifier"])
@@ -45,7 +45,7 @@ class VariantMentionFinder(IFindVariantMentions):
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
                 if (
-                    annotation["infons"]["type"] == "Mutation"
+                    annotation["infons"]["type"] == "Variant"
                     and "identifier" in annotation["infons"]
                     and annotation["infons"]["identifier"] == variant_id
                 ):
@@ -138,7 +138,7 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
                 save = False
-                if not annotation["infons"]["type"] == "Mutation":
+                if not annotation["infons"]["type"] == "Variant":
                     continue
                 if annotation["infons"]["subtype"] == "DNAMutation":
                     if "hgvs" in annotation["infons"] and annotation["infons"]["hgvs"] == evidence["hgvs_c"]:
