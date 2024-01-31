@@ -127,7 +127,7 @@ def test_annotation(mock_web_client):
     assert annotations.get("foo") == "bar"
     assert web_client.call_count() == 1
     assert web_client.last_call("get") == (
-        "https://www.ncbi.nlm.nih.gov/research/pubtator-api/publications/export/biocjson?pmcids=PMC1234567",
+        NcbiLookupClient.PUBTATOR_GET_URL.format(fmt="json", id="PMC1234567"),
         {"content_type": "json"},
     )
 
