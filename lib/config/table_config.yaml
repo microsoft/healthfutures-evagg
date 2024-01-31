@@ -27,5 +27,5 @@ extractor:
 writer:
   di_class: lib.evagg.TableOutputWriter
 log:
-  di_service: lib.evagg.logging.init_logger
+  di_service: lib.evagg.svc.init_logger
   level: INFO

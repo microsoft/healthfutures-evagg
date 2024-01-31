@@ -30,7 +30,7 @@ class SynchronousLocalApp(IEvAggApp):
             logger.info(f"Found {len(papers)} papers for {query.terms()}")
 
             for index, paper in enumerate(papers):
-                logger.debug(f"{index}: {paper.id} - {paper.props['pmcid']}")
+                logger.debug(f"Paper #{index + 1}: {paper}")
 
             # For all papers that match, extract the fields we want.
             fields = {paper.id: self._extractor.extract(paper, query) for paper in papers}
