@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Sequence, Set, Tuple
 
 import Bio.SeqUtils
 
-from lib.evagg.lit import IAnnotateEntities, IFindVariantMentions
-from lib.evagg.ref import IGeneLookupClient
+from lib.evagg.lit import IFindVariantMentions
+from lib.evagg.ref import IAnnotateEntities, IGeneLookupClient
 from lib.evagg.types import IPaperQuery, Paper
 
 logger = logging.getLogger(__name__)
