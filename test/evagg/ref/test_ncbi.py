@@ -43,21 +43,18 @@ def test_single_gene_miss(mock_web_client):
 def test_multi_gene(mock_web_client):
     web_client = mock_web_client(*(["ncbi_symbol_multi.json"] * 3))
 
-    result = NcbiLookupClient(web_client).gene_id_for_symbol(["FAM111B", "FEB11"])
+    result = NcbiLookupClient(web_client).gene_id_for_symbol("FAM111B", "FEB11")
     assert result == {"FAM111B": 374393}
 
-    result = NcbiLookupClient(web_client).gene_id_for_symbol(["FAM111B", "FEB11"], allow_synonyms=True)
+    result = NcbiLookupClient(web_client).gene_id_for_symbol("FAM111B", "FEB11", allow_synonyms=True)
     assert result == {"FAM111B": 374393, "FEB11": 57094}
 
-    result = NcbiLookupClient(web_client).gene_id_for_symbol(["FAM111B", "FEB11", "not a gene"], allow_synonyms=True)
+    result = NcbiLookupClient(web_client).gene_id_for_symbol("FAM111B", "FEB11", "not a gene", allow_synonyms=True)
     assert result == {"FAM111B": 374393, "FEB11": 57094}
 
 
 def test_variant(mock_web_client):
     web_client = mock_web_client(*(["efetch_snp_single_variant.xml"] * 3))
-
-    result = NcbiLookupClient(web_client).hgvs_from_rsid(["rs146010120"])
-    assert result == {"rs146010120": {"hgvs_c": "NM_001276.4:c.104G>A", "hgvs_p": "NP_001267.2:p.Arg35Gln"}}
 
     result = NcbiLookupClient(web_client).hgvs_from_rsid("rs146010120")
     assert result == {"rs146010120": {"hgvs_c": "NM_001276.4:c.104G>A", "hgvs_p": "NP_001267.2:p.Arg35Gln"}}
@@ -66,7 +63,7 @@ def test_variant(mock_web_client):
 def test_multi_variant(mock_web_client):
     web_client = mock_web_client("efetch_snp_multi_variant.xml")
 
-    result = NcbiLookupClient(web_client).hgvs_from_rsid(["rs146010120", "rs113488022"])
+    result = NcbiLookupClient(web_client).hgvs_from_rsid("rs146010120", "rs113488022")
     assert result == {
         "rs113488022": {"hgvs_p": "NP_004324.2:p.Val600Gly", "hgvs_c": "NM_004333.6:c.1799T>G"},
         "rs146010120": {"hgvs_p": "NP_001267.2:p.Arg35Gln", "hgvs_c": "NM_001276.4:c.104G>A"},
@@ -84,11 +81,11 @@ def test_non_rsid(mock_web_client):
     web_client = mock_web_client("")
 
     with pytest.raises(ValueError):
-        NcbiLookupClient(web_client).hgvs_from_rsid(["not a rsid"])
+        NcbiLookupClient(web_client).hgvs_from_rsid("not a rsid")
     with pytest.raises(ValueError):
-        NcbiLookupClient(web_client).hgvs_from_rsid(["rs1a2b"])
+        NcbiLookupClient(web_client).hgvs_from_rsid("rs1a2b")
     with pytest.raises(ValueError):
-        NcbiLookupClient(web_client).hgvs_from_rsid(["12345"])
+        NcbiLookupClient(web_client).hgvs_from_rsid("12345")
 
 
 def test_pubmed_search(mock_web_client):

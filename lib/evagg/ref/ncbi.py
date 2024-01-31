@@ -46,9 +46,6 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
     EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
-    # It isn't particularly clear from the documentation, but it looks like
-    # we're getting 400s from Entrez endpoints when max_tries is set too low.
-    # see https://biopython.org/docs/1.75/api/Bio.Entrez.html
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
@@ -104,26 +101,20 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         return Paper(id=props["doi"], **props)
 
     # IGeneLookupClient
-    def gene_id_for_symbol(self, symbols: Sequence[str], allow_synonyms: bool = False) -> Dict[str, int]:
+    def gene_id_for_symbol(self, *symbols: str, allow_synonyms: bool = False) -> Dict[str, int]:
         """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
 
         If `allow_synonyms` is True, then this will attempt to return the most relevant gene_id for each symbol. If
         there are multiple matches to a symbol, the direct match (where the query symbol is the official symbol) will
         be returned. If there are no direct matches, then the first synonym match will be returned.
         """
-        if isinstance(symbols, str):
-            symbols = [symbols]
-
         url = self.SYMBOL_GET_URL.format(symbols=",".join(symbols))
         root = self._web_client.get(url, content_type="json")
         return _extract_gene_symbols(root.get("reports", []), symbols, allow_synonyms)
 
     # IVariantLookupClient
-    def hgvs_from_rsid(self, rsids: Sequence[str]) -> Dict[str, Dict[str, str]]:
-        """Provided rsids should be a list of strings, each of which is a valid rsid, prefixed with `rs`."""
-        if isinstance(rsids, str):
-            rsids = [rsids]
-
+    def hgvs_from_rsid(self, *rsids: str) -> Dict[str, Dict[str, str]]:
+        # Provided rsids should be numeric strings prefixed with `rs`.
         if not rsids or not all(rsid.startswith("rs") and rsid[2:].isnumeric() for rsid in rsids):
             raise ValueError("Invalid rsids list - must provide 'rs' followed by a string of numeric characters.")
 
