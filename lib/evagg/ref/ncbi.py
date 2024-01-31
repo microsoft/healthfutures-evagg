@@ -5,8 +5,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from pydantic import root_validator
 
 from lib.config import PydanticYamlModel
-from lib.evagg.lit import IAnnotateEntities
-from lib.evagg.ref import IPaperLookupClient
+from lib.evagg.ref import IAnnotateEntities, IPaperLookupClient
 from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
 
