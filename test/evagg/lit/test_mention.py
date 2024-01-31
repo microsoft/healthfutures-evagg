@@ -1,6 +1,6 @@
 from typing import Any, Dict, Sequence, Tuple
 
-from lib.evagg.lit import VariantMentionFinder
+from lib.evagg.content import VariantMentionFinder
 from lib.evagg.ref import IAnnotateEntities, IGeneLookupClient
 from lib.evagg.types import Paper, Query, QueryIterator
 
