@@ -1,6 +1,6 @@
 import logging
 import xml.etree.ElementTree as Et
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 from pydantic import Extra, validator
@@ -49,7 +49,9 @@ class RequestsWebContentClient(IWebContentClient):
             self._session.mount("http://", HTTPAdapter(max_retries=retries))
         return self._session
 
-    def _get_content(self, response: requests.Response, content_type: Optional[str]) -> Any:
+    def _get_content(
+        self, response: requests.Response, content_type: Optional[str]
+    ) -> Optional[Union[str, bytes, Dict[str, Any], Et.Element]]:
         """Get the content from the response based on the provided content type."""
         content_type = content_type or self._settings.content_type
         if content_type == "text":
