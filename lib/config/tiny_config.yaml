@@ -6,7 +6,6 @@ ncbi_settings:
   filter_prefix: "NCBI_EUTILS_"
 ncbi_web:
   di_service: lib.evagg.svc.RequestsWebContentClient
-  default_content_type: text
 ncbi_client: 
   di_service: lib.evagg.ref.NcbiLookupClient
   web_client: "{{ncbi_web}}"
