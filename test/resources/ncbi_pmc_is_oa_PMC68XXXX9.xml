@@ -1,0 +1,5 @@
+<OA>
+    <responseDate>2024-01-25 18:35:00</responseDate>
+    <request>https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC68XXXX9</request>
+    <error code="idDoesNotExist">identifier \'PMC68XXXX9\' does not exist</error>
+</OA>

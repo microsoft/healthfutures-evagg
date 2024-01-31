@@ -1,0 +1,19 @@
+{
+    "reports": [
+        {
+            "gene": {
+                "gene_id": "374393",
+                "symbol": "FAM111B"
+            },
+            "query": ["FAM111B"]
+        },
+        {
+            "gene": {
+                "gene_id": "57094",
+                "symbol": "CPA6"
+            },
+            "query": ["FEB11"]
+        }
+    ],
+    "total_count": 2
+}
