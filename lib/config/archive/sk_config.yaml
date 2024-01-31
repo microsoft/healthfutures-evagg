@@ -35,7 +35,7 @@ extractor:
     config:
       di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
   mention_finder:
-    di_class: lib.evagg.lit.VariantMentionFinder
+    di_class: lib.evagg.content.VariantMentionFinder
     entity_annotator: "{{ncbi_client}}"
     gene_lookup_client: "{{ncbi_client}}"
   variant_lookup_client: "{{ncbi_client}}"
