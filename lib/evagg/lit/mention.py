@@ -57,7 +57,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
     def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
         # Get the gene_id(s) for the query gene(s).
-        query_gene_ids = self._gene_lookup_client.gene_id_for_symbol([v.gene for v in query.terms()])
+        query_gene_ids = self._gene_lookup_client.gene_id_for_symbol(*[v.gene for v in query.terms()])
 
         # Annotate entities in the paper.
         annotations = self._entity_annotator.annotate(paper)
@@ -170,7 +170,7 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
         truth_rows = [d for d in paper.evidence.values() if d["gene"] in query_genes]
 
         # Get the gene ids.
-        query_gene_ids = self._gene_lookup_client.gene_id_for_symbol([v["gene"] for v in truth_rows])
+        query_gene_ids = self._gene_lookup_client.gene_id_for_symbol(*[v["gene"] for v in truth_rows])
 
         # Get the annotated paper.
         annotations = self._entity_annotator.annotate(paper)
