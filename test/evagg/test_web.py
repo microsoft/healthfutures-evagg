@@ -9,15 +9,20 @@ from lib.evagg.svc import RequestsWebContentClient
 
 def test_settings():
     web_client = RequestsWebContentClient()
-    web_client.set_session_defaults(max_retries=1, retry_backoff=2, retry_codes=[500, 429], content_type="json")
-    settings = web_client._defaults.dict()
+    web_client.update_settings(max_retries=1, retry_backoff=2, retry_codes=[500, 429], content_type="json")
+    settings = web_client._settings.dict()
     assert settings["max_retries"] == 1
     assert settings["retry_backoff"] == 2
     assert settings["retry_codes"] == [500, 429]
     assert settings["content_type"] == "json"
 
+    web_client.update_settings(max_retries=10)
+    settings = web_client._settings.dict()
+    assert settings["max_retries"] == 10
+    assert settings["retry_backoff"] == 2
+
     with raises(ValueError):
-        web_client.set_session_defaults(invalid=1)
+        web_client.update_settings(invalid=1)
 
 
 def test_content_types():
@@ -30,7 +35,7 @@ def test_content_types():
     ) == {"test": 1}
 
     with raises(ValueError):
-        RequestsWebContentClient(default_content_type="invalid")
+        RequestsWebContentClient(settings={"content_type": "invalid"})
 
 
 @patch("urllib3.connectionpool.HTTPConnectionPool._get_conn")
@@ -41,8 +46,8 @@ def test_retry_succeeded(mock_get_conn):
         MagicMock(status=200, headers={}, iter_content=lambda _: [b""]),
     ]
 
-    web_client = RequestsWebContentClient()
-    web_client.set_session_defaults(max_retries=2, retry_backoff=0, retry_codes=[500, 429])
+    settings = {"max_retries": 2, "retry_backoff": 0, "retry_codes": [500, 429]}
+    web_client = RequestsWebContentClient(settings)
     web_client.get("https://any.url/testing")
 
     assert mock_get_conn.return_value.request.call_args.args[0] == "GET"
@@ -57,7 +62,7 @@ def test_retry_failed(mock_get_conn):
         MagicMock(status=500, headers={}, iter_content=lambda _: [b""]),
     ]
 
-    web_client = RequestsWebContentClient()
-    web_client.set_session_defaults(max_retries=1, retry_backoff=0, retry_codes=[500, 429])
+    settings = {"max_retries": 1, "retry_backoff": 0, "retry_codes": [500, 429]}
+    web_client = RequestsWebContentClient(settings)
     with raises(requests.exceptions.RetryError):
         web_client.get("https://any.url/testing")
