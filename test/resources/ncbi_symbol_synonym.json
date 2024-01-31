@@ -1,0 +1,12 @@
+{
+    "reports": [
+        {
+            "gene": {
+                "gene_id": "57094",
+                "symbol": "CPA6"
+            },
+            "query": ["FEB11"]
+        }
+    ],
+    "total_count": 1
+}

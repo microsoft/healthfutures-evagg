@@ -4,9 +4,10 @@ from typing import Any, Dict, List, Sequence, Set, Tuple
 
 import Bio.SeqUtils
 
-from lib.evagg.lit import IAnnotateEntities, IFindVariantMentions
-from lib.evagg.ref import IGeneLookupClient
+from lib.evagg.ref import IAnnotateEntities, IGeneLookupClient
 from lib.evagg.types import IPaperQuery, Paper
+
+from .interfaces import IFindVariantMentions
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
-                if annotation["infons"]["type"] == "Mutation":
+                if annotation["infons"]["type"] == "Variant":
                     if "gene_id" in annotation["infons"] and annotation["infons"]["gene_id"] == query_gene_id:
                         if annotation["infons"]["identifier"] is not None:
                             variants_in_query_gene.add(annotation["infons"]["identifier"])
@@ -44,7 +45,7 @@ class VariantMentionFinder(IFindVariantMentions):
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
                 if (
-                    annotation["infons"]["type"] == "Mutation"
+                    annotation["infons"]["type"] == "Variant"
                     and "identifier" in annotation["infons"]
                     and annotation["infons"]["identifier"] == variant_id
                 ):
@@ -84,7 +85,7 @@ class VariantMentionFinder(IFindVariantMentions):
         return mentions
 
 
-class TruthsetVariantMentionFinder(VariantMentionFinder):
+class TruthsetVariantMentionFinder(IFindVariantMentions):
     def __init__(self, entity_annotator: IAnnotateEntities, gene_lookup_client: IGeneLookupClient) -> None:
         self._entity_annotator = entity_annotator
         self._gene_lookup_client = gene_lookup_client
@@ -137,7 +138,7 @@ class TruthsetVariantMentionFinder(VariantMentionFinder):
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
                 save = False
-                if not annotation["infons"]["type"] == "Mutation":
+                if not annotation["infons"]["type"] == "Variant":
                     continue
                 if annotation["infons"]["subtype"] == "DNAMutation":
                     if "hgvs" in annotation["infons"] and annotation["infons"]["hgvs"] == evidence["hgvs_c"]:
