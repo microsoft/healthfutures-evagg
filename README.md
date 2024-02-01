@@ -175,7 +175,7 @@ Where `$SA` is the Azure Blob Storage Account where your team stores test files.
 You can optionally override any particular non-dictionary leaf value within a config using the following syntax:
 
 ```bash
-run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv -o log.log_level:DEBUG
+run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv -o log.level:DEBUG
 ```
 
 ## Contributing

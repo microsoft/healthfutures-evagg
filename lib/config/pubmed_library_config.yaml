@@ -10,13 +10,13 @@ di_class: lib.evagg.SynchronousLocalApp
 queries:
   di_class: lib.evagg.types.QueryIterator
   variants:
-    - "CPA6:R46C" # note R46C is a variant I made up.
+    - "PTEN:R46C" # note R46C is a variant I made up.
 library:
   di_class: lib.evagg.PubMedFileLibrary
   entrez_client: 
     di_class: lib.evagg.ref.NcbiLookupClient
     settings: "{{ncbi_settings}}"
-  max_papers: 1
+  max_papers: 2
 extractor:
   di_class: lib.evagg.PromptBasedContentExtractor
   fields:

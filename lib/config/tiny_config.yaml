@@ -3,8 +3,9 @@ queries:
   di_class: lib.evagg.types.QueryIterator
   # When querying based on gene only, this should cover the full "tiny" truth set.
   variants: 
-    - "COQ2:p.T39S"
+    - "COQ2:p.T39S" 
     - "JPH1:p.R213P"
+
 library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_tiny.tsv

@@ -1,0 +1,34 @@
+#Task:
+Given this text from a paper: {{$passage}},
+
+please output (using format below) the reported variant type for this patient: {{$patient}} based on this gene {{$gene}} variant: {{$variant}}. 
+
+Output missense, frameshift, stop-gain, structural, splice region, non-coding, or not specified. Please strictly use the following format for all output:
+
+#Output format:
+{
+  "grounding": "evidence in support of the variant type.",
+  "variant_type": "missense" | "frameshift" | "stop-gain | "structural" | "splice region" | "non-coding" | or "not specified"
+}
+
+#Definitions for potentially ambiguous terms:
+not specified: information about missense, frameshift, stop-gain, structural, splice region, nor non-coding is not found in the text
+
+#Examples:
+Input: PMID: 37071997, variant: c.119G>T; p.Gly40Val, gene: SRSF1
+Output: Reported annotation: 'Missense'
+
+Input: PMID: 34860163, variant: c.865_869delAGACA, gene: CFTR
+Output: Reported annotation: 'Frameshift'
+
+Input: PMID: 34860163, variant: c.4056G>C, gene: CFTR
+Output: Reported annotation: 'Splice region'
+
+Input:PMID: 34022131, variant: c.−66A>T, gene: MEF2C
+Output: Reported annotation: 'non-coding'
+
+Input: PMID: variant: c.6337delA; p.Ile2113*, gene: DMD
+Output: Reported annotation: ‘stop-gain’
+
+Input: PMID: PMID: 31079897, variant: 7:104678742-104730547x1, gene: KMT2E
+Output: Reported annotation: ‘structural’

@@ -1,0 +1,18 @@
+#Task:
+Given this text from a paper: {{$passage}},
+
+please output (using format below) the reported study type for this patient: {{$patient}} based on this gene {{$gene}} variant: {{$variant}}. 
+
+Output case series, cohort analyis, case report, or unknown. Please strictly use the following format for all output:
+
+#Output format:
+{
+  "grounding": "evidence in support of the zygosity.",
+  "study_type": "case series" | "cohort analysis" | "case report" | "unknown"
+}
+
+#Definitions for potentially ambiguous terms:
+case report: one patient report
+case series: multiple patients with variants in a single gene
+cohort analysis: site-wide assessment of rare disease patients
+unknown: information about case series, cohort analyis, or case report is not found in the text

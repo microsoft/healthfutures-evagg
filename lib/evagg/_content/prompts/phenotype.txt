@@ -1,8 +1,11 @@
-Here is some text from a paper describing genetic variants in the gene {{$gene}}.
-What is the described phenotype for patients with the variant: {{$variant}}?
+#Task:
+Given this text from a paper: {{$passage}},
 
-{{$passage}}
+please output (using format below) the reported phenotype for this patient: {{$patient}} based on this gene {{$gene}} variant: {{$variant}}. 
 
+Please strictly use the following format for all output:
+
+#Output format:
 Provide your response in the following format:
 {
   "phenotype": [
@@ -18,3 +21,28 @@ If you cannot determine the phenotype from the text provided please respond:
     "unknown"
   ]
 }
+
+#Definitions for potentially ambiguous terms:
+unknown: information about the patient phenotype is not found in the text
+
+#Examples:
+Input: PMID: 37071997, variant: c.208G>A; p.Ala70Thr, gene: SRSF1
+Output: Reported phenotype: developmental disorder with intellectual disability
+
+Input: PMID: 32578970, variant: c.4381G>T; p.Glu1461Ter, gene: MYH2
+Output: Reported phenotype: myopathy
+
+Input: PMID: 34860163, variant: c.3909C>G, gene: CFTR
+Output: Reported phenotype: cystic fibrosis
+
+Input: PMID: 20074521, variant: c.1249G>A; p.Asp417Asn, gene: TUBB3
+Output: Reported phenotype: Congenital Fibrosis of the Extraocular Muscles subtype 3
+
+Input: PMID: 20829227, variant: c.1249G>A; p.Asp417Asn, gene: TUBB3
+Output: Reported phenotype: Congenital Fibrosis of the Extraocular Muscles subtype 3
+	
+Input: PMID: 14595441, variant: c.2860C>T; p.Arg954Trp, gene: KIF21A
+Output: Reported phenotype: Congenital Fibrosis of the Extraocular Muscles subtype 1
+
+Input: PMID: 24656932, variant: c.1249G>A; p.Asp417Asn, gene: KIF21A
+Output: Reported phenotype: Congenital Fibrosis of the Extraocular Muscles subtype 1
