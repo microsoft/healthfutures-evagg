@@ -1,16 +1,20 @@
-di_class: lib.evagg.SynchronousLocalApp
+log:
+  di_factory: lib.evagg.svc.init_logger
+  level: INFO
+
+di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_class: lib.evagg.types.QueryIterator
+  di_factory: lib.evagg.types.QueryIterator
   variants:
     - "CHI3L1:p.R116C"
     - "TWNK:p.S369F"
     - "COL23A1:p.A112V"
     - "PRKCG:p.A24S"
 library:
-  di_class: lib.evagg.TruthsetFileLibrary
+  di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_small.tsv
 extractor:
-  di_class: lib.evagg.TruthsetContentExtractor
+  di_factory: lib.evagg.TruthsetContentExtractor
   field_map:
     - gene: gene_symbol
     - id: paper_id
@@ -25,7 +29,5 @@ extractor:
     - paper_title: paper_title
     - link: link
 writer:
-  di_class: lib.evagg.TableOutputWriter
-log:
-  di_service: lib.evagg.svc.init_logger
-  level: INFO
+  di_factory: lib.evagg.TableOutputWriter
+
