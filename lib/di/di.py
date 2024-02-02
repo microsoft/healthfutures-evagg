@@ -2,8 +2,7 @@ from importlib import import_module
 from types import ModuleType
 from typing import Any, Dict
 
-CLASS_TAG = "di_class"
-SERVICE_TAG = "di_service"
+FACTORY_TAG = "di_factory"
 
 
 class DiContainer:
@@ -15,37 +14,47 @@ class DiContainer:
             self._modules[module_name] = import_module(module_name)
         return self._modules[module_name]
 
-    def create_instance(self, module_path: str, spec: Dict[str, Any], services: Dict[str, object]) -> Any:
-        # Locate the module and instance initializer.
-        module_name, _, initializer_name = module_path.rpartition(".")
+    def create_instance(self, spec: Dict[str, Any], resources: Dict[str, object]) -> Any:
+        """Create an instance of an object using the provided factory spec."""
+        parameters: Dict[str, object] = {}
+        values: Dict[str, object] = resources
+
+        # Process initializer spec in order - resources, then parameters.
+        for key, value in spec.items():
+            if key in values:
+                raise ValueError(f"Duplicate definition of '{key}' in spec.")
+
+            # When we reach the factory definition, switch from
+            # accumulating resources to accumulating parameters.
+            if key == FACTORY_TAG:
+                values = parameters
+                continue
+
+            # Look for nested factories to replace with instances.
+            if isinstance(value, dict) and FACTORY_TAG in value:
+                values[key] = self.create_instance(value, resources.copy())
+            # Look for parameters that are resources and replace them with the resource instance.
+            elif isinstance(value, str) and value.startswith("{{") and value.endswith("}}"):
+                resource_name = value[2:-2]
+                if resource_name not in resources:
+                    raise ValueError(f"Resource '{resource_name}' not defined.")
+                values[key] = resources[resource_name]
+            else:
+                values[key] = value
+
+        # Locate the module and instance factory.
+        module_name, _, factory_name = spec[FACTORY_TAG].rpartition(".")
         module = self._try_import(module_name)
         try:
-            instance_initializer = getattr(module, initializer_name)
+            instance_factory = getattr(module, factory_name)
         except AttributeError:
-            raise TypeError(f"Module {module_name} does not define a {initializer_name} entry point.")
-
-        # Process initializer parameters.
-        for key, value in spec.items():
-            # Recursively create instances of any nested classes.
-            if isinstance(value, dict) and CLASS_TAG in value:
-                spec[key] = self.create_instance(value.pop(CLASS_TAG), value, services)
-            # Look for parameters that are services and replace them with the service instance.
-            if isinstance(value, str) and value.startswith("{{") and value.endswith("}}"):
-                service_name = value[2:-2]
-                if service_name not in services:
-                    raise TypeError(f"Service '{service_name}' not defined.")
-                spec[key] = services[service_name]
+            raise TypeError(f"Module {module_name} does not define a {factory_name} entry point.")
 
         # Instantiate the instance with parameters.
-        return instance_initializer(**spec)
+        return instance_factory(**parameters)
 
     def build(self, config: Dict[str, Any]) -> Any:
-        services: Dict[str, object] = {}
-        # First initialize any service instances and consolidate them into the services dictionary.
-        specs = [(key, value) for key, value in config.items() if isinstance(value, dict) and SERVICE_TAG in value]
-        for key, spec in specs:
-            services[key] = self.create_instance(spec.pop(SERVICE_TAG), spec, services)
-            config.pop(key)
-
-        # Then initialize the main class hierarchy.
-        return self.create_instance(config.pop(CLASS_TAG), config, services)
+        if FACTORY_TAG not in config:
+            raise ValueError(f"Missing top-level '{FACTORY_TAG}' in config.")
+        # Initialize the main class hierarchy.
+        return self.create_instance(config, {})
