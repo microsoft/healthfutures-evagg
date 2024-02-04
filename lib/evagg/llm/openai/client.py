@@ -163,12 +163,12 @@ class OpenAIClient(IOpenAIClient):
 
         settings["messages"] = messages
 
-        logger.info(f"Running chat completion with settings: {settings}")
+        logger.debug(f"Running chat completion with settings: {settings}")
 
         result = self._chat_completion_create(settings)
         output = result.choices[0].message.content
 
-        logger.info(f"Chat completion output: {output}")
+        logger.debug(f"Chat completion output: {output}")
 
         return OpenAIClientResponse(result=result, settings=settings, output=output)
 

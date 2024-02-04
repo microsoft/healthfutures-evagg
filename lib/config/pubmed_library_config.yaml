@@ -1,11 +1,19 @@
 # Services
 log:
   di_factory: lib.evagg.svc.init_logger
+  # level: "DEBUG"
+  # exclude_modules: [lib.evagg.svc.*]
+  # include_modules: [lib.evagg.svc.web]
+  # exclude_defaults: true
 
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
   web_client:
     di_factory: lib.evagg.svc.RequestsWebContentClient
+    # di_factory: lib.evagg.svc.CosmosCachingWebClient
+    # cache_settings:
+    #   di_factory: lib.evagg.svc.get_dotenv_settings
+    #   filter_prefix: "EVAGG_CONTENT_CACHE_"
   settings:
     di_factory: lib.evagg.svc.get_dotenv_settings
     filter_prefix: "NCBI_EUTILS_"
