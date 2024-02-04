@@ -1,8 +1,11 @@
+import json
 import logging
 import xml.etree.ElementTree as Et
 from typing import Any, Dict, List, Optional, Union
 
 import requests
+from azure.cosmos import ContainerProxy, CosmosClient
+from azure.cosmos.errors import CosmosResourceNotFoundError
 from pydantic import Extra, validator
 from requests.adapters import HTTPAdapter, Retry
 
@@ -12,7 +15,7 @@ from .interfaces import IWebContentClient
 
 logger = logging.getLogger(__name__)
 
-CONTENT_TYPES = ["text", "binary", "json", "xml"]
+CONTENT_TYPES = ["text", "json", "xml"]
 
 
 class WebClientSettings(PydanticYamlModel, extra=Extra.forbid):
@@ -50,29 +53,70 @@ class RequestsWebContentClient(IWebContentClient):
         return self._session
 
     def _get_content(
-        self, response: requests.Response, content_type: Optional[str]
+        self, text: str, content_type: Optional[str]
     ) -> Optional[Union[str, bytes, Dict[str, Any], Et.Element]]:
         """Get the content from the response based on the provided content type."""
         content_type = content_type or self._settings.content_type
         if content_type == "text":
-            return response.text
-        elif content_type == "binary":
-            return response.content
+            return text
         elif content_type == "json":
-            return response.json() if len(response.content) > 0 else {}
+            return json.loads(text) if text else {}
         elif content_type == "xml":
-            return Et.fromstring(response.content) if len(response.content) > 0 else None
+            return Et.fromstring(text) if text else None
         else:
             raise ValueError(f"Invalid content type: {content_type}")
+
+    def _get_text(self, url: str) -> str:
+        """GET the text content at the provided URL."""
+        return self._get_session().get(url).text
 
     def update_settings(self, **kwargs: Any) -> None:
         """Update the default values for the session."""
         updated_settings = {**self._settings.dict(), **kwargs}
         self._settings = WebClientSettings(**updated_settings)
+        self._session = None  # reset the session to apply the new settings
 
-    def get(self, url: str, content_type: Optional[str] = None) -> Any:
+    def get(self, url: str, content_type: Optional[str] = None, url_extra: Optional[str] = None) -> Any:
         """GET the content at the provided URL."""
-        session = self._get_session()
-        response = session.get(url)
+        text = self._get_text(url + (url_extra or ""))
+        return self._get_content(text, content_type)
 
-        return self._get_content(response, content_type)
+
+class CacheClientSettings(PydanticYamlModel, extra=Extra.forbid):
+    endpoint: str
+    credential: Any
+    database: str = "document_cache"
+    container: str = "cache"
+
+
+class CosmosCachingWebClient(RequestsWebContentClient):
+    """A web content client that uses a lookaside CosmosDB cache."""
+
+    def __init__(self, cache_settings: Dict[str, Any], web_settings: Optional[Dict[str, Any]] = None) -> None:
+        self._cache_settings = CacheClientSettings(**cache_settings)
+        self._cache = CosmosClient(self._cache_settings.endpoint, self._cache_settings.credential)
+        self._container: Optional[ContainerProxy] = None
+        super().__init__(settings=web_settings)
+
+    def _get_container(self) -> ContainerProxy:
+        if self._container:
+            return self._container
+        database = self._cache.get_database_client(self._cache_settings.database)
+        self._container = database.get_container_client(self._cache_settings.container)
+        return self._container
+
+    def get(self, url: str, content_type: Optional[str] = None, url_extra: Optional[str] = None) -> Any:
+        """GET the content at the provided URL, using the cache if available."""
+        cache_key = url.removeprefix("http://").removeprefix("https://")
+        cache_key = cache_key.replace(":", ".").replace("/", ".").replace("?", ".").replace("#", ".")
+        container = self._get_container()
+
+        try:
+            item = container.read_item(item=cache_key, partition_key=cache_key)
+            logger.info(f"{cache_key} served from cache.")
+        except CosmosResourceNotFoundError:
+            content = super()._get_text(url + (url_extra or ""))
+            item = {"id": cache_key, "content": content}
+            container.upsert_item(item)
+
+        return super()._get_content(item["content"], content_type)

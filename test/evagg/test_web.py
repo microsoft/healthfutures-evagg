@@ -28,7 +28,6 @@ def test_settings():
 def test_content_types():
     web_client = RequestsWebContentClient()
     assert web_client._get_content(MagicMock(text="test"), "text") == "test"
-    assert web_client._get_content(MagicMock(content=b"test"), "binary") == b"test"
     assert web_client._get_content(MagicMock(content=b"<test>1</test>"), "xml").tag == "test"
     assert web_client._get_content(
         MagicMock(content=b'{"test": 1}', json=lambda: json.loads('{"test": 1}')), "json"
