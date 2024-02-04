@@ -18,13 +18,13 @@ class NcbiApiSettings(PydanticYamlModel, extra=Extra.forbid):
     api_key: Optional[str] = None
     email: str = "biomedcomp@microsoft.com"
 
-    def get_key_string(self) -> str:
+    def get_key_string(self) -> Optional[str]:
         key_string = ""
         if self.email:
             key_string += f"&email={urlparse.quote(self.email)}"
         if self.api_key:
             key_string += f"&api_key={self.api_key}"
-        return key_string
+        return key_string if key_string else None
 
     @root_validator(pre=True)
     @classmethod
@@ -57,12 +57,12 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
     def _esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
-        return self._web_client.get(f"{self.EUTILS_HOST}{url}{key_string}", content_type=retmode)
+        return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
 
     def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
-        return self._web_client.get(f"{self.EUTILS_HOST}{url}{key_string}", content_type=retmode)
+        return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
 
     def _is_pmc_oa(self, pmcid: Optional[str]) -> bool:
         """Check if a paper is open access using the PMC OA API."""
