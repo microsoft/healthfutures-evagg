@@ -32,16 +32,19 @@ def test_get_content_types(mock_request):
         MagicMock(text="test"),
         MagicMock(text="<test>1</test>"),
         MagicMock(text='{"test": 1}'),
+        MagicMock(text='{"test": 1}'),
     ]
+
+    with raises(ValueError):
+        RequestsWebContentClient(settings={"content_type": "binary"})
 
     web_client = RequestsWebContentClient()
     assert web_client.get("https://any.url/testing", "text", url_extra="&extra") == "test"
     assert mock_request.call_args.args[1] == "https://any.url/testing&extra"
     assert web_client.get("https://any.url/testing", "xml").tag == "test"  # type: ignore
     assert web_client.get("https://any.url/testing", "json") == {"test": 1}
-
     with raises(ValueError):
-        RequestsWebContentClient(settings={"content_type": "binary"})
+        web_client.get("https://any.url/testing", "invalid")
 
 
 @patch("urllib3.connectionpool.HTTPConnectionPool._get_conn")
@@ -104,7 +107,7 @@ def mock_container(json_load):
 def test_cosmos_cache_hit(mock_client, mock_container):
     mock_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
 
-    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython"
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython"  # noqa
     web_client = CosmosCachingWebClient(cache_settings={"endpoint": "http://localhost", "credential": "test"})
     assert web_client.get(url, content_type="xml", url_extra="this doesn't matter").tag == "eSearchResult"
     assert web_client.get(url, content_type="xml").tag == "eSearchResult"
@@ -127,7 +130,7 @@ def test_cosmos_cache_miss(mock_client, mock_request, mock_container):
         MagicMock(text='{"reports": [{"query": ["GGG6"]}]}'),
     ]
 
-    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=GGG6&sort=relevance&retmax=1&tool=biopython"
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=GGG6&sort=relevance&retmax=1&tool=biopython"  # noqa
     web_client = CosmosCachingWebClient(cache_settings={"endpoint": "http://localhost", "credential": "test"})
     assert web_client.get(url, content_type="xml", url_extra="this doesn't matter").tag == "eSearchResult"
     assert web_client.get(url, content_type="xml").tag == "eSearchResult"
