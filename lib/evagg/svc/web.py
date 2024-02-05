@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import requests
 from azure.cosmos import ContainerProxy, CosmosClient
-from azure.cosmos.errors import CosmosResourceNotFoundError
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from pydantic import Extra, validator
 from requests.adapters import HTTPAdapter, Retry
 
