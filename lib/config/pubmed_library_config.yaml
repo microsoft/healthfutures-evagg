@@ -9,11 +9,13 @@ log:
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
   web_client:
-    di_factory: lib.evagg.svc.RequestsWebContentClient
-    # di_factory: lib.evagg.svc.CosmosCachingWebClient
-    # cache_settings:
-    #   di_factory: lib.evagg.svc.get_dotenv_settings
-    #   filter_prefix: "EVAGG_CONTENT_CACHE_"
+    # di_factory: lib.evagg.svc.RequestsWebContentClient
+    di_factory: lib.evagg.svc.CosmosCachingWebClient
+    cache_settings:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "EVAGG_CONTENT_CACHE_"
+    web_settings:
+      max_retries: 3
   settings:
     di_factory: lib.evagg.svc.get_dotenv_settings
     filter_prefix: "NCBI_EUTILS_"
