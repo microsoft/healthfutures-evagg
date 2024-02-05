@@ -1,29 +1,32 @@
 {
-    "www.ncbi.nlm.nih.gov.pmc.utils.oa.oa.fcgi.id=PMC4395397": {
-        "id": "www.ncbi.nlm.nih.gov.pmc.utils.oa.oa.fcgi.id=PMC4395397",
-        "content": "<OA><responseDate>2024-02-02 17:51:42</responseDate><request id=\"PMC4395397\">https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC4395397</request><records returned-count=\"1\" total-count=\"1\"><record id=\"PMC4395397\" citation=\"PLoS One. 2015 Apr 13; 10(4):e0123180\" license=\"CC BY\" retracted=\"no\"><link format=\"tgz\" updated=\"2023-07-08 01:25:09\" href=\"ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_package/9a/2f/PMC4395397.tar.gz\" /></record></records></OA>\n",
-        "_rid": "B1NZAKVoI0wHAAAAAAAAAA==",
-        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0wHAAAAAAAAAA==/",
-        "_etag": "\"0c00db99-0000-0100-0000-65bd71fe0000\"",
+    "www.ncbi.nlm.nih.gov|pmc|utils|oa|oa.fcgi|id=PMC4395397": {
+        "id": "www.ncbi.nlm.nih.gov|pmc|utils|oa|oa.fcgi|id=PMC4395397",
+        "url": "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC4395397",
+        "content": "<OA><responseDate>2024-02-05 12:00:04</responseDate><request id=\"PMC4395397\">https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC4395397</request><records returned-count=\"1\" total-count=\"1\"><record id=\"PMC4395397\" citation=\"PLoS One. 2015 Apr 13; 10(4):e0123180\" license=\"CC BY\" retracted=\"no\"><link format=\"tgz\" updated=\"2023-07-08 01:25:09\" href=\"ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_package/9a/2f/PMC4395397.tar.gz\" /></record></records></OA>\n",
+        "_rid": "B1NZAKVoI0waAAAAAAAAAA==",
+        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0waAAAAAAAAAA==/",
+        "_etag": "\"bf00f7a3-0000-0100-0000-65c114140000\"",
         "_attachments": "attachments/",
-        "_ts": 1706914302
+        "_ts": 1707152404
     },
-    "eutils.ncbi.nlm.nih.gov.entrez.eutils.esearch.fcgi.db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython": {
-        "id": "eutils.ncbi.nlm.nih.gov.entrez.eutils.esearch.fcgi.db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython",
+    "eutils.ncbi.nlm.nih.gov|entrez|eutils|esearch.fcgi|db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython": {
+        "id": "eutils.ncbi.nlm.nih.gov|entrez|eutils|esearch.fcgi|db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython",
+        "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython",
         "content": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<!DOCTYPE eSearchResult PUBLIC \"-//NLM//DTD esearch 20060628//EN\" \"https://eutils.ncbi.nlm.nih.gov/eutils/dtd/20060628/esearch.dtd\">\n<eSearchResult><Count>37</Count><RetMax>1</RetMax><RetStart>0</RetStart><IdList>\n<Id>25875328</Id>\n</IdList><TranslationSet/><QueryTranslation>\"CPA6\"[All Fields]</QueryTranslation></eSearchResult>\n",
-        "_rid": "B1NZAKVoI0wFAAAAAAAAAA==",
-        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0wFAAAAAAAAAA==/",
-        "_etag": "\"0c00d999-0000-0100-0000-65bd71fd0000\"",
+        "_rid": "B1NZAKVoI0wYAAAAAAAAAA==",
+        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0wYAAAAAAAAAA==/",
+        "_etag": "\"bf00f3a3-0000-0100-0000-65c114120000\"",
         "_attachments": "attachments/",
-        "_ts": 1706914301
+        "_ts": 1707152402
     },
-    "api.ncbi.nlm.nih.gov.datasets.v2alpha.gene.symbol.CPA6.taxon.Human": {
-        "id": "api.ncbi.nlm.nih.gov.datasets.v2alpha.gene.symbol.CPA6.taxon.Human",
+    "api.ncbi.nlm.nih.gov|datasets|v2alpha|gene|symbol|CPA6|taxon|Human": {
+        "id": "api.ncbi.nlm.nih.gov|datasets|v2alpha|gene|symbol|CPA6|taxon|Human",
+        "url": "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/CPA6/taxon/Human",
         "content": "{\"reports\":[{\"gene\":{\"gene_id\":\"1548\", \"symbol\":\"CYP2A6\", \"description\":\"cytochrome P450 family 2 subfamily A member 6\", \"tax_id\":\"9606\", \"taxname\":\"Homo sapiens\", \"common_name\":\"human\", \"type\":\"PROTEIN_CODING\", \"orientation\":\"minus\", \"reference_standards\":[{\"gene_range\":{\"accession_version\":\"NG_008377.1\", \"range\":[{\"begin\":\"5001\", \"end\":\"11907\", \"orientation\":\"plus\"}]}, \"type\":\"REFSEQ_GENE\"}], \"chromosomes\":[\"19\"], \"nomenclature_authority\":{\"authority\":\"HGNC\", \"identifier\":\"HGNC:2610\"}, \"swiss_prot_accessions\":[\"P11509\"], \"ensembl_gene_ids\":[\"ENSG00000255974\"], \"omim_ids\":[\"122720\"], \"synonyms\":[\"CPA6\", \"CYP2A\", \"CYP2A3\", \"P450PB\", \"CYPIIA6\", \"P450C2A\"], \"annotations\":[{\"assembly_accession\":\"GCF_000001405.40\", \"assembly_name\":\"GRCh38.p14\", \"annotation_name\":\"GCF_000001405.40-RS_2023_10\", \"annotation_release_date\":\"2023-10-02\", \"genomic_locations\":[{\"genomic_accession_version\":\"NC_000019.10\", \"sequence_name\":\"19\", \"genomic_range\":{\"begin\":\"40843541\", \"end\":\"40850447\", \"orientation\":\"minus\"}}]}, {\"assembly_accession\":\"GCF_009914755.1\", \"assembly_name\":\"T2T-CHM13v2.0\", \"annotation_name\":\"GCF_009914755.1-RS_2023_10\", \"annotation_release_date\":\"2023-10-02\", \"genomic_locations\":[{\"genomic_accession_version\":\"NC_060943.1\", \"sequence_name\":\"19\", \"genomic_range\":{\"begin\":\"43664238\", \"end\":\"43671146\", \"orientation\":\"minus\"}}]}], \"transcript_count\":1, \"protein_count\":1, \"transcript_type_counts\":[{\"type\":\"PROTEIN_CODING\", \"count\":1}]}, \"query\":[\"CPA6\"]}, {\"gene\":{\"gene_id\":\"57094\", \"symbol\":\"CPA6\", \"description\":\"carboxypeptidase A6\", \"tax_id\":\"9606\", \"taxname\":\"Homo sapiens\", \"common_name\":\"human\", \"type\":\"PROTEIN_CODING\", \"orientation\":\"minus\", \"reference_standards\":[{\"gene_range\":{\"accession_version\":\"NG_027682.1\", \"range\":[{\"begin\":\"5026\", \"end\":\"329348\", \"orientation\":\"plus\"}]}, \"type\":\"REFSEQ_GENE\"}], \"chromosomes\":[\"8\"], \"nomenclature_authority\":{\"authority\":\"HGNC\", \"identifier\":\"HGNC:17245\"}, \"swiss_prot_accessions\":[\"Q8N4T0\"], \"ensembl_gene_ids\":[\"ENSG00000165078\"], \"omim_ids\":[\"609562\"], \"synonyms\":[\"CPAH\", \"ETL5\", \"FEB11\"], \"annotations\":[{\"assembly_accession\":\"GCF_000001405.40\", \"assembly_name\":\"GRCh38.p14\", \"annotation_name\":\"GCF_000001405.40-RS_2023_10\", \"annotation_release_date\":\"2023-10-02\", \"genomic_locations\":[{\"genomic_accession_version\":\"NC_000008.11\", \"sequence_name\":\"8\", \"genomic_range\":{\"begin\":\"67422038\", \"end\":\"67746360\", \"orientation\":\"minus\"}}]}, {\"assembly_accession\":\"GCF_009914755.1\", \"assembly_name\":\"T2T-CHM13v2.0\", \"annotation_name\":\"GCF_009914755.1-RS_2023_10\", \"annotation_release_date\":\"2023-10-02\", \"genomic_locations\":[{\"genomic_accession_version\":\"NC_060932.1\", \"sequence_name\":\"8\", \"genomic_range\":{\"begin\":\"67848501\", \"end\":\"68172795\", \"orientation\":\"minus\"}}]}], \"transcript_count\":5, \"protein_count\":5, \"transcript_type_counts\":[{\"type\":\"PROTEIN_CODING\", \"count\":1}, {\"type\":\"PROTEIN_CODING_MODEL\", \"count\":4}], \"gene_groups\":[{\"id\":\"57094\", \"method\":\"NCBI Ortholog\"}]}, \"query\":[\"CPA6\"]}], \"total_count\":2}",
-        "_rid": "B1NZAKVoI0wIAAAAAAAAAA==",
-        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0wIAAAAAAAAAA==/",
-        "_etag": "\"0c00dc99-0000-0100-0000-65bd71ff0000\"",
+        "_rid": "B1NZAKVoI0wbAAAAAAAAAA==",
+        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0wbAAAAAAAAAA==/",
+        "_etag": "\"bf00f8a3-0000-0100-0000-65c114150000\"",
         "_attachments": "attachments/",
-        "_ts": 1706914303
+        "_ts": 1707152405
     }
 }
