@@ -108,7 +108,7 @@ class CosmosCachingWebClient(RequestsWebContentClient):
     def get(self, url: str, content_type: Optional[str] = None, url_extra: Optional[str] = None) -> Any:
         """GET the content at the provided URL, using the cache if available."""
         cache_key = url.removeprefix("http://").removeprefix("https://")
-        cache_key = cache_key.replace(":", ".").replace("/", ".").replace("?", ".").replace("#", ".")
+        cache_key = cache_key.replace(":", "|").replace("/", "|").replace("?", "|").replace("#", "|")
         container = self._get_container()
 
         try:
@@ -116,7 +116,7 @@ class CosmosCachingWebClient(RequestsWebContentClient):
             logger.info(f"{cache_key} served from cache.")
         except CosmosResourceNotFoundError:
             content = super()._get_text(url + (url_extra or ""))
-            item = {"id": cache_key, "content": content}
+            item = {"id": cache_key, "url": url, "content": content}
             container.upsert_item(item)
 
         return super()._get_content(item["content"], content_type)

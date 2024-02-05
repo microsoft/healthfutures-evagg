@@ -104,7 +104,7 @@ def mock_container(json_load):
 def test_cosmos_cache_hit(mock_client, mock_container):
     mock_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
 
-    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch/fcgi?db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython"
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=CPA6&sort=relevance&retmax=1&tool=biopython"
     web_client = CosmosCachingWebClient(cache_settings={"endpoint": "http://localhost", "credential": "test"})
     assert web_client.get(url, content_type="xml", url_extra="this doesn't matter").tag == "eSearchResult"
     assert web_client.get(url, content_type="xml").tag == "eSearchResult"
@@ -121,13 +121,13 @@ def test_cosmos_cache_hit(mock_client, mock_container):
 @patch("requests.sessions.Session.request")
 @patch("lib.evagg.svc.web.CosmosClient")
 def test_cosmos_cache_miss(mock_client, mock_request, mock_container):
+    mock_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
     mock_request.side_effect = [
         MagicMock(text='<?xml version="1.0" encoding="UTF-8" ?><eSearchResult>GGG6</eSearchResult>'),
         MagicMock(text='{"reports": [{"query": ["GGG6"]}]}'),
     ]
-    mock_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
 
-    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch/fcgi?db=pubmed&term=GGG6&sort=relevance&retmax=1&tool=biopython"
+    url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=GGG6&sort=relevance&retmax=1&tool=biopython"
     web_client = CosmosCachingWebClient(cache_settings={"endpoint": "http://localhost", "credential": "test"})
     assert web_client.get(url, content_type="xml", url_extra="this doesn't matter").tag == "eSearchResult"
     assert web_client.get(url, content_type="xml").tag == "eSearchResult"
