@@ -6,13 +6,13 @@
 
 # %% Imports.
 
-import json
+# import json
 import logging
 import os
 import re
 from dataclasses import dataclass
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set
+from typing import Any, Dict, List, Protocol, Sequence, Set
 
 import requests
 
@@ -26,7 +26,13 @@ logger = logging.getLogger(__name__)
 # %% Define ReqSeqReference class.
 
 
-class RefSeqReference:
+class IGetAccessions(Protocol):
+    def get_transcript_accession_for_symbol(self, symbol: str) -> str | None: ...
+
+    def get_protein_accession_for_symbol(self, symbol: str) -> str | None: ...
+
+
+class RefSeqReference(IGetAccessions):
     """Determine RefSeq 'Reference Standard' accessions for genes using the NCBI RefSeqGene database."""
 
     _ref: Dict[str, Dict[str, str]]
@@ -109,7 +115,15 @@ class RefSeqReference:
 # %% Define the Mutalyzer Reference class
 
 
-class MutalyzerReference:
+class INormalizeVariants(Protocol):
+    def normalize(self, hgvs: str) -> Dict[str, Any]: ...
+
+
+class IBackTranslateVariants(Protocol):
+    def back_translate(self, hgvsp: str) -> Sequence[str]: ...
+
+
+class MutalyzerReference(INormalizeVariants, IBackTranslateVariants):
     def __init__(self) -> None:
         pass
 
@@ -125,11 +139,7 @@ class MutalyzerReference:
         return response.json()
 
     @cache
-    def normalize(self, hgvs: str) -> Dict[str, Any]:
-        """Normalize an HGVS description using Mutalyzer.
-
-        hgvs: The HGVS description to normalize, e.g., NM_000551.3:c.1582G>A
-        """
+    def _normalize(self, hgvs: str) -> Dict[str, Any]:
         url = f"https://mutalyzer.nl/api/normalize/{hgvs}"
         response = requests.get(url)
 
@@ -142,12 +152,12 @@ class MutalyzerReference:
         else:
             return {}
 
+    def normalize(self, hgvs: str) -> Dict[str, Any]:
+        """Normalize an HGVS description using Mutalyzer.
 
-# %% Build some useful tools
-
-ref_seq_reference = RefSeqReference()
-
-mutalyzer_reference = MutalyzerReference()
+        hgvs: The HGVS description to normalize, e.g., NM_000551.3:c.1582G>A
+        """
+        return self._normalize(hgvs)
 
 
 # %% Define the Variant, VariantMention, and VariantMentionGroup classes.
@@ -186,20 +196,27 @@ class HGVSVariant:
 
 
 class HGVSVariantFactory:
-    _mutalyzer: MutalyzerReference  # TODO, DI
+    _normalizer: INormalizeVariants
+    _back_translator: IBackTranslateVariants
+    _accession_getter: IGetAccessions
+
     MITO_REFSEQ = "NC_012920.1"
 
-    def __init__(self) -> None:
-        # TODO, DI
-        self._mutalyzer = MutalyzerReference()
+    def __init__(
+        self, normalizer: INormalizeVariants, back_translator: IBackTranslateVariants, accession_getter: IGetAccessions
+    ) -> None:
+        self._normalizer = normalizer
+        self._back_translator = back_translator
+        self._accession_getter = accession_getter
 
     def _predict_refseq(self, text_desc: str, gene_symbol: str | None) -> str | None:
         """Predict the RefSeq for a variant based on its description and gene symbol."""
         if text_desc.startswith("p.") and gene_symbol:
-            return ref_seq_reference.get_protein_accession_for_symbol(gene_symbol)
+            return self._accession_getter.get_protein_accession_for_symbol(gene_symbol)
         elif text_desc.startswith("c.") and gene_symbol:
-            return ref_seq_reference.get_transcript_accession_for_symbol(gene_symbol)
+            return self._accession_getter.get_transcript_accession_for_symbol(gene_symbol)
         elif text_desc.startswith("m."):
+            # TODO: consider moving?
             return self.MITO_REFSEQ
         elif text_desc.startswith("g."):
             raise ValueError(f"Genomic (g. prefixed) variants must have a RefSeq. None was provided for {text_desc}")
@@ -248,7 +265,7 @@ class HGVSVariantFactory:
 
     def _validate_variant(self, refseq: str, text_desc: str) -> bool:
         # Validate the variant. Returns True if the variant is valid, False otherwise.
-        return bool(self._mutalyzer.normalize(f"{refseq}:{text_desc}"))
+        return bool(self._normalizer.normalize(f"{refseq}:{text_desc}"))
 
 
 @dataclass(frozen=True)
@@ -266,9 +283,20 @@ class VariantTopic:
     _variant_mentions: List[HGVSVariantMention]
     _variants: Set[HGVSVariant]
 
-    def __init__(self, mentions: Sequence[HGVSVariantMention]) -> None:
+    _normalizer: INormalizeVariants
+    _back_translator: IBackTranslateVariants
+
+    def __init__(
+        self,
+        mentions: Sequence[HGVSVariantMention],
+        normalizer: INormalizeVariants,
+        back_translator: IBackTranslateVariants,
+    ) -> None:
         self._variant_mentions = []
         self._variants = set()
+
+        self._normalizer = normalizer
+        self._back_translator = back_translator
 
         for mention in mentions:
             self.add_mention(mention)
@@ -320,17 +348,18 @@ class VariantTopic:
         # translate to a common coordinate system to determine if they're linked.
         # Easiest thing to do is to map back to genomic coordinates and compare there.
         def c_to_g(c: str) -> List[str]:
-            norm = mutalyzer_reference.normalize(c)
+            norm = self._normalizer.normalize(c)
             if not norm or "chromosomal_descriptions" not in norm:
                 return []
             for desc in norm["chromosomal_descriptions"]:
                 if desc["assembly"] == "GRCH38":
+                    print(f"{c} -> {desc['g']}")
                     return [desc["g"]]
             return []
 
         def p_to_g(p: str) -> List[str]:
-            txs = mutalyzer_reference.back_translate(p)
-            return [g for tx in txs for g in c_to_g(tx)]
+            txs = self._back_translator.back_translate(p)
+            return [g for tx in txs for g in c_to_g(tx.replace("(", "").replace(")", ""))]
 
         def map_to_g(v: HGVSVariant) -> List[str]:
             if v.hgvs_desc.startswith("g."):
@@ -457,13 +486,18 @@ for idx, paper in enumerate(papers):
 
     break
 
-# %%
+# %% Try to assemble all of the topics based on the extracted topics above.
 
-variant_factory = HGVSVariantFactory()
+ref_seq_reference = RefSeqReference()
+mutalyzer_reference = MutalyzerReference()
+
+variant_factory = HGVSVariantFactory(
+    normalizer=mutalyzer_reference, back_translator=mutalyzer_reference, accession_getter=ref_seq_reference
+)
 variant_topics: List[VariantTopic] = []
 
 for vt in variant_tuples:
-    print(f"1: {vt}")
+    print(vt)
     try:
         v = variant_factory.try_parse(
             text_desc=vt["hgvs"] if vt["hgvs"] else vt["text"], gene_symbol=vt["gene"], refseq=vt["refseq"]
@@ -471,9 +505,7 @@ for vt in variant_tuples:
     except ValueError as e:
         print(f"Error parsing variant {vt['text']}: {e}")
         continue
-    print(f"2: {v}")
     vm = HGVSVariantMention(text=vt["text"], context="Some words", variant=v)
-    print(f"3: {vm}")
     # Check all the topics for a match, if none, add a new topic.
     found = False
     for topic in variant_topics:
@@ -482,51 +514,4 @@ for vt in variant_tuples:
             found = True
             break
     if not found:
-        variant_topics.append(VariantTopic([vm]))
-    print(f"4: {variant_topics}")
-
-# %% Some archival stuff
-
-# TX_FASTA_REGEX = re.compile(r">(NM_\d+\.\d+) .*?\((.*?)\),")
-
-# def get_mane_select_for_symbol(symbol: str) -> Tuple[str | None, int]:
-#     """Fetch data on MANE select transcripts given a gene symbol.
-
-#     Returns a tuple containing the MANE select transcript accession and the MANE select transcript ID
-#     for a given gene symbol.
-#     """
-#     url = f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&retmode=json&term={symbol}[Gene] AND refseq_select[filter] AND "Homo sapiens"[Organism]'
-#     response = requests.get(url)
-#     response.raise_for_status()
-
-#     tx_entries = response.json()
-
-#     if tx_entries["esearchresult"]["count"] == "0":
-#         print(f"Warning ({symbol}): no MANE select transcript entries")
-#         return (None, -1)
-#     elif tx_entries["esearchresult"]["count"] != "1":
-#         print(f"Warning ({symbol}): multiple MANE select entries ({tx_entries['esearchresult']['idlist']})")
-
-#     for tx_id in tx_entries["esearchresult"]["idlist"]:
-
-#         url2 = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&rettype=fasta&retmode=text&id={tx_id}"
-
-#         response2 = requests.get(url2)
-#         response2.raise_for_status()
-
-#         tx_result = response2.text
-
-#         rm = re.match(TX_FASTA_REGEX, tx_result)
-#         if not rm:
-#             print(f"Warning: FASTA response from nuccore for {tx_id} did not meet format expectations: {tx_result}")
-#             continue
-
-#         if rm.groups()[1] != symbol:
-#             print(
-#                 f"Warning: MANE select transcript {rm.groups()[0]} is not for gene {symbol} (it's for {rm.groups()[1]})"
-#             )
-#             continue
-
-#         return (rm.groups()[0], tx_id)
-
-#     return (None, -1)
+        variant_topics.append(VariantTopic([vm], normalizer=mutalyzer_reference, back_translator=mutalyzer_reference))
