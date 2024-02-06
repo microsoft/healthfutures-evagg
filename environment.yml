@@ -31,8 +31,7 @@ dependencies:
 
   # Bioinformatics.
   - biopython
-  - hgvs
-  
+
   # Dependencies used for code development (linting, testing, etc.)
   - black
   - isort
