@@ -5,7 +5,7 @@ from typing import Any, Dict, Sequence
 import pytest
 
 from lib.evagg import PromptBasedContentExtractor, SimpleContentExtractor
-from lib.evagg.lit import IFindVariantMentions
+from lib.evagg.content import IFindVariantMentions
 from lib.evagg.llm.openai import IOpenAIClient
 from lib.evagg.llm.openai.interfaces import OpenAIClientResponse
 from lib.evagg.ref import IVariantLookupClient
