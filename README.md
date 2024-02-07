@@ -83,9 +83,10 @@ AZURE_OPENAI_API_KEY=<your AOAI key>
 AZURE_OPENAI_API_VERSION=<your AOAI API version>
 
 NCBI_EUTILS_API_KEY=<your NCBI eutils API key (optional)>
-NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
-NCBI_EUTILS_MAX_TRIES=<max number of retries for retry-able calls to the NCBI eutils API (optional)>
+NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls (optional)>
 ```
+
+Providing the `NCBI_EUTILS_` values allows a rate limit of 10rps to NCBI endpoints instead of the default 3rps.
 
 ## Codespaces environment setup
 
@@ -109,8 +110,7 @@ AZURE_OPENAI_API_KEY=<your AOAI key>
 AZURE_OPENAI_API_VERSION=<your AOAI API version>
 
 NCBI_EUTILS_API_KEY=<your NCBI eutils API key (optional)>
-NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls>
-NCBI_EUTILS_MAX_TRIES=<max number of retries for retry-able calls to the NCBI eutils API (optional)>
+NCBI_EUTILS_EMAIL=<your email address to be used for NCBI eutils API calls (optional)>
 ```
 
 ### Starting a Codespaces environment
