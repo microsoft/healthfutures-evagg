@@ -10,11 +10,14 @@ from lib.evagg.svc import CosmosCachingWebClient, RequestsWebContentClient
 
 def test_settings():
     web_client = RequestsWebContentClient()
-    web_client.update_settings(max_retries=1, retry_backoff=2, retry_codes=[500, 429], content_type="json")
+    web_client.update_settings(
+        max_retries=1, retry_backoff=2, retry_codes=[500, 429], no_raise_codes=[422], content_type="json"
+    )
     settings = web_client._settings.dict()
     assert settings["max_retries"] == 1
     assert settings["retry_backoff"] == 2
     assert settings["retry_codes"] == [500, 429]
+    assert settings["no_raise_codes"] == [422]
     assert settings["content_type"] == "json"
 
     web_client.update_settings(max_retries=10)
@@ -29,10 +32,10 @@ def test_settings():
 @patch("requests.sessions.Session.request")
 def test_get_content_types(mock_request):
     mock_request.side_effect = [
-        MagicMock(text="test"),
-        MagicMock(text="<test>1</test>"),
-        MagicMock(text='{"test": 1}'),
-        MagicMock(text='{"test": 1}'),
+        MagicMock(status_code=200, text="test"),
+        MagicMock(status_code=200, text="<test>1</test>"),
+        MagicMock(status_code=200, text='{"test": 1}'),
+        MagicMock(status_code=200, text='{"test": 1}'),
     ]
 
     with raises(ValueError):
@@ -126,12 +129,15 @@ def test_cosmos_cache_hit(mock_client, mock_container):
 def test_cosmos_cache_miss(mock_client, mock_request, mock_container):
     mock_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
     mock_request.side_effect = [
-        MagicMock(text='<?xml version="1.0" encoding="UTF-8" ?><eSearchResult>GGG6</eSearchResult>'),
-        MagicMock(text='{"reports": [{"query": ["GGG6"]}]}'),
+        MagicMock(status_code=200, text='<?xml version="1.0" encoding="UTF-8" ?><eSearchResult>GGG6</eSearchResult>'),
+        MagicMock(status_code=200, text='{"reports": [{"query": ["GGG6"]}]}'),
+        MagicMock(status_code=422, text='{"error": "invalid query, no throw"}'),
+        MagicMock(status_code=500, text="throws, doesn't cache"),
     ]
 
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=GGG6&sort=relevance&retmax=1&tool=biopython"  # noqa
     web_client = CosmosCachingWebClient(cache_settings={"endpoint": "http://localhost", "credential": "test"})
+    web_client.update_settings(retry_codes=[500], no_raise_codes=[422])
     assert web_client.get(url, content_type="xml", url_extra="this doesn't matter").tag == "eSearchResult"
     assert web_client.get(url, content_type="xml").tag == "eSearchResult"
 
@@ -139,6 +145,13 @@ def test_cosmos_cache_miss(mock_client, mock_request, mock_container):
     assert web_client.get(url, content_type="json", url_extra="extra")["reports"][0]["query"][0] == "GGG6"
     assert web_client.get(url, content_type="json")["reports"][0]["query"][0] == "GGG6"
 
-    assert len(mock_container.misses) == 2
-    assert len(mock_container.writes) == 2
-    assert len(mock_container.hits) == 2
+    url = "https://testing.invalid/invalid/422"
+    assert web_client.get(url, content_type="json", url_extra="extra")["error"] == "invalid query, no throw"
+    assert web_client.get(url, content_type="json", url_extra="extra")["error"] == "invalid query, no throw"
+    url = "https://testing.invalid/invalid/500"
+    with raises(requests.exceptions.HTTPError):
+        web_client.get(url, content_type="json")
+
+    assert len(mock_container.misses) == 4
+    assert len(mock_container.writes) == 3
+    assert len(mock_container.hits) == 3
