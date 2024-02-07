@@ -1,28 +1,27 @@
 # Services
 log:
-  di_service: lib.evagg.svc.init_logger
+  di_factory: lib.evagg.svc.init_logger
 ncbi_settings:
-  di_service: lib.evagg.svc.get_dotenv_settings
+  di_factory: lib.evagg.svc.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
 ncbi_web:
-  di_service: lib.evagg.svc.RequestsWebContentClient
-  default_content_type: text
+  di_factory: lib.evagg.svc.RequestsWebContentClient
 ncbi_client: 
-  di_service: lib.evagg.ref.NcbiLookupClient
+  di_factory: lib.evagg.ref.NcbiLookupClient
   web_client: "{{ncbi_web}}"
   settings: "{{ncbi_settings}}"
 
 # Application
-di_class: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_class: lib.evagg.types.QueryIterator
+  di_factory: lib.evagg.types.QueryIterator
   variants:
     - "COQ2:p.R55*"
 library:
-  di_class: lib.evagg.TruthsetFileLibrary
+  di_factory: lib.evagg.TruthsetFileLibrary
   file_path: /home/azureuser/repos/ev-agg-exp/data/truth_set_content_manual.tsv
 extractor:
-  di_class: lib.evagg.SemanticKernelContentExtractor
+  di_factory: lib.evagg.SemanticKernelContentExtractor
   fields:
     - gene
     - paper_id
@@ -32,13 +31,13 @@ extractor:
     - zygosity
     - variant_inheritance
   sk_client:
-    di_class: lib.evagg.sk.SemanticKernelClient
+    di_factory: lib.evagg.sk.SemanticKernelClient
     config:
-      di_class: lib.evagg.sk.SemanticKernelDotEnvConfig
+      di_factory: lib.evagg.sk.SemanticKernelDotEnvConfig
   mention_finder:
-    di_class: lib.evagg.content.VariantMentionFinder
+    di_factory: lib.evagg.content.VariantMentionFinder
     entity_annotator: "{{ncbi_client}}"
     gene_lookup_client: "{{ncbi_client}}"
   variant_lookup_client: "{{ncbi_client}}"
 writer:
-  di_class: lib.evagg.TableOutputWriter
+  di_factory: lib.evagg.TableOutputWriter
