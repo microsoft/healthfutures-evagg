@@ -22,7 +22,7 @@ from lib.evagg.ref import (
     NcbiLookupClient,
     NcbiReferenceLookupClient,
 )
-from lib.evagg.svc import RequestsWebContentClient, get_dotenv_settings
+from lib.evagg.svc import CosmosCachingWebClient, RequestsWebContentClient, get_dotenv_settings
 from lib.evagg.types import Paper
 
 logger = logging.getLogger(__name__)
@@ -359,7 +359,20 @@ for idx, paper in enumerate(papers):
 # %% Try to assemble all of the topics based on the extracted topics above.
 
 ref_seq_lookup_client = NcbiReferenceLookupClient()
-mutalyzer_client = MutalyzerClient(RequestsWebContentClient())
+
+#   web_client:
+#     # di_factory: lib.evagg.svc.RequestsWebContentClient
+#     di_factory: lib.evagg.svc.CosmosCachingWebClient
+#     cache_settings:
+#       di_factory: lib.evagg.svc.get_dotenv_settings
+#       filter_prefix: "EVAGG_CONTENT_CACHE_"
+#     web_settings:
+#       max_retries: 3
+
+web_client = CosmosCachingWebClient(
+    get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"max_retries": 0, "retry_codes": []}
+)
+mutalyzer_client = MutalyzerClient(web_client)
 
 variant_factory = HGVSVariantFactory(
     normalizer=mutalyzer_client, back_translator=mutalyzer_client, refseq_client=ref_seq_lookup_client
