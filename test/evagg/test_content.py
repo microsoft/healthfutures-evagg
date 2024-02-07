@@ -55,7 +55,7 @@ class MockVariantLookupClient(IVariantLookupClient):
     def __init__(self, response: Dict[str, Dict[str, str]]) -> None:
         self._response = response
 
-    def hgvs_from_rsid(self, rsid: Sequence[str]) -> Dict[str, Dict[str, str]]:
+    def hgvs_from_rsid(self, *rsids: str) -> Dict[str, Dict[str, str]]:
         return self._response
 
 
