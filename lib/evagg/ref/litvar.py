@@ -27,6 +27,9 @@ class LitVarReference:
     @classmethod
     @sleep_and_retry
     @limits(calls=3, period=1)
+    # This expression actually gets to the RateLimitDecorator class instance that implements the
+    # rate limiting: lv._requests_limited.__closure__[0].cell_contents.__closure__[1].cell_contents
+    # In theory could use this change the rate limiting parameters at runtime.
     def _requests_get_text_limited(cls, url: str, timeout: int = 10) -> str:
         return cls._requests_get_text(url, timeout=timeout)
 
