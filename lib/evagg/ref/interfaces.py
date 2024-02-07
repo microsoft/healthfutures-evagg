@@ -29,3 +29,28 @@ class IAnnotateEntities(Protocol):
     def annotate(self, paper: Paper) -> Dict[str, Any]:
         """Annotate entities in the paper."""
         ...
+
+
+class IRefSeqLookupClient(Protocol):
+    def transcript_accession_for_symbol(self, symbol: str) -> str | None:
+        """Get 'Reference Standard' RefSeq accession ID for the given gene symbol."""
+        ...
+
+    def protein_accession_for_symbol(self, symbol: str) -> str | None:
+        """Get 'Reference Standard' RefSeq protein accession ID for the given gene symbol."""
+        ...
+
+
+class INormalizeVariants(Protocol):
+    def normalize(self, hgvs: str) -> Dict[str, Any]:
+        """Perform normalization on the provided variant."""
+        ...
+
+
+class IBackTranslateVariants(Protocol):
+    def back_translate(self, hgvsp: str) -> Sequence[str]:
+        """Back translate the provided protein variant.
+
+        Returns all possible coding transcript variants that could give rise to the provided protein variant.
+        """
+        ...

@@ -8,156 +8,24 @@
 
 # import json
 import logging
-import os
 import re
 from dataclasses import dataclass
-from functools import cache
-from typing import Any, Dict, List, Protocol, Sequence, Set
+from typing import Any, Dict, List, Sequence, Set
 
 import requests
 
-from lib.evagg.ref import NcbiLookupClient
+from lib.evagg.ref import (
+    IBackTranslateVariants,
+    INormalizeVariants,
+    IRefSeqLookupClient,
+    MutalyzerClient,
+    NcbiLookupClient,
+    NcbiReferenceLookupClient,
+)
 from lib.evagg.svc import RequestsWebContentClient, get_dotenv_settings
 from lib.evagg.types import Paper
 
 logger = logging.getLogger(__name__)
-
-
-# %% Define ReqSeqReference class.
-
-
-class IGetAccessions(Protocol):
-    def get_transcript_accession_for_symbol(self, symbol: str) -> str | None: ...
-
-    def get_protein_accession_for_symbol(self, symbol: str) -> str | None: ...
-
-
-class RefSeqReference(IGetAccessions):
-    """Determine RefSeq 'Reference Standard' accessions for genes using the NCBI RefSeqGene database."""
-
-    _ref: Dict[str, Dict[str, str]]
-    _lazy_initialized: bool
-    _DEFAULT_REFERENCE_DIR = "/home/azureuser/repos/ev-agg-exp/.ref/"  # TODO, change to be relative to repo root.
-    _NCBI_REFERENCE_URL = "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/RefSeqGene/LRG_RefSeqGene"
-
-    def __init__(self, reference_dir: str = _DEFAULT_REFERENCE_DIR) -> None:
-        # Lazy initialize so the constructor is fast.
-        self._reference_dir = reference_dir
-        self._lazy_initialized = False
-        self._ref = {}
-        pass
-
-    def get_transcript_accession_for_symbol(self, symbol: str) -> str | None:
-        """Get the RefSeq transcript accession for a gene symbol."""
-        if not self._lazy_initialized:
-            self._lazy_init()
-        return self._ref.get(symbol, {}).get("RNA", None)
-
-    def get_protein_accession_for_symbol(self, symbol: str) -> str | None:
-        """Get the RefSeq protein accession for a gene symbol."""
-        if not self._lazy_initialized:
-            self._lazy_init()
-        return self._ref.get(symbol, {}).get("Protein", None)
-
-    def _download_reference(self, url: str, target: str) -> None:
-        # Download the reference TSV file from NCBI.
-        response = requests.get(url)
-        response.raise_for_status()
-
-        if response.status_code != 200:
-            raise ValueError(f"Failed to download reference file from {url}")
-
-        with open(target, "wb") as f:
-            f.write(response.content)
-
-    def _lazy_init(self) -> None:
-        # Download the reference file if necessary.
-        if not os.path.exists(self._reference_dir):
-            logging.info(f"Creating reference directory at {self._reference_dir}")
-            os.makedirs(self._reference_dir)
-
-        reference_filepath = os.path.join(self._reference_dir, "LRG_RefSeqGene.tsv")
-        if not os.path.exists(reference_filepath):
-            logging.info(f"Downloading reference file to {reference_filepath}")
-            self._download_reference(self._NCBI_REFERENCE_URL, reference_filepath)
-
-        # Load the reference file into memory.
-        logging.info(f"Loading reference file from {reference_filepath}")
-        self._ref = self._load_reference(reference_filepath)
-        self._lazy_initialized = True
-
-    def _load_reference(self, filepath: str) -> Dict[str, Dict[str, str]]:
-        """Load a reference TSV file into a dictionary."""
-        with open(filepath, "r") as f:
-            lines = f.readlines()
-
-        header = lines[0].strip().split("\t")
-
-        # First two columns are taxon and gene ID, which we don't care about, so we'll skip them.
-        # The third column is gene symbol, which we'll use as a key.
-        # Only keep rows where the last column is "reference standard". If there's more than
-        # one row per gene symbol, print a warning and keep the first one.
-        kept_fields = ["GeneID", "Symbol", "RSG", "RNA", "Protein"]
-        reference_dict = {}
-        for line in lines[1:]:
-            fields = line.strip().split("\t")
-            if fields[-1] != "reference standard":
-                continue
-            gene_symbol = fields[2]
-            if gene_symbol in reference_dict:
-                logging.info(f"Multiple reference standard entries for gene {gene_symbol}. Keeping the first one.")
-                continue
-            reference_dict[gene_symbol] = {k: v for k, v in zip(header, fields) if k in kept_fields}
-
-        return reference_dict
-
-
-# %% Define the Mutalyzer Reference class
-
-
-class INormalizeVariants(Protocol):
-    def normalize(self, hgvs: str) -> Dict[str, Any]: ...
-
-
-class IBackTranslateVariants(Protocol):
-    def back_translate(self, hgvsp: str) -> Sequence[str]: ...
-
-
-class MutalyzerReference(INormalizeVariants, IBackTranslateVariants):
-    def __init__(self) -> None:
-        pass
-
-    @cache
-    def back_translate(self, hgvsp: str) -> Sequence[str]:
-        """Back translate a protein variant description to a coding variant description using Mutalyzer.
-
-        hgvsp: The protein variant description to back translate. Must conform to HGVS nomenclature.
-        """
-        url = f"https://mutalyzer.nl/api/back_translate/{hgvsp}"
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json()
-
-    @cache
-    def _normalize(self, hgvs: str) -> Dict[str, Any]:
-        url = f"https://mutalyzer.nl/api/normalize/{hgvs}"
-        response = requests.get(url)
-
-        # Response code of 422 signifies an unprocessable entity.
-        # This occurs when the description is syntactically invalid, but also
-        # occurs when the description is biologically invalid (e.g., the reference is incorrect).
-        # Detailed information is available in the response body, but it's not currently relevant.
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {}
-
-    def normalize(self, hgvs: str) -> Dict[str, Any]:
-        """Normalize an HGVS description using Mutalyzer.
-
-        hgvs: The HGVS description to normalize, e.g., NM_000551.3:c.1582G>A
-        """
-        return self._normalize(hgvs)
 
 
 # %% Define the Variant, VariantMention, and VariantMentionGroup classes.
@@ -198,23 +66,26 @@ class HGVSVariant:
 class HGVSVariantFactory:
     _normalizer: INormalizeVariants
     _back_translator: IBackTranslateVariants
-    _accession_getter: IGetAccessions
+    _refseq_client: IRefSeqLookupClient
 
     MITO_REFSEQ = "NC_012920.1"
 
     def __init__(
-        self, normalizer: INormalizeVariants, back_translator: IBackTranslateVariants, accession_getter: IGetAccessions
+        self,
+        normalizer: INormalizeVariants,
+        back_translator: IBackTranslateVariants,
+        refseq_client: IRefSeqLookupClient,
     ) -> None:
         self._normalizer = normalizer
         self._back_translator = back_translator
-        self._accession_getter = accession_getter
+        self._refseq_client = refseq_client
 
     def _predict_refseq(self, text_desc: str, gene_symbol: str | None) -> str | None:
         """Predict the RefSeq for a variant based on its description and gene symbol."""
         if text_desc.startswith("p.") and gene_symbol:
-            return self._accession_getter.get_protein_accession_for_symbol(gene_symbol)
+            return self._refseq_client.protein_accession_for_symbol(gene_symbol)
         elif text_desc.startswith("c.") and gene_symbol:
-            return self._accession_getter.get_transcript_accession_for_symbol(gene_symbol)
+            return self._refseq_client.transcript_accession_for_symbol(gene_symbol)
         elif text_desc.startswith("m."):
             # TODO: consider moving?
             return self.MITO_REFSEQ
@@ -353,7 +224,6 @@ class VariantTopic:
                 return []
             for desc in norm["chromosomal_descriptions"]:
                 if desc["assembly"] == "GRCH38":
-                    print(f"{c} -> {desc['g']}")
                     return [desc["g"]]
             return []
 
@@ -488,11 +358,11 @@ for idx, paper in enumerate(papers):
 
 # %% Try to assemble all of the topics based on the extracted topics above.
 
-ref_seq_reference = RefSeqReference()
-mutalyzer_reference = MutalyzerReference()
+ref_seq_lookup_client = NcbiReferenceLookupClient()
+mutalyzer_client = MutalyzerClient(RequestsWebContentClient())
 
 variant_factory = HGVSVariantFactory(
-    normalizer=mutalyzer_reference, back_translator=mutalyzer_reference, accession_getter=ref_seq_reference
+    normalizer=mutalyzer_client, back_translator=mutalyzer_client, refseq_client=ref_seq_lookup_client
 )
 variant_topics: List[VariantTopic] = []
 
@@ -514,4 +384,6 @@ for vt in variant_tuples:
             found = True
             break
     if not found:
-        variant_topics.append(VariantTopic([vm], normalizer=mutalyzer_reference, back_translator=mutalyzer_reference))
+        variant_topics.append(VariantTopic([vm], normalizer=mutalyzer_client, back_translator=mutalyzer_client))
+
+# %%
