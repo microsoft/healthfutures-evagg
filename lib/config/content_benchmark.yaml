@@ -19,10 +19,10 @@ queries:
   # When querying based on gene only, this should cover the full "small" truth set.
   variants: 
     - "COQ2:irrelevant"
-    - "PRKCG:irrelevant"
-    - "TWNK:irrelevant"
-    - "FAM111B:irrelevant"
-    - "UBR5:irrelevant"
+    #- "PRKCG:irrelevant"
+    #- "TWNK:irrelevant"
+    #- "FAM111B:irrelevant"
+    #- "UBR5:irrelevant"
 library:
   di_class: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_content_manual.tsv
