@@ -1,14 +1,17 @@
-di_class: lib.evagg.SynchronousLocalApp
+log:
+  di_factory: lib.evagg.svc.init_logger
+
+di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_class: lib.evagg.types.QueryIterator
+  di_factory: lib.evagg.types.QueryIterator
   variants:
     - "TUBB3:p.E410K"
 library: 
-  di_class: lib.evagg.SimpleFileLibrary
+  di_factory: lib.evagg.SimpleFileLibrary
   collections: 
     - .data/evagg_local
 extractor:
-  di_class: lib.evagg.SimpleContentExtractor
+  di_factory: lib.evagg.SimpleContentExtractor
   fields:
     - gene
     - variant
@@ -16,6 +19,4 @@ extractor:
     - phenotype
     - functional data
 writer:
-  di_class: lib.evagg.ConsoleOutputWriter
-log:
-  di_service: lib.evagg.svc.init_logger
+  di_factory: lib.evagg.ConsoleOutputWriter

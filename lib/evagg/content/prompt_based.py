@@ -48,7 +48,7 @@ class PromptBasedContentExtractor(IExtractFields):
 
         # Build a cached list of hgvs formats for dbsnp identifiers.
         rsids = [v for v in variant_mentions.keys() if v.startswith("rs")]
-        hgvs_cache = self._variant_lookup_client.hgvs_from_rsid(rsids) if len(rsids) > 0 else {}
+        hgvs_cache = self._variant_lookup_client.hgvs_from_rsid(*rsids) if len(rsids) > 0 else {}
 
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []

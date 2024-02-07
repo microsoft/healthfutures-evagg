@@ -30,6 +30,21 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict:
     if overrides is None:
         return {}
 
+    def _parse_override_value(val: str) -> Any:
+        if val.lower() == "true":
+            return True
+        if val.lower() == "false":
+            return False
+        try:
+            return int(val)
+        except ValueError:
+            pass
+        try:
+            return float(val)
+        except ValueError:
+            pass
+        return val
+
     override_dict: Dict[Any, Any] = {}
     for override in overrides:
         key_path, _, value = override.partition(":")
@@ -39,7 +54,7 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict:
             if key not in current_dict:
                 current_dict[key] = {}
             current_dict = current_dict[key]
-        current_dict[keys[-1]] = value
+        current_dict[keys[-1]] = _parse_override_value(value)
 
     return override_dict
 

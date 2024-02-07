@@ -25,6 +25,7 @@ dependencies:
   - retry
   - python-dotenv
   - urllib3
+  - azure-cosmos
 
   # AI/ML.
   - openai
