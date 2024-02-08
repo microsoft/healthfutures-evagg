@@ -23,9 +23,7 @@ ncbi_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  variants:
-    - "CPA6:R46C" # note R46C is a variant I made up.
+  - "CPA6"
 library:
   di_factory: lib.evagg.RemoteFileLibrary
   paper_client: "{{ncbi_client}}"
@@ -37,6 +35,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
+    - subject_id
     - phenotype
     - zygosity
     - variant_inheritance

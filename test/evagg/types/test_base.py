@@ -1,7 +1,7 @@
-from lib.evagg.types import Paper, Variant
+from lib.evagg.types import HGVSVariant, Paper
 
 
-def test_paper_from_dict():
+def test_paper_from_dict() -> None:
     paper_dict = {"id": "123", "citation": "Test Citation", "abstract": "Test Abstract", "pmcid": "PMC123"}
     paper = Paper(**paper_dict)
     assert paper.id == "123"
@@ -10,7 +10,7 @@ def test_paper_from_dict():
     assert paper.props["pmcid"] == "PMC123"
 
 
-def test_paper_equality():
+def test_paper_equality() -> None:
     paper_dict = {"id": "123", "citation": "Test Citation", "abstract": "Test Abstract", "pmcid": "PMC123"}
     same_paper_dict = paper_dict.copy()
     different_paper_dict = paper_dict.copy()
@@ -26,7 +26,7 @@ def test_paper_equality():
     assert paper != "not a paper"
 
 
-def test_paper_repr():
+def test_paper_repr() -> None:
     paper_dict = {"id": "123", "citation": "Test Citation", "abstract": "Test Abstract", "pmcid": "PMC123"}
     str_paper = 'id: 123 - "Test Citation"'
 
@@ -34,10 +34,10 @@ def test_paper_repr():
     assert str(paper) == str_paper
 
 
-def test_variant_equality():
-    variant1 = Variant("gene1", "var")
-    variant2 = Variant("gene1", "var")
-    variant3 = Variant("gene2", "var")
+def test_variant_equality() -> None:
+    variant1 = HGVSVariant("var1", "gene1", "ref1", False, True)
+    variant2 = HGVSVariant("var1", "gene1", "ref1", False, True)
+    variant3 = HGVSVariant("var1", "gene2", "ref2", False, True)
 
     assert variant1 == variant1
     assert variant1 == variant2
@@ -45,12 +45,12 @@ def test_variant_equality():
     assert variant1 != "not a variant"
 
 
-def test_variant_hash():
-    variant1 = Variant("gene1", "var")
-    variant2 = Variant("gene2", "var")
+def test_variant_hash() -> None:
+    variant1 = HGVSVariant("var1", "gene1", "ref1", False, True)
+    variant2 = HGVSVariant("var2", "gene1", "ref1", False, True)
     assert hash(variant1) != hash(variant2)
 
 
-def test_variant_repr():
-    variant = Variant("gene1", "var")
-    assert str(variant) == "gene1:var"
+def test_variant_repr() -> None:
+    variant = HGVSVariant("var", "gene", "ref", False, True)
+    assert str(variant) == "ref:var"
