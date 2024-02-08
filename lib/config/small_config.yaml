@@ -14,19 +14,16 @@ ncbi_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  # When querying based on gene only, this should cover the full "small" truth set.
-  variants: 
-    - "CHI3L1:p.Y34C"
-    - "COQ2:p.T39S"
-    - "CPA6:p.A270V"
-    - "PRKCG:p.G23E"
-    - "TWNK:p.I69F"
-    - "FAM111B:p.Y621D"
-    - "RGSL1:p.Q472*"
-    - "COL23A1:p.A213V"
-    - "JPH1:p.R213P"
-    - "UBR5:p.P1228S"
+  - "CHI3L1"
+  - "COQ2"
+  - "CPA6"
+  - "PRKCG"
+  - "TWNK"
+  - "FAM111B"
+  - "RGSL1"
+  - "COL23A1"
+  - "JPH1"
+  - "UBR5"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_small.tsv
@@ -37,6 +34,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
+    - subject_id
     - phenotype
     - zygosity
     - variant_inheritance

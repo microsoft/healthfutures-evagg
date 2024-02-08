@@ -1,6 +1,6 @@
 from typing import Dict, Sequence
 
-from lib.evagg.types import IPaperQuery, Paper
+from lib.evagg.types import Paper
 
 from ..interfaces import IExtractFields
 
@@ -18,6 +18,8 @@ class SimpleContentExtractor(IExtractFields):
             return "c.101A>G"
         if field == "hgvs_p":
             return "p.Y34C"
+        if field == "subject_id":
+            return "unknown"
         if field == "phenotype":
             return "Long face (HP:0000276)"
         if field == "zygosity":
@@ -29,6 +31,6 @@ class SimpleContentExtractor(IExtractFields):
         else:
             return "Unknown"
 
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
+    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
         # Dummy implementation that returns a single variant with a static set of fields.
         return [{field: self._field_to_value(field) for field in self._fields}]

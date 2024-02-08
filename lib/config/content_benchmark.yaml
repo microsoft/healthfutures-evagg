@@ -14,14 +14,11 @@ ncbi_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  # When querying based on gene only, this should cover the full "small" truth set.
-  variants: 
-    - "COQ2:irrelevant"
-    - "PRKCG:irrelevant"
-    - "TWNK:irrelevant"
-    - "FAM111B:irrelevant"
-    - "UBR5:irrelevant"
+  - "COQ2"
+  - "PRKCG"
+  - "TWNK"
+  - "FAM111B"
+  - "UBR5"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_content_manual.tsv
@@ -32,6 +29,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
+    - subject_id
     - phenotype
     - zygosity
     - variant_inheritance

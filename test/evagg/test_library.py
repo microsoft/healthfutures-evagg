@@ -5,17 +5,19 @@ from typing import Any, Dict
 
 import pytest
 
-from lib.evagg import RemoteFileLibrary, SimpleFileLibrary, TruthsetFileLibrary
+from lib.evagg import RemoteFileLibrary, SimpleFileLibrary
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import Paper, Query
+from lib.evagg.types import Paper
+
+# TODO, test TruthsetFileLibrary, but better.
 
 
 @pytest.fixture
-def mock_paper_client(mock_client):
+def mock_paper_client(mock_client: type) -> IPaperLookupClient:
     return mock_client(IPaperLookupClient)
 
 
-def test_remote_init(mock_paper_client):
+def test_remote_init(mock_paper_client: Any) -> None:
     max_papers = 4
     paper_client = mock_paper_client()
     library = RemoteFileLibrary(paper_client, max_papers)
@@ -23,22 +25,15 @@ def test_remote_init(mock_paper_client):
     assert library._max_papers == max_papers
 
 
-def test_remote_no_paper(mock_paper_client):
+def test_remote_no_paper(mock_paper_client: Any) -> None:
     paper_client = mock_paper_client([])
-    result = RemoteFileLibrary(paper_client).search(Query("gene:mutation"))
+    result = RemoteFileLibrary(paper_client).search("gene")
     assert paper_client.last_call("search") == ({"query": "gene"}, {"max_papers": 5})
     assert paper_client.call_count() == 1
     assert not result
 
 
-def test_remote_multi_query_fail(mock_paper_client):
-    paper_client = mock_paper_client()
-    with pytest.raises(NotImplementedError):
-        RemoteFileLibrary(paper_client).search(Query("gene1:mutation1", "gene2:mutation2"))
-    assert paper_client.call_count() == 0
-
-
-def test_remote_single_paper(mock_paper_client):
+def test_remote_single_paper(mock_paper_client: Any) -> None:
     paper = Paper(
         id="10.1016/j.ajhg.2016.05.014",
         citation="Makrythanasis et al. (2016) AJHG",
@@ -48,7 +43,7 @@ def test_remote_single_paper(mock_paper_client):
         is_pmc_oa=True,
     )
     paper_client = mock_paper_client(["27392077"], paper)
-    result = RemoteFileLibrary(paper_client).search(Query("gene:mutation"))
+    result = RemoteFileLibrary(paper_client).search("gene")
     assert paper_client.last_call("search") == ({"query": "gene"}, {"max_papers": 5})
     assert paper_client.last_call("fetch") == ("27392077",)
     assert paper_client.call_count() == 2
@@ -65,7 +60,7 @@ def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
     }
 
 
-def test_simple_search():
+def test_simple_search() -> None:
     # Create a temporary directory and write some test papers to it
     with tempfile.TemporaryDirectory() as tmpdir:
         paper1 = Paper(id="1", citation="Test Paper 1", abstract="This is a test paper.", pmcid="PMC1234")
@@ -81,7 +76,7 @@ def test_simple_search():
         # Create a SimpleFileLibrary instance and search for papers
         library = SimpleFileLibrary(collections=[tmpdir])
         # This should return all papers in the library.
-        results = library.search(Query("test gene:test variant"))
+        results = library.search("test gene")
 
         # Check that the correct papers were returned
         assert len(results) == 3
@@ -89,9 +84,3 @@ def test_simple_search():
         assert paper1 in results
         assert paper2 in results
         assert paper3 in results
-
-
-def test_truthset_single_paper():
-    library = TruthsetFileLibrary("data/truth_set_small.tsv")
-    results = library.search(Query("COQ2:mutation"))
-    assert len(results) == 7

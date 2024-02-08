@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Sequence
 
 from lib.evagg.llm.openai import IOpenAIClient
 from lib.evagg.ref import IVariantLookupClient
-from lib.evagg.types import IPaperQuery, Paper
+from lib.evagg.types import Paper
 
 from ..interfaces import IExtractFields
 from .interfaces import IFindVariantMentions
@@ -14,7 +14,16 @@ logger = logging.getLogger(__name__)
 
 
 class PromptBasedContentExtractor(IExtractFields):
-    _SUPPORTED_FIELDS = {"gene", "paper_id", "hgvs_c", "hgvs_p", "phenotype", "zygosity", "variant_inheritance"}
+    _SUPPORTED_FIELDS = {
+        "gene",
+        "paper_id",
+        "hgvs_c",
+        "hgvs_p",
+        "subject_id",
+        "phenotype",
+        "zygosity",
+        "variant_inheritance",
+    }
     _PROMPTS = {
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
@@ -36,7 +45,7 @@ class PromptBasedContentExtractor(IExtractFields):
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
+    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
         # Only process papers in PMC.
         if "pmcid" not in paper.props or paper.props["pmcid"] == "":
             return []
@@ -45,6 +54,8 @@ class PromptBasedContentExtractor(IExtractFields):
         variant_mentions = self._mention_finder.find_mentions(query, paper)
 
         logger.info(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
+        # TODO, when find_mentions returns a dict keyed on (variant, subject), we can
+        # extract the hgvs representations directly from that variant object.
 
         # Build a cached list of hgvs formats for dbsnp identifiers.
         rsids = [v for v in variant_mentions.keys() if v.startswith("rs")]
