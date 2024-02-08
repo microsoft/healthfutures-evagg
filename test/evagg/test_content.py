@@ -9,7 +9,7 @@ from lib.evagg.content import IFindVariantMentions
 from lib.evagg.llm.openai import IOpenAIClient
 from lib.evagg.llm.openai.interfaces import OpenAIClientResponse
 from lib.evagg.ref import IVariantLookupClient
-from lib.evagg.types import IPaperQuery, Paper, Query
+from lib.evagg.types import Paper
 
 
 def test_simple_content_extractor() -> None:
@@ -18,7 +18,7 @@ def test_simple_content_extractor() -> None:
     )
     fields = ["gene", "hgvs_p", "variant_inheritance", "phenotype"]
     extractor = SimpleContentExtractor(fields)
-    result = extractor.extract(paper, Query("CHI3L1:p.Y34C"))
+    result = extractor.extract(paper, "CHI3L1")
     assert len(result) == 1
     assert result[0]["gene"] == "CHI3L1"
     assert result[0]["hgvs_p"] == "p.Y34C"
@@ -34,7 +34,7 @@ class MockMentionFinder(IFindVariantMentions):
         ],
     }
 
-    def find_mentions(self, query: IPaperQuery, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
+    def find_mentions(self, query: str, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
         return self.mentions
 
 
@@ -81,14 +81,14 @@ def test_prompt_based_content_extractor_valid_fields() -> None:
         variant_lookup_client=variant_lookup_client,
     )
     paper = Paper(id=fields["paper_id"], citation="citation", abstract="This is a test paper.", pmcid="PMC123")
-    content = content_extractor.extract(paper, Query(f"{fields['gene']}:p.Y34C"))
+    content = content_extractor.extract(paper, fields["gene"])
 
     # Based on the above, there should be two elements in `content`, each containing a dict keyed by fields, with a
     # fake value.
     for k in MockMentionFinder().mentions.keys():
-        row = [c for c in content if c["variant"] == k]
-        assert len(row) == 1
-        row = row[0]
+        rows = [c for c in content if c["variant"] == k]
+        assert len(rows) == 1
+        row = rows[0]
 
         for f in fields:
             assert f in row.keys()
@@ -107,4 +107,4 @@ def test_prompt_based_content_extractor_invalid_fields() -> None:
     paper = Paper(id="12345678", citation="citation", abstract="This is a test paper.", pmcid="PMC123")
 
     with pytest.raises(ValueError):
-        content_extractor.extract(paper, Query("CHI3L1:p.Y34C"))
+        content_extractor.extract(paper, "CHI3L1")
