@@ -29,7 +29,7 @@ queries:
 library:
   di_factory: lib.evagg.RemoteFileLibrary
   paper_client: "{{ncbi_client}}"
-  max_papers: 1
+  max_papers: 10
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:

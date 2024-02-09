@@ -39,6 +39,7 @@ class PromptBasedContentExtractor(IExtractFields):
     def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
         # Only process papers in PMC.
         if "pmcid" not in paper.props or paper.props["pmcid"] == "":
+            logger.warning(f"Will not extract fields from paper '{paper.id}' without a PMCID.")
             return []
 
         # Find all the variant mentions in the paper relating to the query.
