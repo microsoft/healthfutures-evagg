@@ -48,7 +48,8 @@ class HGVSVariantFactory(ICreateVariants):
         elif text_desc.startswith("g."):
             raise ValueError(f"Genomic (g. prefixed) variants must have a RefSeq. None was provided for {text_desc}")
         else:
-            raise ValueError(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}")
+            logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}")
+            return None
 
     def try_parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
         """Attempt to parse a variant based on description and an optional gene symbol and optional refseq.
@@ -210,12 +211,20 @@ class VariantTopic:
 
 
 class VariantMentionFinder(IFindVariantMentions):
-    def __init__(self, entity_annotator: IAnnotateEntities, gene_lookup_client: IGeneLookupClient) -> None:
+    def __init__(
+        self,
+        entity_annotator: IAnnotateEntities,
+        gene_lookup_client: IGeneLookupClient,
+        variant_factory: ICreateVariants,
+    ) -> None:
         self._entity_annotator = entity_annotator
         self._gene_lookup_client = gene_lookup_client
+        self._variant_factory = variant_factory
 
-    def _get_variant_ids(self, annotations: Dict[str, Any], query_gene_id: int, query_gene_symbol: str) -> Set[str]:
-        variants_in_query_gene: Set[str] = set()
+    def _get_variants(
+        self, annotations: Dict[str, Any], query_gene_id: int, query_gene_symbol: str
+    ) -> Set[Tuple[str, HGVSVariant]]:
+        variants_in_query_gene: Set[Tuple[str, HGVSVariant]] = set()
 
         if len(annotations) == 0:
             return variants_in_query_gene
@@ -228,8 +237,18 @@ class VariantMentionFinder(IFindVariantMentions):
             for annotation in passage["annotations"]:
                 if annotation["infons"]["type"] == "Variant":
                     if "gene_id" in annotation["infons"] and annotation["infons"]["gene_id"] == query_gene_id:
-                        if annotation["infons"]["identifier"] is not None:
-                            variants_in_query_gene.add(annotation["infons"]["identifier"])
+                        if annotation["infons"]["name"] is not None:
+                            try:
+                                candidate = self._variant_factory.try_parse(
+                                    annotation["infons"]["name"], query_gene_symbol
+                                )
+                                if candidate.valid:
+                                    variants_in_query_gene.add((annotation["infons"]["identifier"], candidate))
+                            except ValueError:
+                                logger.warning(
+                                    f"Skipping invalid variant found by PubTator: {annotation['infons']['name']} in "
+                                    f"{query_gene_symbol}"
+                                )
 
         return variants_in_query_gene
 
@@ -253,7 +272,7 @@ class VariantMentionFinder(IFindVariantMentions):
 
         return mentions
 
-    def find_mentions(self, query: str, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
+    def find_mentions(self, query: str, paper: Paper) -> Dict[HGVSVariant, Sequence[Dict[str, Any]]]:
         """For the VariantMentionFinder, the query is a gene symbol."""
         # Get the gene_id(s) for the query gene(s).
         query_gene_id = self._gene_lookup_client.gene_id_for_symbol(query)
@@ -263,21 +282,18 @@ class VariantMentionFinder(IFindVariantMentions):
 
         # Search all of the annotations for `Mutations` with the query gene ids.
         # TODO, loop is no longer necessary if query is only a single gene symbol
-        variant_gene_ids: Set[Tuple[str, int, str]] = set()
+        variant_gene_ids: Set[Tuple[str, int, str, HGVSVariant]] = set()
         for gene_symbol, gene_id in query_gene_id.items():
-            # Variant IDs are dictated by the annotator here. Using PubTator, they could be RSIDs, or GENE:hgvs_*
-            # strings. This will cause problems when comparing to the truth set, which uses GENE:hgvs_c strings.
-            # TODO, normalize nomenclature.
-            variant_ids = self._get_variant_ids(annotations, gene_id, gene_symbol)
-            variant_gene_tuples = {(gene_symbol, gene_id, v) for v in variant_ids}
+            variants = self._get_variants(annotations, gene_id, gene_symbol)
+            variant_gene_tuples = {(gene_symbol, gene_id, variant_id, variant) for variant_id, variant in variants}
             variant_gene_ids.update(variant_gene_tuples)
 
         # Now collect all the text chunks that mention each variant.
         # Record the gene id for each variant as well.
-        mentions: Dict[str, Sequence[Dict[str, Any]]] = {}
-        for gene_symbol, gene_id, variant_id in variant_gene_ids:
-            mentions[variant_id] = self._gather_mentions(annotations, variant_id)
-            for m in mentions[variant_id]:
+        mentions: Dict[HGVSVariant, Sequence[Dict[str, Any]]] = {}
+        for gene_symbol, gene_id, variant_id, variant in variant_gene_ids:
+            mentions[variant] = self._gather_mentions(annotations, variant_id)
+            for m in mentions[variant]:
                 m["gene_id"] = gene_id
                 m["gene_symbol"] = gene_symbol
 
@@ -285,9 +301,15 @@ class VariantMentionFinder(IFindVariantMentions):
 
 
 class TruthsetVariantMentionFinder(IFindVariantMentions):
-    def __init__(self, entity_annotator: IAnnotateEntities, gene_lookup_client: IGeneLookupClient) -> None:
+    def __init__(
+        self,
+        entity_annotator: IAnnotateEntities,
+        gene_lookup_client: IGeneLookupClient,
+        variant_factory: ICreateVariants,
+    ) -> None:
         self._entity_annotator = entity_annotator
         self._gene_lookup_client = gene_lookup_client
+        self._variant_factory = variant_factory
 
     SHORTHAND_HGVS_PATTERN = re.compile(r"^p\.([A-Za-z])(\d+)([A-Za-z\*]|fs|del)$")
     LONGHAND_HGVS_PATTERN = re.compile(r"^p\.([A-Za-z]{3})(\d+)([A-Za-z]{3}|\*|fs|del)$")
@@ -363,11 +385,12 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
 
         return mentions
 
-    def find_mentions(self, query: str, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
+    def find_mentions(self, query: str, paper: Paper) -> Dict[HGVSVariant, Sequence[Dict[str, Any]]]:
         """Find variant mentions relevant to `query` that are mentioned in `paper`.
 
         For TruthsetVariantMentionFinder, the query is a gene symbol.
         """
+
         truth_rows = [d for d in paper.evidence.values() if d["gene"] == query]
 
         # TODO, query_gene_ids should really just correspond to a single gene symbol, not a list.
@@ -378,15 +401,15 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
         annotations = self._entity_annotator.annotate(paper)
 
         # Search all of the annotations for `Mutations` that match the variants from the truth set.
-        mentions: Dict[str, Sequence[Dict[str, Any]]] = {}
+        mentions: Dict[HGVSVariant, Sequence[Dict[str, Any]]] = {}
         for variant_dict in truth_rows:
             gene_symbol = variant_dict["gene"]
             if gene_symbol not in query_gene_ids:
                 logger.warning("Gene symbol not found in query gene ids")
                 continue
 
-            identifier = f"{gene_symbol}:{variant_dict['hgvs_c']}"
-            mentions[identifier] = self._gather_mentions_for_variant(
+            variant = self._variant_factory.try_parse(variant_dict["hgvs_c"], gene_symbol)
+            mentions[variant] = self._gather_mentions_for_variant(
                 annotations, query_gene_ids[gene_symbol], variant_dict
             )
 

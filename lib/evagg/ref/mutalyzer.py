@@ -1,3 +1,4 @@
+import logging
 from functools import cache
 from typing import Any, Dict, Sequence
 
@@ -6,6 +7,8 @@ from requests.exceptions import HTTPError
 from lib.evagg.svc import IWebContentClient
 
 from .interfaces import IBackTranslateVariants, INormalizeVariants
+
+logger = logging.getLogger(__name__)
 
 
 class MutalyzerClient(INormalizeVariants, IBackTranslateVariants):
