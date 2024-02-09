@@ -27,7 +27,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
-    - subject_id
+    - individual_id
     - phenotype
     - zygosity
     - variant_inheritance

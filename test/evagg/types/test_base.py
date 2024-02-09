@@ -1,4 +1,18 @@
-from lib.evagg.types import HGVSVariant, Paper
+from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
+
+
+def test_i_create_variants() -> None:
+    class TestCreateVariants(ICreateVariants):
+        def try_parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
+            return HGVSVariant(text_desc, gene_symbol, refseq, False, True)
+
+    test_create_variants = TestCreateVariants()
+    variant = test_create_variants.try_parse("var", "gene", "ref")
+    assert variant.hgvs_desc == "var"
+    assert variant.gene_symbol == "gene"
+    assert variant.refseq == "ref"
+    assert variant.refseq_predicted == False
+    assert variant.valid == True
 
 
 def test_paper_from_dict() -> None:
@@ -51,6 +65,11 @@ def test_variant_hash() -> None:
     assert hash(variant1) != hash(variant2)
 
 
-def test_variant_repr() -> None:
+def test_variant_str() -> None:
     variant = HGVSVariant("var", "gene", "ref", False, True)
     assert str(variant) == "ref:var"
+
+
+def test_variant_repr() -> None:
+    variant = HGVSVariant("var", "gene", "ref", False, True)
+    assert variant.__repr__() == "ref:var"

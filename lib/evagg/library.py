@@ -104,7 +104,7 @@ class TruthsetFileLibrary(IGetPapers):
 
             # For each paper, extract the (variant, subject)-specific key/value pairs into a new dict of dicts.
             variants = {
-                (self._variant_factory.try_parse(r["hgvs_p"], r["gene"]), r["individual_id"]): {
+                (self._variant_factory.try_parse(r["hgvs_c"], r["gene"]), r["individual_id"]): {
                     k: r.get(k, "") for k in TRUTHSET_VARIANT_KEYS
                 }
                 for r in rows

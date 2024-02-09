@@ -18,7 +18,7 @@ class SimpleContentExtractor(IExtractFields):
             return "c.101A>G"
         if field == "hgvs_p":
             return "p.Y34C"
-        if field == "subject_id":
+        if field == "individual_id":
             return "unknown"
         if field == "phenotype":
             return "Long face (HP:0000276)"
