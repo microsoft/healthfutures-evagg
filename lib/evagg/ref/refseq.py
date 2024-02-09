@@ -4,6 +4,8 @@ from typing import Dict
 
 import requests
 
+from lib.evagg.svc import IWebContentClient
+
 from .interfaces import IRefSeqLookupClient
 
 logger = logging.getLogger(__name__)
@@ -17,9 +19,10 @@ class NcbiReferenceLookupClient(IRefSeqLookupClient):
     _DEFAULT_REFERENCE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", ".ref")
     _NCBI_REFERENCE_URL = "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/RefSeqGene/LRG_RefSeqGene"
 
-    def __init__(self, reference_dir: str = _DEFAULT_REFERENCE_DIR) -> None:
+    def __init__(self, web_client: IWebContentClient, reference_dir: str = _DEFAULT_REFERENCE_DIR) -> None:
         # Lazy initialize so the constructor is fast.
         self._reference_dir = reference_dir
+        self._web_client = web_client
         self._lazy_initialized = False
         self._ref = {}
         pass
@@ -39,14 +42,8 @@ class NcbiReferenceLookupClient(IRefSeqLookupClient):
     def _download_reference(self, url: str, target: str) -> None:
         # Download the reference TSV file from NCBI.
         # TODO - @Greg, do you think we should use the webcontent client here, or raw requests?
-        response = requests.get(url)
-        response.raise_for_status()
-
-        if response.status_code != 200:
-            raise ValueError(f"Failed to download reference file from {url}")
-
-        with open(target, "wb") as f:
-            f.write(response.content)
+        with open(target, "w") as f:
+            f.write(self._web_client.get(url=url))
 
     def _lazy_init(self) -> None:
         # Download the reference file if necessary.
@@ -83,7 +80,7 @@ class NcbiReferenceLookupClient(IRefSeqLookupClient):
                 continue
             gene_symbol = fields[2]
             if gene_symbol in reference_dict:
-                logging.info(f"Multiple reference standard entries for gene {gene_symbol}. Keeping the first one.")
+                logging.debug(f"Multiple reference standard entries for gene {gene_symbol}. Keeping the first one.")
                 continue
             reference_dict[gene_symbol] = {k: v for k, v in zip(header, fields) if k in kept_fields}
 

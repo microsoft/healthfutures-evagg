@@ -19,7 +19,7 @@ class PromptBasedContentExtractor(IExtractFields):
         "paper_id",
         "hgvs_c",
         "hgvs_p",
-        "subject_id",
+        "individual_id",
         "phenotype",
         "zygosity",
         "variant_inheritance",
@@ -54,50 +54,19 @@ class PromptBasedContentExtractor(IExtractFields):
         variant_mentions = self._mention_finder.find_mentions(query, paper)
 
         logger.info(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
-        # TODO, when find_mentions returns a dict keyed on (variant, subject), we can
-        # extract the hgvs representations directly from that variant object.
-
-        # Build a cached list of hgvs formats for dbsnp identifiers.
-        rsids = [v for v in variant_mentions.keys() if v.startswith("rs")]
-        hgvs_cache = self._variant_lookup_client.hgvs_from_rsid(*rsids) if len(rsids) > 0 else {}
 
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
-        # TODO, variant_id can currently be any of the following:
-        # - rsid (e.g., rs123456789)
-        # - hgvs_c (e.g., c.123A>T)
-        # - hgvs_p (e.g., p.Ala123Thr)
-        # - gene+hgvs (e.g., BRCA1:c.123A>T || BRCA1:p.Ala123Thr)
-        #
-        # Currently handling this below in a hacky way temporarily. Need to figure out
-        # the correct story for variant nomenclature.
+        for variant in variant_mentions.keys():
+            mentions = variant_mentions[variant]
+            variant_results: Dict[str, str] = {}
 
-        for variant_id in variant_mentions.keys():
-            mentions = variant_mentions[variant_id]
-            variant_results: Dict[str, str] = {"variant": variant_id}
-
-            logger.info(f"### Extracting fields for {variant_id} in {paper.id}")
+            logger.info(f"Extracting fields for {variant} in {paper.id}")
 
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = self._excerpt_from_mentions(mentions)
             gene_symbol = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
-
-            # If we have a cached hgvs value, use it. This means variant_id is an rsid.
-            hgvs: Dict[str, str] = {}
-            if variant_id in hgvs_cache:
-                hgvs = hgvs_cache[variant_id]
-            elif variant_id.startswith("c."):
-                hgvs = {"hgvs_c": variant_id}
-            elif variant_id.startswith("p."):
-                hgvs = {"hgvs_p": variant_id}
-            else:  # assume variant_id is gene+hgvs
-                hgvs_unk = variant_id.split(":")
-                if len(hgvs_unk) == 2:
-                    if hgvs_unk[1].startswith("c."):
-                        hgvs = {"hgvs_c": hgvs_unk[1]}
-                    elif hgvs_unk[1].startswith("p."):
-                        hgvs = {"hgvs_p": hgvs_unk[1]}
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
@@ -107,12 +76,16 @@ class PromptBasedContentExtractor(IExtractFields):
                     result = gene_symbol
                 elif field == "paper_id":
                     result = paper.id
+                elif field == "individual_id":
+                    result = "unknown"
                 elif field == "hgvs_c":
-                    result = hgvs["hgvs_c"] if ("hgvs_c" in hgvs and hgvs["hgvs_c"]) else "unknown"
+                    result = variant.hgvs_desc
                 elif field == "hgvs_p":
-                    result = hgvs["hgvs_p"] if ("hgvs_p" in hgvs and hgvs["hgvs_p"]) else "unknown"
+                    result = variant.hgvs_desc
                 else:
-                    params = {"passage": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
+                    # TODO, should be the original text representation of the variant from the paper. When we switch to
+                    # actual mention objects, we can fix this.
+                    params = {"passage": paper_excerpts, "variant": variant.__str__(), "gene": gene_symbol}
 
                     response = self._llm_client.chat_oneshot_file(
                         user_prompt_file=self._PROMPTS[field],
