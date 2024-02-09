@@ -105,29 +105,21 @@ class OpenAIClient(IOpenAIClient):
         return result
 
     def run(self, prompt: str, settings: Optional[Dict[str, Any]] = None) -> OpenAIClientResponse:
-        default_settings = {
+        settings = {
             "max_tokens": 1024,
             "frequency_penalty": 0,
             "presence_penalty": 0,
             "stop": ["</result>", "[END]", "[DONE]", "#END#"],
             "temperature": 0.25,
             "model": self._config.deployment,
+            **(settings or {}),
+            "prompt": prompt,
         }
 
-        # merge settings
-        if settings:
-            settings = {**default_settings, **settings}
-        else:
-            settings = default_settings
-
-        settings["prompt"] = prompt
-
-        logger.info(f"Running completion with settings: {settings}")
-
+        logger.debug(f"Running completion with settings: {settings}")
         result = self._completion_create(settings)
         output = result.choices[0].text.strip()
-
-        logger.info(f"Completion output: {output}")
+        logger.debug(f"Completion output: {output}")
 
         return OpenAIClientResponse(result=result, settings=settings, output=output)
 
@@ -146,28 +138,19 @@ class OpenAIClient(IOpenAIClient):
         messages: List[Dict[str, str]],
         settings: Optional[Dict[str, Any]] = None,
     ) -> OpenAIClientResponse:
-        default_settings = {
+        settings = {
             "max_tokens": 1024,
             "frequency_penalty": 0,
             "presence_penalty": 0,
             "temperature": 0.25,
-            "messages": [],
             "model": self._config.deployment,
+            **(settings or {}),
+            "messages": messages,
         }
 
-        # merge settings
-        if settings:
-            settings = {**default_settings, **settings}
-        else:
-            settings = default_settings
-
-        settings["messages"] = messages
-
         logger.debug(f"Running chat completion with settings: {settings}")
-
         result = self._chat_completion_create(settings)
         output = result.choices[0].message.content
-
         logger.debug(f"Chat completion output: {output}")
 
         return OpenAIClientResponse(result=result, settings=settings, output=output)
