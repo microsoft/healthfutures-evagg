@@ -9,11 +9,15 @@ class SimpleContentExtractor(IExtractFields):
     def __init__(self, fields: Sequence[str]) -> None:
         self._fields = fields
 
-    def _field_to_value(self, field: str) -> str:
+    def _field_to_value(self, field: str, paper: Paper, query: IPaperQuery) -> str:
         if field == "gene":
-            return "CHI3L1"
+            return "ASHLEY TODO"
         if field == "paper_id":
-            return "10.1016/j.dib.2019.104311"
+            return paper.id
+        if field == "pmcid":
+            return paper.props.get("pmcid", "Unknown")
+        if field == "pmid":
+            return paper.props.get("pmid", "Unknown")
         if field == "hgvs_c":
             return "c.101A>G"
         if field == "hgvs_p":
@@ -31,4 +35,4 @@ class SimpleContentExtractor(IExtractFields):
 
     def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
         # Dummy implementation that returns a single variant with a static set of fields.
-        return [{field: self._field_to_value(field) for field in self._fields}]
+        return [{field: self._field_to_value(field, paper, query) for field in self._fields}]
