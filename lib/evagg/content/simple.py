@@ -11,7 +11,7 @@ class SimpleContentExtractor(IExtractFields):
 
     def _field_to_value(self, field: str, paper: Paper, query: IPaperQuery) -> str:
         if field == "gene":
-            return "ASHLEY TODO"
+            return list(query.terms())[0].gene
         if field == "paper_id":
             return paper.id
         if field == "pmcid":
