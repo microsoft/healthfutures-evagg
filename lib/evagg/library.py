@@ -140,3 +140,36 @@ class RemoteFileLibrary(IGetPapers):
         paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
         return papers
+
+
+class filterFileLibrary(IGetPapers):
+    # reimplement search from RemoteFileLibrary
+    # paper_client.search
+    # filer from that
+    # return Set[Paper]
+    # yaml - swap out at RemoteFileLibrary locations
+    # test: does it return 0 of the papers we dont want
+    """A class for filtering papers from PubMed."""
+
+    def __init__(self, paper_client: IPaperLookupClient, max_papers: int = 5) -> None:
+        """Initialize a new instance of the RemoteFileLibrary class.
+        Args:
+            paper_client (IPaperLookupClient): A class for searching and fetching papers.
+            max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
+        """
+        self._paper_client = paper_client
+        self._max_papers = max_papers
+
+    def search(self, query: IPaperQuery) -> Set[Paper]:
+        """Search for papers based on the given query.
+        Args:
+            query (IPaperQuery): The query to search for.
+        Returns:
+            Set[Paper]: The set of papers that match the query.
+        """
+        if len(query.terms()) > 1:
+            raise NotImplementedError("Multiple term extraction not yet implemented.")
+        term = next(iter(query.terms())).gene
+        paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
+        papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
+        return papers
