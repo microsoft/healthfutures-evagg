@@ -3,16 +3,20 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import openai
+import retry
 from dotenv import load_dotenv
 from openai import AzureOpenAI, OpenAI
-from retry import retry as Retry  # noqa
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from lib.config import PydanticYamlModel
+from lib.evagg.svc.logging import PROMPT
 
 from .interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
+
+ChatCompletionMessages = List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]]
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +92,23 @@ class OpenAIClient(IOpenAIClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
+    def _generate_completion(self, messages: ChatCompletionMessages, settings: Dict[str, Any]) -> Optional[str]:
+        start_ts = time.time()
+        settings = self._clean_completion_settings(settings)
+        completion = self._client.chat.completions.create(messages=messages, **settings)  # type: ignore
+        result = completion.choices[0].message.content
+        logger.info(f"Chat completion took {(time.time() - start_ts):.2f} seconds.")
+        logger.log(
+            PROMPT,
+            "Chat complete.",
+            extra={
+                "prompt_settings": settings,
+                "prompt_text": "\n".join([str(m["content"]) for m in messages]),
+                "prompt_result": result,
+            },
+        )
+        return result
+
     # TODO, return type?
     def _completion_create(self, settings: Dict[str, Any]) -> Any:
         start_ts = time.time()
@@ -132,6 +153,34 @@ class OpenAIClient(IOpenAIClient):
                 prompt = prompt.replace(f"{{{{${key}}}}}", value)
 
         return self.run(prompt, settings)
+
+    def get_prompt_result(
+        self,
+        user_prompt_file: str,
+        system_prompt: Optional[str],
+        params: Optional[Dict[str, str]] = None,
+        settings: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        user_prompt = self._load_prompt_file(user_prompt_file)
+
+        for key, value in params.items() if params else {}:
+            user_prompt = user_prompt.replace(f"{{{{${key}}}}}", value)
+
+        messages: ChatCompletionMessages = [ChatCompletionUserMessageParam(role="user", content=user_prompt)]
+        if system_prompt:
+            messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=system_prompt))
+
+        settings = {
+            "max_tokens": 1024,
+            "frequency_penalty": 0,
+            "presence_penalty": 0,
+            "temperature": 0.25,
+            "model": self._config.deployment,
+            **(settings or {}),
+        }
+
+        result = self._generate_completion(messages, settings)
+        return result or ""
 
     def chat(
         self,
@@ -267,7 +316,7 @@ class OpenAIClient(IOpenAIClient):
 
 
 # TODO, return type,
-@Retry(openai.RateLimitError, tries=3, delay=5, backoff=2)
+@retry.retry(openai.RateLimitError, tries=3, delay=5, backoff=2)
 def _run_single_embedding(
     openai_client: OpenAI,
     input: str,

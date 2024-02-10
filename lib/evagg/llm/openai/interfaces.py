@@ -58,3 +58,13 @@ class IOpenAIClient(Protocol):
     def embeddings(self, inputs: List[str], settings: Optional[Dict[str, Any]] = None) -> OpenAIClientEmbeddings:
         """Get embeddings for the given inputs."""
         ...
+
+    def get_prompt_result(
+        self,
+        user_prompt_file: str,
+        system_prompt: Optional[str],
+        params: Optional[Dict[str, str]] = None,
+        settings: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Get the result of a prompt."""
+        ...

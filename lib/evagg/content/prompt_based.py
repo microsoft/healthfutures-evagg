@@ -103,12 +103,12 @@ class PromptBasedContentExtractor(IExtractFields):
                 else:
                     params = {"passage": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
 
-                    response = self._llm_client.chat_oneshot_file(
+                    response = self._llm_client.get_prompt_result(
                         user_prompt_file=self._PROMPTS[field],
                         system_prompt="Extract field",
                         params=params,
                     )
-                    raw = response.output
+                    raw = response
                     try:
                         result = json.loads(raw)[field]
                     except Exception:
