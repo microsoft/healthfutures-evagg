@@ -180,12 +180,16 @@ class RareDiseaseFileLibrary(IGetPapers):
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
 
         # Call private function to filter for rare disease papers
-        rare_disease_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(papers)
-
-        # Compare the ground truth papers PMIDs to the paper PMIDs that were found
-        n_corr, n_miss, n_extra = self._compare_manual_ground_truth(term, rare_disease_papers)
+        rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(
+            papers
+        )
+        if count_r_d_papers != 0:
+            # Compare the ground truth papers PMIDs to the paper PMIDs that were found
+            n_corr, n_miss, n_extra = self._compare_manual_ground_truth(term, rare_disease_papers)
         pn_corr, pn_miss, pn_extra = self._compare_pubmed_ground_truth(term, papers)
 
+        if count_r_d_papers == 0:
+            rare_disease_papers = set()
         return rare_disease_papers
 
     def _get_ground_truth_gene(self, gene: str):
@@ -369,84 +373,64 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper_abstract = paper.props.get("abstract", "Unknown")
             # print("paper_title", paper_title)
 
-            if paper_title or paper_abstract is not None:
+            inclusion_keywords = [
+                "variant",
+                "variants",
+                "rare disease",
+                "rare variant",
+                "rare variants",
+                "monogenic",
+                "monogenicity",
+                "monoallelic",
+                "syndromic",
+                "inherited",
+                "pathogenic",
+                "benign",
+                "inherited cancer",
+            ]
 
-                # INCLUSION PRINCIPLES
-                # Include papers that have these terms in the title
-                if (
-                    "variant"
-                    or "variants"
-                    or "rare disease"
-                    or "rare variant"
-                    or "rare variants"
-                    or "monogenic"
-                    or "monogenicity"
-                    or "monoallelic"
-                    or "syndromic"
-                    or "inherited"
-                    or "pathogenic"
-                    or "benign"
-                    or "inherited cancer" in paper_title.lower()
-                ):
-                    rare_disease_papers.add(paper)
-                # If not in the title, check the abstract
-                elif (
-                    "variant"
-                    or "variants"
-                    or "rare disease"
-                    or "rare variant"
-                    or "rare variants"
-                    or "monogenic"
-                    or "monogenicity"
-                    or "monoallelic"
-                    or "syndromic"
-                    or "inherited"
-                    or "pathogenic"
-                    or "benign"
-                    or "inherited cancer" in paper_abstract.lower()
-                ):
-                    rare_disease_papers.add(paper)
+            exclusion_keywords = [
+                "digenic",
+                "familial",
+                "structural variant",
+                "somatic",
+                "somatic cancer",
+                "cancer",
+            ]
 
-                # EXCLUSION PRINCIPLES
-                # Exclude papers that have these terms in the title.
-                elif (
-                    "digenic"
-                    or "familial"
-                    or "structural variant"
-                    or "somatic"
-                    or "somatic cancer"
-                    or "cancer" in paper_title.lower()
-                ):
-                    non_rare_disease_papers.add(paper)
-                # If not in the title, check the abstract
-                elif (
-                    "digenic"
-                    or "familial"
-                    or "structural variant"
-                    or "somatic"
-                    or "somatic cancer"
-                    or "cancer" in paper_abstract.lower()
-                ):
-                    non_rare_disease_papers.add(paper)
-                else:
-                    other_papers.add(paper)
+            if paper_title is not None and any(keyword in paper_title.lower() for keyword in inclusion_keywords):
+                rare_disease_papers.add(paper)
+            elif paper_abstract is not None and any(
+                keyword in paper_abstract.lower() for keyword in inclusion_keywords
+            ):
+                rare_disease_papers.add(paper)
+            elif paper_title is not None and any(keyword in paper_title.lower() for keyword in exclusion_keywords):
+                non_rare_disease_papers.add(paper)
+            elif paper_abstract is not None and any(
+                keyword in paper_abstract.lower() for keyword in exclusion_keywords
+            ):
+                non_rare_disease_papers.add(paper)
+            else:
+                other_papers.add(paper)
 
-                # Exclude papers that are not written in English by scanning the title or abstract
-                # TODO: Implement this
+            # Exclude papers that are not written in English by scanning the title or abstract
+            # TODO: Implement this
 
-                # Exclude papers that only describe animal models and do not have human data
-                # TODO: Implement this
+            # Exclude papers that only describe animal models and do not have human data
+            # TODO: Implement this
 
         print("Rare Disease Papers: ", len(rare_disease_papers))
         print("Non-Rare Disease Papers: ", len(non_rare_disease_papers))
         print("Other Papers: ", len(other_papers))
 
         # Check if rare_disease_papers is empty or if non_rare_disease_papers is empty
+        cnt_r_d_p = 1
         if len(rare_disease_papers) == 0:
             # print("No rare disease papers found.")
+            cnt_r_d_p = 0
             rare_disease_papers = Set[Paper]
         if len(non_rare_disease_papers) == 0:
             # print("No non-rare disease papers found.")
             non_rare_disease_papers = Set[Paper]
 
-        return rare_disease_papers, non_rare_disease_papers, other_papers
+        return rare_disease_papers, cnt_r_d_p, non_rare_disease_papers, other_papers

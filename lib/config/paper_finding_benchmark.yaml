@@ -26,10 +26,24 @@ queries:
   di_factory: lib.evagg.types.QueryIterator
   variants:
     - "EXOC2:something" # note R46C is a variant I made up.
+    #- "TP53:something"
+    - "RHOH:something"
+    - "RNASEH1:something"
+    - "DNAJC7:something"
+    - "PTCD3:something"
+    - "ZNF423:something"
+    - "OTUD7A:something"
+    - "PRPH:something"
+    - "BAZ2B:something"
+    - "NDUFA2:something"
+    - "TOP2B:something"
+    - "HYAL1:something"
+    - "FOXE3:something"
+    - "AHCY:something"
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
-  max_papers: 20 # limit to 10 papers
+  max_papers: 50 # limit to 10 papers
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields:
