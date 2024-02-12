@@ -27,9 +27,9 @@ queries:
   variants:
     - "EXOC2:something" # note R46C is a variant I made up.
 library:
-  di_factory: lib.evagg.RemoteFileLibrary
+  di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
-  max_papers: 10 # limit to 10 papers
+  max_papers: 20 # limit to 10 papers
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields:
@@ -37,9 +37,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
-    - phenotype
-    - zygosity
-    - variant_inheritance
+
   # llm_client:
   #   di_factory: lib.evagg.llm.openai.OpenAIClient
   #   config:
