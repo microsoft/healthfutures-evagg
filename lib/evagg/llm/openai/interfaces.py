@@ -59,12 +59,12 @@ class IOpenAIClient(Protocol):
         """Get embeddings for the given inputs."""
         ...
 
-    def get_prompt_result(
+    def get_prompt_response(
         self,
         user_prompt_file: str,
         system_prompt: Optional[str],
         params: Optional[Dict[str, str]] = None,
         settings: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """Get the result of a prompt."""
+        """Get the response from a prompt."""
         ...

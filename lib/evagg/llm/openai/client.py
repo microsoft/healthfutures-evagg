@@ -96,18 +96,14 @@ class OpenAIClient(IOpenAIClient):
         start_ts = time.time()
         settings = self._clean_completion_settings(settings)
         completion = self._client.chat.completions.create(messages=messages, **settings)  # type: ignore
-        result = completion.choices[0].message.content
-        logger.info(f"Chat completion took {(time.time() - start_ts):.2f} seconds.")
-        logger.log(
-            PROMPT,
-            "Chat complete.",
-            extra={
-                "prompt_settings": settings,
-                "prompt_text": "\n".join([str(m["content"]) for m in messages]),
-                "prompt_result": result,
-            },
-        )
-        return result
+        response = completion.choices[0].message.content
+        prompt_log = {
+            "prompt_settings": settings,
+            "prompt_text": "\n".join([str(m["content"]) for m in messages]),
+            "prompt_response": response,
+        }
+        logger.log(PROMPT, f"Chat complete in {(time.time() - start_ts):.2f} seconds.", extra=prompt_log)
+        return response
 
     # TODO, return type?
     def _completion_create(self, settings: Dict[str, Any]) -> Any:
@@ -154,7 +150,7 @@ class OpenAIClient(IOpenAIClient):
 
         return self.run(prompt, settings)
 
-    def get_prompt_result(
+    def get_prompt_response(
         self,
         user_prompt_file: str,
         system_prompt: Optional[str],
@@ -179,8 +175,8 @@ class OpenAIClient(IOpenAIClient):
             **(settings or {}),
         }
 
-        result = self._generate_completion(messages, settings)
-        return result or ""
+        response = self._generate_completion(messages, settings)
+        return response or ""
 
     def chat(
         self,
