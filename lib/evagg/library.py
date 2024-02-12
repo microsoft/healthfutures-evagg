@@ -139,10 +139,11 @@ class RemoteFileLibrary(IGetPapers):
         term = next(iter(query.terms())).gene
         paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
+        print("!papers: ", papers)
         return papers
 
 
-class filterFileLibrary(IGetPapers):
+class RareDiseaseFileLibrary(IGetPapers):
     # reimplement search from RemoteFileLibrary
     # paper_client.search
     # filer from that
