@@ -179,14 +179,15 @@ class RareDiseaseFileLibrary(IGetPapers):
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
 
         # Call private function to filter for rare disease papers
-        rare_disease_papers, non_rare_disease_papers = self._filter_rare_disease_papers(papers)
+        rare_disease_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(papers)
 
-        # Substract non_rare_disease_papers and rare_disease_papers from papers
-        # other_papers = papers - rare_disease_papers - non_rare_disease_papers
-        # print(other_papers)
+        # 
 
         return papers
 
+    # private function to compare 
+    def _compare_truth:
+    
     def _filter_rare_disease_papers(self, papers: Set[Paper]):
         """Filter papers to only include those that are related to rare diseases.
         Args:
