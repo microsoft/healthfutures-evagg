@@ -4,7 +4,7 @@ import logging
 import os
 from collections import defaultdict
 from functools import cache
-from typing import Dict, Sequence, Set
+from typing import Dict, List, Sequence, Set
 
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import IPaperQuery, Paper, Variant
@@ -126,20 +126,16 @@ class RemoteFileLibrary(IGetPapers):
 
     def search(self, query: IPaperQuery) -> Set[Paper]:
         """Search for papers based on the given query.
-
         Args:
             query (IPaperQuery): The query to search for.
-
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
         if len(query.terms()) > 1:
             raise NotImplementedError("Multiple term extraction not yet implemented.")
-
         term = next(iter(query.terms())).gene
         paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
-        print("!papers: ", papers)
         return papers
 
 
@@ -163,14 +159,125 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     def search(self, query: IPaperQuery) -> Set[Paper]:
         """Search for papers based on the given query.
+
         Args:
             query (IPaperQuery): The query to search for.
+
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
         if len(query.terms()) > 1:
             raise NotImplementedError("Multiple term extraction not yet implemented.")
+
+        # Get gene term
         term = next(iter(query.terms())).gene
+
+        # Find paper IDs
         paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
+
+        # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
+
+        # Call private function to filter for rare disease papers
+        rare_disease_papers, non_rare_disease_papers = self._filter_rare_disease_papers(papers)
+
+        # Substract non_rare_disease_papers and rare_disease_papers from papers
+        # other_papers = papers - rare_disease_papers - non_rare_disease_papers
+        # print(other_papers)
+
         return papers
+
+    def _filter_rare_disease_papers(self, papers: Set[Paper]):
+        """Filter papers to only include those that are related to rare diseases.
+        Args:
+            papers (Set[Paper]): The set of papers to filter.
+        Returns:
+            Set[Paper]: The set of papers that are related to rare diseases.
+        """
+
+        rare_disease_papers = set()
+        non_rare_disease_papers = set()
+        other_papers = set()
+
+        for paper in papers:
+            paper_title = paper.props.get("title", "Unknown")
+            print("paper_title", paper_title)
+
+            if paper_title is not None:
+                paper_abstract = paper.props.get("abstract", "Unknown")
+
+                # INCLUSION PRINCIPLES
+                # Include papers that have these terms in the title
+                if (
+                    "variant"
+                    or "variants"
+                    or "rare disease"
+                    or "rare variant"
+                    or "rare variants"
+                    or "monogenic"
+                    or "monogenicity"
+                    or "monoallelic"
+                    or "syndromic"
+                    or "inherited"
+                    or "pathogenic"
+                    or "benign"
+                    or "inherited cancer" in paper_title.lower()
+                ):
+                    rare_disease_papers.add(paper)
+                # If not in the title, check the abstract
+                elif (
+                    "variant"
+                    or "variants"
+                    or "rare disease"
+                    or "rare variant"
+                    or "rare variants"
+                    or "monogenic"
+                    or "monogenicity"
+                    or "monoallelic"
+                    or "syndromic"
+                    or "inherited"
+                    or "pathogenic"
+                    or "benign"
+                    or "inherited cancer" in paper_abstract.lower()
+                ):
+                    rare_disease_papers.add(paper)
+
+                # EXCLUSION PRINCIPLES
+                # Exclude papers that have these terms in the title.
+                elif (
+                    "digenic"
+                    or "familial"
+                    or "structural variant"
+                    or "somatic"
+                    or "somatic cancer"
+                    or "cancer" in paper_title.lower()
+                ):
+                    non_rare_disease_papers.add(paper)
+                # If not in the title, check the abstract
+                elif (
+                    "digenic"
+                    or "familial"
+                    or "structural variant"
+                    or "somatic"
+                    or "somatic cancer"
+                    or "cancer" in paper_abstract.lower()
+                ):
+                    non_rare_disease_papers.add(paper)
+                else:
+                    other_papers.add(paper)
+
+                # Exclude papers that are not written in English by scanning the title or abstract
+                # TODO: Implement this
+
+                # Exclude papers that only describe animal models and do not have human data
+                # TODO: Implement this
+
+        # Check if rare_disease_papers is empty or if non_rare_disease_papers is empty
+        if len(rare_disease_papers) == 0:
+            print("No rare disease papers found.")
+            rare_disease_papers = Set[Paper]
+        if len(non_rare_disease_papers) == 0:
+            print("No non-rare disease papers found.")
+            non_rare_disease_papers = Set[Paper]
+
+        return rare_disease_papers, non_rare_disease_papers, other_papers

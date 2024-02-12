@@ -36,4 +36,4 @@ class SimpleContentExtractor(IExtractFields):
 
     def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
         # Dummy implementation that returns a single variant with a static set of fields.
-        return [{field: self._field_to_value(field) for field in self._fields}]
+        return [{field: self._field_to_value(field, paper) for field in self._fields}]
