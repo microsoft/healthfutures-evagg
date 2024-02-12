@@ -1,0 +1,53 @@
+# Services
+log:
+  di_factory: lib.evagg.svc.init_logger
+  # level: "DEBUG"
+  # exclude_modules: [lib.evagg.svc.*]
+  # include_modules: [lib.evagg.svc.web]
+  # exclude_defaults: true
+
+ncbi_client: 
+  di_factory: lib.evagg.ref.NcbiLookupClient
+  web_client:
+    # di_factory: lib.evagg.svc.RequestsWebContentClient
+    di_factory: lib.evagg.svc.CosmosCachingWebClient
+    cache_settings:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "EVAGG_CONTENT_CACHE_"
+    web_settings:
+      max_retries: 3
+  settings:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "NCBI_EUTILS_"
+
+# Application
+di_factory: lib.evagg.SynchronousLocalApp
+queries:
+  di_factory: lib.evagg.types.QueryIterator
+  variants:
+    - "EXOC2:something" # note R46C is a variant I made up.
+library:
+  di_factory: lib.evagg.RemoteFileLibrary
+  paper_client: "{{ncbi_client}}"
+  max_papers: 10 # limit to 10 papers
+extractor:
+  di_factory: lib.evagg.SimpleContentExtractor
+  fields:
+    - gene
+    - paper_id
+    - hgvs_c
+    - hgvs_p
+    - phenotype
+    - zygosity
+    - variant_inheritance
+  # llm_client:
+  #   di_factory: lib.evagg.llm.openai.OpenAIClient
+  #   config:
+  #     di_factory: lib.evagg.llm.openai.OpenAIDotEnvConfig
+  # mention_finder:
+  #   di_factory: lib.evagg.content.VariantMentionFinder
+  #   entity_annotator: "{{ncbi_client}}"
+  #   gene_lookup_client: "{{ncbi_client}}"
+  # variant_lookup_client: "{{ncbi_client}}"
+writer:
+  di_factory: lib.evagg.TableOutputWriter
