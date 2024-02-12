@@ -157,7 +157,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         self._paper_client = paper_client
         self._max_papers = max_papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def search(self, query: IPaperQuery):
         """Search for papers based on the given query.
 
         Args:
@@ -171,6 +171,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Get gene term
         term = next(iter(query.terms())).gene
+        print(term)
 
         # Find paper IDs
         paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
@@ -181,13 +182,176 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Call private function to filter for rare disease papers
         rare_disease_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(papers)
 
-        # 
+        # Compare the ground truth papers PMIDs to the paper PMIDs that were found
+        n_corr, n_miss, n_extra = self._compare_manual_ground_truth(term, rare_disease_papers)
+        pn_corr, pn_miss, pn_extra = self._compare_pubmed_ground_truth(term, papers)
 
-        return papers
+        return rare_disease_papers
 
-    # private function to compare 
-    def _compare_truth:
-    
+    def _get_ground_truth_gene(self, gene: str):
+        # Ground truth papers
+        ground_truth_papers_pmids = {
+            "EXOC2": ["32639540"],
+            "RHOH": ["22850876"],
+            "RNASEH1": ["30340744", "28508084", "31258551", "26094573", "33396418"],
+            "DNAJC7": ["31768050", "32897108", "33193563", "34233860", "35039179", "35456894", "37870677", "38112783"],
+            "PTCD3": ["36450274", "30706245", "30607703"],
+            "ZNF423": ["32925911", "33531950", "33270637", "22863007"],
+            "OTUD7A": ["33381903", "31997314"],
+            "PRPH": ["15322088", "15446584", "20363051", "25299611", "26742954", "17045786", "30992453", "35714755"],
+            "BAZ2B": [
+                "31999386",
+                "25363768",
+                "28135719",
+                "28554332",
+                "28867142",
+                "31398340",
+                "31981491",
+                "33057194",
+                "37872713",
+            ],
+            "NDUFA2": ["18513682", "27159321", "28857146", "32154054"],
+            "TOP2B": ["31198993", "31409799", "31953910", "35063500", "36450898", "37068767", "32128574"],
+            "HYAL1": ["10339581", "21559944", "26322170"],
+            "FOXE3": [
+                "26854927",
+                "26995144",
+                "28418495",
+                "29136273",
+                "29314435",
+                "29878917",
+                "30078984",
+                "31884615",
+                "32224865",
+                "32436650",
+                "32499604",
+                "32976546",
+                "34046667",
+                "35051625",
+                "35170016",
+                "36192130",
+                "37628625",
+                "37758467",
+            ],
+            "AHCY": [
+                "19177456",
+                "20852937",
+                "22959829",
+                "26095522",
+                "26527160",
+                "26974671",
+                "28779239",
+                "30121674",
+                "31957987",
+                "32689861",
+                "33869213",
+                "35789945",
+                "38052822",
+                "15024124",
+                "16736098",
+                "27848944",
+                "35463910",
+            ],
+        }
+
+        if gene in ground_truth_papers_pmids.keys():
+            return ground_truth_papers_pmids[gene]
+        else:
+            return None
+
+    # private function to compare the ground truth papers PMIDs to the papers that were found
+    def _compare_manual_ground_truth(self, gene, r_d_papers) -> List[int]:
+        """Compare the papers that were found to the ground truth papers.
+        Args:
+            paper (Paper): The paper to compare.
+        Returns:
+            number of correct papers (i.e. the number that match the ground truth)
+            number of missed papers (i.e. the number that are in the ground truth but not in the papers that were found)
+            number of extra papers (i.e. the number that are in the papers that were found but not in the ground truth)
+        """
+        n_correct = 0
+        n_missed = 0
+        n_extra = 0
+
+        # Get all the PMIDs from all of the papers
+        r_d_pmids = [paper.props.get("pmid", "Unknown") for paper in r_d_papers]
+        # print("R_D_PMIDS ", r_d_pmids)
+
+        ground_truth_papers_pmids = self._get_ground_truth_gene(gene)
+
+        # Keep track of the correct and extra PMIDs to subtract from the ground truth papers PMIDs
+        counted_pmids = []
+
+        # For the gene, get the ground truth PMIDs from ground_truth_papers_pmids and compare the PMIDS to the PMIDS from the papers that were found
+        # For any PMIDs that match, increment n_correct
+        if ground_truth_papers_pmids is not None:
+            for pmid in r_d_pmids:
+                if pmid in ground_truth_papers_pmids:
+                    n_correct += 1
+                    counted_pmids.append(pmid)
+                else:
+                    n_extra += 1
+                    counted_pmids.append(pmid)
+
+            # For any PMIDs in the ground truth that are not in the papers that were found, increment n_missed, use counted_pmids to subtract from the ground truth papers PMIDs
+            for pmid in ground_truth_papers_pmids:
+                if pmid not in counted_pmids:
+                    n_missed += 1
+
+        else:
+            n_correct = 0
+            n_missed = 0
+            n_extra = 0
+
+        print(f"Tool against Manual Ground Truth - Correct: {n_correct}, Missed: {n_missed}, Extra: {n_extra}")
+        return [n_correct, n_missed, n_extra]
+
+    # private function to compare the ground truth papers PMIDs to the papers that were found
+    def _compare_pubmed_ground_truth(self, gene, all_pubmed_papers) -> List[int]:
+        """Compare the papers that were found to the ground truth papers.
+        Args:
+            paper (Paper): The paper to compare.
+        Returns:
+            number of correct papers (i.e. the number that match the ground truth)
+            number of missed papers (i.e. the number that are in the ground truth but not in the papers that were found)
+            number of extra papers (i.e. the number that are in the papers that were found but not in the ground truth)
+        """
+        n_correct = 0
+        n_missed = 0
+        n_extra = 0
+
+        p_pmids = [paper.props.get("pmid", "Unknown") for paper in all_pubmed_papers]
+        # print("P_PMIDS ", p_pmids)
+
+        ground_truth_papers_pmids = self._get_ground_truth_gene(gene)
+
+        # Keep track of the correct and extra PMIDs to subtract from the ground truth papers PMIDs
+        counted_pmids = []
+
+        # For the gene, get the ground truth PMIDs from ground_truth_papers_PMIDs and compare the PMIDS to the PMIDS from the papers that were found
+        # For any PMIDs that match, increment n_correct
+        if ground_truth_papers_pmids is not None:
+            for pmid in p_pmids:
+                if pmid in ground_truth_papers_pmids:
+                    n_correct += 1
+                    counted_pmids.append(pmid)
+                else:
+                    n_extra += 1
+                    counted_pmids.append(pmid)
+
+            # For any PMIDs in the ground truth that are not in the papers that were found, increment n_missed, use counted_pmids to subtract from the ground truth papers PMIDs
+            for pmid in ground_truth_papers_pmids:
+                if pmid not in counted_pmids:
+                    n_missed += 1
+
+        else:
+            n_correct = 0
+            n_missed = 0
+            n_extra = 0
+
+        print(f"PubMed against Manual Ground Truth - Correct: {n_correct}, Missed: {n_missed}, Extra: {n_extra}")
+        return [n_correct, n_missed, n_extra]
+
     def _filter_rare_disease_papers(self, papers: Set[Paper]):
         """Filter papers to only include those that are related to rare diseases.
         Args:
@@ -202,10 +366,10 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         for paper in papers:
             paper_title = paper.props.get("title", "Unknown")
-            print("paper_title", paper_title)
+            paper_abstract = paper.props.get("abstract", "Unknown")
+            # print("paper_title", paper_title)
 
-            if paper_title is not None:
-                paper_abstract = paper.props.get("abstract", "Unknown")
+            if paper_title or paper_abstract is not None:
 
                 # INCLUSION PRINCIPLES
                 # Include papers that have these terms in the title
@@ -273,12 +437,16 @@ class RareDiseaseFileLibrary(IGetPapers):
                 # Exclude papers that only describe animal models and do not have human data
                 # TODO: Implement this
 
+        print("Rare Disease Papers: ", len(rare_disease_papers))
+        print("Non-Rare Disease Papers: ", len(non_rare_disease_papers))
+        print("Other Papers: ", len(other_papers))
+
         # Check if rare_disease_papers is empty or if non_rare_disease_papers is empty
         if len(rare_disease_papers) == 0:
-            print("No rare disease papers found.")
+            # print("No rare disease papers found.")
             rare_disease_papers = Set[Paper]
         if len(non_rare_disease_papers) == 0:
-            print("No non-rare disease papers found.")
+            # print("No non-rare disease papers found.")
             non_rare_disease_papers = Set[Paper]
 
         return rare_disease_papers, non_rare_disease_papers, other_papers
