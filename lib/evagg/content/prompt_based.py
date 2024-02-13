@@ -103,7 +103,7 @@ class PromptBasedContentExtractor(IExtractFields):
                 else:
                     params = {"passage": paper_excerpts, "variant": variant_id, "gene": gene_symbol}
 
-                    response = self._llm_client.get_prompt_response(
+                    response = self._llm_client.prompt(
                         user_prompt_file=self._PROMPTS[field],
                         system_prompt="Extract field",
                         params=params,
