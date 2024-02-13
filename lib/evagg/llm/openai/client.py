@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -7,17 +6,16 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import openai
 import retry
-from dotenv import load_dotenv
 from openai import AzureOpenAI, OpenAI
+from openai.types import CreateEmbeddingResponse
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from lib.config import PydanticYamlModel
 from lib.evagg.svc.logging import PROMPT
 
-from .interfaces import IOpenAIClient, OpenAIClientEmbeddings
+from .interfaces import IPromptClient
 
 ChatCompletionMessages = List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]]
-
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +26,7 @@ class OpenAIConfig(PydanticYamlModel):
     api_version: str
 
 
-class OpenAIClient(IOpenAIClient):
+class OpenAIClient(IPromptClient):
     _config: OpenAIConfig
 
     def __init__(self, config: Dict[str, Any]) -> None:
@@ -54,19 +52,20 @@ class OpenAIClient(IOpenAIClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    def _generate_completion(self, messages: ChatCompletionMessages, settings: Dict[str, Any]) -> Optional[str]:
+    def _generate_completion(self, messages: ChatCompletionMessages, settings: Dict[str, Any]) -> str:
         start_ts = time.time()
         prompt_key = settings.pop("prompt_key", "prompt")
-        settings = self._clean_completion_settings(settings)
         completion = self._client.chat.completions.create(messages=messages, **settings)  # type: ignore
-        response = completion.choices[0].message.content
+        response = completion.choices[0].message.content or ""
+        elapsed = time.time() - start_ts
+
         prompt_log = {
+            "prompt_key": prompt_key,
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m["content"]) for m in messages]),
             "prompt_response": response,
-            "prompt_key": prompt_key,
         }
-        logger.log(PROMPT, f"Chat complete in {(time.time() - start_ts):.2f} seconds.", extra=prompt_log)
+        logger.log(PROMPT, f"Chat complete in {elapsed:.2f} seconds.", extra=prompt_log)
         return response
 
     def prompt(
@@ -74,7 +73,7 @@ class OpenAIClient(IOpenAIClient):
         user_prompt: str,
         system_prompt: Optional[str],
         params: Optional[Dict[str, str]] = None,
-        settings: Optional[Dict[str, Any]] = None,
+        prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Get the response from a prompt."""
         for key, value in params.items() if params else {}:
@@ -90,98 +89,46 @@ class OpenAIClient(IOpenAIClient):
             "presence_penalty": 0,
             "temperature": 0.25,
             "model": self._config.deployment,
-            **(settings or {}),
+            **(prompt_settings or {}),
         }
 
-        response = self._generate_completion(messages, settings)
-        return response or ""
+        return self._generate_completion(messages, settings)
 
     def prompt_file(
         self,
         user_prompt_file: str,
         system_prompt: Optional[str],
         params: Optional[Dict[str, str]] = None,
-        settings: Optional[Dict[str, Any]] = None,
+        prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         user_prompt = self._load_prompt_file(user_prompt_file)
-        return self.prompt(user_prompt, system_prompt, params, settings)
+        return self.prompt(user_prompt, system_prompt, params, prompt_settings)
 
-    def embeddings(self, inputs: List[str], settings: Optional[Dict[str, Any]] = None) -> OpenAIClientEmbeddings:
-        settings = {
-            "model": "text-embedding-ada-002",
-            **(settings or {}),
-        }
+    def embeddings(
+        self, inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, List[float]]:
+        settings = {"model": "text-embedding-ada-002", **(embedding_settings or {})}
+
         start_overall = time.time()
-        results = []
-
-        # clean up before executing
-        settings = self._clean_embedding_settings(settings)
-
-        # use threadpool to call _run_one_embedding
         with ThreadPoolExecutor(max_workers=20) as executor:
-            futures = [executor.submit(_run_single_embedding, self._client, input, settings) for input in inputs]
-            results = [f.result() for f in futures]
-
-        logger.info(f"Overall time for {len(inputs)} embeddings: {time.time() - start_overall}")
+            results = executor.map(lambda input: _run_single_embedding(self._client, input, settings), inputs)
+        elapsed = time.time() - start_overall
 
         embeddings = {}
         tokens_used = 0
-        model = ""
+        for input, embedding, token_count in results:
+            embeddings[input] = embedding
+            tokens_used += token_count
 
-        for input, result in results:
-            vector = result.data[0].embedding
-            tokens_used += result.usage.prompt_tokens
-            model = result.model
-            embeddings[input] = vector
-
-        # HACK: this is because embeddings have a different data model than the other endpoints
-        merged_result = {
-            "usage": {"prompt_tokens": tokens_used, "completion_tokens": 0},
-            "model": model,
-        }
-        return OpenAIClientEmbeddings(embeddings=embeddings, response=merged_result)
-
-    def _clean_completion_settings(self, settings: Dict[str, Any]) -> Dict[str, Any]:
-        # make a copy
-        settings = dict(settings)
-
-        # if stop tokens are specified, remove any blank ones
-        if "stop" in settings:
-            stop_tokens = settings["stop"]
-
-            # wrap in list if not already
-            if isinstance(stop_tokens, str):
-                stop_tokens = [stop_tokens]
-
-            if not isinstance(stop_tokens, list):
-                raise ValueError(f"Stop tokens must be a list but is: {type(stop_tokens)}")
-
-            settings["stop"] = [s for s in stop_tokens if s]
-
-            # if there are no stop tokens, remove the key entirely
-            if not settings["stop"]:
-                del settings["stop"]
-
-        return settings
-
-    def _clean_embedding_settings(self, settings: Dict[str, Any]) -> Dict[str, Any]:
-        # make a copy
-        settings = dict(settings)
-
-        return settings
+        logger.info(f"Total of {len(inputs)} embeddings produced in {elapsed:.2f} seconds using {tokens_used} tokens.")
+        return embeddings
 
 
-# TODO, return type,
 @retry.retry(openai.RateLimitError, tries=3, delay=5, backoff=2)
 def _run_single_embedding(
     openai_client: OpenAI,
     input: str,
     settings: Any,
-) -> Tuple[str, Any]:
-    start_ts = time.time()
-
-    result = openai_client.embeddings.create(input=[input], **settings)  # type: ignore
-
-    logger.info(f"Embedding took {time.time() - start_ts} seconds")
-
-    return (input, result)
+) -> Tuple[str, List[float], int]:
+    result: CreateEmbeddingResponse = openai_client.embeddings.create(input=[input], **settings)
+    return (input, result.data[0].embedding, result.usage.prompt_tokens)
