@@ -28,5 +28,28 @@
         "_etag": "\"bf00f8a3-0000-0100-0000-65c114150000\"",
         "_attachments": "attachments/",
         "_ts": 1707152405
-    }
-}
+    },
+    "mutalyzer.nl|api|back_translate|NM_000108.4|p.R263H":
+    {
+        "id": "mutalyzer.nl|api|back_translate|NM_000108.4|p.R263H",
+        "url": "https://mutalyzer.nl/api/back_translate/NM_000108.4:p.R263H",
+        "status_code": 200,
+        "content": "[\"NM_000108.4:c.(788G>A)\"]\n",
+        "_rid": "B1NZAKVoI0wiAAAAAAAAAA==",
+        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0wiAAAAAAAAAA==/",
+        "_etag": "\"280070ec-0000-0100-0000-65c2cb910000\"",
+        "_attachments": "attachments/",
+        "_ts": 1707264913
+    },
+    "mutalyzer.nl|api|back_translate|NM_000108.4|p.R666H":
+    {
+        "id": "mutalyzer.nl|api|back_translate|NM_000108.4|p.R666H",
+        "url": "https://mutalyzer.nl/api/back_translate/NM_000108.4:p.R666H",
+        "status_code": 422,
+        "content": "[]\n",
+        "_rid": "B1NZAKVoI0wiAAAAAAAAAA==",
+        "_self": "dbs/B1NZAA==/colls/B1NZAKVoI0w=/docs/B1NZAKVoI0wiAAAAAAAAAA==/",
+        "_etag": "\"280070ec-0000-0100-0000-65c2cb910000\"",
+        "_attachments": "attachments/",
+        "_ts": 1707264913
+    }}
