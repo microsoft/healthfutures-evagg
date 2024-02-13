@@ -2,7 +2,7 @@ from typing import Any, Dict, Sequence, Tuple
 
 from lib.evagg.content import VariantMentionFinder
 from lib.evagg.ref import IAnnotateEntities, IGeneLookupClient
-from lib.evagg.types import Paper
+from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 GENE_ID_PAIRS = {
     "COQ2": 27235,
@@ -25,6 +25,7 @@ class MockAnnotator(IAnnotateEntities):
                             "infons": {
                                 "type": "Variant",
                                 "identifier": variant,
+                                "name": variant,
                                 "gene_id": gene_id,
                             }
                         }
@@ -44,13 +45,22 @@ class MockGeneLookupClient(IGeneLookupClient):
         return {symbol: gene_id for symbol, gene_id in self._gene_id_variant_tuples if symbol in symbols}
 
 
+class MockVariantFactory(ICreateVariants):
+    def __init__(self) -> None:
+        pass
+
+    def try_parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
+        return HGVSVariant(text_desc, gene_symbol, "transcript", True, True)
+
+
 def test_find_single_mention_single_query() -> None:
     gene_symbol = list(GENE_ID_PAIRS.keys())[0]
     gene_id = GENE_ID_PAIRS[gene_symbol]
 
     mock_annotator = MockAnnotator([(gene_id, "var1")])
     mock_gene_lookup_client = MockGeneLookupClient([(gene_symbol, gene_id)])
-    finder = VariantMentionFinder(mock_annotator, mock_gene_lookup_client)
+    mock_variant_factory = MockVariantFactory()
+    finder = VariantMentionFinder(mock_annotator, mock_gene_lookup_client, mock_variant_factory)
 
     paper = Paper(id="123")
 
@@ -58,11 +68,12 @@ def test_find_single_mention_single_query() -> None:
 
     # There should be one mention, corresponding to var1.
     assert len(mentions) == 1
-    assert "var1" in mentions
+    vkey = HGVSVariant("var1", gene_symbol, "transcript", True, True)
+    assert vkey in mentions
     # This mention should reference one passage.
-    assert len(mentions["var1"]) == 1
-    assert mentions["var1"][0]["gene_id"] == gene_id
-    assert mentions["var1"][0]["gene_symbol"] == gene_symbol
+    assert len(mentions[vkey]) == 1
+    assert mentions[vkey][0]["gene_id"] == gene_id
+    assert mentions[vkey][0]["gene_symbol"] == gene_symbol
 
 
 def test_find_multiple_mentions_single_query() -> None:
@@ -71,7 +82,8 @@ def test_find_multiple_mentions_single_query() -> None:
 
     mock_annotator = MockAnnotator([(gene_id, "var1"), (gene_id, "var2")])
     mock_gene_lookup_client = MockGeneLookupClient([(gene_symbol, gene_id)])
-    finder = VariantMentionFinder(mock_annotator, mock_gene_lookup_client)
+    mock_variant_factory = MockVariantFactory()
+    finder = VariantMentionFinder(mock_annotator, mock_gene_lookup_client, mock_variant_factory)
 
     paper = Paper(id="123")
 
@@ -79,13 +91,15 @@ def test_find_multiple_mentions_single_query() -> None:
 
     # There should be two mentions, one corresponding to var1, another corresponding to var2.
     assert len(mentions) == 2
-    assert "var1" in mentions
-    assert "var2" in mentions
+    vkey1 = HGVSVariant("var1", gene_symbol, "transcript", True, True)
+    vkey2 = HGVSVariant("var2", gene_symbol, "transcript", True, True)
+    assert vkey1 in mentions
+    assert vkey2 in mentions
     # Each mention should reference one passage.
-    for varname in ["var1", "var2"]:
-        assert len(mentions[varname]) == 1
-        assert mentions[varname][0]["gene_id"] == gene_id
-        assert mentions[varname][0]["gene_symbol"] == gene_symbol
+    for variant in [vkey1, vkey2]:
+        assert len(mentions[variant]) == 1
+        assert mentions[variant][0]["gene_id"] == gene_id
+        assert mentions[variant][0]["gene_symbol"] == gene_symbol
 
 
 def test_find_no_mentions() -> None:
@@ -97,7 +111,8 @@ def test_find_no_mentions() -> None:
 
     mock_annotator = MockAnnotator([(gene_id, "var1")])
     mock_gene_lookup_client = MockGeneLookupClient([(gene_symbol, gene_id)])
-    finder = VariantMentionFinder(mock_annotator, mock_gene_lookup_client)
+    mock_variant_factory = MockVariantFactory()
+    finder = VariantMentionFinder(mock_annotator, mock_gene_lookup_client, mock_variant_factory)
 
     paper = Paper(id="123")
 
