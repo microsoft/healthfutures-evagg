@@ -78,11 +78,15 @@ class LoggingFormatter(logging.Formatter):
 
     @classmethod
     def format_prompt(cls, record: logging.LogRecord) -> str:
+        prompt_key = record.__dict__.get("prompt_key", "prompt")
+        prompt_header = f" {prompt_key} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
         settings = record.__dict__.get("prompt_settings", {})
         prompt = record.__dict__.get("prompt_text", "")
         response = record.__dict__.get("prompt_response", "")
         return (
-            f"#{' SETTINGS '.ljust(80, '#')}\n"
+            f"# {'/' * 79}\n"
+            + f"#{prompt_header.ljust(80, '/')}\n"
+            + f"#{' SETTINGS '.ljust(80, '#')}\n"
             + f"{'\n'.join(f'{k}: {v}' for k, v in settings.items())}\n"
             + f"#{' PROMPT '.ljust(80, '#')}\n"
             + f"{prompt}\n"
@@ -103,7 +107,8 @@ class PromptFileHandler(logging.Handler):
             os.makedirs(self._log_dir, exist_ok=True)
 
     def emit(self, record: logging.LogRecord) -> None:
-        with open(f"{self._log_dir}/{record.name}.log", "a") as f:
+        file_name = record.__dict__.get("prompt_key", "prompt")
+        with open(f"{self._log_dir}/{file_name}.log", "a") as f:
             f.write(LoggingFormatter.format_prompt(record) + "\n")
 
 
@@ -157,12 +162,8 @@ class LogProvider:
         exclusions = set(DEFAULT_EXCLUSIONS if exclude_defaults else [])
         exclusions.update(exclude_modules or [])
         inclusions = set(include_modules or [])
-        LOGGING_CONFIG["filters"]["module_filter"].update(
-            {
-                "exclude_modules": exclusions,
-                "include_modules": inclusions,
-            }
-        )
+        LOGGING_CONFIG["filters"]["module_filter"]["exclude_modules"] = exclusions
+        LOGGING_CONFIG["filters"]["module_filter"]["include_modules"] = inclusions
 
         # Set up the global logging configuration.
         logging.config.dictConfig(LOGGING_CONFIG)
