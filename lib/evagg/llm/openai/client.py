@@ -14,7 +14,7 @@ from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUs
 from lib.config import PydanticYamlModel
 from lib.evagg.svc.logging import PROMPT
 
-from .interfaces import IOpenAIClient, OpenAIClientEmbeddings, OpenAIClientResponse
+from .interfaces import IOpenAIClient, OpenAIClientEmbeddings
 
 ChatCompletionMessages = List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]]
 
@@ -101,56 +101,12 @@ class OpenAIClient(IOpenAIClient):
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m["content"]) for m in messages]),
             "prompt_response": response,
+            # "prompt_key": 
         }
         logger.log(PROMPT, f"Chat complete in {(time.time() - start_ts):.2f} seconds.", extra=prompt_log)
         return response
 
-    # TODO, return type?
-    def _completion_create(self, settings: Dict[str, Any]) -> Any:
-        start_ts = time.time()
-        settings = self._clean_completion_settings(settings)
-        result = self._client.completions.create(**settings)  # type: ignore
-        logger.info(f"Completion took {time.time() - start_ts} seconds")
-        return result
-
-    # TODO, return type?
-    def _chat_completion_create(self, settings: Dict[str, Any]) -> Any:
-        start_ts = time.time()
-        settings = self._clean_completion_settings(settings)
-        result = self._client.chat.completions.create(**settings)  # type: ignore
-        logger.info(f"Chat completion took {time.time() - start_ts} seconds")
-        return result
-
-    def run(self, prompt: str, settings: Optional[Dict[str, Any]] = None) -> OpenAIClientResponse:
-        settings = {
-            "max_tokens": 1024,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "stop": ["</result>", "[END]", "[DONE]", "#END#"],
-            "temperature": 0.25,
-            "model": self._config.deployment,
-            **(settings or {}),
-            "prompt": prompt,
-        }
-
-        logger.debug(f"Running completion with settings: {settings}")
-        result = self._completion_create(settings)
-        output = result.choices[0].text.strip()
-        logger.debug(f"Completion output: {output}")
-
-        return OpenAIClientResponse(result=result, settings=settings, output=output)
-
-    def run_file(
-        self, prompt_file: str, params: Optional[Dict[str, str]] = None, settings: Optional[Dict[str, Any]] = None
-    ) -> OpenAIClientResponse:
-        prompt = self._load_prompt_file(prompt_file)
-        if params:
-            for key, value in params.items():
-                prompt = prompt.replace(f"{{{{${key}}}}}", value)
-
-        return self.run(prompt, settings)
-
-    def get_prompt_response(
+    def prompt(
         self,
         user_prompt_file: str,
         system_prompt: Optional[str],
@@ -178,77 +134,12 @@ class OpenAIClient(IOpenAIClient):
         response = self._generate_completion(messages, settings)
         return response or ""
 
-    def chat(
-        self,
-        messages: List[Dict[str, str]],
-        settings: Optional[Dict[str, Any]] = None,
-    ) -> OpenAIClientResponse:
-        settings = {
-            "max_tokens": 1024,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "temperature": 0.25,
-            "model": self._config.deployment,
-            **(settings or {}),
-            "messages": messages,
-        }
-
-        logger.debug(f"Running chat completion with settings: {settings}")
-        result = self._chat_completion_create(settings)
-        output = result.choices[0].message.content
-        logger.debug(f"Chat completion output: {output}")
-
-        return OpenAIClientResponse(result=result, settings=settings, output=output)
-
-    def chat_oneshot(
-        self,
-        user_prompt: str,
-        system_prompt: Optional[str] = None,
-        settings: Optional[Dict[str, Any]] = None,
-    ) -> OpenAIClientResponse:
-        messages = []
-
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-
-        messages.append({"role": "user", "content": user_prompt})
-
-        return self.chat(messages, settings)
-
-    def chat_oneshot_file(
-        self,
-        user_prompt_file: str,
-        system_prompt: Optional[str],
-        params: Optional[Dict[str, str]] = None,
-        settings: Optional[Dict[str, Any]] = None,
-    ) -> OpenAIClientResponse:
-        user_prompt = self._load_prompt_file(user_prompt_file)
-
-        if params:
-            for key, value in params.items():
-                user_prompt = user_prompt.replace(f"{{{{${key}}}}}", value)
-
-        return self.chat_oneshot(user_prompt=user_prompt, system_prompt=system_prompt, settings=settings)
-
     def embeddings(self, inputs: List[str], settings: Optional[Dict[str, Any]] = None) -> OpenAIClientEmbeddings:
-        default_settings = {
+        settings = {
             "model": "text-embedding-ada-002",
+            **(settings or {}),
         }
-
-        # merge settings
-        if settings:
-            settings = {**default_settings, **settings}
-        else:
-            settings = default_settings
-
-        return self._run_parallel_embeddings(
-            inputs=inputs,
-            settings=settings,
-        )
-
-    def _run_parallel_embeddings(self, inputs: List[str], settings: Any) -> OpenAIClientEmbeddings:
         start_overall = time.time()
-
         results = []
 
         # clean up before executing
@@ -276,10 +167,7 @@ class OpenAIClient(IOpenAIClient):
             "usage": {"prompt_tokens": tokens_used, "completion_tokens": 0},
             "model": model,
         }
-        settings["prompt"] = "\n".join(inputs)
-        response = OpenAIClientResponse(result=merged_result, settings=settings, output="")
-
-        return OpenAIClientEmbeddings(embeddings=embeddings, response=response)
+        return OpenAIClientEmbeddings(embeddings=embeddings, response=merged_result)
 
     def _clean_completion_settings(self, settings: Dict[str, Any]) -> Dict[str, Any]:
         # make a copy
