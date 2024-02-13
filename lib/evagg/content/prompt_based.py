@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Any, Dict, List, Sequence
 
-from lib.evagg.llm.openai import IOpenAIClient
+from lib.evagg.llm.openai import IPromptClient
 from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import IPaperQuery, Paper
 
@@ -24,7 +24,7 @@ class PromptBasedContentExtractor(IExtractFields):
     def __init__(
         self,
         fields: Sequence[str],
-        llm_client: IOpenAIClient,
+        llm_client: IPromptClient,
         mention_finder: IFindVariantMentions,
         variant_lookup_client: IVariantLookupClient,
     ) -> None:
@@ -107,7 +107,7 @@ class PromptBasedContentExtractor(IExtractFields):
                         user_prompt_file=self._PROMPTS[field],
                         system_prompt="Extract field",
                         params=params,
-                        settings={"prompt_key": field},
+                        prompt_settings={"prompt_key": field},
                     )
                     raw = response
                     try:
