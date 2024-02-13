@@ -8,7 +8,7 @@ from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import Paper
 
 from ..interfaces import IExtractFields
-from .interfaces import IFindVariantMentions
+from .interfaces import IFindVariantObservations, VariantObservation
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +34,12 @@ class PromptBasedContentExtractor(IExtractFields):
         self,
         fields: Sequence[str],
         llm_client: IOpenAIClient,
-        mention_finder: IFindVariantMentions,
+        observation_finder: IFindVariantObservations,
         variant_lookup_client: IVariantLookupClient,
     ) -> None:
         self._fields = fields
         self._llm_client = llm_client
-        self._mention_finder = mention_finder
+        self.observation_finder = observation_finder
         self._variant_lookup_client = variant_lookup_client
 
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
@@ -50,42 +50,47 @@ class PromptBasedContentExtractor(IExtractFields):
         if "pmcid" not in paper.props or paper.props["pmcid"] == "":
             return []
 
-        # Find all the variant mentions in the paper relating to the query.
-        variant_mentions = self._mention_finder.find_mentions(query, paper)
+        # Find all the variant observations in the paper relating to the query
+        observations = self.observation_finder.find_variant_observations(query, paper)
 
-        logger.info(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
+        logger.info(f"Found {len(observations)} topics in {paper.id}")
 
-        # For each variant/field pair, extract the appropriate content.
+        # For each variant observation/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
-        for variant in variant_mentions.keys():
-            mentions = variant_mentions[variant]
-            variant_results: Dict[str, str] = {}
+        for obs in observations:
+            variant = obs.variant
+            individual_id = obs.individual_id
 
-            logger.info(f"Extracting fields for {variant} in {paper.id}")
-
-            # Simplest thing we can think of is to just concatenate all the chunks.
-            paper_excerpts = self._excerpt_from_mentions(mentions)
-            gene_symbol = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
+            topic_content: Dict[str, str] = {}
+            logger.info(f"Extracting fields for {individual_id}:{variant} from {paper.id}")
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
                     raise ValueError(f"Unsupported field: {field}")
 
                 if field == "gene":
-                    result = gene_symbol
+                    result = variant.gene_symbol
                 elif field == "paper_id":
                     result = paper.id
                 elif field == "individual_id":
-                    result = "unknown"
+                    result = individual_id
                 elif field == "hgvs_c":
+                    # TODO, hgvs_c conversion from variant
                     result = variant.hgvs_desc
                 elif field == "hgvs_p":
+                    # TODO, hgvs_p conversion from variant
                     result = variant.hgvs_desc
                 else:
-                    # TODO, should be the original text representation of the variant from the paper. When we switch to
-                    # actual mention objects, we can fix this.
-                    params = {"passage": paper_excerpts, "variant": variant.__str__(), "gene": gene_symbol}
+                    # TODO, Use of obs.variant.gene_symbol is potentially dangerous if the paper uses a synonym
+                    # for the gene that we've normalized in the HGVSVariant. We should consider using the gene
+                    # symbol as expressed in the source text here, or HGVSVariant should include a list of synonyms
+                    # for the gene symbol.
+                    params = {
+                        "passage": "\n\n".join(obs.mentions),
+                        "variant": ",".join(obs.variant_identifiers),
+                        "gene": obs.variant.gene_symbol if obs.variant.gene_symbol else "unknown",
+                    }
 
                     response = self._llm_client.chat_oneshot_file(
                         user_prompt_file=self._PROMPTS[field],
@@ -97,6 +102,6 @@ class PromptBasedContentExtractor(IExtractFields):
                         result = json.loads(raw)[field]
                     except Exception:
                         result = "failed"
-                variant_results[field] = result
-            results.append(variant_results)
+                topic_content[field] = result
+            results.append(topic_content)
         return results

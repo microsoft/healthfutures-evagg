@@ -101,6 +101,15 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
         return Paper(id=props["doi"], **props)
 
+    def download(self, pmc_id: str) -> Optional[str]:
+        # Ideally this would use the BioC API or bulk download of the full text contents, but for now we use efetch.
+        # Better: https://www.ncbi.nlm.nih.gov/research/bionlp/APIs/BioC-PMC/
+
+        root = self._efetch(db="pmc", id=pmc_id, retmode="xml", rettype="full")
+        if (article := root.find(f"PMC/record/article")) is None:
+            return None
+        return article.text
+
     # IGeneLookupClient
     def gene_id_for_symbol(self, *symbols: str, allow_synonyms: bool = False) -> Dict[str, int]:
         """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
