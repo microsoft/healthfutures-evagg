@@ -94,6 +94,7 @@ class OpenAIClient(IOpenAIClient):
 
     def _generate_completion(self, messages: ChatCompletionMessages, settings: Dict[str, Any]) -> Optional[str]:
         start_ts = time.time()
+        prompt_key = settings.pop("prompt_key", "prompt")
         settings = self._clean_completion_settings(settings)
         completion = self._client.chat.completions.create(messages=messages, **settings)  # type: ignore
         response = completion.choices[0].message.content
@@ -101,20 +102,19 @@ class OpenAIClient(IOpenAIClient):
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m["content"]) for m in messages]),
             "prompt_response": response,
-            # "prompt_key": 
+            "prompt_key": prompt_key,
         }
         logger.log(PROMPT, f"Chat complete in {(time.time() - start_ts):.2f} seconds.", extra=prompt_log)
         return response
 
     def prompt(
         self,
-        user_prompt_file: str,
+        user_prompt: str,
         system_prompt: Optional[str],
         params: Optional[Dict[str, str]] = None,
         settings: Optional[Dict[str, Any]] = None,
     ) -> str:
-        user_prompt = self._load_prompt_file(user_prompt_file)
-
+        """Get the response from a prompt."""
         for key, value in params.items() if params else {}:
             user_prompt = user_prompt.replace(f"{{{{${key}}}}}", value)
 
@@ -133,6 +133,16 @@ class OpenAIClient(IOpenAIClient):
 
         response = self._generate_completion(messages, settings)
         return response or ""
+
+    def prompt_file(
+        self,
+        user_prompt_file: str,
+        system_prompt: Optional[str],
+        params: Optional[Dict[str, str]] = None,
+        settings: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        user_prompt = self._load_prompt_file(user_prompt_file)
+        return self.prompt(user_prompt, system_prompt, params, settings)
 
     def embeddings(self, inputs: List[str], settings: Optional[Dict[str, Any]] = None) -> OpenAIClientEmbeddings:
         settings = {
