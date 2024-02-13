@@ -390,7 +390,6 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
 
         For TruthsetVariantMentionFinder, the query is a gene symbol.
         """
-
         truth_rows = [d for d in paper.evidence.values() if d["gene"] == query]
 
         # TODO, query_gene_ids should really just correspond to a single gene symbol, not a list.
