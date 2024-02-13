@@ -19,7 +19,7 @@ class IPromptClient(Protocol):
         params: Optional[Dict[str, str]] = None,
         prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """Get the response from a prompt."""
+        """Get the response from a prompt with an input file."""
         ...
 
     def embeddings(
