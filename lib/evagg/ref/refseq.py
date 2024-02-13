@@ -2,8 +2,6 @@ import logging
 import os
 from typing import Dict
 
-import requests
-
 from lib.evagg.svc import IWebContentClient
 
 from .interfaces import IRefSeqLookupClient
