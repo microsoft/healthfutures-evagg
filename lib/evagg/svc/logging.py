@@ -1,13 +1,12 @@
 import logging
 import logging.config
 import os
-from datetime import datetime
 import sys
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Set
 
-PROMPT = logging.CRITICAL + 5
-
 LogFilter = Callable[[logging.LogRecord], bool]
+PROMPT = logging.CRITICAL + 5
 
 LOGGING_CONFIG: Dict = {
     "version": 1,
