@@ -28,49 +28,11 @@ class OpenAIConfig(PydanticYamlModel):
     api_version: str
 
 
-class OpenAIDotEnvConfig(OpenAIConfig):
-    _REQUIRED_ENV_VARS = [
-        "AZURE_OPENAI_DEPLOYMENT",
-        "AZURE_OPENAI_ENDPOINT",
-        "AZURE_OPENAI_API_KEY",
-        "AZURE_OPENAI_API_VERSION",
-    ]
-
-    def __init__(self) -> None:
-        if not load_dotenv():
-            logger.warning("No .env file found, using pre-existing environment variables.")
-
-        if any(var not in os.environ for var in self._REQUIRED_ENV_VARS):
-            raise ValueError(
-                f"Missing one or more required environment variables: {', '.join(self._REQUIRED_ENV_VARS)}"
-            )
-
-        bag: Dict[str, str] = {}
-        for k in self._REQUIRED_ENV_VARS:
-            new_key = k.replace("AZURE_OPENAI_", "").lower()
-            bag[new_key] = os.environ[k]
-        super().__init__(**bag)
-
-
-class OpenAIClientFactory:
-    @staticmethod
-    def create(config: OpenAIConfig) -> IOpenAIClient:
-        return OpenAIClient(config)
-
-    @staticmethod
-    def create_from_dict(config: Dict[str, str]) -> IOpenAIClient:
-        return OpenAIClientFactory.create(OpenAIConfig.parse_obj(config))
-
-    @staticmethod
-    def create_from_json_string(config: str) -> IOpenAIClient:
-        return OpenAIClientFactory.create(OpenAIConfig.parse_raw(config))
-
-
 class OpenAIClient(IOpenAIClient):
     _config: OpenAIConfig
 
-    def __init__(self, config: OpenAIConfig) -> None:
-        self._config = config
+    def __init__(self, config: Dict[str, Any]) -> None:
+        self._config = OpenAIConfig(**config)
 
     @property
     def _client(self) -> OpenAI:
