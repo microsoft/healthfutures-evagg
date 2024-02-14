@@ -3,9 +3,7 @@ log:
 
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  variants:
-    - "TUBB3:p.E410K"
+  - "TUBB3"
 library: 
   di_factory: lib.evagg.SimpleFileLibrary
   collections: 

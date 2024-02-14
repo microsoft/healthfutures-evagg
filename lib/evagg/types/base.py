@@ -1,8 +1,9 @@
-# TODO dataclass?
-# TODO should be immutable after load.
+from dataclasses import dataclass
 from typing import Any
 
 
+# TODO dataclass?
+# TODO should be immutable after load.
 class Paper:
     def __init__(self, **kwargs: Any) -> None:
         self.id = kwargs["id"]  # id is required, DOI
@@ -24,21 +25,35 @@ class Paper:
         return f'id: {self.id} - "{text[:15]}{"..." if len(text) > 15 else ""}"'
 
 
-class Variant:
-    def __init__(self, gene: str, variant: str) -> None:
-        self.gene = gene
-        self.variant = variant
+@dataclass(frozen=True)
+class HGVSVariant:
+    """A representation of a genetic variant."""
 
-    def get_gene(self) -> str:
-        return self.gene
+    hgvs_desc: str
+    gene_symbol: str | None
+    refseq: str | None
+    refseq_predicted: bool
+    valid: bool
 
-    def __hash__(self) -> int:
-        return hash(self.gene + self.variant)
-
-    def __eq__(self, o: object) -> bool:
-        if not isinstance(o, Variant):
-            return False
-        return self.gene == o.gene and self.variant == o.variant
+    def __str__(self) -> str:
+        """Obtain a string representation of the variant."""
+        return f"{self.refseq}:{self.hgvs_desc}"
 
     def __repr__(self) -> str:
-        return f"{self.gene}:{self.variant}"
+        return self.__str__()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, HGVSVariant):
+            return False
+        return (
+            self.refseq == other.refseq
+            and self.gene_symbol == other.gene_symbol
+            and self.desc_no_paren() == other.desc_no_paren()
+        )
+
+    def desc_no_paren(self) -> str:
+        """Return a string representation of the variant description without prediction parentheses.
+
+        For example: p.(Arg123Cys) -> p.Arg123Cys
+        """
+        return self.hgvs_desc.replace("(", "").replace(")", "")
