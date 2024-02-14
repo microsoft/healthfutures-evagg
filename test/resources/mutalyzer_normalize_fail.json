@@ -1,0 +1,20 @@
+{
+    "custom": {
+        "input_description": "NP_001267.2:FOO",
+        "errors": [
+            {
+                "code": "ESYNTAXUC",
+                "details": "Unexpected character.",
+                "line": 1,
+                "column": 14,
+                "pos_in_stream": 13,
+                "unexpected_character": "O",
+                "description": "NP_001267.2:FOO",
+                "expecting": [
+                    "a number (to indicate a location or a length)"
+                ]
+            }
+        ]
+    },
+    "message": "Errors encountered. Check the 'custom' field."
+}
