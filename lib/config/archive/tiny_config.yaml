@@ -15,11 +15,8 @@ ncbi_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  # When querying based on gene only, this should cover the full "tiny" truth set.
-  variants: 
-    - "COQ2:p.T39S"
-    - "JPH1:p.R213P"
+  - "COQ2"
+  - "JPH1"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_tiny.tsv
@@ -30,6 +27,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
+    - individual_id
     - phenotype
     - zygosity
     - variant_inheritance
