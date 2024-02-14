@@ -9,7 +9,7 @@ from lib.evagg.content import IFindVariantMentions
 from lib.evagg.llm.openai import IOpenAIClient
 from lib.evagg.llm.openai.interfaces import OpenAIClientResponse
 from lib.evagg.ref import IVariantLookupClient
-from lib.evagg.types import Paper
+from lib.evagg.types import HGVSVariant, Paper
 
 
 def test_simple_content_extractor() -> None:
@@ -27,14 +27,13 @@ def test_simple_content_extractor() -> None:
 
 
 class MockMentionFinder(IFindVariantMentions):
-    mentions: Dict[str, Sequence[Dict[str, Any]]] = {
-        "rs1234": [{"text": "This is a test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"}],
-        "rs5678": [
-            {"text": "This is another test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"},
-        ],
+    mentions: Dict[HGVSVariant, Sequence[Dict[str, Any]]] = {
+        HGVSVariant("c.1234A>G", "CHI3L1", "transcript", True, True): [
+            {"text": "This is a test paper.", "gene_id": 1116, "gene_symbol": "CHI3L1"}
+        ]
     }
 
-    def find_mentions(self, query: str, paper: Paper) -> Dict[str, Sequence[Dict[str, Any]]]:
+    def find_mentions(self, query: str, paper: Paper) -> Dict[HGVSVariant, Sequence[Dict[str, Any]]]:
         return self.mentions
 
 
@@ -63,8 +62,8 @@ def test_prompt_based_content_extractor_valid_fields() -> None:
     fields = {
         "gene": "CHI3L1",
         "paper_id": "12345678",
-        "hgvs_c": "c.A100G",
-        "hgvs_p": "g.Py34C",
+        "hgvs_c": "c.1234A>G",
+        "hgvs_p": "c.1234A>G",
         "phenotype": "test",
         "zygosity": "test",
         "variant_inheritance": "test",
@@ -72,11 +71,11 @@ def test_prompt_based_content_extractor_valid_fields() -> None:
 
     mention_finder = MockMentionFinder()
     variant_lookup_client = MockVariantLookupClient(
-        {k: {"hgvs_c": fields["hgvs_c"], "hgvs_p": fields["hgvs_p"]} for k in mention_finder.mentions.keys()}
+        {k.__str__(): {"hgvs_c": fields["hgvs_c"], "hgvs_p": fields["hgvs_p"]} for k in mention_finder.mentions.keys()}
     )
     content_extractor = PromptBasedContentExtractor(
         list(fields.keys()),
-        llm_client=MockOpenAIClient(),
+        llm_client=MockOpenAIClient(),  # type: ignore
         mention_finder=mention_finder,
         variant_lookup_client=variant_lookup_client,
     )
@@ -86,7 +85,7 @@ def test_prompt_based_content_extractor_valid_fields() -> None:
     # Based on the above, there should be two elements in `content`, each containing a dict keyed by fields, with a
     # fake value.
     for k in MockMentionFinder().mentions.keys():
-        rows = [c for c in content if c["variant"] == k]
+        rows = [c for c in content if c["hgvs_c"] == k.hgvs_desc]
         assert len(rows) == 1
         row = rows[0]
 
@@ -100,7 +99,7 @@ def test_prompt_based_content_extractor_invalid_fields() -> None:
 
     content_extractor = PromptBasedContentExtractor(
         fields,
-        MockOpenAIClient(),
+        MockOpenAIClient(),  # type: ignore
         MockMentionFinder(),
         MockVariantLookupClient(response={}),
     )

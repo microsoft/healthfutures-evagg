@@ -2,8 +2,6 @@ import logging
 import os
 from typing import Dict
 
-import requests
-
 from lib.evagg.svc import IWebContentClient
 
 from .interfaces import IRefSeqLookupClient
@@ -16,7 +14,7 @@ class NcbiReferenceLookupClient(IRefSeqLookupClient):
 
     _ref: Dict[str, Dict[str, str]]
     _lazy_initialized: bool
-    _DEFAULT_REFERENCE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", ".ref")
+    _DEFAULT_REFERENCE_DIR = ".ref"
     _NCBI_REFERENCE_URL = "https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/RefSeqGene/LRG_RefSeqGene"
 
     def __init__(self, web_client: IWebContentClient, reference_dir: str = _DEFAULT_REFERENCE_DIR) -> None:
