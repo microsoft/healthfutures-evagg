@@ -59,7 +59,6 @@ class PromptBasedContentExtractor(IExtractFields):
         results: List[Dict[str, str]] = []
 
         for variant, mentions in variant_mentions.items():
-            # mentions = variant_mentions[variant]
             variant_results: Dict[str, str] = {}
 
             logger.info(f"Extracting fields for {variant} in {paper.id}")
