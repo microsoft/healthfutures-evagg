@@ -1,6 +1,6 @@
 from typing import Dict, Mapping, Protocol, Sequence, Set
 
-from lib.evagg.types import IPaperQuery, Paper
+from lib.evagg.types import Paper
 
 
 class IEvAggApp(Protocol):
@@ -10,7 +10,7 @@ class IEvAggApp(Protocol):
 
 
 class IGetPapers(Protocol):
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def search(self, query: str) -> Set[Paper]:
         ...
         #
         # Set of papers that mention the gene
@@ -18,8 +18,8 @@ class IGetPapers(Protocol):
 
 
 class IExtractFields(Protocol):
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
-        """Extract fields from the paper."""
+    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
+        """Extract fields from the paper based on the query."""
         ...
 
 

@@ -4,12 +4,10 @@ log:
 
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  variants:
-    - "CHI3L1:p.R116C"
-    - "TWNK:p.S369F"
-    - "COL23A1:p.A112V"
-    - "PRKCG:p.A24S"
+  - "CHI3L1"
+  - "TWNK"
+  - "COL23A1"
+  - "PRKCG"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/truth_set_small.tsv
@@ -20,6 +18,7 @@ extractor:
     - id: paper_id
     - hgvs_c: hgvs_c
     - hgvs_p: hgvs_p
+    - individual_id: individual_id
     - phenotype: phenotype
     - zygosity: zygosity
     - variant_inheritance: variant_inheritance
