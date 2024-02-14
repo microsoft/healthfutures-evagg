@@ -22,7 +22,8 @@ mutalyzer_client:
   web_client: "{{web_client}}"
 refseq_client:
   di_factory: lib.evagg.ref.NcbiReferenceLookupClient
-  web_client: "{{web_client}}"
+  web_client:
+    di_factory: lib.evagg.svc.RequestsWebContentClient
 variant_factory:
   di_factory: lib.evagg.content.HGVSVariantFactory
   normalizer: "{{mutalyzer_client}}"
