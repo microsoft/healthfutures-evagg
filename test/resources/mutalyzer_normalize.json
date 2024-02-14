@@ -1,0 +1,88 @@
+{
+    "input_description": "NP_001267.2:p.Arg35Gln",
+    "input_model": {
+        "type": "description_protein",
+        "reference": {
+            "id": "NP_001267.2"
+        },
+        "coordinate_system": "p",
+        "variants": [
+            {
+                "location": {
+                    "type": "point",
+                    "amino_acid": "Arg",
+                    "position": 35
+                },
+                "type": "substitution",
+                "source": "reference",
+                "inserted": [
+                    {
+                        "sequence": "Gln",
+                        "source": "description"
+                    }
+                ]
+            }
+        ]
+    },
+    "corrected_model": {
+        "type": "description_protein",
+        "reference": {
+            "id": "NP_001267.2"
+        },
+        "coordinate_system": "p",
+        "variants": [
+            {
+                "location": {
+                    "type": "point",
+                    "amino_acid": "Arg",
+                    "position": 35
+                },
+                "type": "substitution",
+                "source": "reference",
+                "inserted": [
+                    {
+                        "sequence": "Gln",
+                        "source": "description"
+                    }
+                ]
+            }
+        ]
+    },
+    "corrected_description": "NP_001267.2:p.Arg35Gln",
+    "normalized_description": "NP_001267.2:p.(Arg35Gln)",
+    "normalized_model": {
+        "type": "description_protein",
+        "reference": {
+            "id": "NP_001267.2"
+        },
+        "coordinate_system": "p",
+        "variants": [
+            {
+                "location": {
+                    "type": "point",
+                    "amino_acid": "Arg",
+                    "position": 35
+                },
+                "type": "substitution",
+                "source": "reference",
+                "inserted": [
+                    {
+                        "sequence": "Gln",
+                        "source": "description"
+                    }
+                ]
+            }
+        ],
+        "predicted": true
+    },
+    "equivalent_descriptions": {
+        "p": [
+            {
+                "description": "NP_001267.2:p.(R35Q)"
+            }
+        ]
+    },
+    "back_translated_descriptions": [
+        "NM_001276.4:c.(104G>A)"
+    ]
+}

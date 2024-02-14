@@ -5,27 +5,35 @@ log:
   # exclude_modules: [lib.evagg.svc.*]
   # include_modules: [lib.evagg.svc.web]
   # exclude_defaults: true
-
+ncbi_settings:
+  di_factory: lib.evagg.svc.get_dotenv_settings
+  filter_prefix: "NCBI_EUTILS_"
+web_client:
+  di_factory: lib.evagg.svc.CosmosCachingWebClient
+  cache_settings:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "EVAGG_CONTENT_CACHE_"  
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
+  web_client: "{{web_client}}"
+  settings: "{{ncbi_settings}}"
+mutalyzer_client:
+  di_factory: lib.evagg.ref.MutalyzerClient
+  web_client: "{{web_client}}"
+refseq_client:
+  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
   web_client:
-    # di_factory: lib.evagg.svc.RequestsWebContentClient
-    di_factory: lib.evagg.svc.CosmosCachingWebClient
-    cache_settings:
-      di_factory: lib.evagg.svc.get_dotenv_settings
-      filter_prefix: "EVAGG_CONTENT_CACHE_"
-    web_settings:
-      max_retries: 3
-  settings:
-    di_factory: lib.evagg.svc.get_dotenv_settings
-    filter_prefix: "NCBI_EUTILS_"
+    di_factory: lib.evagg.svc.RequestsWebContentClient
+variant_factory:
+  di_factory: lib.evagg.content.HGVSVariantFactory
+  normalizer: "{{mutalyzer_client}}"
+  back_translator: "{{mutalyzer_client}}"
+  refseq_client: "{{refseq_client}}"
 
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  variants:
-    - "CPA6:R46C" # note R46C is a variant I made up.
+  - "FAM111B"
 library:
   di_factory: lib.evagg.RemoteFileLibrary
   paper_client: "{{ncbi_client}}"
@@ -37,6 +45,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
+    - individual_id
     - phenotype
     - zygosity
     - variant_inheritance
@@ -49,6 +58,7 @@ extractor:
     di_factory: lib.evagg.content.VariantMentionFinder
     entity_annotator: "{{ncbi_client}}"
     gene_lookup_client: "{{ncbi_client}}"
+    variant_factory: "{{variant_factory}}"
   variant_lookup_client: "{{ncbi_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter

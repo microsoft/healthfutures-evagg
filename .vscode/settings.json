@@ -34,6 +34,6 @@
     "files.watcherExclude": {
         "**/target": true
     },
-    "mypy-type-checker.ignorePatterns": ["test/*"]
+    "mypy-type-checker.ignorePatterns": ["test/**", "test/evagg/**" ]
 
 }
