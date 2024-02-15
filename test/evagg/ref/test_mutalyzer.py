@@ -17,7 +17,7 @@ def test_back_translate_success(mock_web_client: Any) -> None:
     assert result == ["NM_001276.4:c.(104G>A)"]
 
 
-def test_back_trainslate_failure(mock_web_client: Any) -> None:
+def test_back_translate_failure(mock_web_client: Any) -> None:
     web_client = mock_web_client([])
     result = MutalyzerClient(web_client).back_translate("NP_001267.2:FOO")
     assert result == []
@@ -47,7 +47,7 @@ def test_normalize_failure(mock_web_client: Any) -> None:
     assert result["message"] == "Errors encountered. Check the 'custom' field."
 
 
-def test_back_translate_caching(mock_web_client: Any) -> None:
+def test_normalize_caching(mock_web_client: Any) -> None:
     web_client = mock_web_client("mutalyzer_normalize.json", "mutalyzer_normalize_fail.json")
     mutalyzer = MutalyzerClient(web_client)
     result = mutalyzer.normalize("NP_001267.2:p.Arg35Gln")
