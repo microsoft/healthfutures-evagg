@@ -10,7 +10,7 @@ class IPromptClient(Protocol):
         prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Get the response from a prompt."""
-        ...
+        ...  # pragma: no cover
 
     def prompt_file(
         self,
@@ -20,10 +20,10 @@ class IPromptClient(Protocol):
         prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Get the response from a prompt with an input file."""
-        ...
+        ...  # pragma: no cover
 
     def embeddings(
         self, inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None
     ) -> Dict[str, List[float]]:
         """Get embeddings for the given inputs."""
-        ...
+        ...  # pragma: no cover
