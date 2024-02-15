@@ -1,4 +1,4 @@
-from .client import OpenAIClient
+from .aoai import OpenAIClient
 from .interfaces import IPromptClient
 
 __all__ = [
