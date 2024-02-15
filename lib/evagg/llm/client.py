@@ -1,8 +1,9 @@
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import openai
 import retry
@@ -19,6 +20,7 @@ from lib.evagg.svc.logging import PROMPT
 
 from .interfaces import IPromptClient
 
+ChatMessages = List[ChatCompletionMessageParam]
 logger = logging.getLogger(__name__)
 
 
@@ -55,20 +57,22 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    def _generate_completion(self, messages: List[ChatCompletionMessageParam], settings: Dict[str, Any]) -> str:
+    def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         start_ts = time.time()
-        prompt_key = settings.pop("prompt_key", "prompt")
+        prompt_tag = settings.pop("prompt_tag", "prompt")
         completion = self._client.chat.completions.create(messages=messages, **settings)
         response = completion.choices[0].message.content or ""
         elapsed = time.time() - start_ts
 
         prompt_log = {
-            "prompt_key": prompt_key,
+            "prompt_tag": prompt_tag,
+            "prompt_model": f"{settings.get("model")} {self._config.api_version}",
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m.get("content")) for m in messages]),
             "prompt_response": response,
         }
-        logger.log(PROMPT, f"Chat '{prompt_key}' complete in {elapsed:.2f} seconds.", extra=prompt_log)
+
+        logger.log(PROMPT, f"Chat '{prompt_tag}' complete in {elapsed:.2f} seconds.", extra=prompt_log)
         return response
 
     def prompt(
@@ -82,7 +86,7 @@ class OpenAIClient(IPromptClient):
         for key, value in params.items() if params else {}:
             user_prompt = user_prompt.replace(f"{{{{${key}}}}}", value)
 
-        messages: List[ChatCompletionMessageParam] = [ChatCompletionUserMessageParam(role="user", content=user_prompt)]
+        messages: ChatMessages = [ChatCompletionUserMessageParam(role="user", content=user_prompt)]
         if system_prompt:
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=system_prompt))
 

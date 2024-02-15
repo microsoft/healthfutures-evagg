@@ -78,14 +78,14 @@ class LoggingFormatter(logging.Formatter):
 
     @classmethod
     def format_prompt(cls, record: logging.LogRecord) -> str:
-        prompt_key = record.__dict__.get("prompt_key", "prompt")
-        prompt_header = f" {prompt_key} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
+        prompt_tag = record.__dict__.get("prompt_tag", "(no tag)")
+        prompt_model = record.__dict__.get("prompt_model", "(no model)")
         settings = record.__dict__.get("prompt_settings", {})
         prompt = record.__dict__.get("prompt_text", "")
         response = record.__dict__.get("prompt_response", "")
+        header = f"{prompt_tag} {prompt_model} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         return (
-            f"# {'/' * 79}\n"
-            + f"#{prompt_header.ljust(80, '/')}\n"
+            f"#{'/' * 80}\n#{(' ' + header + ' ').ljust(80, '/')}\n"
             + f"#{' SETTINGS '.ljust(80, '#')}\n"
             + f"{'\n'.join(f'{k}: {v}' for k, v in settings.items())}\n"
             + f"#{' PROMPT '.ljust(80, '#')}\n"
@@ -107,7 +107,7 @@ class PromptFileHandler(logging.Handler):
             os.makedirs(self._log_dir, exist_ok=True)
 
     def emit(self, record: logging.LogRecord) -> None:
-        file_name = record.__dict__.get("prompt_key", "prompt")
+        file_name = record.__dict__.get("prompt_tag", "prompt")
         with open(f"{self._log_dir}/{file_name}.log", "a") as f:
             f.write(LoggingFormatter.format_prompt(record) + "\n")
 

@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Any, Dict, List, Sequence
 
-from lib.evagg.llm.openai import IPromptClient
+from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import Paper
 
@@ -90,7 +90,7 @@ class PromptBasedContentExtractor(IExtractFields):
                         user_prompt_file=self._PROMPTS[field],
                         system_prompt="Extract field",
                         params=params,
-                        prompt_settings={"prompt_key": field},
+                        prompt_settings={"prompt_tag": field},
                     )
                     raw = response
                     try:
