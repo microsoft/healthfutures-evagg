@@ -1,0 +1,20 @@
+Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+What is the described phenotype for patients with the variant: {{$variant}}?
+
+{{$passage}}
+
+Provide your response in the following format:
+{
+  "phenotype": [
+    "first phenotypic description",
+    "second phenotypic description",
+    "etc"
+  ]
+}
+
+If you cannot determine the phenotype from the text provided please respond:
+{
+  "phenotype": [
+    "unknown"
+  ]
+}

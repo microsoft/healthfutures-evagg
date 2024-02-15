@@ -1,8 +1,7 @@
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from functools import lru_cache
+from functools import lru_cache, reduce
 from typing import Any, Dict, List, Optional, Tuple
 
 import openai
@@ -83,8 +82,8 @@ class OpenAIClient(IPromptClient):
         prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Get the response from a prompt."""
-        for key, value in params.items() if params else {}:
-            user_prompt = user_prompt.replace(f"{{{{${key}}}}}", value)
+        # Replace any '{{${key}}}' instances with values from the params dictionary.
+        user_prompt = reduce(lambda x, kv: x.replace(f"{{{{${kv[0]}}}}}", kv[1]), (params or {}).items(), user_prompt)
 
         messages: ChatMessages = [ChatCompletionUserMessageParam(role="user", content=user_prompt)]
         if system_prompt:
