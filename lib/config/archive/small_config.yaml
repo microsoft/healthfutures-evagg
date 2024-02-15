@@ -55,7 +55,7 @@ extractor:
     - zygosity
     - variant_inheritance
   llm_client:
-    di_factory: lib.evagg.llm.openai.OpenAIClient
+    di_factory: lib.evagg.llm.OpenAIClient
     config:
       di_factory: lib.evagg.svc.get_dotenv_settings
       filter_prefix: "AZURE_OPENAI_"
