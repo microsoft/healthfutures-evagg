@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, call, mock_open, patch
 from lib.evagg.llm import OpenAIClient
 
 
-@patch("lib.evagg.llm.client.AzureOpenAI")
+@patch("lib.evagg.llm.aoai.AzureOpenAI")
 def test_openai_client_prompt(mock_openai, test_file_contents) -> None:
     prompt_template = test_file_contents("phenotype.txt")
     prompt_params = {"gene": "GENE", "variant": "VARIANT", "passage": "PASSAGE"}
@@ -35,7 +35,7 @@ def test_openai_client_prompt(mock_openai, test_file_contents) -> None:
     )
 
 
-@patch("lib.evagg.llm.client.AzureOpenAI")
+@patch("lib.evagg.llm.aoai.AzureOpenAI")
 def test_openai_client_embeddings(mock_openai) -> None:
     embedding = MagicMock(data=[MagicMock(embedding=[0.4, 0.5, 0.6])], usage=MagicMock(prompt_tokens=10))
     mock_openai.return_value.embeddings.create.return_value = embedding
