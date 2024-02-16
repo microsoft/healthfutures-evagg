@@ -4,10 +4,10 @@ import logging
 import os
 from collections import defaultdict
 from functools import cache
-from typing import Dict, Sequence, Set
+from typing import Dict, Sequence, Set, Tuple
 
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import ICreateVariants, Paper
+from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .interfaces import IGetPapers
 
@@ -102,13 +102,13 @@ class TruthsetFileLibrary(IGetPapers):
                 if not row["gene"] or not row["hgvs_p"]:
                     logger.warning(f"Missing gene or variant for {paper_id}.")
 
+            # Return the parsed variant from HGVS c or p and the individual ID.
+            def _get_variant_key(row: Dict[str, str]) -> Tuple[HGVSVariant, str]:
+                text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
+                return self._variant_factory.try_parse(text_desc, row["gene"]), row["individual_id"]
+
             # For each paper, extract the (variant, subject)-specific key/value pairs into a new dict of dicts.
-            variants = {
-                (self._variant_factory.try_parse(r["hgvs_c"], r["gene"]), r["individual_id"]): {
-                    k: r.get(k, "") for k in TRUTHSET_VARIANT_KEYS
-                }
-                for r in rows
-            }
+            variants = {_get_variant_key(row): {key: row.get(key, "") for key in TRUTHSET_VARIANT_KEYS} for row in rows}
             # Create a Paper object with the extracted fields.
             papers.add(Paper(id=paper_id, evidence=variants, **paper_data))
 
