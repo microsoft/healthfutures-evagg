@@ -5,6 +5,9 @@ mutalyzer_client:
   di_factory: lib.evagg.ref.MutalyzerClient
   web_client:
     di_factory: lib.evagg.svc.CosmosCachingWebClient
+    web_settings:
+      # Mutalyzer response code of 422 signifies an unprocessable entity.
+      no_raise_codes: [422]
     cache_settings:
       di_factory: lib.evagg.svc.get_dotenv_settings
       filter_prefix: "EVAGG_CONTENT_CACHE_"
