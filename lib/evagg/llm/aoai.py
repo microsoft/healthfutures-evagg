@@ -65,7 +65,7 @@ class OpenAIClient(IPromptClient):
 
         prompt_log = {
             "prompt_tag": prompt_tag,
-            "prompt_model": f"{settings.get("model")} {self._config.api_version}",
+            "prompt_model": f"{settings.get('model')} {self._config.api_version}",
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m.get("content")) for m in messages]),
             "prompt_response": response,
