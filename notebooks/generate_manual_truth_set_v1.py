@@ -88,14 +88,14 @@ def _phenotype_validator(x: Any) -> Tuple[bool, str]:
 
 
 def _transcript_validator(x: Any) -> Tuple[bool, str]:
-    result = x is None or x.startswith("NM_")  # Transcript is optional.
-    return result, "Value must be None or start with NM" if not result else ""
+    result = x is None or x.startswith("NM_") or x.startswith("ENST")  # Transcript is optional.
+    return result, "Value must be None or start with NM_ or ENST" if not result else ""
 
 
 def _hgvs_c_validator(x: Any) -> Tuple[bool, str]:
     # TODO, not particularly sophisticated.
-    result = x is not None and x.startswith("c.")
-    return result, "Value must start with 'c.'" if not result else ""
+    result = x is None or x.startswith("c.")
+    return result, "Value must be None or start with 'c.'" if not result else ""
 
 
 def _hgvs_p_validator(x: Any) -> Tuple[bool, str]:
