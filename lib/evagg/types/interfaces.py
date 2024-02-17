@@ -1,19 +1,9 @@
-from typing import Protocol, Set
+from typing import Protocol
 
-from .base import Variant
-
-
-class IPaperQuery(Protocol):
-    def terms(self) -> Set[Variant]:
-        """Get the terms in the query."""
-        ...
+from .base import HGVSVariant
 
 
-class IPaperQueryIterator(Protocol):
-    def __next__(self) -> IPaperQuery:
-        """Get the next query."""
-        ...
-
-    def __iter__(self) -> "IPaperQueryIterator":
-        """Get the iterator."""
+class ICreateVariants(Protocol):
+    def try_parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
+        """Try to parse a variant from a description and gene symbol."""
         ...

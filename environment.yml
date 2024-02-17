@@ -2,7 +2,8 @@ name: evagg
 channels:
   - conda-forge
   - defaults
-  # - bioconda
+  - bioconda
+
 dependencies:
   - python>=3.12
   - poetry>=1.2
