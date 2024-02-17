@@ -5,11 +5,10 @@ from typing import Any, Dict, List, Optional, Sequence
 from pydantic import Extra, root_validator
 
 from lib.config import PydanticYamlModel
-from lib.evagg.ref import IAnnotateEntities, IPaperLookupClient
 from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
 
-from .interfaces import IGeneLookupClient, IVariantLookupClient
+from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient, IVariantLookupClient
 
 logger = logging.getLogger(__name__)
 
