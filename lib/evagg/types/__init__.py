@@ -1,17 +1,12 @@
 """Base types for the evagg library."""
 
-from .base import Paper, Variant
-from .interfaces import IPaperQuery, IPaperQueryIterator
-from .query import Query, QueryIterator
+from .base import HGVSVariant, Paper
+from .interfaces import ICreateVariants
 
 __all__ = [
     # Base.
     "Paper",
-    "Variant",
-    # Query.
-    "Query",
-    "QueryIterator",
+    "HGVSVariant",
     # Interfaces.
-    "IPaperQuery",
-    "IPaperQueryIterator",
+    "ICreateVariants",
 ]
