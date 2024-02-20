@@ -1,6 +1,7 @@
 # Services
 log:
   di_factory: lib.evagg.svc.init_logger
+  prompts_to_console: true
 ncbi_settings:
   di_factory: lib.evagg.svc.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
