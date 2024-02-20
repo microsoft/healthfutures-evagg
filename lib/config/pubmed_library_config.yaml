@@ -1,6 +1,7 @@
 # Services
 log:
   di_factory: lib.evagg.svc.init_logger
+  prompts_to_console: true
   # level: "DEBUG"
   # exclude_modules: [lib.evagg.svc.*]
   # include_modules: [lib.evagg.svc.web]
