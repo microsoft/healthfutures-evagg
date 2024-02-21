@@ -70,7 +70,9 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
         root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
 
-        # If the response contains a record with the given pmcid and does not have a "no derrivatives" license, then the paper is open access.
+        # TODO - this is a little bit of a misnomer, as it's not strictly "open access" we're checking for.
+        # If the response contains a record with the given pmcid and does not have a "no derrivatives" license, then the
+        # paper is open access.
         record = root.find(f"records/record[@id='{pmcid}']")
         if record is not None:
             license = record.attrib.get("license", "")
@@ -85,6 +87,28 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         if err_code and err_code != "idIsNotOpenAccess":
             logger.warning(f"PMC OA error code: {err_code}")
         return False
+
+    def _get_license(self, pmcid: str) -> str:
+        root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
+        unknown_str = "unknown"
+
+        print(f"### {" ".join(root.itertext())}")
+
+        record = root.find(f"records/record[@id='{pmcid}']")
+        if record is not None:
+            license = record.attrib.get("license", unknown_str)
+            return license
+
+        # If there is an error code, extract it from the response.
+        err_code = root.find("error").attrib["code"] if root.find("error") is not None else None
+
+        if err_code:
+            if err_code == "idIsNotOpenAccess":
+                return "not_open_access"
+            else:
+                logger.warning(f"PMC OA error code: {err_code}")
+
+        return unknown_str
 
     # IPaperLookupClient
     def search(self, query: str, max_papers: Optional[int] = None) -> Sequence[str]:
@@ -103,6 +127,7 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         props = _extract_paper_props_from_xml(article)
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         props["is_pmc_oa"] = self._is_pmc_oa(props["pmcid"])
+        props["license"] = self._get_license(props["pmcid"])
         props["pmid"] = paper_id
 
         return Paper(id=props["doi"], **props)
