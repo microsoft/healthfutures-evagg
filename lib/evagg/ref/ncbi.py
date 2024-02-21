@@ -69,8 +69,14 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
             return False
 
         root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
-        # If the response contains a record with the given pmcid, then it is open access.
-        if root.find(f"records/record[@id='{pmcid}']") is not None:
+
+        # If the response contains a record with the given pmcid and does not have a "no derrivatives" license, then the paper is open access.
+        record = root.find(f"records/record[@id='{pmcid}']")
+        if record is not None:
+            license = record.attrib.get("license", "")
+            if "-ND" in license:  # ND: No Derivatives
+                logger.warning(f"PMC OA record found for {pmcid} but has a no derivatives license: {license}")
+                return False
             logger.debug(f"PMC OA record found for {pmcid}")
             return True
 
