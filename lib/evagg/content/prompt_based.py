@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Any, Dict, List, Sequence
 
-from lib.evagg.llm.openai import IOpenAIClient
+from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import Paper
 
@@ -33,7 +33,7 @@ class PromptBasedContentExtractor(IExtractFields):
     def __init__(
         self,
         fields: Sequence[str],
-        llm_client: IOpenAIClient,
+        llm_client: IPromptClient,
         mention_finder: IFindVariantMentions,
         variant_lookup_client: IVariantLookupClient,
     ) -> None:
@@ -86,12 +86,13 @@ class PromptBasedContentExtractor(IExtractFields):
                     # actual mention objects, we can fix this.
                     params = {"passage": paper_excerpts, "variant": variant.__str__(), "gene": gene_symbol}
 
-                    response = self._llm_client.chat_oneshot_file(
+                    response = self._llm_client.prompt_file(
                         user_prompt_file=self._PROMPTS[field],
                         system_prompt="Extract field",
                         params=params,
+                        prompt_settings={"prompt_tag": field},
                     )
-                    raw = response.output
+                    raw = response
                     try:
                         result = json.loads(raw)[field]
                     except Exception:

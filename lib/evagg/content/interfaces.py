@@ -10,4 +10,4 @@ class IFindVariantMentions(Protocol):
 
         Returns a dictionary mapping each variant to a list of text chunks that mention it.
         """
-        ...
+        ...  # pragma: no cover
