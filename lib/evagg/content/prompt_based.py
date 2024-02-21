@@ -55,6 +55,10 @@ class PromptBasedContentExtractor(IExtractFields):
 
         logger.info(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
 
+        if not variant_mentions:
+            logger.warning(f"No variant mentions found in {paper.id}")
+            return []
+
         # For each variant/field pair, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
@@ -62,6 +66,10 @@ class PromptBasedContentExtractor(IExtractFields):
             variant_results: Dict[str, str] = {}
 
             logger.info(f"Extracting fields for {variant} in {paper.id}")
+
+            if not mentions:
+                logger.warning(f"No mentions found for {variant} in {paper.id}")
+                continue
 
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = self._excerpt_from_mentions(mentions)
