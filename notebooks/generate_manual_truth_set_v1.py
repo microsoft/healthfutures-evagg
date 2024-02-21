@@ -9,14 +9,13 @@ downloaded and uploaded to Azure blob storage before processing.
 Note: because this is a the spreadsheet contains multiple sheets, it will be necessary to download it as an xlsx file,
 not a csv or tsv file.
 
-TODO (2/15/2024) -
+TODO (2/21/2024) -
 - We're not currently validating whether any of the variants specified in the truth set are syntatically or biologically
     correct.
 - Along similar lines, the validators don't currently handle p. or c. notation.
 - Probably not necessary, but we don't validate the HPO or OMIM terms to make sure they exist.
 - Train and test are just taken as an fractional split of genes per evidence category. They will be re-selected any
     time this script is re-run. Fixed split is probably more appropriate.
-- There are lots of validation errors that need addressing in the source spreadsheet
 
 """
 
@@ -25,10 +24,14 @@ TODO (2/15/2024) -
 
 import os
 import re
+from functools import cache
 from typing import Any, List, Tuple
 
 import openpyxl
 import pandas as pd
+
+from lib.evagg.ref import NcbiLookupClient
+from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
@@ -46,8 +49,8 @@ CONTENT_SHEET_COLUMN_HEADINGS = {
     "Text Description": "pheno_text_description",
     "Phenotype": "phenotype",
     "Transcript": "transcript",
-    "HGVS.C": "hgvsc",
-    "HGVS.P": "hgvsp",
+    "HGVS.C": "hgvs_c",
+    "HGVS.P": "hgvs_p",
     "Variant_Type": "variant_type",
     "Zygosity": "zygosity",
     "Variant_Inheritance": "variant_inheritance",
@@ -353,6 +356,66 @@ for gene_tuple in genes:
 
     print(f"## INFO: Adding {len(gene_evidence_df)} rows of evidence for gene {gene_name}")
     evidence_df = pd.concat([evidence_df, gene_evidence_df])
+
+
+# %% Post-process evidence_df before writing out.
+
+# Move the "gene" column to the front.
+evidence_df = evidence_df[["gene"] + [col for col in evidence_df.columns if col != "gene"]]
+
+# Add a paper_id column right after pmid that is formatted as "pmid:{pmid}".
+evidence_df["paper_id"] = "pmid:" + evidence_df["pmid"].astype(str)
+
+# Helper function for getting paper titles.
+ncbi_client = NcbiLookupClient(
+    CosmosCachingWebClient(get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_")),
+    get_dotenv_settings(filter_prefix="NCBI_EUTILS_"),
+)
+
+
+@cache
+def get_paper(pmid: str) -> Any:
+    return ncbi_client.fetch(pmid)
+
+
+def get_paper_title(pmid: str) -> str:
+    if paper := get_paper(pmid):
+        return paper.props.get("title", "unknown")
+    return "unknown"
+
+
+def get_pmc_oa(pmid: str) -> bool:
+    if paper := get_paper(pmid):
+        return paper.props.get("is_pmc_oa", False)
+    return False
+
+
+def get_license(pmid: str) -> str | None:
+    if paper := get_paper(pmid):
+        return paper.props.get("license", None)
+    return None
+
+
+def get_pmcid(pmid: str) -> str | None:
+    if paper := get_paper(pmid):
+        return paper.props.get("pmcid", None)
+    return None
+
+
+# Now get the paper title.
+evidence_df["paper_title"] = evidence_df["pmid"].apply(get_paper_title)
+
+# Now add the pmc_oa status.
+evidence_df["is_pmc_oa"] = evidence_df["pmid"].apply(get_pmc_oa)
+
+# Now add the license.
+evidence_df["license"] = evidence_df["pmid"].apply(get_license)
+
+# And the pmcid.
+evidence_df["pmcid"] = evidence_df["pmid"].apply(get_pmcid)
+
+# And the link, which is just a link to the paper on pubmed.
+evidence_df["link"] = "https://pubmed.ncbi.nlm.nih.gov/" + evidence_df["pmid"].astype(str) + "/"
 
 
 # %% Write gene_paper_df and evidence_df to disk, splitting into two files each based on is_train from gene_df.
