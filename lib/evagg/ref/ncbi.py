@@ -181,5 +181,7 @@ def _extract_paper_props_from_xml(article: Any) -> Dict[str, Any]:
         "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
     }
 
-    props = {k: (v.text if (v := article.find(path)) is not None else None) for k, path in extractions.items()}
+    props = {
+        k: ("".join(v.itertext()) if (v := article.find(path)) is not None else None) for k, path in extractions.items()
+    }
     return props
