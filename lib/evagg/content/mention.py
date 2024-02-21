@@ -311,7 +311,7 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
         self._gene_lookup_client = gene_lookup_client
         self._variant_factory = variant_factory
 
-    SHORTHAND_HGVS_PATTERN = re.compile(r"^p\.([A-Za-z])(\d+)([A-Za-z\*]|fs|del)$")
+    SHORTHAND_HGVS_PATTERN = re.compile(r"^p\.([A-Za-z]+)(\d+)([A-Za-z\*]|fs|del)$")
     LONGHAND_HGVS_PATTERN = re.compile(r"^p\.([A-Za-z]{3})(\d+)([A-Za-z]{3}|\*|fs|del)$")
     UNCONVERTED_AA_CODES = {"del", "fs"}
 
@@ -350,12 +350,15 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
         if len(annotations) == 0:
             return mentions
 
-        hgvsps = self._generate_lowercase_hgvsp_representations(evidence["hgvs_p"])
+        hgvsps = self._generate_lowercase_hgvsp_representations(evidence["hgvs_p"]) if evidence["hgvs_p"] else []
 
         # TODO, this approach to variant nomenclature is pretty brittle. It will only match variant mentions where the
         # hgvs_c or hgvs_p representation in a paper is exactly the same as what's in the truth set (case insensitive).
         # Thus expressions of the variant in paper text that don't conform to hgvs nomenclature standards might be
         # missed.
+
+        # TODO, note that we're simply ignoring gene_id here. This is because pubtator does a relatively poor job of
+        # variant-gene linking and results in a lot of false negatives.
         for passage in annotations["passages"]:
             for annotation in passage["annotations"]:
                 save = False
@@ -407,7 +410,12 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
                 logger.warning("Gene symbol not found in query gene ids")
                 continue
 
-            variant = self._variant_factory.try_parse(variant_dict["hgvs_c"], gene_symbol)
+            hgvs_desc = variant_dict["hgvs_c"] if variant_dict["hgvs_c"] else variant_dict["hgvs_p"]
+            transcript = variant_dict["transcript"] if variant_dict["transcript"] else None
+
+            variant = self._variant_factory.try_parse(text_desc=hgvs_desc, gene_symbol=gene_symbol, refseq=transcript)
+            # It is possible that that there are no mentions for this variant (i.e., this is empty) if the
+            # variant is only mentioned in the supplement.
             mentions[variant] = self._gather_mentions_for_variant(
                 annotations, query_gene_ids[gene_symbol], variant_dict
             )
