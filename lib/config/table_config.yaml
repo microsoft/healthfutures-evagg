@@ -23,6 +23,7 @@ variant_factory:
 
 di_factory: lib.evagg.SynchronousLocalApp
 # TODO, this should be kept updated with the list of genes in TruthsetFileLibrary.file_path
+# Currently set to all the genes in the entire v1 truthset.
 queries:
   - "COG4"
   - "TAPBP"
@@ -49,6 +50,18 @@ queries:
   - "TDO2"
   - "PTCD3"
   - "OTUD7A"
+  - "NLGN3"
+  - "GRXCR2"
+  - "JPH2"
+  - "TOPBP1"
+  - "EMC1"
+  - "PRPH"
+  - "ADCY1"
+  - "KIF1B"
+  - "SARS1"
+  - "FOXE3"
+  - "IGKC"
+  - "BAZ2B"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
