@@ -1,6 +1,7 @@
 # Services
 log:
   di_factory: lib.evagg.svc.init_logger
+  prompts_to_console: true
   # level: "DEBUG"
   # exclude_modules: [lib.evagg.svc.*]
   # include_modules: [lib.evagg.svc.web]
@@ -50,9 +51,10 @@ extractor:
     - zygosity
     - variant_inheritance
   llm_client:
-    di_factory: lib.evagg.llm.openai.OpenAIClient
+    di_factory: lib.evagg.llm.OpenAIClient
     config:
-      di_factory: lib.evagg.llm.openai.OpenAIDotEnvConfig
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "AZURE_OPENAI_"
   mention_finder:
     di_factory: lib.evagg.content.VariantMentionFinder
     entity_annotator: "{{ncbi_client}}"

@@ -33,21 +33,15 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants):
     def _cached_normalize(self, hgvs: str) -> Dict[str, Any]:
         url = f"https://mutalyzer.nl/api/normalize/{hgvs}"
 
-        # Response code of 422 signifies an unprocessable entity.
-        # This occurs when the description is syntactically invalid, but also
-        # occurs when the description is biologically invalid (e.g., the reference is incorrect).
-        # Detailed information is available in the response body, but it's not currently relevant.
-        #
-        # Additionally, for at least one variant "NP_000099.2:p.R316X", Mutalyzer returns a 500 error.
-        # We do not have additional information why this is being returned, but in either case we need to handle it
-        # sensibly, current approach is to return an empty dictionary.
-        #
-        # TODO: leverage error handling within the web_client itself
+        # Response code of 422 signifies an unprocessable entity. This occurs when the description is syntactically
+        # invalid, but also occurs when the description is biologically invalid (e.g., the reference is incorrect).
+        # Mutalyzer's web client should be configured with no_raise_codes=[422] to avoid raising an exception.
+        # For at least one variant (NP_000099.2:p.R316X), Mutalyzer returns a 500 error, which it shouldn't (500
+        # is an internal server error). For now we interpret this as an unresolvable entity and return an empty dict.
         try:
             response = self._web_client.get(url, "json")
         except HTTPError as e:
-            if e.response.status_code == 422:
-                return {}
+            logger.debug(f"{url} returned an error: {e}")
             if e.response.status_code == 500:
                 return {}
             raise e

@@ -56,7 +56,9 @@ class RequestsWebContentClient(IWebContentClient):
     def _raise_for_status(self, code: int) -> None:
         """Raise an exception if the status code is not 2xx."""
         if code >= 400 and code < 600 and code not in self._settings.no_raise_codes:
-            raise requests.HTTPError(f"Request failed with status code {code}")
+            response = requests.Response()
+            response.status_code = code
+            raise requests.HTTPError(f"Request failed with status code {code}", response=response)
 
     def _transform_content(
         self, text: str, content_type: Optional[str]
