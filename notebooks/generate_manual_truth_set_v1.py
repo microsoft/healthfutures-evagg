@@ -153,7 +153,7 @@ def _zygosity_validator(x: Any) -> Tuple[bool, str]:
     return result, f"Value is not one of {_ZYGOSITIES}" if not result else ""
 
 
-_STUDY_TYPES = ["case report", "case series", "cohort analysis"]
+_STUDY_TYPES = ["case report", "case series", "cohort analysis", None]
 
 
 def _study_type_validator(x: Any) -> Tuple[bool, str]:
@@ -323,7 +323,7 @@ for gene_tuple in genes:
     for index, row in enumerate(gene_evidence_df.itertuples()):
         if not row.paper_variant:
             print(
-                f"WARNING: SKIPPING ROW {index+2} for gene {gene_name} / sheet {ws.title}, "
+                f"WARNING: gene {gene_name} / sheet {ws.title} SKIPPING ROW {index+2} , "
                 "due to None in paper_variant."
             )
             gene_evidence_df.at[index, "drop"] = True
@@ -339,7 +339,7 @@ for gene_tuple in genes:
 
         if failed_cols:
             print(
-                f"VALIDATION: SKIPPING ROW {index+2} for gene {gene_name} / sheet {ws.title}, "
+                f"WARNING: gene {gene_name} / sheet {ws.title} SKIPPING ROW {index+2} , "
                 f"due to failed validations: {failed_cols}"
             )
             gene_evidence_df.at[index, "drop"] = True
