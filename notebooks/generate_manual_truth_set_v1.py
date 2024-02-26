@@ -19,6 +19,9 @@ TODO (2/21/2024) -
 
 """
 
+# TODO:
+# Functional_study is obsolete, traded for three subsequent CONTENT_SHEET_COLUMN_HEADINGS
+
 # %% Imports.
 
 
@@ -155,6 +158,19 @@ def _zygosity_validator(x: Any) -> Tuple[bool, str]:
     result = x in _ZYGOSITIES
     return result, f"Value is not one of {_ZYGOSITIES}" if not result else ""
 
+_VARIANT_INHERITANCES = [
+    "maternally inherited",
+    "parternally inherited",
+    "de novo",
+    "?de novo (if not confirmed)",
+    "unknown",
+    "maternally and paternally inherited homozygous"
+]
+
+def _variant_inheritance_validator(x: Any) -> Tuple[bool, str]:
+    result = x in _VARIANT_INHERITANCES
+    return result, f"Value is not one of {_VARIANT_INHERITANCES}" if not result else ""
+
 
 _STUDY_TYPES = ["case report", "case series", "cohort analysis", None]
 
@@ -182,11 +198,14 @@ def _yes_no_validator(x: Any) -> Tuple[bool, str]:
     result = x in ["Y", "N"]
     return result, "Value is not one of 'Y' or 'N'" if not result else ""
 
+# TODO: text description for phenotype can be empty, HPO list can be empty
+# TODO: need variant_inheritance validator
+# TODO: need individual id validator
 
 VALIDATORS = {
     "paper_build": _paper_build_validator,
     "paper_variant": _not_none_validator,
-    "Individual_ID": _not_none_validator,
+    "individual_id": _not_none_validator,
     "pheno_text_description": _not_none_validator,
     "phenotype": _phenotype_validator,
     "transcript": _transcript_validator,
@@ -194,6 +213,7 @@ VALIDATORS = {
     "hgvsp": _hgvs_p_validator,
     "variant_type": _variant_type_validator,
     "zygosity": _zygosity_validator,
+    "variant_inheritance": _variant_inheritance_validator,
     "pmid": _is_digit_validator,
     "author": _not_none_validator,
     "year": _is_digit_validator,
