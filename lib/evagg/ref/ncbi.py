@@ -89,10 +89,13 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         return False
 
     def _get_license(self, pmcid: str) -> str:
-        root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
-        unknown_str = "unknown"
+        """Get the license for a paper from the PMC OA API."""
 
-        print(f"### {" ".join(root.itertext())}")
+        unknown_str = "unknown"
+        if not pmcid:
+            return unknown_str
+
+        root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
 
         record = root.find(f"records/record[@id='{pmcid}']")
         if record is not None:
