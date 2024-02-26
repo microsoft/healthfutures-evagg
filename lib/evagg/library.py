@@ -409,19 +409,21 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "CNV",
                 "copy number variant",
             ]
-
+            # include
             if paper_title is not None and any(keyword in paper_title.lower() for keyword in inclusion_keywords):
                 rare_disease_papers.add(paper)
             elif paper_abstract is not None and any(
                 keyword in paper_abstract.lower() for keyword in inclusion_keywords
             ):
                 rare_disease_papers.add(paper)
+            # exclude
             elif paper_title is not None and any(keyword in paper_title.lower() for keyword in exclusion_keywords):
                 non_rare_disease_papers.add(paper)
             elif paper_abstract is not None and any(
                 keyword in paper_abstract.lower() for keyword in exclusion_keywords
             ):
                 non_rare_disease_papers.add(paper)
+            # other
             else:
                 other_papers.add(paper)
 
