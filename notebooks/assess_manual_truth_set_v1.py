@@ -26,21 +26,15 @@ df["animal_model"] = df["animal_model"].apply(lambda x: "yes" if x == "x" else "
 # recode in_supplement to be yes/no instead of Y/N
 df["in_supplement"] = df["in_supplement"].apply(lambda x: "yes" if x == "Y" else "no")
 
-# %% Row-level plots
+# %% Gene-level plots
 
-categorical_columns = [
-    "variant_type",
-    "zygosity",
-    "variant_inheritance",
-    "engineered_cells",
-    "patient_cells_tissues",
-    "animal_model",
-    "in_supplement",
-]
+gene_categorical_columns = ["evidence_base"]
 
-for col in categorical_columns:
-    normalized_value_counts = df[col].groupby(df["group"]).value_counts(normalize=True)
+for col in gene_categorical_columns:
+
+    normalized_value_counts = df.groupby(["gene"]).first().groupby("group")[col].value_counts(normalize=True)
     normalized_value_counts = normalized_value_counts.rename("proportion").reset_index()
+
     mplot = sns.barplot(data=normalized_value_counts, x=col, y="proportion", hue="group")
     mplot.set_xticklabels(mplot.get_xticklabels(), rotation=90)
     plt.title(col)
@@ -60,22 +54,25 @@ for col in paper_categorical_columns:
     mplot.set_xticklabels(mplot.get_xticklabels(), rotation=90)
     plt.title(col)
     plt.show()
-# is_pmc_oa
-# license
 
-# %% Gene-level plots
+# %% Row-level plots
 
-gene_categorical_columns = ["evidence_base"]
+categorical_columns = [
+    "variant_type",
+    "zygosity",
+    "variant_inheritance",
+    "engineered_cells",
+    "patient_cells_tissues",
+    "animal_model",
+    "in_supplement",
+]
 
-for col in gene_categorical_columns:
-
-    normalized_value_counts = df.groupby(["gene"]).first().groupby("group")[col].value_counts(normalize=True)
+for col in categorical_columns:
+    normalized_value_counts = df[col].groupby(df["group"]).value_counts(normalize=True)
     normalized_value_counts = normalized_value_counts.rename("proportion").reset_index()
-
     mplot = sns.barplot(data=normalized_value_counts, x=col, y="proportion", hue="group")
     mplot.set_xticklabels(mplot.get_xticklabels(), rotation=90)
     plt.title(col)
     plt.show()
-
 
 # %%
