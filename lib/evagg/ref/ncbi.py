@@ -90,7 +90,6 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
     def _get_license(self, pmcid: str) -> str:
         """Get the license for a paper from the PMC OA API."""
-
         unknown_str = "unknown"
         if not pmcid:
             return unknown_str
