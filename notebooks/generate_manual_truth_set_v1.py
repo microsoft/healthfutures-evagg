@@ -446,6 +446,8 @@ evidence_df["pmcid"] = evidence_df["pmid"].apply(get_pmcid)
 # And the link, which is just a link to the paper on pubmed.
 evidence_df["link"] = "https://pubmed.ncbi.nlm.nih.gov/" + evidence_df["pmid"].astype(str) + "/"
 
+# Remove any newlines from "pheno_text_description".
+evidence_df["pheno_text_description"] = evidence_df["pheno_text_description"].str.replace("\n", " ")
 
 # %% Load in the group assignments and merge with gene_df and evidence_df.
 
@@ -459,25 +461,45 @@ evidence_df = evidence_df.merge(gene_df, on="gene", how="left")
 # %% Compare statistics of the train and test sets.
 
 # what proportion of genes are in train and test?
-print("Proportion of genes in train: {:.2f}".format(gene_df.query('group == "train"').shape[0] / gene_df.shape[0]))
-print("Proportion of genes in test: {:.2f}".format(gene_df.query('group == "test"').shape[0] / gene_df.shape[0]))
+n_genes = gene_df.shape[0]
+n_genes_train = gene_df.query('group == "train"').shape[0]
+n_genes_test = gene_df.query('group == "test"').shape[0]
+
+print("Proportion of genes in train: {:.2f} ({} genes)".format(n_genes_train / n_genes, n_genes_train))
+print("Proportion of genes in test: {:.2f} ({} genes)".format(n_genes_test / n_genes, n_genes_test))
 
 # what proportion of papers are in train and test?
 temp_df = evidence_df.groupby("paper_id").first()
-print("Proportion of papers in train: {:.2f}".format(temp_df.query('group == "train"').shape[0] / temp_df.shape[0]))
-print("Proportion of papers in test: {:.2f}".format(temp_df.query('group == "test"').shape[0] / temp_df.shape[0]))
+temp_train_df = temp_df.query('group == "train"')
+temp_test_df = temp_df.query('group == "test"')
+
+print(
+    "Proportion of papers in train: {:.2f} ({} papers from {} genes)".format(
+        temp_train_df.shape[0] / temp_df.shape[0], temp_train_df.shape[0], len(temp_train_df["gene"].unique())
+    )
+)
+print(
+    "Proportion of papers in test: {:.2f} ({} papers from {} genes)".format(
+        temp_test_df.shape[0] / temp_df.shape[0], temp_test_df.shape[0], len(temp_test_df["gene"].unique())
+    )
+)
 
 # what proportion of variants are in train and test?
 print(
-    "Proportion of variant/individuals in train: {:.2f}".format(
-        evidence_df.query('group == "train"').shape[0] / evidence_df.shape[0]
+    "Proportion of variant/individuals in train: {:.2f} ({} V/Is from {} genes)".format(
+        evidence_df.query('group == "train"').shape[0] / evidence_df.shape[0],
+        evidence_df.query('group == "train"').shape[0],
+        len(evidence_df.query('group == "train"')["gene"].unique())
     )
 )
 print(
-    "Proportion of variant/individuals in test: {:.2f}".format(
-        evidence_df.query('group == "test"').shape[0] / evidence_df.shape[0]
+    "Proportion of variant/individuals in test: {:.2f} ({} V/Is from {} genes)".format(
+        evidence_df.query('group == "test"').shape[0] / evidence_df.shape[0],
+        evidence_df.query('group == "test"').shape[0],
+        len(evidence_df.query('group == "test"')["gene"].unique())
     )
 )
+
 
 # %% Write gene_paper_df and evidence_df to disk, splitting into two files each based on is_train from gene_df.
 
