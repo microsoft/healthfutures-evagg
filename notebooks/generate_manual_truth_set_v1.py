@@ -423,6 +423,15 @@ evidence_df["paper_title"] = evidence_df["pmid"].apply(get_paper_title)
 # Now add the pmc_oa status.
 evidence_df["is_pmc_oa"] = evidence_df["pmid"].apply(get_pmc_oa)
 
+# Drop the papers that aren't in PMC-OA.
+if evidence_df.query("is_pmc_oa == False").shape[0] > 0:
+    print(
+        "WARNING: Dropping {} papers that are not in PMC-OA".format(
+            evidence_df.query("is_pmc_oa == False").groupby("paper_id").first().shape[0]
+        )
+    )
+    evidence_df = evidence_df.query("is_pmc_oa == True")
+
 # Now add the license.
 evidence_df["license"] = evidence_df["pmid"].apply(get_license)
 
