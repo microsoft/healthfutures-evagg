@@ -59,7 +59,7 @@ CONTENT_SHEET_COLUMN_HEADINGS = {
     "Year": "year",
     "Journal (full name)": "journal",
     "Study_Type": "study_type",
-    "Functional_Study": "functional_study",
+    "In_Silico": "in_silico",
     "Engineered_Cells": "engineered_cells",
     "Patient_Cells_Tissues": "patient_cells_tissues",
     "Animal_Model": "animal_model",
@@ -186,20 +186,6 @@ def _study_type_validator(x: Any) -> Tuple[bool, str]:
     return result, f"Value is not one of {_STUDY_TYPES}" if not result else ""
 
 
-_FUNCTIONAL_STUDY_TYPES = [
-    "functional studies using patient cells supports (or lacks) pathogenicity of the variant",
-    "functional studies using animal cells or model supports (or lacks) pathogenicity of the variant",
-    "functional studies using a cell line supports (or lacks) pathogenicity of the variant",
-    "in silico analysis supports (or lacks) pathogenicity of the variant",
-    "none",
-]
-
-
-def _functional_study_validator(x: Any) -> Tuple[bool, str]:
-    result = x in _FUNCTIONAL_STUDY_TYPES
-    return result, f"Value is not one of {_FUNCTIONAL_STUDY_TYPES}" if not result else ""
-
-
 def _yes_no_validator(x: Any) -> Tuple[bool, str]:
     result = x in ["Y", "N"]
     return result, "Value is not one of 'Y' or 'N'" if not result else ""
@@ -227,7 +213,7 @@ VALIDATORS = {
     "year": _is_digit_validator,
     "journal": _not_none_validator,
     "study_type": _study_type_validator,
-    "functional_study": _functional_study_validator,
+    "in_silico": _x_none_validator,
     "engineered_cells": _x_none_validator,
     "patient_cells_tissues": _x_none_validator,
     "animal_model": _x_none_validator,
@@ -346,6 +332,9 @@ for gene_tuple in genes:
         print(f"WARNING: No variants found in manual evidence for gene {gene_name} / sheet {ws.title}, skipping gene.")
         continue
 
+    # Replace any instances of "" with None.
+    gene_evidence_df = gene_evidence_df.replace("", None)
+
     # Column-wise checks.
     gene_evidence_df["drop"] = False
 
@@ -391,9 +380,6 @@ evidence_df = evidence_df[["gene"] + [col for col in evidence_df.columns if col 
 
 # Add a paper_id column right after pmid that is formatted as "pmid:{pmid}".
 evidence_df["paper_id"] = "pmid:" + evidence_df["pmid"].astype(str)
-
-# Drop the functional_study column.
-evidence_df.drop(columns=["functional_study"], inplace=True)
 
 # Helper function for getting paper titles.
 ncbi_client = NcbiLookupClient(
