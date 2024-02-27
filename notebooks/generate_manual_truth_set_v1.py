@@ -489,14 +489,14 @@ print(
     "Proportion of variant/individuals in train: {:.2f} ({} V/Is from {} genes)".format(
         evidence_df.query('group == "train"').shape[0] / evidence_df.shape[0],
         evidence_df.query('group == "train"').shape[0],
-        len(evidence_df.query('group == "train"')["gene"].unique())
+        len(evidence_df.query('group == "train"')["gene"].unique()),
     )
 )
 print(
     "Proportion of variant/individuals in test: {:.2f} ({} V/Is from {} genes)".format(
         evidence_df.query('group == "test"').shape[0] / evidence_df.shape[0],
         evidence_df.query('group == "test"').shape[0],
-        len(evidence_df.query('group == "test"')["gene"].unique())
+        len(evidence_df.query('group == "test"')["gene"].unique()),
     )
 )
 
