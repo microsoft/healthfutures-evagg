@@ -8,8 +8,8 @@ import seaborn as sns
 
 # %% Constants.
 
-TRAIN_TSV = "/home/azureuser/repos/ev-agg-exp/data/v1/evidence_train_v1.tsv"
-TEST_TSV = "/home/azureuser/repos/ev-agg-exp/data/v1/evidence_test_v1.tsv"
+TRAIN_TSV = "./data/v1/evidence_train_v1.tsv"
+TEST_TSV = "./data/v1/evidence_test_v1.tsv"
 
 # %% Load the data and concatenate into a single dataframe.
 

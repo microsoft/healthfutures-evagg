@@ -36,9 +36,9 @@ from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
-TRUTH_XLSX = "/home/azureuser/repos/ev-agg-exp/.tmp/Manual Ground Truth.xlsx"
-GROUP_ASSIGNMENT_CSV = "/home/azureuser/repos/ev-agg-exp/data/v1/group_assignments.tsv"
-OUTPUT_ROOT = "/home/azureuser/repos/ev-agg-exp/data/v1"
+TRUTH_XLSX = "./.tmp/Manual Ground Truth.xlsx"
+GROUP_ASSIGNMENT_CSV = "./data/v1/group_assignments.tsv"
+OUTPUT_ROOT = "./data/v1"
 
 PAPERS_SHEET_NAME = "find_right_papers"
 
