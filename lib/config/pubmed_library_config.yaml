@@ -25,13 +25,44 @@ di_factory: lib.evagg.SynchronousLocalApp
 queries:
   di_factory: lib.evagg.types.QueryIterator
   variants:
-    - "CPA6:R46C" # note R46C is a variant I made up.
+    - 'ADCY1:something'
+    - 'RHOH:something'
+    - 'FBN2:something'
+    - 'ACAT2:something'
+    - 'TAPBP:something'
+    - 'LRRC10:something'
+    - 'EXOC2:something'
+    - 'CTF1:something'
+    - 'TOPBP1:something'
+    - 'TNNC2:something'
+    - 'PEX11A:something'
+    - 'KMO:something'
+    - 'GRXCR2:something'
+    - 'CPT1B:something'
+    - 'COG4:something'
+    - 'MLH3:something'
+    - 'HYAL1:something'
+    - 'EMC1:something'
+    - 'TOP2B:something'
+    - 'OTUD7A:something'
+    - 'DNAJC7:something'
+    - 'SARS1:something'
+    - 'NPPA:something'
+    - 'RNASEH1:something'
+    - 'IGKC:something'
+    - 'RGS9:something'
+    - 'SLFN14:something'
+    - 'SLC38A9:something'
+    - 'B4GAT1:something'
+    - 'ZNF423:something'
+    - 'BAZ2B:something'
+    - 'JPH2:something'
 library:
-  di_factory: lib.evagg.RemoteFileLibrary
+  di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
-  max_papers: 1
+  max_papers: 50
 extractor:
-  di_factory: lib.evagg.PromptBasedContentExtractor
+  di_factory: lib.evagg.SimpleContentExtractor
   fields:
     - gene
     - paper_id
@@ -40,14 +71,5 @@ extractor:
     - phenotype
     - zygosity
     - variant_inheritance
-  llm_client:
-    di_factory: lib.evagg.llm.openai.OpenAIClient
-    config:
-      di_factory: lib.evagg.llm.openai.OpenAIDotEnvConfig
-  mention_finder:
-    di_factory: lib.evagg.content.VariantMentionFinder
-    entity_annotator: "{{ncbi_client}}"
-    gene_lookup_client: "{{ncbi_client}}"
-  variant_lookup_client: "{{ncbi_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
