@@ -71,8 +71,8 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
 
         # TODO - this is a little bit of a misnomer, as it's not strictly "open access" we're checking for.
-        # If the response contains a record with the given pmcid and does not have a "no derrivatives" license, then the
-        # paper is open access.
+        # If the response contains a record with the given pmcid and does
+        # not have a "no derivatives" license, then the paper is open access.
         record = root.find(f"records/record[@id='{pmcid}']")
         if record is not None:
             license = record.attrib.get("license", "")
