@@ -22,20 +22,36 @@ variant_factory:
   refseq_client: "{{refseq_client}}"
 
 di_factory: lib.evagg.SynchronousLocalApp
+# TODO, this should be kept updated with the list of genes in TruthsetFileLibrary.file_path
+# Currently set to all the genes in the entire v1 truthset.
 queries:
-  - "CHI3L1"
-  - "TWNK"
-  - "COL23A1"
-  - "PRKCG"
+  - "CTF1"
+  - "FBN2"
+  - "EXOC2"
+  - "RNASEH1"
+  - "DNAJC7"
+  - "ZNF423"
+  - "SARS1"
+  - "BAZ2B"
+  - "B4GAT1"
+  - "TOP2B"
+  - "SLFN14"
+  - "MLH3"
+  - "COG4"
+  - "JPH2"
+  - "GRXCR2"
+  - "EMC1"
+  - "LRRC10"
+  - "TOPBP1"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
-  file_path: data/truth_set_small.tsv
+  file_path: data/v1/evidence_train_v1.tsv
   variant_factory: "{{variant_factory}}"
 extractor:
   di_factory: lib.evagg.TruthsetContentExtractor
   field_map:
     - gene: gene_symbol
-    - id: paper_id
+    - paper_id: paper_id
     - hgvs_c: hgvs_c
     - hgvs_p: hgvs_p
     - individual_id: individual_id

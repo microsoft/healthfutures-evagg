@@ -101,11 +101,15 @@ def test_pubmed_fetch(mock_web_client, json_load):
 
 
 def test_pubmed_pmc_oa_fetch(mock_web_client):
-    web_client = mock_web_client("efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC6824399.xml")
+    web_client = mock_web_client(
+        "efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC6824399.xml", "ncbi_pmc_is_oa_PMC6824399.xml"
+    )
     result = NcbiLookupClient(web_client).fetch("31427284")
     assert result and result.props["is_pmc_oa"] is False
 
-    web_client = mock_web_client("efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC3564958.xml")
+    web_client = mock_web_client(
+        "efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC3564958.xml", "ncbi_pmc_is_oa_PMC3564958.xml"
+    )
     result = NcbiLookupClient(web_client).fetch("31427284")
     assert result and result.props["is_pmc_oa"] is True
 
