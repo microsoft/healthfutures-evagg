@@ -134,6 +134,27 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
         return Paper(id=props["doi"], **props)
 
+    def full_text(self, paper: Paper, kept_section_types: Optional[Sequence[str]] = None) -> Optional[str]:
+        """Get the full text of a paper from PMC."""
+        if not kept_section_types:
+            kept_section_types = ["TITLE", "ABSTRACT", "INTRO", "METHODS", "RESULTS", "DISCUSS", "TABLE"]
+
+        if (
+            not paper.props.get("pmcid", None)
+            or not paper.props.get("is_pmc_oa", False)
+            or paper.props.get("license", "").find("nd") >= 0
+        ):
+            logger.warning(f"Cannot fetch full text, paper '{paper}' is not in PMC-OA or has unusable license.")
+            return None
+
+        # TODO, this should be replaced with a call directly to the BioC APIs when they're back up and running.
+        # see https://www.ncbi.nlm.nih.gov/research/bionlp/APIs/BioC-PubMed/
+        anno = self.annotate(paper)
+        full_text = "\n\n".join(
+            [p["text"] for p in anno["passages"] if p["infons"]["section_type"] in kept_section_types]
+        )
+        return full_text
+
     # IGeneLookupClient
     def gene_id_for_symbol(self, *symbols: str, allow_synonyms: bool = False) -> Dict[str, int]:
         """Query the NCBI gene database for the gene_id for a given collection of `symbols`.

@@ -24,6 +24,10 @@ class IPaperLookupClient(Protocol):
         """Fetch the paper with the given id."""
         ...  # pragma: no cover
 
+    def full_text(self, paper: Paper, kept_section_types: Optional[Sequence[str]] = None) -> Optional[str]:
+        """Fetch the full text of the paper."""
+        ...
+
 
 class IAnnotateEntities(Protocol):
     def annotate(self, paper: Paper) -> Dict[str, Any]:
