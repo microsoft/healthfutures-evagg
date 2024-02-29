@@ -49,7 +49,7 @@ class MockVariantFactory(ICreateVariants):
     def __init__(self) -> None:
         pass
 
-    def try_parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
+    def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
         return HGVSVariant(text_desc, gene_symbol, "transcript", True, True)
 
 
