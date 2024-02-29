@@ -44,10 +44,11 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa", "license"]
+TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa", "license"]
 # These are the columns in the truthset that are specific to the variant.
 TRUTHSET_VARIANT_KEYS = [
     "gene",
+    "transcript",
     "hgvs_c",
     "hgvs_p",
     "individual_id",
@@ -99,16 +100,35 @@ class TruthsetFileLibrary(IGetPapers):
                     if paper_data[key] != row[key]:
                         logger.warning(f"Multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
                 # Make sure the gene/variant columns are not empty.
-                if not row["gene"] or not row["hgvs_p"]:
-                    logger.warning(f"Missing gene or variant for {paper_id}.")
+                if not row["gene"] or (not row["hgvs_p"] and not row["hgvs_c"]):
+                    logger.warning(f"Missing gene or hgvs_p for {paper_id}.")
 
             # Return the parsed variant from HGVS c or p and the individual ID.
-            def _get_variant_key(row: Dict[str, str]) -> Tuple[HGVSVariant, str]:
+            def _get_variant_key(row: Dict[str, str]) -> Tuple[HGVSVariant | None, str]:
                 text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
-                return self._variant_factory.try_parse(text_desc, row["gene"]), row["individual_id"]
+                transcript = row["transcript"] if "transcript" in row else None
+
+                # This can fail, instead of raising an exception, we'll return a placeholder value that can be dropped
+                # from the set of variants later.
+                try:
+                    return (
+                        self._variant_factory.parse(text_desc=text_desc, gene_symbol=row["gene"], refseq=transcript),
+                        row["individual_id"],
+                    )
+                except ValueError as e:
+                    logger.warning(f"Variant parsing failed: {e}")
+                    return None, ""
 
             # For each paper, extract the (variant, subject)-specific key/value pairs into a new dict of dicts.
             variants = {_get_variant_key(row): {key: row.get(key, "") for key in TRUTHSET_VARIANT_KEYS} for row in rows}
+            if (None, "") in variants:
+                logger.warning("Dropping placeholder variants.")
+                variants.pop((None, ""))
+
+            if not variants:
+                logger.warning(f"No valid variants for {paper_id}.")
+                continue
+
             # Create a Paper object with the extracted fields.
             papers.add(Paper(id=paper_id, evidence=variants, **paper_data))
 

@@ -3,11 +3,11 @@ from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 def test_i_create_variants() -> None:
     class TestCreateVariants(ICreateVariants):
-        def try_parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
+        def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
             return HGVSVariant(text_desc, gene_symbol, refseq, False, True)
 
     test_create_variants = TestCreateVariants()
-    variant = test_create_variants.try_parse("var", "gene", "ref")
+    variant = test_create_variants.parse("var", "gene", "ref")
     assert variant.hgvs_desc == "var"
     assert variant.gene_symbol == "gene"
     assert variant.refseq == "ref"
