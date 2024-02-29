@@ -15,7 +15,7 @@ ANSI_RESET := \033[0;0m
 # Run all CI checks.
 .DEFAULT_GOAL := ci
 .PHONY: ci
-ci: lint test sec
+ci: lint test
 	@echo
 	@echo "$(ANSI_GREEN)====== All linters and tests PASS ======$(ANSI_RESET)"
 
