@@ -82,7 +82,7 @@ class TruthsetFileLibrary(IGetPapers):
                 logger.warning(f"Skipped {len(rows)} rows with no paper ID.")
                 continue
 
-            # For each paper, extract the paper-specific key/value pairs into a new dict.
+            # For each paper, irrelevantct the paper-specific key/value pairs into a new dict.
             # These are repeated on every paper/variant row, so we can just take the first row.
             paper_data = {k: v for k, v in rows[0].items() if k in TRUTHSET_PAPER_KEYS}
 
@@ -192,8 +192,8 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         if count_r_d_papers != 0:
             # Compare the ground truth papers PMIDs to the paper PMIDs that were found
-            n_corr, n_miss, n_extra = self._compare_manual_ground_truth(term, rare_disease_papers)
-        pn_corr, pn_miss, pn_extra = self._compare_pubmed_ground_truth(term, papers)
+            n_corr, n_miss, n_irrelevant = self._compare_manual_ground_truth(term, rare_disease_papers)
+        pn_corr, pn_miss, pn_irrelevant = self._compare_pubmed_ground_truth(term, papers)
 
         if count_r_d_papers == 0:
             rare_disease_papers = set()
@@ -521,11 +521,12 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             number of correct papers (i.e. the number that match the ground truth)
             number of missed papers (i.e. the number that are in the ground truth but not in the papers that were found)
-            number of extra papers (i.e. the number that are in the papers that were found but not in the ground truth)
+            number of irrelevant papers (i.e. the number that are in the papers that were found but not in the ground truth)
         """
+
         n_correct = 0
         n_missed = 0
-        n_extra = 0
+        n_irrelevant = 0
 
         # Get all the PMIDs from all of the papers
         r_d_pmids = [paper.props.get("pmid", "Unknown") for paper in r_d_papers]
@@ -533,11 +534,11 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         ground_truth_papers_pmids = self._get_ground_truth_gene(gene)
 
-        # Keep track of the correct and extra PMIDs to subtract from the ground truth papers PMIDs
+        # Keep track of the correct and irrelevant PMIDs to subtract from the ground truth papers PMIDs
         counted_pmids = []
         correct_pmids = []
         missed_pmids = []
-        extra_pmids = []
+        irrelevant_pmids = []
 
         # For the gene, get the ground truth PMIDs from ground_truth_papers_pmids and compare the PMIDS to the PMIDS from the papers that were found
         # For any PMIDs that match, increment n_correct
@@ -549,10 +550,10 @@ class RareDiseaseFileLibrary(IGetPapers):
                     correct_pmids.append(pmid)
 
                 else:
-                    n_extra += 1
-                    print("extra pmid: ", pmid)
+                    n_irrelevant += 1
+                    print("irrelevant pmid: ", pmid)
                     counted_pmids.append(pmid)
-                    extra_pmids.append(pmid)
+                    irrelevant_pmids.append(pmid)
 
             # For any PMIDs in the ground truth that are not in the papers that were found, increment n_missed, use counted_pmids to subtract from the ground truth papers PMIDs
             for pmid in ground_truth_papers_pmids:
@@ -564,23 +565,35 @@ class RareDiseaseFileLibrary(IGetPapers):
         else:
             n_correct = 0
             n_missed = 0
-            n_extra = 0
+            n_irrelevant = 0
 
-        # todo: filter r_d_papers to only include those that overlap with correct_pmids, missed_pmids, and extra_pmids so that I can use the props to print the titles.
-        print('For all "correct papers"')
-        for paper in correct_pmids:
-            print(paper.props.get("title", "Unknown"))
+        print(
+            f"Tool against Manual Ground Truth - Correct: {n_correct}, Missed: {n_missed}, Irrelevant: {n_irrelevant}"
+        )
 
-        print('For all "missed papers"')
-        for paper in missed_pmids:
-            print(paper.props.get("title", "Unknown"))
+        # Filter r_d_papers and create 3 objects that each have all of the paper titles that correspond to the omids in correct_pmids, missed_pmids, and irrelevant_pmids. This enables me to use the props to print the titles
 
-        print('For all "extra papers"')
-        for paper in extra_pmids:
-            print(paper.props.get("title", "Unknown"))
+        correct_papers = [
+            paper.props.get("title", "Unknown")
+            for paper in r_d_papers
+            if paper.props.get("pmid", "Unknown") in correct_pmids
+        ]
+        # paper_abstract = paper.props.get("abstract", "Unknown")
+        missed_papers = [
+            paper.props.get("title", "Unknown")
+            for paper in r_d_papers
+            if paper.props.get("pmid", "Unknown") in missed_pmids
+        ]
+        irrelevant_papers = [
+            paper.props.get("title", "Unknown")
+            for paper in r_d_papers
+            if paper.props.get("pmid", "Unknown") in irrelevant_pmids
+        ]
 
-        print(f"Tool against Manual Ground Truth - Correct: {n_correct}, Missed: {n_missed}, Extra: {n_extra}")
-        return [n_correct, n_missed, n_extra]
+        print("missed papers", missed_papers)
+        print("irrelevant papers", irrelevant_papers)
+
+        return [n_correct, n_missed, n_irrelevant]
 
     # private function to compare the ground truth papers PMIDs to the papers that were found
     def _compare_pubmed_ground_truth(self, gene, all_pubmed_papers) -> List[int]:
@@ -590,18 +603,18 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             number of correct papers (i.e. the number that match the ground truth)
             number of missed papers (i.e. the number that are in the ground truth but not in the papers that were found)
-            number of extra papers (i.e. the number that are in the papers that were found but not in the ground truth)
+            number of irrelevant papers (i.e. the number that are in the papers that were found but not in the ground truth)
         """
         n_correct = 0
         n_missed = 0
-        n_extra = 0
+        n_irrelevant = 0
 
         p_pmids = [paper.props.get("pmid", "Unknown") for paper in all_pubmed_papers]
         # print("P_PMIDS ", p_pmids)
 
         ground_truth_papers_pmids = self._get_ground_truth_gene(gene)
 
-        # Keep track of the correct and extra PMIDs to subtract from the ground truth papers PMIDs
+        # Keep track of the correct and irrelevant PMIDs to subtract from the ground truth papers PMIDs
         counted_pmids = []
 
         # For the gene, get the ground truth PMIDs from ground_truth_papers_PMIDs and compare the PMIDS to the PMIDS from the papers that were found
@@ -612,8 +625,8 @@ class RareDiseaseFileLibrary(IGetPapers):
                     n_correct += 1
                     counted_pmids.append(pmid)
                 else:
-                    print("extra pmid: ", pmid)
-                    n_extra += 1
+                    print("irrelevant pmid: ", pmid)
+                    n_irrelevant += 1
                     counted_pmids.append(pmid)
 
             # For any PMIDs in the ground truth that are not in the papers that were found, increment n_missed, use counted_pmids to subtract from the ground truth papers PMIDs
@@ -625,10 +638,12 @@ class RareDiseaseFileLibrary(IGetPapers):
         else:
             n_correct = 0
             n_missed = 0
-            n_extra = 0
+            n_irrelevant = 0
 
-        print(f"PubMed against Manual Ground Truth - Correct: {n_correct}, Missed: {n_missed}, Extra: {n_extra}")
-        return [n_correct, n_missed, n_extra]
+        print(
+            f"PubMed against Manual Ground Truth - Correct: {n_correct}, Missed: {n_missed}, irrelevant: {n_irrelevant}"
+        )
+        return [n_correct, n_missed, n_irrelevant]
 
     def _filter_rare_disease_papers(self, papers: Set[Paper]):
         """Filter papers to only include those that are related to rare diseases.
