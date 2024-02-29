@@ -112,9 +112,7 @@ class TruthsetFileLibrary(IGetPapers):
                 # from the set of variants later.
                 try:
                     return (
-                        self._variant_factory.try_parse(
-                            text_desc=text_desc, gene_symbol=row["gene"], refseq=transcript
-                        ),
+                        self._variant_factory.parse(text_desc=text_desc, gene_symbol=row["gene"], refseq=transcript),
                         row["individual_id"],
                     )
                 except ValueError as e:
