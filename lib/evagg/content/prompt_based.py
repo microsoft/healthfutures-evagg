@@ -46,8 +46,14 @@ class PromptBasedContentExtractor(IExtractFields):
         return "\n\n".join([m["text"] for m in mentions])
 
     def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
-        # Only process papers in PMC.
-        if "pmcid" not in paper.props or paper.props["pmcid"] == "":
+        # Only process papers in PMC-OA.
+        if (
+            "pmcid" not in paper.props
+            or paper.props["pmcid"] == ""
+            or "is_pmc_oa" not in paper.props
+            or paper.props["is_pmc_oa"] is False
+        ):
+            logger.warning(f"Skipping {paper.id} because it is not in PMC-OA")
             return []
 
         # Find all the variant mentions in the paper relating to the query.
