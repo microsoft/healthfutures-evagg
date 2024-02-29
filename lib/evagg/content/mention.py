@@ -51,7 +51,7 @@ class HGVSVariantFactory(ICreateVariants):
             logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}")
             return None
 
-    def try_parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
+    def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
         """Attempt to parse a variant based on description and an optional gene symbol and optional refseq.
 
         `gene_symbol` is required for protein (p.) and coding (c.) variants, but not mitochondrial (m.) or genomic (g.)
@@ -76,9 +76,7 @@ class HGVSVariantFactory(ICreateVariants):
             refseq_predicted = False
 
         if not refseq:
-            raise ValueError(
-                f"RefSeq required for all variants. None was provided or predicted for {text_desc, gene_symbol}"
-            )
+            raise ValueError(f"No RefSeq provided or predicted for {text_desc, gene_symbol}")
 
         # Validate the variant for both syntactic and biological correctness.
         is_valid = self._validate_variant(refseq, text_desc)
@@ -239,9 +237,7 @@ class VariantMentionFinder(IFindVariantMentions):
                     if "gene_id" in annotation["infons"] and annotation["infons"]["gene_id"] == query_gene_id:
                         if annotation["infons"]["name"] is not None:
                             try:
-                                candidate = self._variant_factory.try_parse(
-                                    annotation["infons"]["name"], query_gene_symbol
-                                )
+                                candidate = self._variant_factory.parse(annotation["infons"]["name"], query_gene_symbol)
                                 if candidate.valid:
                                     variants_in_query_gene.add((annotation["infons"]["identifier"], candidate))
                             except ValueError:
@@ -413,7 +409,7 @@ class TruthsetVariantMentionFinder(IFindVariantMentions):
             hgvs_desc = variant_dict["hgvs_c"] if variant_dict["hgvs_c"] else variant_dict["hgvs_p"]
             transcript = variant_dict["transcript"] if variant_dict["transcript"] else None
 
-            variant = self._variant_factory.try_parse(text_desc=hgvs_desc, gene_symbol=gene_symbol, refseq=transcript)
+            variant = self._variant_factory.parse(text_desc=hgvs_desc, gene_symbol=gene_symbol, refseq=transcript)
             # It is possible that that there are no mentions for this variant (i.e., this is empty) if the
             # variant is only mentioned in the supplement.
             mentions[variant] = self._gather_mentions_for_variant(

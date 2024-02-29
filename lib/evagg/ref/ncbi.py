@@ -63,54 +63,34 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         url = self.EUTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
         return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
 
-    def _is_pmc_oa(self, pmcid: Optional[str]) -> bool:
-        """Check if a paper is open access using the PMC OA API."""
+    def _get_oa_props(self, pmcid: str) -> Dict[str, Any]:
+        """Get the OA status for a paper from the PMC OA API."""
+        props = {"is_pmc_oa": False, "license": "unknown"}
         if not pmcid:
-            return False
+            return props
 
+        # Do a record lookup for the given pmcid at the PMC OA endpoint.
         root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
-
-        # TODO - this is a little bit of a misnomer, as it's not strictly "open access" we're checking for.
-        # If the response contains a record with the given pmcid and does not have a "no derrivatives" license, then the
-        # paper is open access.
+        # Look for a record with the given pmcid in the response.
         record = root.find(f"records/record[@id='{pmcid}']")
-        if record is not None:
-            license = record.attrib.get("license", "")
-            if "-ND" in license:  # ND: No Derivatives
-                logger.warning(f"PMC OA record found for {pmcid} but has a no derivatives license: {license}")
-                return False
-            logger.debug(f"PMC OA record found for {pmcid}")
-            return True
 
-        # If there is an error code, extract it from the response.
-        err_code = root.find("error").attrib["code"] if root.find("error") is not None else None
-        if err_code and err_code != "idIsNotOpenAccess":
-            logger.warning(f"PMC OA error code: {err_code}")
-        return False
-
-    def _get_license(self, pmcid: str) -> str:
-        """Get the license for a paper from the PMC OA API."""
-        unknown_str = "unknown"
-        if not pmcid:
-            return unknown_str
-
-        root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
-
-        record = root.find(f"records/record[@id='{pmcid}']")
-        if record is not None:
-            license = record.attrib.get("license", unknown_str)
-            return license
-
-        # If there is an error code, extract it from the response.
-        err_code = root.find("error").attrib["code"] if root.find("error") is not None else None
-
-        if err_code:
+        if record is None:
+            # No valid OA record returned - if there is an error code, extract it from the response.
+            err_code = root.find("error").attrib["code"] if root.find("error") is not None else None
             if err_code == "idIsNotOpenAccess":
-                return "not_open_access"
-            else:
-                logger.warning(f"PMC OA error code: {err_code}")
+                props["license"] = "not_open_access"
+            elif err_code:
+                logger.warning(f"Unexpected PMC OA error code: {err_code}")
+        else:
+            props["is_pmc_oa"] = True
+            props["license"] = license = record.attrib.get("license", "unknown")
+            logger.debug(f"PMC OA record found for {pmcid}")
+            if "-ND" in license:
+                # TODO if it has a "no derivatives" license, then we don't consider it open access.
+                logger.warning(f"PMC OA record found for {pmcid} but has a no-derivatives license: {license}")
+                props["is_pmc_oa"] = False
 
-        return unknown_str
+        return props
 
     # IPaperLookupClient
     def search(self, query: str, max_papers: Optional[int] = None) -> Sequence[str]:
@@ -127,9 +107,8 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
             return None
 
         props = _extract_paper_props_from_xml(article)
+        props.update(self._get_oa_props(props["pmcid"]))
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
-        props["is_pmc_oa"] = self._is_pmc_oa(props["pmcid"])
-        props["license"] = self._get_license(props["pmcid"])
         props["pmid"] = paper_id
 
         return Paper(id=props["doi"], **props)
