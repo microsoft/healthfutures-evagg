@@ -68,6 +68,9 @@ class HGVSVariantFactory(ICreateVariants):
         Raises a ValueError if the refseq and variant description are not compatible (e.g., a protein variant on a
         transcript refseq).
         """
+        # text_desc should not contain any spaces, but it often does.
+        text_desc = text_desc.replace(" ", "")
+
         # If no refseq is provided, we'll try to predict it.
         if not refseq:
             refseq = self._predict_refseq(text_desc, gene_symbol)
