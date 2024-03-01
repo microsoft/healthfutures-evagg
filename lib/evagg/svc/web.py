@@ -1,11 +1,11 @@
 import json
 import logging
-import xml.etree.ElementTree as Et
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from azure.cosmos import ContainerProxy, CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from defusedxml import ElementTree
 from pydantic import Extra, validator
 from requests.adapters import HTTPAdapter, Retry
 
@@ -60,9 +60,7 @@ class RequestsWebContentClient(IWebContentClient):
             response.status_code = code
             raise requests.HTTPError(f"Request failed with status code {code}", response=response)
 
-    def _transform_content(
-        self, text: str, content_type: Optional[str]
-    ) -> Optional[Union[str, bytes, Dict[str, Any], Et.Element]]:
+    def _transform_content(self, text: str, content_type: Optional[str]) -> Any:
         """Get the content from the response based on the provided content type."""
         content_type = content_type or self._settings.content_type
         if content_type == "text":
@@ -70,7 +68,7 @@ class RequestsWebContentClient(IWebContentClient):
         elif content_type == "json":
             return json.loads(text) if text else {}
         elif content_type == "xml":
-            return Et.fromstring(text) if text else None
+            return ElementTree.fromstring(text) if text else None
         else:
             raise ValueError(f"Invalid content type: {content_type}")
 
