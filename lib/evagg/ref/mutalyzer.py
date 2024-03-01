@@ -46,7 +46,8 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants):
                 return {}
             raise e
 
-        if "errors" in response:
+        if "errors" in response or ("custom" in response and "errors" in response["custom"]):
+            logger.info(f"Mutalyzer returned an error for {hgvs}: {response['custom']['errors']}")
             return {}
         return response
 
