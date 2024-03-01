@@ -180,6 +180,25 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return rare_disease_papers
 
+    def split_papers_into_categories(self, query: IPaperQuery):
+        if len(query.terms()) > 1:
+            raise NotImplementedError("Multiple term extraction not yet implemented.")
+
+        # Get gene term
+        term = next(iter(query.terms())).gene
+        print(f"\nSearching for papers related to {term}.")
+
+        # Find paper IDs
+        print("term", term)
+        paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
+
+        # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
+        papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
+
+        # Call private function to filter for rare disease papers
+        rare_disease_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(papers)
+        return rare_disease_papers, non_rare_disease_papers, other_papers
+
     def _filter_rare_disease_papers(self, papers: Set[Paper]):
         """Filter papers to only include those that are related to rare diseases.
         Args:
