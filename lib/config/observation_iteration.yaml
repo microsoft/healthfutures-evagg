@@ -1,0 +1,70 @@
+log:
+  di_factory: lib.evagg.svc.init_logger
+  level: INFO
+  prompts_to_file: true
+
+ncbi_client: 
+  di_factory: lib.evagg.ref.NcbiLookupClient
+  web_client:
+    di_factory: lib.evagg.svc.CosmosCachingWebClient
+    cache_settings:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "EVAGG_CONTENT_CACHE_"
+  settings:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "NCBI_EUTILS_"
+  
+mutalyzer_client:
+  di_factory: lib.evagg.ref.MutalyzerClient
+  web_client:
+    di_factory: lib.evagg.svc.CosmosCachingWebClient
+    web_settings:
+      # Mutalyzer response code of 422 signifies an unprocessable entity.
+      no_raise_codes: [422]
+    cache_settings:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "EVAGG_CONTENT_CACHE_"
+
+refseq_client:
+  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
+  web_client:
+    di_factory: lib.evagg.svc.RequestsWebContentClient
+
+variant_factory:
+  di_factory: lib.evagg.content.HGVSVariantFactory
+  normalizer: "{{mutalyzer_client}}"
+  back_translator: "{{mutalyzer_client}}"
+  refseq_client: "{{refseq_client}}"
+
+llm_client:
+  di_factory: lib.evagg.llm.OpenAIClient
+  config:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "AZURE_OPENAI_"
+
+di_factory: lib.evagg.SynchronousLocalApp
+queries:
+  - "EMC1"
+library:
+  di_factory: lib.evagg.TruthsetFileLibrary
+  file_path: data/v1/evidence_train_v1.tsv
+  variant_factory: "{{variant_factory}}"
+extractor:
+  di_factory: lib.evagg.PromptBasedContentExtractor
+  fields:
+    - gene
+    - paper_id
+    - hgvs_c
+    - hgvs_p
+    - individual_id
+    - transcript
+  llm_client: "{{llm_client}}"
+  observation_finder:
+    di_factory: lib.evagg.content.ObservationFinder
+    llm_client: "{{llm_client}}"
+    paper_lookup_client: "{{ncbi_client}}"
+    variant_factory: "{{variant_factory}}"
+writer:
+  di_factory: lib.evagg.TableOutputWriter
+
+
