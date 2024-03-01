@@ -60,7 +60,7 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict[str, Any]:
 def run_sync() -> None:
     args = _parse_args()
     # Make an instance spec dictionary out of the factory yaml and the override args and instantiate it.
-    spec: Dict[str, Any] = {"di_factory": args.config, **_parse_override_args(args.override)}
+    spec = {"di_factory": args.config, **_parse_override_args(args.override)}
     app: IEvAggApp = DiContainer().create_instance(spec, {})
 
     try:
