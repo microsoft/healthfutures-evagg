@@ -1,9 +1,9 @@
 import json
 import os
-import xml.etree.ElementTree as Et
 from typing import Optional
 
 import pytest
+from defusedxml import ElementTree
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def json_load(test_file_contents):
 @pytest.fixture
 def xml_parse():
     def _parser(content):
-        return Et.fromstring(content)
+        return ElementTree.fromstring(content)
 
     return _parser
 
