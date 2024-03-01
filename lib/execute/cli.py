@@ -1,9 +1,6 @@
 import traceback
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 from typing import Any, Dict, Sequence
-
-import yaml
 
 from lib.di import DiContainer
 from lib.evagg import IEvAggApp
@@ -60,30 +57,13 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict[str, Any]:
     return override_dict
 
 
-def _nested_update(d: Dict, u: Dict) -> Dict:
-    """Recursively update a nested dictionary."""
-    for k, v in u.items():
-        if isinstance(v, dict):
-            d[k] = _nested_update(d.get(k, {}), v)
-        else:
-            d[k] = v
-    return d
-
-
 def run_sync() -> None:
     args = _parse_args()
-    config: Dict[str, Any]
-
-    # Read in the config dictionary.
-    with open(Path(args.config), "r") as f:
-        config = yaml.safe_load(f)
-
-    # Merge in any overrides.
-    config = _nested_update(config, _parse_override_args(args.override))
+    # Make an instance spec dictionary out of the factory yaml and the override args and instantiate it.
+    spec = {"di_factory": args.config, **_parse_override_args(args.override)}
+    app: IEvAggApp = DiContainer().create_instance(spec, {})
 
     try:
-        # Instantiate and run the app.
-        app: IEvAggApp = DiContainer().build(config)
         app.execute()
     except KeyboardInterrupt as e:
         # Less verbose KeyboardInterrupt handling.
