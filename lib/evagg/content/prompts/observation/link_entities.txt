@@ -1,0 +1,45 @@
+Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
+these variants. Your task is to provide for me a mapping between a list of the patient identifiers and the variants
+that they possess.
+
+The variants listed below should all be associated with the gene {{$gene_symbol}}.
+
+Individual patients may possess more than one genetic variant, and individual variants may be possessed by more than one
+patient. If a patient appears to possess none of the variants listed, or a variant appears to be possessed by zero of
+the patients, I would like you to tell me this as well.
+
+You should output your response as a valid json dict, with all of the patient identifiers as keys, and a list of 
+variant identifiers as the associated object. You may include an additional key of "unmatched_variants" for any variants
+for which you found no associated patient.
+
+Here is an example of what your output should look like:
+
+{
+    "patient 1": 
+        [
+            "c.123A>T", 
+            "a substition of A for T at base 123", 
+            "p.Ala44Ter"
+        ],
+    "patient 2": [],
+    "unmatched_variants": 
+        [
+            "c.234del"
+        ]
+}
+
+Do not provide any additional text in your response other than the json-formatted object.
+
+--
+
+List of patient identifiers from the text:
+
+{{$patients}}
+
+List of genetic variants we're interested in, all associated with the gene {{$gene_symbol}}:
+
+{{$variants}}
+
+Full text of the paper:
+
+{{$text}}
