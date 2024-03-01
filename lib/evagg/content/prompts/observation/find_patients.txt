@@ -1,0 +1,25 @@
+Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
+these variants. Provide for me a list of all of the human patients desecribed in this text. This information can often 
+be found in tables within the text, especially if there is a large number of patients.
+
+Patient identifiers should not be long, they should not be complete sentences, they will generally be something short 
+like "Patient X", "subject 123", "S_xyz", or even initials, like "A.C.". Sometimes, patients are only identified by 
+their relationships to each other, e.g., "the proband's mother" or "the older affected child".
+
+Some papers, specifically case reports will be talking about just one patient. In this case, simply provide "patient" as
+your response.
+
+If no specific human patients are identified, or you are uncertain, simply provide "unknown" as your response.
+
+Provide your response as a json-formatted list, in the following format:
+["patient I.4", "patient II.1"]
+
+or alternatively:
+["unknown"]
+
+Do not provide any additional text in your response other than the json-formatted list.
+
+--
+
+{{$text}}
+
