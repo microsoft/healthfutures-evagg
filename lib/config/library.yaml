@@ -1,0 +1,19 @@
+log:
+  di_factory: lib.evagg.svc.init_logger
+  level: DEBUG
+  prompts_to_console: true
+ncbi_settings:
+  di_factory: lib.evagg.svc.get_dotenv_settings
+  filter_prefix: "NCBI_EUTILS_"
+web_client:
+  di_factory: lib.evagg.svc.CosmosCachingWebClient
+  cache_settings:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "EVAGG_CONTENT_CACHE_"  
+ncbi_client:
+  di_factory: lib.evagg.ref.NcbiLookupClient
+  web_client: "{{web_client}}"
+  settings: "{{ncbi_settings}}"
+ 
+di_factory: lib.evagg.RareDiseaseFileLibrary
+paper_client: "{{ncbi_client}}"
