@@ -173,12 +173,30 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
 
+        print("\n\n GENE: ", term, "*")
         # Call private function to filter for rare disease papers
-        rare_disease_papers = self._filter_rare_disease_papers(papers)[
-            0
-        ]  # chose not to return dummy variables and to use indexing instead as more memory efficient
+        rd_papers, non_rd_papers, irr_papers = self._filter_rare_disease_papers(papers)
 
-        return rare_disease_papers
+        if "id:" in str(rd_papers):
+            print(f"\nFound {len(rd_papers)} rare disease papers.")
+            for i, p in enumerate(rd_papers):
+                print("*", i + 1, "*", p.props["pmid"], "*", p.props["title"])
+
+        if "id:" in str(non_rd_papers):
+            print(f"\nFound {len(non_rd_papers)} NON-rare disease papers.")
+            for i, p in enumerate(non_rd_papers):
+                print("*", i + 1, "*", p.props["pmid"], "*", p.props["title"])
+
+        if "id:" in str(irr_papers):
+            print(f"\nFound {len(irr_papers)} irrelevant rare disease papers.")
+            for i, p in enumerate(irr_papers):
+                print("*", i + 1, "*", p.props["pmid"], "*", p.props["title"])
+
+        # rare_disease_papers = self._filter_rare_disease_papers(papers)[
+        #    0
+        # ]  # chose not to return dummy variables and to use indexing instead as more memory efficient
+
+        return rd_papers
 
     def split_papers_into_categories(self, query: IPaperQuery):
         if len(query.terms()) > 1:
@@ -275,9 +293,13 @@ class RareDiseaseFileLibrary(IGetPapers):
             # Exclude papers that only describe animal models and do not have human data
             # TODO: Implement this
 
-        logger.info(f"Found {len(rare_disease_papers)} rare disease papers.")
-        logger.info(f"Found {len(non_rare_disease_papers)} non-rare disease papers.")
-        logger.info(f"Found {len(other_papers)} other papers.")
+        print(f"Found {len(rare_disease_papers)} rare disease papers.")
+        print(f"Found {len(non_rare_disease_papers)} non-rare disease papers.")
+        print(f"Found {len(other_papers)} other papers.")
+
+        # logger.info(f"Found {len(rare_disease_papers)} rare disease papers.")
+        # logger.info(f"Found {len(non_rare_disease_papers)} non-rare disease papers.")
+        # logger.info(f"Found {len(other_papers)} other papers.")
 
         # Check if rare_disease_papers is empty or if non_rare_disease_papers is empty
         if len(rare_disease_papers) == 0:
