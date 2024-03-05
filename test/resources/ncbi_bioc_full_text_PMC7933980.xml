@@ -1,0 +1,563 @@
+<collection>
+    <source>BioC-API</source>
+    <date>20240305</date>
+    <key>collection.key</key>
+    <document>
+        <id>7933980</id>
+        <infon key="license">CC BY</infon>
+        <passage>
+            <infon key="article-id_doi">10.17912/micropub.biology.000373</infon>
+            <infon key="article-id_pmc">7933980</infon>
+            <infon key="article-id_pmid">33688625</infon>
+            <infon key="elocation-id">10.17912/micropub.biology.000373</infon>
+            <infon key="license">This is an open-access article distributed under the terms of the
+                Creative Commons Attribution License, which permits unrestricted use, distribution,
+                and reproduction in any medium, provided the original author and source are
+                credited.</infon>
+            <infon key="name_0">surname:Zafra;given-names:Isabella</infon>
+            <infon key="name_1">surname:Nebenfuehr;given-names:Benjamin</infon>
+            <infon key="name_2">surname:Golden;given-names:Andy</infon>
+            <infon key="name_3">surname:Kowalski;given-names:Jennifer</infon>
+            <infon key="section_type">TITLE</infon>
+            <infon key="type">front</infon>
+            <infon key="volume">2021</infon>
+            <infon key="year">2021</infon>
+            <offset>0</offset>
+            <text>Saul-Wilson Syndrome Missense Allele Does Not Show Obvious Golgi Defects in a C.
+                elegans Model</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract</infon>
+            <offset>95</offset>
+            <text>Saul-Wilson Syndrome is an ultra-rare skeletal syndrome caused by a mutation in
+                the COG4 gene resulting in a glycine-to-arginine substitution at amino acid position
+                516. The COG4 gene encodes one of 8 subunits of the conserved oligomeric Golgi
+                complex. Using CRISPR-Cas9, our lab generated a C. elegans model for Saul-Wilson
+                Syndrome by recreating the same glycine-to-arginine substitution in the worm
+                ortholog cogc-4. Upon observation, the cogc-4(av107) worms did not display any
+                obvious differences compared to wild-type worms. We used a variety of assays
+                including stressing the worms using heat and Paraquat, as well as RNAi against the 7
+                other COG complex subunit genes in an attempt to uncover a phenotype. Our data
+                suggest that this mutation in cogc-4(av107) worms does not lead to a detectable
+                phenotype. Further studies should aim at more directly assessing Golgi function in
+                this disease model.</text>
+        </passage>
+        <passage>
+            <infon key="file">25789430-2021-micropub.biology.000373.jpg</infon>
+            <infon key="id">f1</infon>
+            <infon key="section_type">FIG</infon>
+            <infon key="type">fig_caption</infon>
+            <offset>1000</offset>
+            <text>A. Patient mutation and alignment of region of interest in human COG4 and C.
+                elegans COGC-4. B. No distal tip cell migration defects observed in adult animals.
+                The distal tip cell marker used allows visualization of the plasma membrane of lag-2
+                expressing cells, specifically of the distal tip cell. C. No co-localization of ER
+                (SP12::GFP) and Golgi (ugtp-1::mChr) markers observed in 2-cell embryos. D. Paraquat
+                Survival Assay. Time points represent hours after young L4 worms were placed in a
+                96-well plate containing various concentrations of Paraquat in M9. Each well was
+                stirred for about 3 seconds with a wooden toothpick before worms were counted as
+                either dead or alive. Worm counts were done at the beginning (immediately following
+                the \'0 hour\' counts) and after 8 hours. Worms were counted as "alive" if visibly
+                thrashing, or if any type of movement was observed following "stirring" or directly
+                after being poked with the wooden stick. Similarly, worms were counted as "dead" if
+                no movement at all was observed for 5-10 seconds after stirring the well or poked
+                directly. Sample size was 5-10 worms per well, 4 replicates per condition. Survival
+                was compared at each Paraquat concentration using two-way ANOVA (genotype x
+                timepoint) with Sidak multiple comparison\'s test. There was no significant
+                difference in survival between N2 and cogc-4 worms. E. Heat shock: Water Bath.
+                Percentage of N2 and cogc-4(av107[G529R]) L4 stage worms that were alive and visibly
+                crawling 24 and 96 hours, respectively, after 3 hours at three different heat shock
+                temperatures (37 C, 38.5 C and 40 C). Sample size was 30-50 worms per plate, 3
+                replicates per temperature. Visible thrashing after each heat shock was compared
+                using two-way ANOVA (genotype x temperature) with Sidak multiple comparison\'s test.
+                There were significantly less N2 worms visibly thrashing following the 3 hour water
+                bath at 38.5 C, only (*P = 0.0078). F. Heat Shock: Temperature Gradient. Across all
+                eight temperatures assayed, both N2 and cogc-4(av107[G529R]) worms displayed similar
+                levels of response immediately following heat shock (30 minute recovery) and 24
+                hours after the heat shock (24 hour recovery). Sample size was 5-10 worms per tube,
+                3 replicates per temperature. Visible thrashing was compared using two-way ANOVA
+                (genotype x temperature) with Sidak multiple comparison\'s test. There was no
+                significant difference in survival between N2 and cogc-4 worms.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">title_1</infon>
+            <offset>3464</offset>
+            <text>Description</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>3476</offset>
+            <text>Saul-Wilson Syndrome (SWS) is an ultra-rare, autosomal dominant skeletal dysplasia
+                syndrome discovered in 1990; only 16 patients have been identified to date (Saul and
+                Wilson 1990; Ferreira et al. 2018, OMIM#: 618150). The disease is characterized by
+                short stature, various craniofacial abnormalities, shortened fingers and toes, and
+                speech and physical developmental delay (Ferreira 2020). SWS is caused by a missense
+                mutation in the COG4 gene, resulting in a G516R residue change. Other pathogenic
+                mutations have been observed in this gene and all are clustered at the C-terminal
+                end of the protein (R724W, R729W, R729A, E764A). These are associated with
+                Congenital Disorder of Glycosylation type 2j (CDGIIj). This is a recessive disease
+                characterized by mild psychomotor delay, mild dysmorphic features, epilepsy, and
+                defective sialylation (Reynders et al. 2009). Besides the mild developmental delay,
+                this disease seems to share virtually no phenotypic similarity with SWS.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>4454</offset>
+            <text>Human COG4 is one of 8 protein subunits that comprise a bi-lobed complex known as
+                the Conserved Oligomeric Golgi Complex or COG complex (Smith and Lupashin 2008).
+                This complex is involved in intra-Golgi trafficking and glycoprotein modification
+                (Reynders et al. 2009). All COG genes, with the exception of COG3, have been
+                implicated in recessive Congenital Disorders of Glycosylation (CDGs).</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>4846</offset>
+            <text>In assessing the clinical phenotype, Ferreira and others (2018) have reported data
+                from a cohort of 14 SWS patients. These individuals did not have obvious
+                glycosylation defects in serum proteins analyzed, although the secreted proteoglycan
+                decorin appeared to be at a higher molecular weight than decorin secreted from
+                control cells. This suggests some types of Golgi processing compartments are
+                affected in SWS. Besides this observation, cellular trafficking in fibroblast
+                cultures appeared normal and there was also no defect in COG subunit mRNA, protein
+                expression, or localization. Immunofluorescence showed that nearly half of SWS
+                patient fibroblasts had abnormal Golgi morphology characterized by collapsed stacks,
+                while control fibroblasts had over 93% normal Golgi stacks. After treatment with
+                Brefeldin A (BFA), a compound known to inhibit transport between the Golgi and ER,
+                patient cells appeared to have a collapsed Golgi nearly twice as soon after
+                treatment compared to control cells. This was evidenced by cis- and trans-Golgi
+                markers becoming co-localized, and was termed "accelerated anterograde transport"-
+                thus, attributing gain-of-function status to this G516R mutation in the mutant COG4
+                protein (Ferreira et al. 2018).</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>6093</offset>
+            <text>Two zebrafish models homozygous for frameshift mutations and both resulting in a
+                truncated COG protein also revealed morphological Golgi defects, as well as inner
+                ear deformities and decreased number of hair bundles in mechanosensory hair cells
+                (Ferreira et al. 2018). In addition, biochemical findings included defects in
+                proteoglycan secretion, as well as some types of collagen having decreased
+                expression in certain tissues. These findings in the zebrafish models as well as
+                from patient cultures have established a role for COG4 in inner ear development and
+                skeletogenesis, which is, through some unknown mechanism, associated with defective
+                Golgi structure. To this date, there has not been a model organism model studied in
+                which the conserved Saul-Wilson allele has been mutated.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>6881</offset>
+            <text>Given the moderate degree of amino acid conservation (29% amino identity, UniProt;
+                65.7% similarity, LALIGN) between human COG4 and the C. elegans ortholog COGC-4
+                (Fig. 1A), we decided to recreate the Saul-Wilson allele in the worm and assay for
+                any Golgi-related phenotypes. On a macroscopic level, the worms did not display any
+                morphological, reproductive, locomotive, or other behavioral defects. In addition,
+                RNAi of each of the other 7 COG subunit genes individually did not reveal an obvious
+                phenotype in these cogc-4(av107) worms as they were phenotypically indistinguishable
+                from N2 worms. However, it should be noted that gene knockdown quantification was
+                not verified with qRT-PCR, therefore there is the potential for incomplete
+                knockdown.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>7632</offset>
+            <text>It has been reported that RNAi of the individual COG complex lobe 1 subunit genes
+                (cogc-1, cogc-2, cogc-3 and cogc-4, respectively) reveal gonad arm and distal tip
+                cell (DTC) migration defects (Kubota et al. 2006). Therefore, we crossed in a DTC
+                marker, but the av107 worms did not display distal tip cell migration defects using
+                the distal tip cell marker, despite the cogc-4 RNAi DTC migration defect phenotype
+                reported in Kubota et al. 2006 (Figure 1B). We also crossed in fluorescent Golgi and
+                ER markers to monitor for evidence of Golgi collapse. Normal ER and Golgi morphology
+                and no evidence of co-localization was observed in our cogc-4(av107) early embryos
+                (Fig. 1C).</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>8309</offset>
+            <text>Given its role in Golgi trafficking, we then decided to perform a variety of
+                stress assays:using heat and oxidative stress: in an attempt to uncover a phenotype
+                (Fig. 1D-F). We reasoned that stressing worms could exacerbate a stronger and
+                quantifiable phenotype. We used the methods described in Senchuk et al. (2017) as a
+                reference in addition to troubleshooting to optimize the conditions such as Paraquat
+                concentration and exposure time as well as optimal temperature ranges that worked
+                best for our assays. There did not appear to be a difference in both survival after
+                heat shock or recovery after heat shock for embryos or L4 stage worms between the
+                two genotypes at any of the conditions tested. This is also true for survival in the
+                presence of Paraquat (PQ) (Fig. 1D). It should be noted that all assays were
+                performed using animals homozygous for the G529R mutation. We will continue to test
+                these animals for phenotypes under a variety of other stresses and challenges.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_1</infon>
+            <offset>9294</offset>
+            <text>Methods</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>9302</offset>
+            <text>Generation of Saul-Wilson Allele using CRISPR: A single guide RNA (sgRNA) was
+                designed that targeted the region surrounding position G529 in cogc-4
+                (5\'-ATGAGGTGACGTATCCCTGC- 3\'). The DNA repair oligo
+                (5\'-GATACAGTCGTCCACGGGCATTTACGCCAGAGCATACAACAACGTTACGTCACCTCATCCAATTTCGCATCTGAAGCATT-
+                3\') was designed to contain a mutated PAM site, 3 silent mutations, the desired
+                G529R change and a restriction site for AclI used in genotyping for edits
+                (underlined in the sequence shown). Missense mutations were identified using the
+                following primers: forward 5\'- CTCAATCGTCGACGATGTGG; and reverse 5\'-
+                TTGATAGTGTCTGTGCCACC.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>9934</offset>
+            <text>Heat Shock: Water Bath: A preliminary assay was performed using
+                bleach-synchronized embryos being treated at 37 C or 38.5 C for 30 minutes or 180
+                minutes. Embryos were checked for viability and development into fertile adults 24
+                and 96 hours following the assay. However, at 37 C, 100% of N2 and cogc-4(av107)
+                embryos hatched and developed into fertile adults after both the 30 minute and 180
+                minute exposure times. At 38.5 C, 100% of N2 and cogc-4(av107) embryos died after
+                both 30 minute and 180 minute exposure times. We then decided to assay L4 stage
+                worms in order to perhaps see more subtle phenotypes. Bleach-synchronized worms were
+                allowed to reach L4 stage and were then incubated for 3 hours at 37 C, 38 C, or 40 C
+                in a water bath. L4s were counted immediately after heat shock, and allowed 24 hours
+                for recovery at 20 C, as well as assessed 96 hours after the heat shock treatment.
+                Worms were assessed by eye for viability and movement by either poking them with a
+                pick or by observing thrashing after a 1 ul drop of M9 was pipetted onto them on the
+                agar plate.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>11015</offset>
+            <text>Heat Shock: Temperature Gradient: Approximately ~1000 embryos were synchronized
+                and placed onto multiple plates. Once the worms reached the L4 stage, worms were
+                rinsed off of the plate(s) in a total of 2 ml of M9 and were added to two (2)
+                separate Eppendorf tubes. 30 ul of worms in M9 were added into each of the tubes of
+                an 8-tube PCR strip. Tubes were placed in the thermocycler and a heat gradient was
+                run for 30 minutes that was programmed to the following eight temperatures: 37.0 C,
+                37.2 C, 37.6 C, 38.1 C, 38.9 C, 39.5 C, 39.8 C, and 40 C. Five replicates were
+                performed for both genotypes (N2 and av107). After the 30 minutes, the contents of
+                each tube were pipetted and aliquoted into a 96-well plate for assessment of
+                survival. Worms were counted and assessed for thrashing or signs of viability 30
+                minutes after heat shock and 24 hours after the shock. They were gently poked with a
+                platinum wire tip to check for movement.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>11959</offset>
+            <text>Paraquat Survival Assay: cogc-4(av107) and N2 populations were
+                bleach-synchronized, plated, and the embryos allowed to develop until the desired
+                stage had been reached (L3-young L4s). Paraquat (PQ) solutions were prepared from a
+                200 mM stock, diluted with M9 to get final concentrations of 43.75 mM, 87.5 mM,
+                131.25 mM and 175 mM PQ solutions (accounting for the 5 ul of worms in M9 added to
+                each well in later steps). 35 ul of each solution was added to the corresponding
+                wells of a 96-well plate. Worms were washed off the plates using M9 and into an
+                Eppendorf tube. M9 was either removed or added in order to make the final
+                concentration of worms ~1 worm/ul. Worms were observed immediately after being added
+                to the paraquat solution (time point 0), after 1 hour (T1), 2 hours (T2), and then
+                every 2 hours until 8 hours had passed since being placed in the wells (T3-T5). At
+                each time point, each well was stirred for about 3 seconds with a wooden toothpick
+                before the number of moving worms per well was counted. Worms were counted as
+                "alive" if visibly thrashing, or if any type of head movement was observed following
+                "stirring" or directly after being gently poked with the wooden stick. Similarly,
+                worms were counted as "dead" if no movement at all was observed after being stirred
+                or poked directly. Total worms per well were counted at the beginning of the assay
+                (immediately following the T0 viability count) and after the T5 counts.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>13416</offset>
+            <text>Statistical analyses were performed for all Paraquat assay plots and temperature
+                assays using GraphPad Prism 9.0 Software.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>13539</offset>
+            <text>Microscopy: Images were captured by high-resolution confocal microscopy with Nikon
+                60 X 1.2 NA water objective with 1mum z-step size, and 60% intensity for the 488 nm
+                and 561 nm lasers. Images were generated by custom Fiji Image J>Stacks>Z project
+                (Linkert et al. 2010, Schindelin et al. 2012).</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_1</infon>
+            <offset>13834</offset>
+            <text>Reagents</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>13843</offset>
+            <text>Strains: The Saul-Wilson allele strain we generated by CRISPR is AG529:
+                cogc-4(av107) G529R. The DTC marker was crossed in from strain JK4475 (qIs153
+                [lag-2p::MYR::GFP + ttx-3p::DsRed] V). The ER marker used was crossed in from strain
+                OCF15: pie-1p::mCherry::sp12::pie-1 3\'UTR + unc-119(+). The Golgi marker used was
+                crossed in from strain WH351: pie-1::GFP::ugtp-1 + unc-119(+). The three marker
+                strains were obtained from the CGC.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>14278</offset>
+            <text>Paraquat Assays: Paraquat dichloride hydrate was purchased from Millipore Sigma
+                (36541-100MG).</text>
+        </passage>
+        <passage>
+            <infon key="fpage">553</infon>
+            <infon key="issue">4</infon>
+            <infon key="lpage">567</infon>
+            <infon key="name_0">surname:Ferreira;given-names:CR</infon>
+            <infon key="name_1">surname:Xia;given-names:ZJ</infon>
+            <infon key="name_10">surname:Logan;given-names:CV</infon>
+            <infon key="name_11">surname:Wolfe;given-names:LA</infon>
+            <infon key="name_12">surname:Solomon;given-names:BD</infon>
+            <infon key="name_13">surname:Cho;given-names:MT</infon>
+            <infon key="name_14">surname:Douglas;given-names:G</infon>
+            <infon key="name_15">surname:Carvalho;given-names:DR</infon>
+            <infon key="name_16">surname:Bratke;given-names:H</infon>
+            <infon key="name_17">surname:Haug;given-names:MG</infon>
+            <infon key="name_18">surname:Phillips;given-names:JB</infon>
+            <infon key="name_19">surname:Wegner;given-names:J</infon>
+            <infon key="name_2">surname:Clement;given-names:A</infon>
+            <infon key="name_20">surname:Tiemeyer;given-names:M</infon>
+            <infon key="name_21">surname:Aoki;given-names:K</infon>
+            <infon key="name_22">surname:Nordgren;given-names:A</infon>
+            <infon key="name_23">surname:Hammarsjo;given-names:A</infon>
+            <infon key="name_24">surname:Duker;given-names:AL</infon>
+            <infon key="name_25">surname:Rohena;given-names:L</infon>
+            <infon key="name_26">surname:Hove;given-names:HB</infon>
+            <infon key="name_27">surname:Ek;given-names:J</infon>
+            <infon key="name_28">surname:Adams;given-names:D</infon>
+            <infon key="name_29">surname:Tifft;given-names:CJ</infon>
+            <infon key="name_3">surname:Parry;given-names:DA</infon>
+            <infon key="name_30">surname:Onyekweli;given-names:T</infon>
+            <infon key="name_31">surname:Weixel;given-names:T</infon>
+            <infon key="name_32">surname:Macnamara;given-names:E</infon>
+            <infon key="name_33">surname:Radtke;given-names:K</infon>
+            <infon key="name_34">surname:Powis;given-names:Z</infon>
+            <infon key="name_35">surname:Earl;given-names:D</infon>
+            <infon key="name_36">surname:Gabriel;given-names:M</infon>
+            <infon key="name_37">surname:Russi;given-names:AHS</infon>
+            <infon key="name_38">surname:Brick;given-names:L</infon>
+            <infon key="name_39">surname:Kozenko;given-names:M</infon>
+            <infon key="name_4">surname:Davids;given-names:M</infon>
+            <infon key="name_40">surname:Tham;given-names:E</infon>
+            <infon key="name_41">surname:Raymond;given-names:KM</infon>
+            <infon key="name_42">surname:Phillips JA;given-names:3rd</infon>
+            <infon key="name_43">surname:Tiller;given-names:GE</infon>
+            <infon key="name_44">surname:Wilson;given-names:WG</infon>
+            <infon key="name_45">surname:Hamid;given-names:R</infon>
+            <infon key="name_46">surname:Malicdan;given-names:MCV</infon>
+            <infon key="name_47">surname:Nishimura;given-names:G</infon>
+            <infon key="name_48">surname:Grigelioniene;given-names:G</infon>
+            <infon key="name_49">surname:Jackson;given-names:A</infon>
+            <infon key="name_5">surname:Taylan;given-names:F</infon>
+            <infon key="name_50">surname:Westerfield;given-names:M</infon>
+            <infon key="name_51">surname:Bober;given-names:MB</infon>
+            <infon key="name_52">surname:Gahl;given-names:WA</infon>
+            <infon key="name_53">surname:Freeze;given-names:HH</infon>
+            <infon key="name_6">surname:Sharma;given-names:P</infon>
+            <infon key="name_7">surname:Turgeon;given-names:CT</infon>
+            <infon key="name_8">surname:Blanco-Sanchez;given-names:B</infon>
+            <infon key="name_9">surname:Ng;given-names:BG</infon>
+            <infon key="pub-id_doi">10.1016/j.ajhg.2018.09.003</infon>
+            <infon key="pub-id_pmid">30290151</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Am J Hum Genet</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">103</infon>
+            <infon key="year">2018</infon>
+            <offset>14373</offset>
+            <text>A Recurrent De Novo Heterozygous COG4 Substitution Leads to Saul-Wilson Syndrome,
+                Disrupted Vesicular Trafficking, and Altered Proteoglycan Glycosylation.</text>
+        </passage>
+        <passage>
+            <infon key="name_0">surname:Ferreira;given-names:C</infon>
+            <infon key="pub-id_pmid">32078278</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="type">ref</infon>
+            <infon key="year">1993</infon>
+            <offset>14528</offset>
+            <text>Saul-Wilson Syndrome</text>
+        </passage>
+        <passage>
+            <infon key="fpage">263</infon>
+            <infon key="issue">2</infon>
+            <infon key="lpage">273</infon>
+            <infon key="name_0">surname:Kubota;given-names:Y</infon>
+            <infon key="name_1">surname:Sano;given-names:M</infon>
+            <infon key="name_2">surname:Goda;given-names:S</infon>
+            <infon key="name_3">surname:Suzuki;given-names:N</infon>
+            <infon key="name_4">surname:Nishiwaki;given-names:K</infon>
+            <infon key="pub-id_doi">10.1242/dev.02195</infon>
+            <infon key="pub-id_pmid">16354716</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Development</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">133</infon>
+            <infon key="year">2005</infon>
+            <offset>14549</offset>
+            <text>The conserved oligomeric Golgi complex acts in organ morphogenesis via
+                glycosylation of an ADAM protease in C. elegans.</text>
+        </passage>
+        <passage>
+            <infon key="fpage">3244</infon>
+            <infon key="issue">17</infon>
+            <infon key="lpage">3256</infon>
+            <infon key="name_0">surname:Reynders;given-names:E</infon>
+            <infon key="name_1">surname:Foulquier;given-names:F</infon>
+            <infon key="name_2">surname:Leao Teles;given-names:E</infon>
+            <infon key="name_3">surname:Quelhas;given-names:D</infon>
+            <infon key="name_4">surname:Morelle;given-names:W</infon>
+            <infon key="name_5">surname:Rabouille;given-names:C</infon>
+            <infon key="name_6">surname:Annaert;given-names:W</infon>
+            <infon key="name_7">surname:Matthijs;given-names:G</infon>
+            <infon key="pub-id_doi">10.1093/hmg/ddp262</infon>
+            <infon key="pub-id_pmid">19494034</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Hum Mol Genet</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">18</infon>
+            <infon key="year">2009</infon>
+            <offset>14669</offset>
+            <text>Golgi function and dysfunction in the first COG4-deficient CDG type II patient.</text>
+        </passage>
+        <passage>
+            <infon key="fpage">388</infon>
+            <infon key="issue">3</infon>
+            <infon key="lpage">393</infon>
+            <infon key="name_0">surname:Saul;given-names:RA</infon>
+            <infon key="name_1">surname:Wilson;given-names:WG</infon>
+            <infon key="pub-id_doi">10.1002/ajmg.1320350315</infon>
+            <infon key="pub-id_pmid">2309787</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Am J Med Genet</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">35</infon>
+            <infon key="year">1990</infon>
+            <offset>14749</offset>
+            <text>A "new" skeletal dysplasia in two unrelated boys.</text>
+        </passage>
+        <passage>
+            <infon key="fpage">2024</infon>
+            <infon key="issue">12</infon>
+            <infon key="lpage">2031</infon>
+            <infon key="name_0">surname:Smith;given-names:RD</infon>
+            <infon key="name_1">surname:Lupashin;given-names:VV</infon>
+            <infon key="pub-id_doi">10.1016/j.carres.2008.01.034</infon>
+            <infon key="pub-id_pmid">18353293</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Carbohydr Res</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">343</infon>
+            <infon key="year">2008</infon>
+            <offset>14799</offset>
+            <text>Role of the conserved oligomeric Golgi (COG) complex in protein glycosylation.</text>
+        </passage>
+        <passage>
+            <infon key="issue">1</infon>
+            <infon key="name_0">surname:Senchuk;given-names:MM</infon>
+            <infon key="name_1">surname:Dues;given-names:DJ</infon>
+            <infon key="name_2">surname:Van Raamsdonk;given-names:JM</infon>
+            <infon key="pub-id_doi">10.21769/BioProtoc.2086</infon>
+            <infon key="pub-id_pmid">29276721</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Bio Protoc</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">7</infon>
+            <infon key="year">2017</infon>
+            <offset>14878</offset>
+            <text>Measuring Oxidative Stress in Caenorhabditis elegans: Paraquat and Juglone
+                Sensitivity Assays.</text>
+        </passage>
+        <passage>
+            <infon key="fpage">450</infon>
+            <infon key="issue">3</infon>
+            <infon key="lpage">457</infon>
+            <infon key="name_0">surname:Zevian;given-names:SC</infon>
+            <infon key="name_1">surname:Yanowitz;given-names:JL</infon>
+            <infon key="pub-id_doi">10.1016/j.ymeth.2014.04.015</infon>
+            <infon key="pub-id_pmid">24780523</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Methods</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">68</infon>
+            <infon key="year">2014</infon>
+            <offset>14973</offset>
+            <text>Methodological considerations for heat shock of the nematode Caenorhabditis
+                elegans.</text>
+        </passage>
+        <passage>
+            <infon key="fpage">777</infon>
+            <infon key="issue">5</infon>
+            <infon key="lpage">782</infon>
+            <infon key="name_0">surname:Linkert;given-names:M</infon>
+            <infon key="name_1">surname:Rueden;given-names:CT</infon>
+            <infon key="name_10">surname:Tarkowska;given-names:A</infon>
+            <infon key="name_11">surname:Sticco;given-names:C</infon>
+            <infon key="name_12">surname:Hill;given-names:E</infon>
+            <infon key="name_13">surname:Rossner;given-names:M</infon>
+            <infon key="name_14">surname:Eliceiri;given-names:KW</infon>
+            <infon key="name_15">surname:Swedlow;given-names:JR</infon>
+            <infon key="name_2">surname:Allan;given-names:C</infon>
+            <infon key="name_3">surname:Burel;given-names:JM</infon>
+            <infon key="name_4">surname:Moore;given-names:W</infon>
+            <infon key="name_5">surname:Patterson;given-names:A</infon>
+            <infon key="name_6">surname:Loranger;given-names:B</infon>
+            <infon key="name_7">surname:Moore;given-names:J</infon>
+            <infon key="name_8">surname:Neves;given-names:C</infon>
+            <infon key="name_9">surname:Macdonald;given-names:D</infon>
+            <infon key="pub-id_doi">10.1083/jcb.201004104</infon>
+            <infon key="pub-id_pmid">20513764</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">J Cell Biol</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">189</infon>
+            <infon key="year">2010</infon>
+            <offset>15058</offset>
+            <text>Metadata matters: access to image data in the real world.</text>
+        </passage>
+        <passage>
+            <infon key="fpage">676</infon>
+            <infon key="issue">7</infon>
+            <infon key="lpage">682</infon>
+            <infon key="name_0">surname:Schindelin;given-names:J</infon>
+            <infon key="name_1">surname:Arganda-Carreras;given-names:I</infon>
+            <infon key="name_10">surname:Tinevez;given-names:JY</infon>
+            <infon key="name_11">surname:White;given-names:DJ</infon>
+            <infon key="name_12">surname:Hartenstein;given-names:V</infon>
+            <infon key="name_13">surname:Eliceiri;given-names:K</infon>
+            <infon key="name_14">surname:Tomancak;given-names:P</infon>
+            <infon key="name_15">surname:Cardona;given-names:A</infon>
+            <infon key="name_2">surname:Frise;given-names:E</infon>
+            <infon key="name_3">surname:Kaynig;given-names:V</infon>
+            <infon key="name_4">surname:Longair;given-names:M</infon>
+            <infon key="name_5">surname:Pietzsch;given-names:T</infon>
+            <infon key="name_6">surname:Preibisch;given-names:S</infon>
+            <infon key="name_7">surname:Rueden;given-names:C</infon>
+            <infon key="name_8">surname:Saalfeld;given-names:S</infon>
+            <infon key="name_9">surname:Schmid;given-names:B</infon>
+            <infon key="pub-id_doi">10.1038/nmeth.2019</infon>
+            <infon key="pub-id_pmid">22743772</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Nat Methods</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">9</infon>
+            <infon key="year">2012</infon>
+            <offset>15116</offset>
+            <text>Fiji: an open-source platform for biological-image analysis.</text>
+        </passage>
+    </document>
+</collection>
