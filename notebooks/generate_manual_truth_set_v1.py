@@ -442,11 +442,13 @@ evidence_df["link"] = "https://pubmed.ncbi.nlm.nih.gov/" + evidence_df["pmid"].a
 # Remove any newlines from "pheno_text_description".
 evidence_df["pheno_text_description"] = evidence_df["pheno_text_description"].str.replace("\n", " ")
 
-# %% Load in the group assignments and merge with gene_df and evidence_df.
+# %% Load in the group assignments and merge with gene_df gene_paper_df, and evidence_df.
 
 group_assignment_df = pd.read_csv(GROUP_ASSIGNMENT_CSV, sep="\t")
 
 gene_df = gene_df.merge(group_assignment_df, on="gene", how="left")
+
+gene_paper_df = gene_paper_df.merge(group_assignment_df, on="gene", how="left")
 
 evidence_df = evidence_df.merge(gene_df, on="gene", how="left")
 
@@ -498,8 +500,8 @@ print(
 
 os.makedirs(OUTPUT_ROOT, exist_ok=True)
 
-gene_df.query("group == 'train'").to_csv(os.path.join(OUTPUT_ROOT, "papers_train_v1.tsv"), sep="\t", index=False)
-gene_df.query("group == 'test'").to_csv(os.path.join(OUTPUT_ROOT, "papers_test_v1.tsv"), sep="\t", index=False)
+gene_paper_df.query("group == 'train'").to_csv(os.path.join(OUTPUT_ROOT, "papers_train_v1.tsv"), sep="\t", index=False)
+gene_paper_df.query("group == 'test'").to_csv(os.path.join(OUTPUT_ROOT, "papers_test_v1.tsv"), sep="\t", index=False)
 
 evidence_df.query("group == 'train'").to_csv(os.path.join(OUTPUT_ROOT, "evidence_train_v1.tsv"), sep="\t", index=False)
 evidence_df.query("group == 'test'").to_csv(os.path.join(OUTPUT_ROOT, "evidence_test_v1.tsv"), sep="\t", index=False)
