@@ -43,6 +43,8 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
     PUBTATOR_GET_URL = (
         "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/pmc_export/bioc{fmt}?pmcids={id}"
     )
+    # TODO: consider unicode encoding for the BioC response.
+    BIOC_GET_URL = "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_xml/{pmcid}/ascii"
 
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
@@ -92,7 +94,28 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
         return props
 
+    def _get_full_text_xml(self, pmcid: str | None, is_pmc_oa: bool, license: str) -> Optional[str]:
+        """Get the full text of a paper from PMC."""
+        if not pmcid or not is_pmc_oa or license.find("nd") >= 0:
+            logger.warning(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
+            return None
+
+        response_root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
+
+        # Find and return the specific document.
+        for document in response_root.findall("./document"):
+            id = document.find("id")
+            if id is not None and id.text == pmcid.upper().lstrip("PMC"):
+                return document
+        logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
+        return None
+
+    def _full_text_sections_from_xml(self, root: Any) -> Sequence[str]:
+        """Extract the full text from a BioC XML response."""
+        return [p.text for p in root.findall("./passage/text")]
+
     # IPaperLookupClient
+
     def search(self, query: str, max_papers: Optional[int] = None) -> Sequence[str]:
         retmax = max_papers or self._default_max_papers
         root = self._esearch(db="pubmed", term=query, sort="relevance", retmax=retmax, retmode="xml")
@@ -110,6 +133,12 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         props.update(self._get_oa_props(props["pmcid"]))
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         props["pmid"] = paper_id
+        props["full_text_xml"] = self._get_full_text_xml(
+            pmcid=props["pmcid"], is_pmc_oa=props["is_pmc_oa"], license=props["license"]
+        )
+        props["full_text_sections"] = (
+            self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
+        )
 
         return Paper(id=props["doi"], **props)
 
