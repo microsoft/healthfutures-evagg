@@ -1,0 +1,250 @@
+<?xml version="1.0"?>
+<!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2024//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_240101.dtd">
+<PubmedArticleSet>
+    <PubmedArticle>
+        <MedlineCitation Status="PubMed-not-MEDLINE" Owner="NLM">
+            <PMID Version="1">33688625</PMID>
+            <DateRevised>
+                <Year>2021</Year>
+                <Month>04</Month>
+                <Day>01</Day>
+            </DateRevised>
+            <Article PubModel="Electronic">
+                <Journal>
+                    <ISSN IssnType="Electronic">2578-9430</ISSN>
+                    <JournalIssue CitedMedium="Internet">
+                        <Volume>2021</Volume>
+                        <PubDate>
+                            <Year>2021</Year>
+                            <Month>Mar</Month>
+                            <Day>04</Day>
+                        </PubDate>
+                    </JournalIssue>
+                    <Title>microPublication biology</Title>
+                    <ISOAbbreviation>MicroPubl Biol</ISOAbbreviation>
+                </Journal>
+                <ArticleTitle>Saul-Wilson Syndrome Missense Allele Does Not Show Obvious Golgi
+                    Defects in a <i>C. elegans</i> Model.</ArticleTitle>
+                <ELocationID EIdType="doi" ValidYN="Y">10.17912/micropub.biology.000373</ELocationID>
+                <Abstract>
+                    <AbstractText>Saul-Wilson Syndrome is an ultra-rare skeletal syndrome caused by
+                        a mutation in the COG4 gene resulting in a glycine-to-arginine substitution
+                        at amino acid position 516. The COG4 gene encodes one of 8 subunits of the
+                        conserved oligomeric Golgi complex. Using CRISPR-Cas9, our lab generated a <i>C.
+                        elegans</i> model for Saul-Wilson Syndrome by recreating the same
+                        glycine-to-arginine substitution in the worm ortholog <i>cogc-4</i>. Upon
+                        observation, the <i>cogc-4(av107)</i> worms did not display any obvious
+                        differences compared to wild-type worms. We used a variety of assays
+                        including stressing the worms using heat and Paraquat, as well as RNAi
+                        against the 7 other COG complex subunit genes in an attempt to uncover a
+                        phenotype. Our data suggest that this mutation in <i>cogc-4(av107)</i> worms
+                        does not lead to a detectable phenotype. Further studies should aim at more
+                        directly assessing Golgi function in this disease model.</AbstractText>
+                    <CopyrightInformation>Copyright: &#xa9; 2021 by the authors.</CopyrightInformation>
+                </Abstract>
+                <AuthorList CompleteYN="Y">
+                    <Author ValidYN="Y">
+                        <LastName>Zafra</LastName>
+                        <ForeName>Isabella</ForeName>
+                        <Initials>I</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Lab of Biochemistry and Genetics, National Diabetes and
+                                Digestive and Kidney Diseases, NIH.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Nebenfuehr</LastName>
+                        <ForeName>Benjamin</ForeName>
+                        <Initials>B</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Lab of Biochemistry and Genetics, National Diabetes and
+                                Digestive and Kidney Diseases, NIH.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Golden</LastName>
+                        <ForeName>Andy</ForeName>
+                        <Initials>A</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>Lab of Biochemistry and Genetics, National Diabetes and
+                                Digestive and Kidney Diseases, NIH.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                </AuthorList>
+                <Language>eng</Language>
+                <GrantList CompleteYN="Y">
+                    <Grant>
+                        <GrantID>P40 OD010440</GrantID>
+                        <Acronym>OD</Acronym>
+                        <Agency>NIH HHS</Agency>
+                        <Country>United States</Country>
+                    </Grant>
+                </GrantList>
+                <PublicationTypeList>
+                    <PublicationType UI="D016428">Journal Article</PublicationType>
+                </PublicationTypeList>
+                <ArticleDate DateType="Electronic">
+                    <Year>2021</Year>
+                    <Month>03</Month>
+                    <Day>04</Day>
+                </ArticleDate>
+            </Article>
+            <MedlineJournalInfo>
+                <Country>United States</Country>
+                <MedlineTA>MicroPubl Biol</MedlineTA>
+                <NlmUniqueID>101759238</NlmUniqueID>
+                <ISSNLinking>2578-9430</ISSNLinking>
+            </MedlineJournalInfo>
+            <CommentsCorrectionsList>
+                <CommentsCorrections RefType="ErratumIn">
+                    <RefSource>MicroPubl Biol. 2021 Mar 24;2021:</RefSource>
+                    <PMID Version="1">33791595</PMID>
+                </CommentsCorrections>
+            </CommentsCorrectionsList>
+        </MedlineCitation>
+        <PubmedData>
+            <History>
+                <PubMedPubDate PubStatus="entrez">
+                    <Year>2021</Year>
+                    <Month>3</Month>
+                    <Day>10</Day>
+                    <Hour>8</Hour>
+                    <Minute>23</Minute>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="pubmed">
+                    <Year>2021</Year>
+                    <Month>3</Month>
+                    <Day>11</Day>
+                    <Hour>6</Hour>
+                    <Minute>0</Minute>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="medline">
+                    <Year>2021</Year>
+                    <Month>3</Month>
+                    <Day>11</Day>
+                    <Hour>6</Hour>
+                    <Minute>1</Minute>
+                </PubMedPubDate>
+            </History>
+            <PublicationStatus>epublish</PublicationStatus>
+            <ArticleIdList>
+                <ArticleId IdType="pubmed">33688625</ArticleId>
+                <ArticleId IdType="pmc">PMC7933980</ArticleId>
+                <ArticleId IdType="doi">10.17912/micropub.biology.000373</ArticleId>
+            </ArticleIdList>
+            <ReferenceList>
+                <Reference>
+                    <Citation>Ferreira CR, Xia ZJ, Cl&#xe9;ment A, Parry DA, Davids M, Taylan F,
+                        Sharma P, Turgeon CT, Blanco-S&#xe1;nchez B, Ng BG, Logan CV, Wolfe LA,
+                        Solomon BD, Cho MT, Douglas G, Carvalho DR, Bratke H, Haug MG, Phillips JB,
+                        Wegner J, Tiemeyer M, Aoki K, Undiagnosed Diseases Network. Scottish Genome
+                        Partnership. Nordgren A, Hammarsj&#xf6; A, Duker AL, Rohena L, Hove HB, Ek
+                        J, Adams D, Tifft CJ, Onyekweli T, Weixel T, Macnamara E, Radtke K, Powis Z,
+                        Earl D, Gabriel M, Russi AHS, Brick L, Kozenko M, Tham E, Raymond KM,
+                        Phillips JA 3rd, Tiller GE, Wilson WG, Hamid R, Malicdan MCV, Nishimura G,
+                        Grigelioniene G, Jackson A, Westerfield M, Bober MB, Gahl WA, Freeze HH. A
+                        Recurrent De Novo Heterozygous COG4 Substitution Leads to Saul-Wilson
+                        Syndrome, Disrupted Vesicular Trafficking, and Altered Proteoglycan
+                        Glycosylation. Am J Hum Genet. 2018 Oct 01;103(4):553&#x2013;567. doi:
+                        10.1016/j.ajhg.2018.09.003.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1016/j.ajhg.2018.09.003</ArticleId>
+                        <ArticleId IdType="pmc">PMC6174323</ArticleId>
+                        <ArticleId IdType="pubmed">30290151</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Ferreira C, Adam MP. Ardinger HH. Pagon RA. Wallace SE. Bean LJH.
+                        Mirzaa G. Amemiya A Saul-Wilson Syndrome. 1993</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pubmed">32078278</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Kubota Y, Sano M, Goda S, Suzuki N, Nishiwaki K. The conserved
+                        oligomeric Golgi complex acts in organ morphogenesis via glycosylation of an
+                        ADAM protease in C. elegans. Development. 2005 Dec 14;133(2):263&#x2013;273.
+                        doi: 10.1242/dev.02195.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1242/dev.02195</ArticleId>
+                        <ArticleId IdType="pubmed">16354716</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Reynders E, Foulquier F, Le&#xe3;o Teles E, Quelhas D, Morelle W,
+                        Rabouille C, Annaert W, Matthijs G. Golgi function and dysfunction in the
+                        first COG4-deficient CDG type II patient. Hum Mol Genet. 2009 Jun
+                        01;18(17):3244&#x2013;3256. doi: 10.1093/hmg/ddp262.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1093/hmg/ddp262</ArticleId>
+                        <ArticleId IdType="pmc">PMC2722986</ArticleId>
+                        <ArticleId IdType="pubmed">19494034</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Saul RA, Wilson WG. A "new" skeletal dysplasia in two unrelated boys.
+                        Am J Med Genet. 1990 Mar 01;35(3):388&#x2013;393. doi:
+                        10.1002/ajmg.1320350315.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1002/ajmg.1320350315</ArticleId>
+                        <ArticleId IdType="pubmed">2309787</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Smith RD, Lupashin VV. Role of the conserved oligomeric Golgi (COG)
+                        complex in protein glycosylation. Carbohydr Res. 2008 Feb
+                        01;343(12):2024&#x2013;2031. doi: 10.1016/j.carres.2008.01.034.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1016/j.carres.2008.01.034</ArticleId>
+                        <ArticleId IdType="pmc">PMC2773262</ArticleId>
+                        <ArticleId IdType="pubmed">18353293</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Senchuk MM, Dues DJ, Van Raamsdonk JM. Measuring Oxidative Stress in
+                        Caenorhabditis elegans: Paraquat and Juglone Sensitivity Assays. Bio Protoc.
+                        2017 Jan 01;7(1) doi: 10.21769/BioProtoc.2086.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.21769/BioProtoc.2086</ArticleId>
+                        <ArticleId IdType="pmc">PMC5739066</ArticleId>
+                        <ArticleId IdType="pubmed">29276721</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Zevian SC, Yanowitz JL. Methodological considerations for heat shock
+                        of the nematode Caenorhabditis elegans. Methods. 2014 Apr
+                        26;68(3):450&#x2013;457. doi: 10.1016/j.ymeth.2014.04.015.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1016/j.ymeth.2014.04.015</ArticleId>
+                        <ArticleId IdType="pmc">PMC4112136</ArticleId>
+                        <ArticleId IdType="pubmed">24780523</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Linkert M, Rueden CT, Allan C, Burel JM, Moore W, Patterson A,
+                        Loranger B, Moore J, Neves C, Macdonald D, Tarkowska A, Sticco C, Hill E,
+                        Rossner M, Eliceiri KW, Swedlow JR. Metadata matters: access to image data
+                        in the real world. J Cell Biol. 2010 May 31;189(5):777&#x2013;782. doi:
+                        10.1083/jcb.201004104.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1083/jcb.201004104</ArticleId>
+                        <ArticleId IdType="pmc">PMC2878938</ArticleId>
+                        <ArticleId IdType="pubmed">20513764</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Schindelin J, Arganda-Carreras I, Frise E, Kaynig V, Longair M,
+                        Pietzsch T, Preibisch S, Rueden C, Saalfeld S, Schmid B, Tinevez JY, White
+                        DJ, Hartenstein V, Eliceiri K, Tomancak P, Cardona A. Fiji: an open-source
+                        platform for biological-image analysis. Nat Methods. 2012 Jun
+                        28;9(7):676&#x2013;682. doi: 10.1038/nmeth.2019.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="doi">10.1038/nmeth.2019</ArticleId>
+                        <ArticleId IdType="pmc">PMC3855844</ArticleId>
+                        <ArticleId IdType="pubmed">22743772</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+            </ReferenceList>
+        </PubmedData>
+    </PubmedArticle>
+</PubmedArticleSet>
