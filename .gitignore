@@ -166,3 +166,4 @@ cython_debug/
 .metals
 .ref
 .tmp
+.bin
