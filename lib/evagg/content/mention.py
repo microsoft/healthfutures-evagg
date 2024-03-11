@@ -11,6 +11,7 @@ from lib.evagg.ref import (
     IGeneLookupClient,
     INormalizeVariants,
     IRefSeqLookupClient,
+    IValidateVariants,
 )
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
@@ -20,20 +21,17 @@ logger = logging.getLogger(__name__)
 
 
 class HGVSVariantFactory(ICreateVariants):
-    _normalizer: INormalizeVariants
-    _back_translator: IBackTranslateVariants
+    _validator: IValidateVariants
     _refseq_client: IRefSeqLookupClient
 
     MITO_REFSEQ = "NC_012920.1"
 
     def __init__(
         self,
-        normalizer: INormalizeVariants,
-        back_translator: IBackTranslateVariants,
+        validator: IValidateVariants,
         refseq_client: IRefSeqLookupClient,
     ) -> None:
-        self._normalizer = normalizer
-        self._back_translator = back_translator
+        self._validator = validator
         self._refseq_client = refseq_client
 
     def _predict_refseq(self, text_desc: str, gene_symbol: str | None) -> str | None:
@@ -81,6 +79,18 @@ class HGVSVariantFactory(ICreateVariants):
         if not refseq:
             raise ValueError(f"No RefSeq provided or predicted for {text_desc, gene_symbol}")
 
+        # If the variant is intronic, the refseq should be either a transcript with an included genomic reference, or
+        # should be a standalone genomic reference.
+        #   see https://hgvs-nomenclature.org/stable/background/refseq/
+        if text_desc.find("+") >= 0 or text_desc.find("-") >= 0:
+            # Intronic sequence variant, ensure that we've got an NG_ or NC_ refseq to start
+            if refseq.startswith("NM_"):
+                # Find the associated genomic reference sequence.
+                logger.info(f"Intronic variant without genomic reference, attempting to fix: {text_desc} {gene_symbol}")
+                if gene_symbol:
+                    chrom_refseq = self._refseq_client.genomic_accession_for_symbol(gene_symbol)
+                    refseq = f"{chrom_refseq}({refseq})" if chrom_refseq else refseq
+
         # Validate the variant for both syntactic and biological correctness.
         is_valid = self._validate_variant(refseq, text_desc)
 
@@ -94,7 +104,7 @@ class HGVSVariantFactory(ICreateVariants):
 
     def _validate_variant(self, refseq: str, text_desc: str) -> bool:
         # Validate the variant. Returns True if the variant is valid, False otherwise.
-        return bool(self._normalizer.normalize(f"{refseq}:{text_desc}"))
+        return self._validator.validate(f"{refseq}:{text_desc}")
 
 
 @dataclass(frozen=True)

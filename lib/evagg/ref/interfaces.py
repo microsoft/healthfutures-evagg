@@ -44,6 +44,10 @@ class IRefSeqLookupClient(Protocol):
         """Get 'Reference Standard' RefSeq protein accession ID for the given gene symbol."""
         ...  # pragma: no cover
 
+    def genomic_accession_for_symbol(self, symbol: str) -> str | None:
+        """Get 'Reference Standard' RefSeq genomic accession ID for the given gene symbol."""
+        ...
+
 
 class INormalizeVariants(Protocol):
     def normalize(self, hgvs: str) -> Dict[str, Any]:
@@ -57,4 +61,10 @@ class IBackTranslateVariants(Protocol):
 
         Returns all possible coding transcript variants that could give rise to the provided protein variant.
         """
+        ...  # pragma: no cover
+
+
+class IValidateVariants(Protocol):
+    def validate(self, hgvs: str) -> bool:
+        """Validate the provided variant."""
         ...  # pragma: no cover
