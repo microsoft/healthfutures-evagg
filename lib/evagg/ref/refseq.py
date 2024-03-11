@@ -37,6 +37,12 @@ class NcbiReferenceLookupClient(IRefSeqLookupClient):
             self._lazy_init()
         return self._ref.get(symbol, {}).get("Protein", None)
 
+    def genomic_accession_for_symbol(self, symbol: str) -> str | None:
+        """Get the RefSeq genomic accession for a gene symbol."""
+        if not self._lazy_initialized:
+            self._lazy_init()
+        return self._ref.get(symbol, {}).get("RSG", None)
+
     def _download_reference(self, url: str, target: str) -> None:
         # Download the reference TSV file from NCBI.
         # TODO - @Greg, do you think we should use the webcontent client here, or raw requests?
