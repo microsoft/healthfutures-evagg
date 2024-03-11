@@ -13,17 +13,18 @@ if [ ! -d "$DIR" ]; then
   mkdir -p "$DIR"
 fi
 
-# Check if the file exists; if not, download it.
 FILE_PATH="$DIR/aoaiproxy"
-if [ ! -f "$FILE_PATH" ]; then
-  # Must login with a Microsoft EMU identity (https://github.com/enterprises/microsoft)
-  # gh auth login --hostname github.com --git-protocol https --web
 
+# Check if the file exists; if not, download it.
+if [ ! -f "$FILE_PATH" ]; then
   echo "Downloading aoaiproxy $VERSION..."
+
   # Convert periods and dashes to underscores.
   VERSION_=$(echo $VERSION | sed 's/\./_/g' | sed 's/-/_/g')
   ARCHIVE="aoaiproxy_${VERSION_}_linux_amd64.tar.gz"
   DOWNLOAD_URL="https://github.com/health-futures/aoaiproxy/releases/download/${VERSION}/${ARCHIVE}"
+
+  # Must login with a Microsoft EMU identity (https://github.com/enterprises/microsoft)
   err=$(2>&1 gh release download $VERSION --repo https://github.com/health-futures/aoaiproxy --pattern $ARCHIVE --output "$FILE_PATH.tar.gz")
   if [ $? -ne 0 ]; then
     if [[ $err == *"GraphQL: Could not resolve to a Repository with the name 'health-futures/aoaiproxy'"* || \
