@@ -31,8 +31,7 @@ def make_default_observation_finder() -> "ObservationFinder":
             settings=get_dotenv_settings(filter_prefix="NCBI_EUTILS_"),
         ),
         variant_factory=HGVSVariantFactory(
-            normalizer=mutalyzer_client,
-            back_translator=mutalyzer_client,
+            validator=mutalyzer_client,
             refseq_client=NcbiReferenceLookupClient(web_client=web_client),
         ),
     )
