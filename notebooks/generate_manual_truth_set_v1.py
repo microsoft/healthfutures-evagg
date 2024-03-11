@@ -36,7 +36,7 @@ from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
-TRUTH_XLSX = "./.tmp/Manual Ground Truth.xlsx"
+TRUTH_XLSX = "./.tmp/Manual Ground Truth - 2024.03.06.xlsx"
 GROUP_ASSIGNMENT_CSV = "./data/v1/group_assignments.tsv"
 OUTPUT_ROOT = "./data/v1"
 
@@ -95,7 +95,10 @@ def _phenotype_validator(x: Any) -> Tuple[bool, str]:
 
 
 def _transcript_validator(x: Any) -> Tuple[bool, str]:
-    result = x is None or x.startswith("NM_") or x.startswith("ENST")  # Transcript is optional.
+    # Actually validate any refseq here.
+    result = (
+        x is None or x.startswith("NM_") or x.startswith("ENST") or x.startswith("NP_") or x.startswith("ENSP")
+    )  # Transcript is optional.
     return result, "Value must be None or start with NM_ or ENST" if not result else ""
 
 
