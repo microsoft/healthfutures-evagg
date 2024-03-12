@@ -80,7 +80,7 @@ class TruthsetFileLibrary(IGetPapers):
             reader = csv.reader(tsvfile, delimiter="\t")
             for line in reader:
                 fields = dict(zip(header, [field.strip() for field in line]))
-                paper_id = fields.get("doi") or fields.get("pmid") or fields.get("pmcid") or "MISSING_ID"
+                paper_id = fields.get("paper_id")
                 paper_groups[paper_id].append(fields)
 
         papers: Set[Paper] = set()
