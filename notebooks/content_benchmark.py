@@ -23,7 +23,7 @@ TEST_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "observation_b
 CONTENT_COLUMNS: Set[str] = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
 # CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"} # noqa
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
-EXTRA_COLUMNS = {"gene"}
+EXTRA_COLUMNS = {"gene", "in_supplement"}
 
 RESTRICT_TRUTH_GENES_TO_TEST = True  # if True, only compare the genes in the test set to the truth set.
 
@@ -49,11 +49,11 @@ if RESTRICT_TRUTH_GENES_TO_TEST:
 # %% Sanity check the dataframes.
 all_columns = CONTENT_COLUMNS.union(INDEX_COLUMNS).union(EXTRA_COLUMNS)
 
-missing_from_truth = all_columns - set(truth_df.columns)
+missing_from_truth = CONTENT_COLUMNS.union(INDEX_COLUMNS) - set(truth_df.columns)
 if missing_from_truth:
     raise ValueError(f"Truth table is missing columns: {missing_from_truth}")
 
-missing_from_test = all_columns - set(test_df.columns)
+missing_from_test = CONTENT_COLUMNS.union(INDEX_COLUMNS) - set(test_df.columns)
 if missing_from_test:
     raise ValueError(f"Test table is missing columns: {missing_from_test}")
 
@@ -84,8 +84,13 @@ if "hgvs_c" in INDEX_COLUMNS and "hgvs_p" in INDEX_COLUMNS:
 
 # %% Merge the dataframes.
 columns_of_interest = list(all_columns)
-truth_df = truth_df.reset_index()[columns_of_interest]
-test_df = test_df.reset_index()[columns_of_interest]
+
+truth_df = truth_df.reset_index()
+truth_df = truth_df.reset_index()[[c for c in columns_of_interest if c in truth_df.columns]]
+
+test_df = test_df.reset_index()
+test_df = test_df[[c for c in columns_of_interest if c in test_df.columns]]
+
 
 # Add a column for provenance.
 truth_df["in_truth"] = True
@@ -107,14 +112,26 @@ if "gene_truth" in merged_df.columns:
     merged_df["gene"] = merged_df["gene_truth"].fillna(merged_df["gene_test"])
     merged_df.drop(columns=["gene_truth", "gene_test"], inplace=True)
 
+# Reorder columns, keeping in_truth and in_test as the last two.
+merged_df = merged_df[[c for c in merged_df.columns if c not in {"in_truth", "in_test"}] + ["in_truth", "in_test"]]
+
 # %% Assess variant finding.
 
 precision = merged_df.in_truth[merged_df.in_test == True].mean()
 recall = merged_df.in_test[merged_df.in_truth == True].mean()
 
+# Make a copy of merged_df removing all rows where in_supplement is 'Y'
+merged_df_no_supplement = merged_df[merged_df.in_supplement != "Y"]
+precision_no_supplement = merged_df_no_supplement.in_truth[merged_df_no_supplement.in_test == True].mean()
+recall_no_supplement = merged_df_no_supplement.in_test[merged_df_no_supplement.in_truth == True].mean()
+
 print("---- Variant finding performance ----")
-print(f"Variant finding precision: {precision}")
-print(f"Variant finding recall: {recall}")
+print("Overall")
+print(f"  Variant finding precision: {precision:.2f}")
+print(f"  Variant finding recall: {recall:.2f}")
+print("Ignoring truth papers from supplement")
+print(f"  Variant finding precision: {precision_no_supplement:.2f}")
+print(f"  Variant finding recall: {recall_no_supplement:.2f}")
 print()
 
 print(merged_df)
