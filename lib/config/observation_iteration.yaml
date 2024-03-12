@@ -43,7 +43,24 @@ llm_client:
 
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  - "EMC1"
+  # - "CTF1" Only in supplement
+  - "FBN2"
+  - "EXOC2"
+  # - "RNASEH1"
+  # - "DNAJC7"
+  # - "ZNF423"
+  # - "SARS1"
+  # - "BAZ2B"
+  # - "B4GAT1"
+  # - "TOP2B"
+  # - "SLFN14"
+  # - "MLH3"
+  # - "COG4"
+  # - "JPH2"
+  # - "GRXCR2"
+  # - "EMC1"
+  # - "LRRC10"
+  # - "TOPBP1"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
@@ -65,5 +82,7 @@ extractor:
     variant_factory: "{{variant_factory}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
+  output_path: .out/observation_benchmark.tsv
+
 
 
