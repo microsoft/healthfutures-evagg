@@ -43,7 +43,7 @@ llm_client:
 
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  # - "CTF1" Only in supplement
+  - "CTF1" Only in supplement
   - "FBN2"
   - "EXOC2"
   - "RNASEH1"
