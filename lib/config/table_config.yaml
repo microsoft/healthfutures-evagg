@@ -1,25 +1,60 @@
 log:
   di_factory: lib.evagg.svc.init_logger
   level: INFO
+mutalyzer_client:
+  di_factory: lib.evagg.ref.MutalyzerClient
+  web_client:
+    di_factory: lib.evagg.svc.CosmosCachingWebClient
+    web_settings:
+      # Mutalyzer response code of 422 signifies an unprocessable entity.
+      no_raise_codes: [422]
+    cache_settings:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "EVAGG_CONTENT_CACHE_"
+refseq_client:
+  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
+  web_client:
+    di_factory: lib.evagg.svc.RequestsWebContentClient
+variant_factory:
+  di_factory: lib.evagg.content.HGVSVariantFactory
+  normalizer: "{{mutalyzer_client}}"
+  back_translator: "{{mutalyzer_client}}"
+  refseq_client: "{{refseq_client}}"
 
 di_factory: lib.evagg.SynchronousLocalApp
+# TODO, this should be kept updated with the list of genes in TruthsetFileLibrary.file_path
+# Currently set to all the genes in the entire v1 truthset.
 queries:
-  di_factory: lib.evagg.types.QueryIterator
-  variants:
-    - "CHI3L1:p.R116C"
-    - "TWNK:p.S369F"
-    - "COL23A1:p.A112V"
-    - "PRKCG:p.A24S"
+  - "CTF1"
+  - "FBN2"
+  - "EXOC2"
+  - "RNASEH1"
+  - "DNAJC7"
+  - "ZNF423"
+  - "SARS1"
+  - "BAZ2B"
+  - "B4GAT1"
+  - "TOP2B"
+  - "SLFN14"
+  - "MLH3"
+  - "COG4"
+  - "JPH2"
+  - "GRXCR2"
+  - "EMC1"
+  - "LRRC10"
+  - "TOPBP1"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
-  file_path: data/truth_set_small.tsv
+  file_path: data/v1/evidence_train_v1.tsv
+  variant_factory: "{{variant_factory}}"
 extractor:
   di_factory: lib.evagg.TruthsetContentExtractor
   field_map:
     - gene: gene_symbol
-    - id: paper_id
+    - paper_id: paper_id
     - hgvs_c: hgvs_c
     - hgvs_p: hgvs_p
+    - individual_id: individual_id
     - phenotype: phenotype
     - zygosity: zygosity
     - variant_inheritance: variant_inheritance

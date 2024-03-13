@@ -1,9 +1,9 @@
 import json
 import os
-import xml.etree.ElementTree as Et
 from typing import Optional
 
 import pytest
+from defusedxml import ElementTree
 
 
 @pytest.fixture
@@ -12,10 +12,18 @@ def test_resources_path():
 
 
 @pytest.fixture
-def json_load(test_resources_path):
+def test_file_contents(test_resources_path):
     def _loader(file_name):
-        with open(os.path.join(test_resources_path, file_name), "r") as json_file:
-            return json.load(json_file)
+        with open(os.path.join(test_resources_path, file_name), "r") as file:
+            return file.read()
+
+    return _loader
+
+
+@pytest.fixture
+def json_load(test_file_contents):
+    def _loader(file_name):
+        return json.loads(test_file_contents(file_name))
 
     return _loader
 
@@ -23,16 +31,15 @@ def json_load(test_resources_path):
 @pytest.fixture
 def xml_parse():
     def _parser(content):
-        return Et.fromstring(content)
+        return ElementTree.fromstring(content)
 
     return _parser
 
 
 @pytest.fixture
-def xml_load(test_resources_path, xml_parse):
+def xml_load(test_file_contents, xml_parse):
     def _loader(file_name):
-        with open(os.path.join(test_resources_path, file_name), "r") as xml_file:
-            return xml_parse(xml_file.read())
+        return xml_parse(test_file_contents(file_name))
 
     return _loader
 
