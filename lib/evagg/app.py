@@ -23,15 +23,16 @@ class SynchronousLocalApp(IEvAggApp):
         all_fields: Dict[str, List[Dict[str, str]]] = {}
 
         for query in self._queries:
+            term = query["gene_symbol"]
             # Get the papers that match this query.
             papers = self._library.get_papers(query)
-            logger.info(f"Found {len(papers)} papers for {query}")
+            logger.info(f"Found {len(papers)} papers for {term}")
 
             for index, paper in enumerate(papers):
                 logger.debug(f"Paper #{index + 1}: {paper}")
 
             # For all papers that match, extract the fields we want.
-            fields = {paper.id: self._extractor.extract(paper, query) for paper in papers}  # TODO
+            fields = {paper.id: self._extractor.extract(paper, term) for paper in papers}
 
             # Record the result.
             for paper_id, paper_fields in fields.items():

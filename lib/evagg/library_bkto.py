@@ -103,7 +103,7 @@ class TruthsetFileLibrary(IGetPapers):
 
         return papers
 
-    def get_papers(self, query: IPaperQuery) -> Set[Paper]:
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         all_papers = self._load_truthset()
         query_genes = {v.gene for v in query.terms()}
 
