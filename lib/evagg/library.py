@@ -4,7 +4,7 @@ import logging
 import os
 from collections import defaultdict
 from functools import cache
-from typing import Dict, List, Sequence, Set, Tuple
+from typing import Any, Dict, List, Sequence, Set, Tuple
 
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
@@ -37,7 +37,7 @@ class SimpleFileLibrary(IGetPapers):
 
         return papers
 
-    def search(self, query: str) -> Set[Paper]:
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         # Dummy implementation that returns all papers regardless of query.
         all_papers = set(self._load().values())
         return all_papers
@@ -134,7 +134,7 @@ class TruthsetFileLibrary(IGetPapers):
 
         return papers
 
-    def search(self, query: str) -> Set[Paper]:
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         """For the TruthsetFileLibrary, query is expected to be a gene symbol."""
         all_papers = self._load_truthset()
 
@@ -155,7 +155,7 @@ class RemoteFileLibrary(IGetPapers):
         self._paper_client = paper_client
         self._max_papers = max_papers
 
-    def search(self, query: str) -> Set[Paper]:
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         """Search for papers based on the given query.
 
         Args:
@@ -185,7 +185,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         paper_client: IPaperLookupClient,
         max_papers: int = 5,
         min_date: str = "1800/01/01",
-        max_date: str = "2029/01/01",
+        max_date: str = "2029/01/01",  # TODO
         date_type: str = "pdat",
     ) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
@@ -199,7 +199,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         self._max_date = max_date
         self._date_type = date_type
 
-    def search(self, query: IPaperQuery):
+    def get_papers(self, query: Dict[str, Any]):
         """Search for papers based on the given query.
 
         Args:
@@ -208,18 +208,18 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
-        if len(query.terms()) > 1:
-            raise NotImplementedError("Multiple term extraction not yet implemented.")
+        if not query["gene_symbol"]:
+            raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
 
         # Get gene term
-        term = next(iter(query.terms())).gene
-        print("\nGENE: ", term, self._min_date)
+        term = query["gene_symbol"]
+        print("\nGENE: ", term, query["min_date"])  # better to use term, s.t. term = query["gene_symbol"]?
 
         # Find paper IDs
         paper_ids = self._paper_client.search(
             query=term,
             max_papers=self._max_papers,  # ,
-            # min_date=,
+            min_date=query["min_date"],
             # max_date=self._max_date,
             # date_type=self._date_type,
         )
@@ -618,7 +618,8 @@ class RareDiseaseFileLibrary(IGetPapers):
             n_missed = (0, "NA")
             n_irrelevant = (0, "NA")
 
-        # todo: filter r_d_papers to only include those that overlap with correct_pmids, missed_pmids, and extra_pmids so that I can use the props to print the titles.
+        # todo: filter r_d_papers to only include those that overlap with correct_pmids, missed_pmids, and extra_pmids
+        # so that I can use the props to print the titles.
         if pubmed:  # comparing tool to PubMed
             print("\nOf PubMed papers...")
             print("Pubmed # Correct Papers: ", len(correct_pmids_papers))

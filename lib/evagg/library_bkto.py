@@ -4,7 +4,7 @@ import logging
 import os
 from collections import defaultdict
 from functools import cache
-from typing import Dict, List, Sequence, Set
+from typing import Any, Dict, List, Sequence, Set
 
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import IPaperQuery, Paper, Variant
@@ -37,7 +37,7 @@ class SimpleFileLibrary(IGetPapers):
 
         return papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         # Dummy implementation that returns all papers regardless of query.
         all_papers = set(self._load().values())
         return all_papers
@@ -103,7 +103,7 @@ class TruthsetFileLibrary(IGetPapers):
 
         return papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def get_papers(self, query: IPaperQuery) -> Set[Paper]:
         all_papers = self._load_truthset()
         query_genes = {v.gene for v in query.terms()}
 
@@ -124,7 +124,7 @@ class RemoteFileLibrary(IGetPapers):
         self._paper_client = paper_client
         self._max_papers = max_papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         """Search for papers based on the given query.
         Args:
             query (IPaperQuery): The query to search for.
@@ -151,7 +151,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         self._paper_client = paper_client
         self._max_papers = max_papers
 
-    def search(self, query: IPaperQuery):
+    def get_papers(self, query: Dict[str, Any]):
         """Search for papers based on the given query.
 
         Args:
@@ -168,7 +168,11 @@ class RareDiseaseFileLibrary(IGetPapers):
         logger.info(f"\nSearching for papers related to {term}.")
 
         # Find paper IDs
-        paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
+        paper_ids = self._paper_client.search(
+            query=term,
+            max_papers=self._max_papers,
+            mindate=query.something,
+        )
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
