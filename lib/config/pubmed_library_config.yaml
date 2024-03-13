@@ -25,23 +25,23 @@ di_factory: lib.evagg.SynchronousLocalApp
 queries:
   di_factory: lib.evagg.types.QueryIterator
   variants:
-    - 'ADCY1:something'
-    - 'RHOH:something'
-    - 'FBN2:something'
-    - 'ACAT2:something'
-    - 'TAPBP:something'
-    - 'LRRC10:something'
-    - 'EXOC2:something'
-    - 'CTF1:something'
-    - 'TOPBP1:something'
-    - 'TNNC2:something'
-    - 'PEX11A:something'
-    - 'KMO:something'
-    - 'GRXCR2:something'
-    - 'CPT1B:something'
+    - 'ADCY1:something' 
+    - 'RHOH:something' 
+    - 'FBN2:something' 
+    - 'ACAT2:something' 
+    - 'TAPBP:something' 
+    - 'LRRC10:something' 
+    - 'EXOC2:something' 
+    - 'CTF1:something' 
+    - 'TOPBP1:something' 
+    - 'TNNC2:something' 
+    - 'PEX11A:something'  
+    - 'KMO:something' 
+    - 'GRXCR2:something'  
+    - 'CPT1B:something' 
     - 'COG4:something'
-    - 'MLH3:something'
-    - 'HYAL1:something'
+    - 'MLH3:something' 
+    - 'HYAL1:something' 
     - 'EMC1:something'
     - 'TOP2B:something'
     - 'OTUD7A:something'
@@ -60,7 +60,42 @@ queries:
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
-  max_papers: 50
+  max_papers: 350
+  min_date: # [2014, 2012, 1998, 2021, 2002, 2015, 2020, 2000, 2014, 2023, 2020, 2023, 2014, 2021, 2009, 2001, 1999, 2016, 2019, 2020, 2019, 2017, 2020, 2019, 1976, 2004, 2015, 2022, 2013, 2012, 2020, 2007]
+    - "2014/01/01"
+    - "2012/01/01"
+    - "1998/01/01"
+    - "2021/01/01"
+    - "2002/01/01"
+    - "2015/01/01"
+    - "2020/01/01"
+    - "2000/01/01"
+    - "2014/01/01"
+    - "2023/01/01"
+    - "2020/01/01"
+    - "2023/01/01"
+    - "2014/01/01"
+    - "2021/01/01"
+    - "2009/01/01"
+    - "2001/01/01"
+    - "1999/01/01"
+    - "2016/01/01"
+    - "2019/01/01"
+    - "2020/01/01"
+    - "2019/01/01"
+    - "2017/01/01"
+    - "2020/01/01"
+    - "2019/01/01"
+    - "1976/01/01"
+    - "2004/01/01"
+    - "2015/01/01"
+    - "2022/01/01"
+    - "2013/01/01"
+    - "2012/01/01"
+    - "2020/01/01"
+    - "2007/01/01" 
+  max_date: "2024/03/12"
+  date_type: "pdat"
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields:
