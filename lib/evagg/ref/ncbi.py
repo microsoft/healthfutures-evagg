@@ -5,11 +5,10 @@ from typing import Any, Dict, List, Optional, Sequence
 from pydantic import Extra, root_validator
 
 from lib.config import PydanticYamlModel
-from lib.evagg.ref import IAnnotateEntities, IPaperLookupClient
 from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
 
-from .interfaces import IGeneLookupClient, IVariantLookupClient
+from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient, IVariantLookupClient
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +43,8 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
     PUBTATOR_GET_URL = (
         "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/pmc_export/bioc{fmt}?pmcids={id}"
     )
+    # TODO: consider unicode encoding for the BioC response.
+    BIOC_GET_URL = "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_xml/{pmcid}/ascii"
 
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
@@ -82,22 +83,54 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         url = self.EUTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
         return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
 
-    def _is_pmc_oa(self, pmcid: Optional[str]) -> bool:
-        """Check if a paper is open access using the PMC OA API."""
+    def _get_oa_props(self, pmcid: str) -> Dict[str, Any]:
+        """Get the OA status for a paper from the PMC OA API."""
+        props = {"is_pmc_oa": False, "license": "unknown"}
         if not pmcid:
-            return False
+            return props
 
+        # Do a record lookup for the given pmcid at the PMC OA endpoint.
         root = self._web_client.get(self.PMCOA_GET_URL.format(pmcid=pmcid), content_type="xml")
-        # If the response contains a record with the given pmcid, then it is open access.
-        if root.find(f"records/record[@id='{pmcid}']") is not None:
-            logger.debug(f"PMC OA record found for {pmcid}")
-            return True
+        # Look for a record with the given pmcid in the response.
+        record = root.find(f"records/record[@id='{pmcid}']")
 
-        # If there is an error code, extract it from the response.
-        err_code = root.find("error").attrib["code"] if root.find("error") is not None else None
-        if err_code and err_code != "idIsNotOpenAccess":
-            logger.warning(f"PMC OA error code: {err_code}")
-        return False
+        if record is None:
+            # No valid OA record returned - if there is an error code, extract it from the response.
+            err_code = root.find("error").attrib["code"] if root.find("error") is not None else None
+            if err_code == "idIsNotOpenAccess":
+                props["license"] = "not_open_access"
+            elif err_code:
+                logger.warning(f"Unexpected PMC OA error code: {err_code}")
+        else:
+            props["is_pmc_oa"] = True
+            props["license"] = license = record.attrib.get("license", "unknown")
+            logger.debug(f"PMC OA record found for {pmcid}")
+            if "-ND" in license:
+                # TODO if it has a "no derivatives" license, then we don't consider it open access.
+                logger.warning(f"PMC OA record found for {pmcid} but has a no-derivatives license: {license}")
+                props["is_pmc_oa"] = False
+
+        return props
+
+    def _get_full_text_xml(self, pmcid: str | None, is_pmc_oa: bool, license: str) -> Optional[str]:
+        """Get the full text of a paper from PMC."""
+        if not pmcid or not is_pmc_oa or license.find("nd") >= 0:
+            logger.warning(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
+            return None
+
+        response_root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
+
+        # Find and return the specific document.
+        for document in response_root.findall("./document"):
+            id = document.find("id")
+            if id is not None and id.text == pmcid.upper().lstrip("PMC"):
+                return document
+        logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
+        return None
+
+    def _full_text_sections_from_xml(self, root: Any) -> Sequence[str]:
+        """Extract the full text from a BioC XML response."""
+        return [p.text for p in root.findall("./passage/text")]
 
     # IPaperLookupClient
     def search(
@@ -132,9 +165,15 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
             return None
 
         props = _extract_paper_props_from_xml(article)
+        props.update(self._get_oa_props(props["pmcid"]))
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
-        props["is_pmc_oa"] = self._is_pmc_oa(props["pmcid"])
         props["pmid"] = paper_id
+        props["full_text_xml"] = self._get_full_text_xml(
+            pmcid=props["pmcid"], is_pmc_oa=props["is_pmc_oa"], license=props["license"]
+        )
+        props["full_text_sections"] = (
+            self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
+        )
 
         return Paper(id=props["doi"], **props)
 
@@ -212,5 +251,7 @@ def _extract_paper_props_from_xml(article: Any) -> Dict[str, Any]:
         "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
     }
 
-    props = {k: (v.text if (v := article.find(path)) is not None else None) for k, path in extractions.items()}
+    props = {
+        k: ("".join(v.itertext()) if (v := article.find(path)) is not None else None) for k, path in extractions.items()
+    }
     return props

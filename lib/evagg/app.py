@@ -1,7 +1,5 @@
 import logging
-from typing import Dict, List
-
-from lib.evagg.types import IPaperQueryIterator
+from typing import Dict, List, Sequence
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 
@@ -11,12 +9,12 @@ logger = logging.getLogger(__name__)
 class SynchronousLocalApp(IEvAggApp):
     def __init__(
         self,
-        queries: IPaperQueryIterator,
+        queries: Sequence[str],
         library: IGetPapers,
         extractor: IExtractFields,
         writer: IWriteOutput,
     ) -> None:
-        self._query_factory = queries
+        self._queries = queries
         self._library = library
         self._extractor = extractor
         self._writer = writer
@@ -24,11 +22,11 @@ class SynchronousLocalApp(IEvAggApp):
     def execute(self) -> None:
         all_fields: Dict[str, List[Dict[str, str]]] = {}
 
-        for i, query in enumerate(self._query_factory):
+for i, query in enumerate(self._queries):
             # Get the papers that match this query.
-            print("Query", i, ":", query.terms())
+            print("Query", i, ":", query)
             papers = self._library.search(query)
-            logger.info(f"Found {len(papers)} papers for {query.terms()}")
+            logger.info(f"Found {len(papers)} papers for {query}")
 
             for index, paper in enumerate(papers):
                 logger.debug(f"Paper #{index + 1}: {paper}")

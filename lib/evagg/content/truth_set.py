@@ -1,6 +1,6 @@
 from typing import Dict, Sequence
 
-from lib.evagg.types import IPaperQuery, Paper
+from lib.evagg.types import Paper
 
 from ..interfaces import IExtractFields
 
@@ -10,10 +10,12 @@ class TruthsetContentExtractor(IExtractFields):
         # Turn list of single-element key-mapping dicts into a list of tuples.
         self._field_map = [kv for [kv] in [kv.items() for kv in field_map]]
 
-    def extract(self, paper: Paper, query: IPaperQuery) -> Sequence[Dict[str, str]]:
+    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
         extracted_fields = []
         # For each queried variant for which we have evidence in the paper...
-        for v in query.terms() & paper.evidence.keys():
+        for v in paper.evidence.keys():
+            if v[0].gene_symbol != query:
+                continue
             # Union the evidence props with the paper props.
             properties = paper.props | paper.evidence[v]
             # Add a new evidence dict to the list, mapping evidence values to new key names.
