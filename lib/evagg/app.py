@@ -22,7 +22,7 @@ class SynchronousLocalApp(IEvAggApp):
     def execute(self) -> None:
         all_fields: Dict[str, List[Dict[str, str]]] = {}
 
-for i, query in enumerate(self._queries):
+        for i, query in enumerate(self._queries):
             # Get the papers that match this query.
             print("Query", i, ":", query)
             papers = self._library.search(query)
