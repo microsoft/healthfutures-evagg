@@ -24,8 +24,9 @@ class SynchronousLocalApp(IEvAggApp):
     def execute(self) -> None:
         all_fields: Dict[str, List[Dict[str, str]]] = {}
 
-        for query in self._query_factory:
+        for i, query in enumerate(self._query_factory):
             # Get the papers that match this query.
+            print("Query", i, ":", query.terms())
             papers = self._library.search(query)
             logger.info(f"Found {len(papers)} papers for {query.terms()}")
 
