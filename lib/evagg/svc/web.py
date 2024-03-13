@@ -1,11 +1,11 @@
 import json
 import logging
-import xml.etree.ElementTree as Et
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from azure.cosmos import ContainerProxy, CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from defusedxml import ElementTree
 from pydantic import Extra, validator
 from requests.adapters import HTTPAdapter, Retry
 
@@ -22,6 +22,7 @@ class WebClientSettings(PydanticYamlModel, extra=Extra.forbid):
     max_retries: int = 0  # no retries by default
     retry_backoff: float = 0.5  # indicates progression of 0.5, 1, 2, 4, 8, etc. seconds
     retry_codes: List[int] = [429, 500, 502, 503, 504]  # rate-limit exceeded, server errors
+    no_raise_codes: List[int] = []  # don't raise exceptions for these codes
     content_type: str = "text"
 
     @validator("content_type")
@@ -52,9 +53,14 @@ class RequestsWebContentClient(IWebContentClient):
             self._session.mount("http://", HTTPAdapter(max_retries=retries))
         return self._session
 
-    def _get_content(
-        self, text: str, content_type: Optional[str]
-    ) -> Optional[Union[str, bytes, Dict[str, Any], Et.Element]]:
+    def _raise_for_status(self, code: int) -> None:
+        """Raise an exception if the status code is not 2xx."""
+        if code >= 400 and code < 600 and code not in self._settings.no_raise_codes:
+            response = requests.Response()
+            response.status_code = code
+            raise requests.HTTPError(f"Request failed with status code {code}", response=response)
+
+    def _transform_content(self, text: str, content_type: Optional[str]) -> Any:
         """Get the content from the response based on the provided content type."""
         content_type = content_type or self._settings.content_type
         if content_type == "text":
@@ -62,13 +68,14 @@ class RequestsWebContentClient(IWebContentClient):
         elif content_type == "json":
             return json.loads(text) if text else {}
         elif content_type == "xml":
-            return Et.fromstring(text) if text else None
+            return ElementTree.fromstring(text) if text else None
         else:
             raise ValueError(f"Invalid content type: {content_type}")
 
-    def _get_text(self, url: str) -> str:
+    def _get_content(self, url: str) -> Tuple[int, str]:
         """GET the text content at the provided URL."""
-        return self._get_session().get(url).text
+        response = self._get_session().get(url)
+        return response.status_code, response.text
 
     def update_settings(self, **kwargs: Any) -> None:
         """Update the default values for the session."""
@@ -78,8 +85,9 @@ class RequestsWebContentClient(IWebContentClient):
 
     def get(self, url: str, content_type: Optional[str] = None, url_extra: Optional[str] = None) -> Any:
         """GET the content at the provided URL."""
-        text = self._get_text(url + (url_extra or ""))
-        return self._get_content(text, content_type)
+        code, content = self._get_content(url + (url_extra or ""))
+        self._raise_for_status(code)
+        return self._transform_content(content, content_type)
 
 
 class CacheClientSettings(PydanticYamlModel, extra=Extra.forbid):
@@ -113,10 +121,13 @@ class CosmosCachingWebClient(RequestsWebContentClient):
 
         try:
             item = container.read_item(item=cache_key, partition_key=cache_key)
-            logger.info(f"{cache_key} served from cache.")
+            logger.info(f"{item['url']} served from cache.")
+            code = item.get("status_code", 200)
         except CosmosResourceNotFoundError:
-            content = super()._get_text(url + (url_extra or ""))
-            item = {"id": cache_key, "url": url, "content": content}
-            container.upsert_item(item)
+            code, content = super()._get_content(url + (url_extra or ""))
+            item = {"id": cache_key, "url": url, "status_code": code, "content": content}
+            if code not in self._settings.retry_codes:
+                container.upsert_item(item)
 
-        return super()._get_content(item["content"], content_type)
+        self._raise_for_status(code)
+        return super()._transform_content(item["content"], content_type)

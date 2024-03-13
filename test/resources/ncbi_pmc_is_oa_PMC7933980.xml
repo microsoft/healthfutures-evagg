@@ -1,0 +1,11 @@
+<OA>
+    <responseDate>2024-03-05 17:51:01</responseDate>
+    <request id="PMC7933980">https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC7933980</request>
+    <records returned-count="1" total-count="1">
+        <record id="PMC7933980" citation="MicroPubl Biol.; 2021:10.17912/micropub.biology.000373"
+            license="CC BY" retracted="no">
+            <link format="tgz" updated="2023-11-04 02:25:09"
+                href="ftp://ftp.ncbi.nlm.nih.gov/pub/pmc/oa_package/7e/38/PMC7933980.tar.gz" />
+        </record>
+    </records>
+</OA>

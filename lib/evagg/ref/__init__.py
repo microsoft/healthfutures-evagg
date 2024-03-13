@@ -1,8 +1,18 @@
 """Package for interacting with reference resources."""
 
-from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient, IVariantLookupClient
+from .interfaces import (
+    IAnnotateEntities,
+    IBackTranslateVariants,
+    IGeneLookupClient,
+    INormalizeVariants,
+    IPaperLookupClient,
+    IRefSeqLookupClient,
+    IVariantLookupClient,
+)
 from .litvar import LitVarReference
+from .mutalyzer import MutalyzerClient
 from .ncbi import NcbiLookupClient
+from .refseq import NcbiReferenceLookupClient
 
 __all__ = [
     # Litvar.
@@ -12,6 +22,12 @@ __all__ = [
     "IGeneLookupClient",
     "IPaperLookupClient",
     "IVariantLookupClient",
+    "IRefSeqLookupClient",
+    "INormalizeVariants",
+    "IBackTranslateVariants",
     # NCBI.
     "NcbiLookupClient",
+    "NcbiReferenceLookupClient",
+    # Mutalyzer.
+    "MutalyzerClient",
 ]
