@@ -1,6 +1,9 @@
 from importlib import import_module
+from pathlib import Path
 from types import ModuleType
 from typing import Any, Dict
+
+import yaml
 
 FACTORY_TAG = "di_factory"
 
@@ -14,10 +17,23 @@ class DiContainer:
             self._modules[module_name] = import_module(module_name)
         return self._modules[module_name]
 
+    def _nested_update(self, d: Dict, u: Dict) -> Dict:
+        """Recursively update a nested dictionary."""
+        for k, v in u.items():
+            if isinstance(v, dict):
+                d[k] = self._nested_update(d.get(k, {}), v)
+            else:
+                d[k] = v
+        return d
+
     def create_instance(self, spec: Dict[str, Any], resources: Dict[str, object]) -> Any:
         """Create an instance of an object using the provided factory spec."""
         parameters: Dict[str, object] = {}
         values: Dict[str, object] = resources
+
+        if FACTORY_TAG not in spec:
+            raise ValueError(f"Missing '{FACTORY_TAG}' in instance spec.")
+        factory: str = spec[FACTORY_TAG]
 
         # Process initializer spec in order - resources, then parameters.
         for key, value in spec.items():
@@ -42,19 +58,22 @@ class DiContainer:
             else:
                 values[key] = value
 
-        # Locate the module and instance factory.
-        module_name, _, factory_name = spec[FACTORY_TAG].rpartition(".")
-        module = self._try_import(module_name)
-        try:
-            instance_factory = getattr(module, factory_name)
-        except AttributeError:
-            raise TypeError(f"Module {module_name} does not define a {factory_name} entry point.")
+        if factory.endswith(".yaml"):
+            # Read in the spec dictionary from yaml.
+            with open(Path(factory), "r") as f:
+                yaml_spec = yaml.safe_load(f)
+            # Parameters to the yaml are considered overrides to items inside the yaml.
+            yaml_spec = self._nested_update(yaml_spec, parameters)
+            instance = self.create_instance(yaml_spec, resources.copy())
+        else:
+            # Locate the module and instance factory from module path.
+            module_name, _, factory_name = factory.rpartition(".")
+            module = self._try_import(module_name)
+            try:
+                instance_factory = getattr(module, factory_name)
+            except AttributeError:
+                raise TypeError(f"Module {module_name} does not define a {factory_name} entry point.")
+            # Instantiate the instance with parameters.
+            instance = instance_factory(**parameters)
 
-        # Instantiate the instance with parameters.
-        return instance_factory(**parameters)
-
-    def build(self, config: Dict[str, Any]) -> Any:
-        if FACTORY_TAG not in config:
-            raise ValueError(f"Missing top-level '{FACTORY_TAG}' in config.")
-        # Initialize the main class hierarchy.
-        return self.create_instance(config, {})
+        return instance

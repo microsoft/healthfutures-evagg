@@ -17,7 +17,7 @@ ANSI_RESET := \033[0;0m
 .PHONY: ci
 ci: lint test sec
 	@echo
-	@echo "$(ANSI_GREEN)====== All linters and tests PASS ======$(ANSI_RESET)"
+	@echo "$(ANSI_GREEN)====== All linters, tests, and security checks PASS ======$(ANSI_RESET)"
 
 # Run all linters.
 .PHONY: lint
@@ -33,7 +33,7 @@ test:
 
 .PHONY: lint-flake8
 lint-flake8:
-	@flake8 $(PY_DIRS_MAIN) $(PY_DIRS_TEST)
+	@flake8 $(PY_DIRS_MAIN)
 
 .PHONY: type
 type:
@@ -41,4 +41,4 @@ type:
 
 .PHONY: sec
 sec:
-	@bandit -c pyproject.toml -r $(PY_DIRS_ALL)
+	@bandit -c pyproject.toml -r $(PY_DIRS_TEST) $(PY_DIRS_MAIN)

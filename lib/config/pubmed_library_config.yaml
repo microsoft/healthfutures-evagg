@@ -1,24 +1,35 @@
 # Services
 log:
   di_factory: lib.evagg.svc.init_logger
+  prompts_to_console: true
   # level: "DEBUG"
   # exclude_modules: [lib.evagg.svc.*]
   # include_modules: [lib.evagg.svc.web]
   # exclude_defaults: true
-
+ncbi_settings:
+  di_factory: lib.evagg.svc.get_dotenv_settings
+  filter_prefix: "NCBI_EUTILS_"
+web_client:
+  di_factory: lib.evagg.svc.CosmosCachingWebClient
+  cache_settings:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "EVAGG_CONTENT_CACHE_"  
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
+  web_client: "{{web_client}}"
+  settings: "{{ncbi_settings}}"
+mutalyzer_client:
+  di_factory: lib.evagg.ref.MutalyzerClient
+  web_client: "{{web_client}}"
+refseq_client:
+  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
   web_client:
-    # di_factory: lib.evagg.svc.RequestsWebContentClient
-    di_factory: lib.evagg.svc.CosmosCachingWebClient
-    cache_settings:
-      di_factory: lib.evagg.svc.get_dotenv_settings
-      filter_prefix: "EVAGG_CONTENT_CACHE_"
-    web_settings:
-      max_retries: 3
-  settings:
-    di_factory: lib.evagg.svc.get_dotenv_settings
-    filter_prefix: "NCBI_EUTILS_"
+    di_factory: lib.evagg.svc.RequestsWebContentClient
+variant_factory:
+  di_factory: lib.evagg.content.HGVSVariantFactory
+  normalizer: "{{mutalyzer_client}}"
+  back_translator: "{{mutalyzer_client}}"
+  refseq_client: "{{refseq_client}}"
 
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
@@ -103,6 +114,7 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
+    - individual_id
     - phenotype
     - zygosity
     - variant_inheritance

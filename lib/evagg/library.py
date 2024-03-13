@@ -4,10 +4,10 @@ import logging
 import os
 from collections import defaultdict
 from functools import cache
-from typing import Dict, List, Sequence, Set
+from typing import Dict, List, Sequence, Set, Tuple
 
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import IPaperQuery, Paper, Variant
+from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .interfaces import IGetPapers
 
@@ -37,19 +37,21 @@ class SimpleFileLibrary(IGetPapers):
 
         return papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def search(self, query: str) -> Set[Paper]:
         # Dummy implementation that returns all papers regardless of query.
         all_papers = set(self._load().values())
         return all_papers
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["doi", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa", "license"]
+TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa", "license"]
 # These are the columns in the truthset that are specific to the variant.
 TRUTHSET_VARIANT_KEYS = [
     "gene",
+    "transcript",
     "hgvs_c",
     "hgvs_p",
+    "individual_id",
     "phenotype",
     "zygosity",
     "variant_inheritance",
@@ -61,8 +63,13 @@ TRUTHSET_VARIANT_KEYS = [
 
 
 class TruthsetFileLibrary(IGetPapers):
-    def __init__(self, file_path: str) -> None:
+    """A class for retrieving papers from a truthset file."""
+
+    _variant_factory: ICreateVariants
+
+    def __init__(self, file_path: str, variant_factory: ICreateVariants) -> None:
         self._file_path = file_path
+        self._variant_factory = variant_factory
 
     @cache
     def _load_truthset(self) -> Set[Paper]:
@@ -93,22 +100,46 @@ class TruthsetFileLibrary(IGetPapers):
                     if paper_data[key] != row[key]:
                         logger.warning(f"Multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
                 # Make sure the gene/variant columns are not empty.
-                if not row["gene"] or not row["hgvs_p"]:
-                    logger.warning(f"Missing gene or variant for {paper_id}.")
+                if not row["gene"] or (not row["hgvs_p"] and not row["hgvs_c"]):
+                    logger.warning(f"Missing gene or hgvs_p for {paper_id}.")
 
-            # For each paper, extract the variant-specific key/value pairs into a new dict of dicts.
-            variants = {Variant(r["gene"], r["hgvs_p"]): {k: r.get(k, "") for k in TRUTHSET_VARIANT_KEYS} for r in rows}
+            # Return the parsed variant from HGVS c or p and the individual ID.
+            def _get_variant_key(row: Dict[str, str]) -> Tuple[HGVSVariant | None, str]:
+                text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
+                transcript = row["transcript"] if "transcript" in row else None
+
+                # This can fail, instead of raising an exception, we'll return a placeholder value that can be dropped
+                # from the set of variants later.
+                try:
+                    return (
+                        self._variant_factory.parse(text_desc=text_desc, gene_symbol=row["gene"], refseq=transcript),
+                        row["individual_id"],
+                    )
+                except ValueError as e:
+                    logger.warning(f"Variant parsing failed: {e}")
+                    return None, ""
+
+            # For each paper, extract the (variant, subject)-specific key/value pairs into a new dict of dicts.
+            variants = {_get_variant_key(row): {key: row.get(key, "") for key in TRUTHSET_VARIANT_KEYS} for row in rows}
+            if (None, "") in variants:
+                logger.warning("Dropping placeholder variants.")
+                variants.pop((None, ""))
+
+            if not variants:
+                logger.warning(f"No valid variants for {paper_id}.")
+                continue
+
             # Create a Paper object with the extracted fields.
             papers.add(Paper(id=paper_id, evidence=variants, **paper_data))
 
         return papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def search(self, query: str) -> Set[Paper]:
+        """For the TruthsetFileLibrary, query is expected to be a gene symbol."""
         all_papers = self._load_truthset()
-        query_genes = {v.gene for v in query.terms()}
 
-        # Filter to just the papers with variant terms that have evidence for the genes specified in the query.
-        return {p for p in all_papers if query_genes & {v.gene for v in p.evidence.keys()}}
+        # Filter to just the papers with variants that have evidence for the gene specified in the query.
+        return {p for p in all_papers if query in {v[0].gene_symbol for v in p.evidence.keys()}}
 
 
 class RemoteFileLibrary(IGetPapers):
@@ -124,16 +155,17 @@ class RemoteFileLibrary(IGetPapers):
         self._paper_client = paper_client
         self._max_papers = max_papers
 
-    def search(self, query: IPaperQuery) -> Set[Paper]:
+    def search(self, query: str) -> Set[Paper]:
         """Search for papers based on the given query.
+
         Args:
             query (IPaperQuery): The query to search for.
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
-        if len(query.terms()) > 1:
+        if len(query) > 1:
             raise NotImplementedError("Multiple term extraction not yet implemented.")
-        term = next(iter(query.terms())).gene
+        term = next(iter(query))
         paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
         return papers
@@ -171,7 +203,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Search for papers based on the given query.
 
         Args:
-            query (IPaperQuery): The query to search for.
+            query (str): The query to search for.
 
         Returns:
             Set[Paper]: The set of papers that match the query.
@@ -529,6 +561,7 @@ class RareDiseaseFileLibrary(IGetPapers):
     # private function to compare the ground truth papers PMIDs to the papers that were found
     def _compare_to_truth_or_tool(self, gene, r_d_papers, pubmed):
         """Compare the papers that were found to the ground truth papers.
+
         Args:
             paper (Paper): The paper to compare.
         Returns:
@@ -551,7 +584,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         missed_pmids_papers = []
         irrelevant_pmids_papers = []
 
-        # For the gene, get the ground truth PMIDs from ground_truth_papers_pmids and compare the PMIDS to the PMIDS from the papers that were found
+        # For the gene, get the ground truth PMIDs from ground_truth_papers_pmids and compare the PMIDS to the PMIDS
+        # from the papers that were found
         # For any PMIDs that match, increment n_correct
         if ground_truth_papers_pmids is not None:
             for pmid, title in r_d_pmids:
@@ -565,7 +599,8 @@ class RareDiseaseFileLibrary(IGetPapers):
                     counted_pmids.append(pmid)
                     irrelevant_pmids_papers.append((pmid, title))
 
-            # For any PMIDs in the ground truth that are not in the papers that were found, increment n_missed, use counted_pmids to subtract from the ground truth papers PMIDs
+            # For any PMIDs in the ground truth that are not in the papers that were found, increment n_missed, use
+            # counted_pmids to subtract from the ground truth papers PMIDs
             for pmid in ground_truth_papers_pmids:
                 if pmid not in counted_pmids:
                     missed_paper_title = self._paper_client.fetch(str(pmid))

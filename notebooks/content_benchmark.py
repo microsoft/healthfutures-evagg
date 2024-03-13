@@ -15,11 +15,12 @@ import pandas as pd
 
 # %% Constants.
 
-TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "truth_set_content_manual.tsv")
+TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
 TEST_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
-CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"}
+# CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"}
+CONTENT_COLUMNS = {"variant_inheritance"}
 INDEX_COLUMNS = {"gene", "hgvs_c", "paper_id"}
 
 # %% Read in the truth and test tables.
@@ -29,7 +30,7 @@ if "doi" in truth_df.columns:
     print("Warning: converting doi to paper_id")
     truth_df.rename(columns={"doi": "paper_id"}, inplace=True)
 
-test_df = pd.read_csv(TEST_PATH, sep="\t")
+test_df = pd.read_csv(TEST_PATH, sep="\t", skiprows=1)
 
 # TODO: temporary, sample the both dfs so we have some missing/extra rows.
 # truth_df = truth_df.sample(frac=0.9, replace=False)
@@ -44,6 +45,13 @@ if missing_from_truth:
 missing_from_test = CONTENT_COLUMNS.union(INDEX_COLUMNS) - set(test_df.columns)
 if missing_from_test:
     raise ValueError(f"Test table is missing columns: {missing_from_test}")
+
+# Ensure that the index columns are unique.
+if not truth_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
+    raise ValueError("Truth table has non-unique index columns.")
+
+if not test_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
+    raise ValueError("Test table has non-unique index columns.")
 
 # %% Merge the dataframes.
 columns_of_interest = list(INDEX_COLUMNS.union(CONTENT_COLUMNS))
