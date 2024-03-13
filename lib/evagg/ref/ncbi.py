@@ -48,34 +48,20 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
-    EUTILS_SEARCH_URL = (
-        "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}"
-        "&mindate={mindate}&maxdate={maxdate}&datetype={datetype}&tool=biopython"
-    )
+    EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
         self._default_max_papers = 5  # TODO: make configurable?
-        self._default_min_date = ""  # no date restriction
-        self._default_max_date = ""  # no date restriction
-        self._default_datetype = "pdat"  # TODO: this is fixed for now to pdat, make configurable?
         self._web_client = web_client
 
     def _esearch(
-        self,
-        db: str,
-        term: str,
-        sort: str,
-        retmax: int,
-        mindate: str,
-        maxdate: str,
-        datetype="pdat",
-        retmode: str | None = None,
+        self, db: str, term: str, sort: str, retmax: int, retmode: Optional[str], **extra_params: Optional[str]
     ) -> Any:
         key_string = self._config.get_key_string()
-        url = self.EUTILS_SEARCH_URL.format(
-            db=db, term=term, sort=sort, retmax=retmax, mindate=mindate, maxdate=maxdate, datetype=datetype
-        )
+        url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
+        # If mindate, maxdate, and datetype, not none - add above to url
+        url += "&".join([f"{k}={v}" for k, v in extra_params.items()])
         return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
 
     def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
@@ -137,23 +123,10 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         self,
         query: str,
         max_papers: Optional[int] = None,
-        mindate: Optional[str] = None,
-        maxdate: Optional[str] = None,
-        datetype="pdat",
+        **extra_params: Optional[str],
     ) -> Sequence[str]:
         retmax = max_papers or self._default_max_papers
-        mindate = mindate or self._default_max_date
-        maxdate = maxdate or self._default_max_date
-        root = self._esearch(
-            db="pubmed",
-            term=query,
-            sort="relevance",
-            retmax=retmax,
-            mindate=mindate,
-            maxdate=maxdate,
-            datetype="pdat",
-            retmode="xml",
-        )
+        root = self._esearch(db="pubmed", term=query, sort="relevance", retmax=retmax, retmode="xml", **extra_params)
         pmids = [id.text for id in root.findall("./IdList/Id") if id.text]
         return pmids
 
