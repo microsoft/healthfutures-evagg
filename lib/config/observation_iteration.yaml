@@ -43,19 +43,19 @@ llm_client:
 
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  # - "CTF1"
-  # - "FBN2"
-  # - "EXOC2"
-  # - "RNASEH1"
-  # - "DNAJC7"
-  # - "ZNF423"
-  # - "SARS1"
-  # - "BAZ2B"
-  # - "B4GAT1"
-  # - "TOP2B"
-  # - "SLFN14"
-  # - "MLH3"
-  # - "COG4"
+  - "CTF1"
+  - "FBN2"
+  - "EXOC2"
+  - "RNASEH1"
+  - "DNAJC7"
+  - "ZNF423"
+  - "SARS1"
+  - "BAZ2B"
+  - "B4GAT1"
+  - "TOP2B"
+  - "SLFN14"
+  - "MLH3"
+  - "COG4"
   - "JPH2"
   - "GRXCR2"
   - "EMC1"
@@ -65,6 +65,7 @@ library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
   variant_factory: "{{variant_factory}}"
+  paper_client: "{{ncbi_client}}"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
