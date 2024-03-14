@@ -101,17 +101,22 @@ def test_pubmed_fetch(mock_web_client, json_load):
 
 
 def test_pubmed_pmc_oa_fetch(mock_web_client):
-    web_client = mock_web_client(
-        "efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC6824399.xml", "ncbi_pmc_is_oa_PMC6824399.xml"
-    )
+    web_client = mock_web_client("efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC6824399.xml")
     result = NcbiLookupClient(web_client).fetch("31427284")
     assert result and result.props["is_pmc_oa"] is False
 
+
+def test_pubmed_pmc_full_text(mock_web_client):
     web_client = mock_web_client(
-        "efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC3564958.xml", "ncbi_pmc_is_oa_PMC3564958.xml"
+        "efetch_pubmed_paper_33688625.xml", "ncbi_pmc_is_oa_PMC7933980.xml", "ncbi_bioc_full_text_PMC7933980.xml"
     )
-    result = NcbiLookupClient(web_client).fetch("31427284")
+    result = NcbiLookupClient(web_client).fetch("33688625")
     assert result and result.props["is_pmc_oa"] is True
+    assert len(result.props["full_text_xml"]) > 0
+    assert len(result.props["full_text_sections"]) > 0
+
+
+#     assert result and result.props["full_text"] == "This is the full text"
 
 
 def test_pubmed_fetch_missing(mock_web_client, xml_parse):
