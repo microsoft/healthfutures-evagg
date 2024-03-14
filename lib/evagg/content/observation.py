@@ -52,6 +52,8 @@ literature that supports (or refutes) the potential causal role that a given var
 As part of that process, you will assist the analyst in identifying observations of genetic variation in human
 subjects/patients.
 
+All of your responses should be provided in the form of a JSON object. These responses should never include long,
+uninterrupted sequences of whitespace characters.
 """
 
     def __init__(
@@ -61,43 +63,51 @@ subjects/patients.
         self._paper_lookup_client = paper_lookup_client
         self._variant_factory = variant_factory
 
-    def _call_to_json_list(self, prompt_filepath: str, params: Dict[str, str], prompt_tag: str) -> Sequence[str]:
+    def _run_json_prompt(
+        self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        default_settings = {
+            "prompt_tag": "observation",
+            "temperature": 0.7,
+            "top_p": 0.95,
+            "response_format": {"type": "json_object"},
+        }
+        prompt_settings = {**default_settings, **prompt_settings}
+
         response = self._llm_client.prompt_file(
             user_prompt_file=prompt_filepath,
             system_prompt=self._SYSTEM_PROMPT,
             params=params,
-            prompt_settings={"prompt_tag": prompt_tag, "temperature": 0.7, "top_p": 0.95},
+            prompt_settings=prompt_settings,
         )
 
         try:
             result = json.loads(response)
         except Exception:
             logger.warning(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
-            return []
+            return {}
+
         return result
 
     def _find_patients(self, full_text: str) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
-        patient_candidates = self._call_to_json_list(
+        response = self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_patients"],
             params={"text": full_text},
-            prompt_tag="observation__find_patients",
+            prompt_settings={"prompt_tag": "observation__find_patients"},
         )
-        # TODO, deduplicate.
 
-        # TODO Sometimes subjects are reported with parentheticals, simplify
-
-        return patient_candidates
+        return response.get("patients", [])
 
     def _find_variant_descriptions(self, full_text: str, query: str) -> Sequence[str]:
         """Identify the genetic variants relevant to the query described in the full text of the paper.
 
         `query` should be a gene symbol.
         """
-        variant_candidates = self._call_to_json_list(
+        response = self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_variants"],
             params={"text": full_text, "gene_symbol": query},
-            prompt_tag="observation__find_variants",
+            prompt_settings={"prompt_tag": "observation__find_variants"},
         )
 
         # Often, the gene-symbol is provided as a prefix to the variant, remove it.
@@ -108,20 +118,20 @@ subjects/patients.
                 return x[len(query) :].lstrip(":")
             return x
 
-        variant_candidates = [_strip_query(x) for x in variant_candidates]
+        candidates = [_strip_query(x) for x in response.get("variants", [])]
 
         # Often, the variant is reported with both coding and protein-level descriptions, separate these out to
         # two distinct candidates.
         expanded_candidates: List[str] = []
 
-        for candidate in variant_candidates:
+        for candidate in candidates:
             if candidate.find("p.") >= 0 and candidate.find("c.") >= 0:
-                split_candidates = self._call_to_json_list(
+                split_response = self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["split_variants"],
                     params={"variant_list": f'"{candidate}"'},  # Encase in double-quotes in prep for bulk calling.
-                    prompt_tag="observation__split_variants",
+                    prompt_settings={"prompt_tag": "observation__split_variants"},
                 )
-                expanded_candidates.extend(split_candidates)
+                expanded_candidates.extend(split_response.get("variants", []))
             else:
                 expanded_candidates.append(candidate)
 
@@ -136,19 +146,13 @@ subjects/patients.
             "variants": ", ".join(variants),
             "gene_symbol": query,
         }
-        response = self._llm_client.prompt_file(
-            user_prompt_file=self._PROMPTS["link_entities"],
-            system_prompt=self._SYSTEM_PROMPT,
+        response = self._run_json_prompt(
+            prompt_filepath=self._PROMPTS["link_entities"],
             params=params,
             prompt_settings={"prompt_tag": "observation__link_entities"},
         )
 
-        try:
-            result = json.loads(response)
-        except Exception:
-            logger.warning(f"Failed to parse response from LLM to {self._PROMPTS['link_entities']}: {response}")
-            return {}
-        return result
+        return response
 
     def _create_variant(self, variant_str: str, gene_symbol: str) -> HGVSVariant | None:
         """Create an HGVSVariant object from `variant_str` and `gene_symbol`."""

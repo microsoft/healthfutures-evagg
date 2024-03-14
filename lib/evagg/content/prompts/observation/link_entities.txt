@@ -8,7 +8,7 @@ Individual patients may possess more than one genetic variant, and individual va
 patient. If a patient appears to possess none of the variants listed, or a variant appears to be possessed by zero of
 the patients, I would like you to tell me this as well.
 
-You should output your response as a valid json dict, with all of the patient identifiers as keys, and a list of 
+You should output your response as a valid json object, with all of the patient identifiers as keys, and a list of 
 variant identifiers as the associated object. You may include an additional key of "unmatched_variants" for any variants
 for which you found no associated patient.
 
@@ -28,7 +28,7 @@ Here is an example of what your output should look like:
         ]
 }
 
-Do not provide any additional text in your response other than the json-formatted object.
+Do not provide any additional text in your response other than the json object.
 
 --
 
