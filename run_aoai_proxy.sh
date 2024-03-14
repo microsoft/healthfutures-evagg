@@ -12,6 +12,7 @@
 
 # Prerequisites:
 # - [download] Logged in to GitHub CLI with a Microsoft EMU identity that has been added to the health-futures group.
+# - [running] .env file is configured correctly with AZURE_OPENAI_ENDPOINT set to "http://localhost:2624".
 # - [running] Running as an Azure user that has AAD access to the HF keyvaults.
 
 # Update this to new releases as they come out at
@@ -25,6 +26,15 @@ if [ ! -d "$DIR" ]; then
 fi
 
 FILE_PATH="$DIR/aoaiproxy"
+
+# Source the environment variables from .env to check if AZURE_OPENAI_ENDPOINT is set correctly.
+if [ -f ".env" ]; then
+  source .env
+fi
+if [ "$AZURE_OPENAI_ENDPOINT" != "http://localhost:2624" ]; then
+  echo "Warning: AZURE_OPENAI_ENDPOINT is not set to http://localhost:2624."
+  echo "It is $AZURE_OPENAI_ENDPOINT. This may cause issues with the AOAI proxy."
+fi
 
 # Check if the file exists; if not, download it.
 if [ ! -f "$FILE_PATH" ]; then
