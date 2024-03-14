@@ -3,7 +3,6 @@ from typing import Any
 
 
 # TODO dataclass?
-# TODO should be immutable after load.
 class Paper:
     def __init__(self, **kwargs: Any) -> None:
         self.id = kwargs["id"]  # id is required, DOI

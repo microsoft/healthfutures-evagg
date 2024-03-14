@@ -181,8 +181,9 @@ uninterrupted sequences of whitespace characters.
         values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
         """
         # Obtain the full-text of the paper.
-        full_text = self._paper_lookup_client.full_text(paper)
-        if full_text is None:
+        full_text = "\n".join(paper.props.get("full_text_sections", []))
+
+        if not full_text:
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
             return {}
 
