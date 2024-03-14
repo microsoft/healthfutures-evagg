@@ -22,13 +22,17 @@ described.
 
 If no specific genetic variants are described, or you are uncertain, simply provide "unknown" as your response.
 
-Provide your response as a json-compatible list, in the following format:
-["c.1234A>T", "NM_000123.1:c.2345del", "NP_000123.1:p.K34T"]
+Provide your response as a json object in the following format:
+{
+    "variants": ["c.1234A>T", "NM_000123.1:c.2345del", "NP_000123.1:p.K34T"]
+}
 
 or alternatively:
-["unknown"]
+{
+    "variants": ["unknown"]
+}
 
-Do not provide any additional text in your response other than the json-formatted list.
+Do not provide any additional text in your response other than the json object.
 
 Remember, you're searching only for variants associated with the gene {{$gene_symbol}}, other genes in the same pathway 
 may be named very similarly, please be careful.
