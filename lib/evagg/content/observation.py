@@ -41,6 +41,7 @@ class ObservationFinder:
     _PROMPTS = {
         "find_patients": os.path.dirname(__file__) + "/prompts/observation/find_patients.txt",
         "find_variants": os.path.dirname(__file__) + "/prompts/observation/find_variants.txt",
+        "split_variants": os.path.dirname(__file__) + "/prompts/observation/split_variants.txt",
         "link_entities": os.path.dirname(__file__) + "/prompts/observation/link_entities.txt",
     }
     _SYSTEM_PROMPT = """
@@ -65,7 +66,7 @@ subjects/patients.
             user_prompt_file=prompt_filepath,
             system_prompt=self._SYSTEM_PROMPT,
             params=params,
-            prompt_settings={"prompt_tag": prompt_tag},
+            prompt_settings={"prompt_tag": prompt_tag, "temperature": 0.7, "top_p": 0.95},
         )
 
         try:
@@ -77,22 +78,54 @@ subjects/patients.
 
     def _find_patients(self, full_text: str) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
-        return self._call_to_json_list(
+        patient_candidates = self._call_to_json_list(
             prompt_filepath=self._PROMPTS["find_patients"],
             params={"text": full_text},
             prompt_tag="observation__find_patients",
         )
+        # TODO, deduplicate.
 
-    def _find_variants(self, full_text: str, query: str) -> Sequence[str]:
+        # TODO Sometimes subjects are reported with parentheticals, simplify
+
+        return patient_candidates
+
+    def _find_variant_descriptions(self, full_text: str, query: str) -> Sequence[str]:
         """Identify the genetic variants relevant to the query described in the full text of the paper.
 
         `query` should be a gene symbol.
         """
-        return self._call_to_json_list(
+        variant_candidates = self._call_to_json_list(
             prompt_filepath=self._PROMPTS["find_variants"],
             params={"text": full_text, "gene_symbol": query},
             prompt_tag="observation__find_variants",
         )
+
+        # Often, the gene-symbol is provided as a prefix to the variant, remove it.
+        # TODO, consider hunting through the text for plausible transcripts.
+        def _strip_query(x: str) -> str:
+            # If x starts with query, remove that and any subsequent colon.
+            if x.startswith(query):
+                return x[len(query) :].lstrip(":")
+            return x
+
+        variant_candidates = [_strip_query(x) for x in variant_candidates]
+
+        # Often, the variant is reported with both coding and protein-level descriptions, separate these out to
+        # two distinct candidates.
+        expanded_candidates: List[str] = []
+
+        for candidate in variant_candidates:
+            if candidate.find("p.") >= 0 and candidate.find("c.") >= 0:
+                split_candidates = self._call_to_json_list(
+                    prompt_filepath=self._PROMPTS["split_variants"],
+                    params={"variant_list": f'"{candidate}"'},  # Encase in double-quotes in prep for bulk calling.
+                    prompt_tag="observation__split_variants",
+                )
+                expanded_candidates.extend(split_candidates)
+            else:
+                expanded_candidates.append(candidate)
+
+        return expanded_candidates
 
     def _link_entities(
         self, full_text: str, patients: Sequence[str], variants: Sequence[str], query: str
@@ -129,8 +162,8 @@ subjects/patients.
 
         try:
             return self._variant_factory.parse(text_desc, gene_symbol, refseq)
-        except ValueError:
-            logger.warning(f"Failed to create variant from {variant_str} and {gene_symbol}")
+        except Exception as e:
+            logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
     def find_observations(self, query: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
@@ -150,7 +183,6 @@ subjects/patients.
             return {}
 
         # Determine all of the patients specifically referred to in the paper, if any.
-        # TODO: handle deduping patients
         patients = self._find_patients(full_text)
         logger.debug(f"Found the following patients in {paper}: {patients}")
         if patients == ["unknown"]:
@@ -158,7 +190,7 @@ subjects/patients.
 
         # Determine all of the genetic variants matching `query`
         # TODO: handle deduping variants
-        variants = self._find_variants(full_text, query)
+        variants = self._find_variant_descriptions(full_text, query)
         logger.debug(f"Found the following variants for {query} in {paper}: {variants}")
         if variants == ["unknown"]:
             variants = []
@@ -166,6 +198,7 @@ subjects/patients.
         # Obtain a mapping of valid variant strings to the corresponding variant object.
         variant_objects = {v: self._create_variant(v, query) for v in variants}
         variant_objects = {k: v for k, v in variant_objects.items() if v is not None and v.valid}
+        # TODO: de-duplicate.
         validated_variants = list(variant_objects.keys())
 
         # If there are both variants and patients, build a mapping between the two,
@@ -178,7 +211,7 @@ subjects/patients.
         else:
             observations = {}
 
-        # TODO: don't just use the full text of the paper here.
+        # TODO: don't just use the full text of the paper here as the list of sections to be returned.
         result = {}
         for individual, variant_strs in observations.items():
             for variant_str in variant_strs:
