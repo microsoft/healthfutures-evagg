@@ -1,7 +1,18 @@
 #!/bin/bash
 
-# set -e
-# set -o pipefail
+# This script downloads and runs the Health Futures aoaiproxy client. The client is a Health
+# Futures-internal Go application that runs a local AOAI API proxy server, listens for AOAI
+# requests and load-balances them across a pool of HF-owned AOAI endpoints for improved throughout
+# and token count management. See https://github.com/health-futures/aoaiproxy for more information.
+
+# The script will check in the .bin/aoaiproxy directory for the aoaiproxy binary. If it doesn't exist,
+# it will download the binary from the Health Futures aoaiproxy GitHub releases page. The script will
+# then run the binary with the default HF pool configuration. To make use of the proxy in evagg experiments,
+# set the AZURE_OPENAI_ENDPOINT environment variable in your .env to "http://localhost:2624".
+
+# Prerequisites:
+# - [download] Logged in to GitHub CLI with a Microsoft EMU identity that has been added to the health-futures group.
+# - [running] Running as an Azure user that has AAD access to the HF keyvaults.
 
 # Update this to new releases as they come out at
 # https://github.com/health-futures/aoaiproxy/releases
