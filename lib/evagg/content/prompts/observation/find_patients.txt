@@ -11,13 +11,17 @@ your response.
 
 If no specific human patients are identified, or you are uncertain, simply provide "unknown" as your response.
 
-Provide your response as a json-formatted list, in the following format:
-["patient I.4", "patient II.1"]
+Provide your response as a json object, in the following format:
+{
+    "patients": ["patient I.4", "patient II.1"]
+}
 
 or alternatively:
-["unknown"]
+{
+    "patients": ["unknown"]
+}
 
-Do not provide any additional text in your response other than the json-formatted list.
+Do not provide any additional text in your response other than the json object.
 
 --
 

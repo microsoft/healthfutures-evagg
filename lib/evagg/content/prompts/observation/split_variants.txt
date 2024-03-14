@@ -11,13 +11,13 @@ reference with the p. description.
 
 I will provide examples below.
 
-Provide your response as a json-compatible list, in the following format:
-["NM_000123.1:c.2345C>G", "NP_000123.1:p.K34T"]
+Provide your response as a json object, in the following format:
+{"variants": ["NM_000123.1:c.2345C>G", "NP_000123.1:p.K34T"]}
 
 or alternatively just an empty list if you don't see any valid variants in the input:
-[]
+{"variants": []}
 
-Do not provide any additional text in your response other than the json-formatted list.
+Do not provide any additional text in your response other than the json obkect.
 
 Here are some examples:
 
@@ -27,7 +27,7 @@ Input:
 
 Output:
 
-["NM_000123.1:c.2345C>G", "NM_000123.1:p.T782G"]
+{"variants": ["NM_000123.1:c.2345C>G", "NM_000123.1:p.T782G"]}
 
 Input:
 
@@ -35,7 +35,7 @@ Input:
 
 Output:
 
-["p.V123D"]
+{"variants": ["p.V123D"]}
 
 Input:
 
@@ -43,9 +43,13 @@ Input:
 
 Output:
 
-["c.444delA", "NP_000123.1:c.135C>G", "NP_000456.1:p.A44*"]
+{"variants": ["c.444delA", "NP_000123.1:c.135C>G", "NP_000456.1:p.A44*"]}
 
 --
 
+Input:
+
 {{$variant_list}}
+
+Output:
 
