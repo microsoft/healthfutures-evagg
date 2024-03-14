@@ -14,7 +14,7 @@ The intended model for interacting with this environment is using VSCode. Many o
 
 Local Machine
 
-- [Visual studio code](https://code.visualstudio.com/download)
+- [Visual Studio Code](https://code.visualstudio.com/download)
 - The Remote Development Extension Pack for VSCode.
 
 Ubuntu 20.04/22.04 VM/WSL
@@ -25,7 +25,7 @@ Ubuntu 20.04/22.04 VM/WSL
 - git (install script)
 - make (install script)
 - docker (install script, only necessary if you're going to develop with devcontainers/codespaces)
-- Miniconda
+- miniconda
 
     ```bash
     curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
