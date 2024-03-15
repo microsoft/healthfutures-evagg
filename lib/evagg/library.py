@@ -204,7 +204,6 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Get gene term
         term = query["gene_symbol"]
-        print("\nGENE: ", term)  # better to use term, s.t. term = query["gene_symbol"]?
 
         # Find paper IDs
         paper_ids = self._paper_client.search(
@@ -744,18 +743,16 @@ class RareDiseaseFileLibrary(IGetPapers):
             # Exclude papers that only describe animal models and do not have human data
             # TODO: Implement this
 
-        print("Rare Disease Papers: ", len(rare_disease_papers))
-        print("Non-Rare Disease Papers: ", len(non_rare_disease_papers))
-        print("Other Papers: ", len(other_papers))
+        logger.info("Rare Disease Papers: ", len(rare_disease_papers))
+        logger.info("Non-Rare Disease Papers: ", len(non_rare_disease_papers))
+        logger.info("Other Papers: ", len(other_papers))
 
         # Check if rare_disease_papers is empty or if non_rare_disease_papers is empty
         cnt_r_d_p = 1
         if len(rare_disease_papers) == 0:
-            # print("No rare disease papers found.")
             cnt_r_d_p = 0
             rare_disease_papers = Set[Paper]
         if len(non_rare_disease_papers) == 0:
-            # print("No non-rare disease papers found.")
             non_rare_disease_papers = Set[Paper]
 
         return rare_disease_papers, cnt_r_d_p, non_rare_disease_papers, other_papers
