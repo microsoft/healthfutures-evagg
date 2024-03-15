@@ -103,10 +103,10 @@ The library code consists of a variety of independent components for querying, f
 variant publication evidence. These components are designed to be assembled in various ways into an experiment "app"
 that can be run via the `run_query_sync` entrypoint to perform some sort of concrete analysis.
 
-### App specs
+### Defining experiment apps
 
 An "app" is any Python class that implements the `lib.evagg.IEvAggApp` protocol (essentially just an `execute` method).
-An app specification is defined in a yaml file as an ordered dictionary of key/value pairs describing the full
+An app is defined in a yaml specification file as an ordered dictionary of key/value pairs describing the full
 class/parameter hierarchy to be instantiated before `execute` is called. The abstract format of a yaml spec
 is as follows:
 
@@ -134,9 +134,10 @@ hierarchies of this sort may be arbitrarily deep.
 
 A library of existing app specs for defining various experiments can be found in `lib/config/`.
 
-### `run_query_sync` script
+### Executing experiment apps
 
-The script `run_query_sync` has one required argument - a pointer to a yaml app spec - and is invoked as follows:
+The script `run_query_sync` is used to execute an experiment app. It has one required argument - a pointer to a yaml
+app spec - and is invoked as follows:
 
 ```bash
 run_query_sync <path_to_yaml_app_spec_file>
@@ -151,7 +152,7 @@ object that implements `IEvAggApp`.
 As a simple test of script execution, run the following specific commands from the repo root:
 
 ```bash
-python sandbox/miah/make_local_library.py
+python test/make_local_library.py
 run_query_sync lib/config/simple_config.yaml
 ```
 
