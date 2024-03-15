@@ -60,7 +60,7 @@ def fetch_paper_bioc(pmid: str) -> dict:
         f"https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_json/{pmid}/ascii", timeout=10
     )
     r.raise_for_status()
-    d = r.json()["documents"][0]
+    d = r.json()[0]["documents"][0]
     return {
         "id": _get_doi(d),
         "abstract": _get_abstract(d),
