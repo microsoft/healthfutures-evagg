@@ -213,6 +213,25 @@ def parse_benchmarking_results(file_path):
                     elif lines[i].startswith("Pubmed # Irrelevant Papers:"):
                         pubmed_irrelevant_papers = int(lines[i].split(":")[1].strip())
                     i += 1
+                if "rare_disease_papers" not in locals():
+                    rare_disease_papers = 0
+                if "non_rare_disease_papers" not in locals():
+                    non_rare_disease_papers = 0
+                if "other_papers" not in locals():
+                    other_papers = 0
+                if "tool_correct_papers" not in locals():
+                    tool_correct_papers = 0
+                if "tool_missed_papers" not in locals():
+                    tool_missed_papers = 0
+                if "tool_irrelevant_papers" not in locals():
+                    tool_irrelevant_papers = 0
+                if "pubmed_correct_papers" not in locals():
+                    pubmed_correct_papers = 0
+                if "pubmed_missed_papers" not in locals():
+                    pubmed_missed_papers = 0
+                if "pubmed_irrelevant_papers" not in locals():
+                    pubmed_irrelevant_papers = 0
+
                 benchmarking_train_results[gene] = [
                     rare_disease_papers,
                     non_rare_disease_papers,
@@ -226,7 +245,7 @@ def parse_benchmarking_results(file_path):
                 ]
             else:
                 i += 1  # Go to the next line
-        print("bench", benchmarking_train_results)
+
     return benchmarking_train_results
 
 
@@ -325,7 +344,6 @@ def plot_benchmarking_results(benchmarking_train_results):
     def add_labels(bars):
         for bar in bars:
             height = bar.get_height()
-            print(height)
             ax.text(
                 bar.get_x() + bar.get_width() / 2, bar.get_y() + height + 0.9, "%.2f" % height, ha="left", va="bottom"
             )
@@ -339,118 +357,179 @@ def plot_benchmarking_results(benchmarking_train_results):
     plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train.png")
 
 
+# Plot the filtereds into paper 3 categories (rare disease, non-rare disease, other)
+def plot_paper_categories(rare_disease_papers, non_rare_disease_papers, other_papers, gene):
+
+    # Calculate averages
+    rare_disease_avg = results_to_plot["Rare Disease Papers"].mean()
+    non_rare_disease_avg = results_to_plot["Non-Rare Disease Papers"].mean()
+    other_papers_avg = results_to_plot["Other Papers"].mean()
+
+    # Create a figure and a set of subplots
+    fig, ax = plt.subplots()
+
+    # Define bar width
+    bar_width = 0.35
+
+    # Positions of the left bar boundaries
+    bar_l = np.arange(3)
+
+    # Positions of the x-axis ticks (center of the bars as bar labels)
+    tick_pos = [i + (bar_width / 2) for i in bar_l]
+
+    # Create a bar plot
+    bars = ax.bar(
+        bar_l,
+        # using the data
+        [rare_disease_avg, non_rare_disease_avg, other_papers_avg],
+        # set the width
+        width=bar_width,
+        # with alpha 0.5
+        alpha=0.5,
+        # with color
+        color="b",
+    )
+
+    # Set the ticks to be first names
+    plt.xticks(tick_pos, ["Rare Disease Papers", "Non-Rare Disease Papers", "Other Papers"])
+    ax.set_ylabel("Average")
+    ax.set_xlabel("Categories")
+    plt.title("Average # PubMed papers filtered into rare, non-rare, and other categories")
+
+    # Function to add labels
+    def add_labels(bars):
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_y() + height + 0.5,
+                "%.2f" % float(height),
+                ha="center",
+                va="bottom",
+            )
+
+    # Call the function for each barplot
+    add_labels(bars)
+
+    # Let's display the plot
+    plt.show()
+
+
 def main(args):
 
     # Set the logging level
-    # log_level_str = args.log_level
+    set_log_level()  # TODO: set_log_level() to something that can be configured from CRITICAL
 
-    # set_log_level()  # TODO: set_log_level() to something that can be configured from CRITICAL
+    # Open and load the .yaml file
+    with open(args.library_config, "r") as file:
+        yaml_data = yaml.safe_load(file)
 
-    # # Open and load the .yaml file
-    # with open(args.library_config, "r") as file:
-    #     yaml_data = yaml.safe_load(file)
+    # Get max_papers parameter
+    max_papers = yaml_data["library"]["max_papers"]  # TODO: use this parameter to limit the number of papers to fetch
 
-    # # Get max_papers parameter
-    # max_papers = yaml_data["library"]["max_papers"]  # TODO: use this parameter to limit the number of papers to fetch
+    # Read the manual ground truth (MGT) data from the CSV file
+    mgt_gene_pmids_dict = read_mgt(args.mgt_path)
 
-    # # Read the manual ground truth (MGT) data from the CSV file
-    # mgt_gene_pmids_dict = read_mgt(args.mgt_path)
+    # Create train and test split from MGT data
+    train_mgt_paper_finding_dict, _ = create_train_test_split(
+        mgt_gene_pmids_dict
+    )  # TODO: fill in _ with test data benchmarking, or reconfigure to accept train or test data
 
-    # # Create train and test split from MGT data
-    # train_mgt_paper_finding_dict, _ = create_train_test_split(
-    #     mgt_gene_pmids_dict
-    # )  # TODO: fill in _ with test data benchmarking, or reconfigure to accept train or test data
+    # Get the query/ies from .yaml file
+    query_list_yaml = []
+    for query in yaml_data["queries"]:
+        # Extract the values, or use an empty string if they're missing
+        gene_symbol = query.get("gene_symbol", "")
+        min_date = query.get("min_date", "")
+        max_date = query.get("max_date", "")
+        date_type = query.get("date_type", "")
 
-    # # Get the query/ies from .yaml file
-    # query_list_yaml = []
-    # for query in yaml_data["queries"]:
-    #     # Extract the values, or use an empty string if they're missing
-    #     gene_symbol = query.get("gene_symbol", "")
-    #     min_date = query.get("min_date", "")
-    #     max_date = query.get("max_date", "")
-    #     date_type = query.get("date_type", "")
+        # Create a new dictionary with the gene_symbol and the values, '' in places where .yaml does not show a value
+        new_dict = {"gene_symbol": gene_symbol, "min_date": min_date, "max_date": max_date, "date_type": date_type}
 
-    #     # Create a new dictionary with the gene_symbol and the values, '' in places where .yaml does not show a value
-    #     new_dict = {"gene_symbol": gene_symbol, "min_date": min_date, "max_date": max_date, "date_type": date_type}
+        # Add the new dictionary to the list
+        query_list_yaml.append(new_dict)
 
-    #     # Add the new dictionary to the list
-    #     query_list_yaml.append(new_dict)
+    # Create the library and the PubMed lookup clients
+    library: RareDiseaseFileLibrary = DiContainer().create_instance({"di_factory": "lib/config/library.yaml"}, {})
+    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
 
-    # # Create the library and the PubMed lookup clients
-    # library: RareDiseaseFileLibrary = DiContainer().create_instance({"di_factory": "lib/config/library.yaml"}, {})
-    # ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
+    # For each query, get papers, compare ev. agg. papers to MGT training data papers,
+    # compare PubMed papers to MGT training data papers. Write results to benchmarking against training set file.
+    os.makedirs(args.outdir, exist_ok=True)
+    with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
+        for query in query_list_yaml:
 
-    # # For each query, get papers, compare ev. agg. papers to MGT training data papers,
-    # # compare PubMed papers to MGT training data papers. Write results to benchmarking against training set file.
-    # os.makedirs(args.outdir, exist_ok=True)
-    # with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
-    #     for query in query_list_yaml:
+            # Get the gene name from the query
+            term = query["gene_symbol"]
+            f.write("\nGENE: %s\n" % term)
 
-    #         # Get the gene name from the query
-    #         term = query["gene_symbol"]
-    #         f.write("\nGENE: %s\n" % term)
+            # Get the papers from the library for the query (i.e. gene/term)
+            rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers, papers = library.get_papers(
+                query
+            )  # TODO: remove count_r_d_papers, better to union 3 sets or keep papers?
 
-    #         # Get the papers from the library for the query (i.e. gene/term)
-    #         rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers, papers = library.get_papers(
-    #             query
-    #         )  # TODO: remove count_r_d_papers, better to union 3 sets or keep papers?
+            # Check if =<3 papers categories are empty, and report the number of papers in each category
+            if rare_disease_papers == Set[Paper]:
+                f.write("Rare Disease Papers: 0\n")
+            else:
+                f.write("Rare Disease Papers: %s\n" % len(rare_disease_papers))  # type: ignore
+            if non_rare_disease_papers == Set[Paper]:
+                f.write("Non-Rare Disease Papers: 0\n")
+            else:
+                f.write("Non-Rare Disease Papers: %s\n" % len(non_rare_disease_papers))  # type: ignore
+            if other_papers == Set[Paper]:
+                f.write("Other Papers: 0\n")
+            else:
+                f.write("Other Papers: %s\n" % len(other_papers))
 
-    #         # Check if =<3 papers categories are empty, and report the number of papers in each category
-    #         if rare_disease_papers == Set[Paper]:
-    #             f.write("Rare Disease Papers: 0\n")
-    #         else:
-    #             f.write("Rare Disease Papers: %s\n" % len(rare_disease_papers))  # type: ignore
-    #         if non_rare_disease_papers == Set[Paper]:
-    #             f.write("Non-Rare Disease Papers: 0\n")
-    #         else:
-    #             f.write("Non-Rare Disease Papers: %s\n" % len(non_rare_disease_papers))  # type: ignore
-    #         if other_papers == Set[Paper]:
-    #             f.write("Other Papers: 0\n")
-    #         else:
-    #             f.write("Other Papers: %s\n" % len(other_papers))
+            # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to the MGT training data papers (PMIDs)
+            if count_r_d_papers != 0:
+                correct_pmids, missed_pmids, irrelevant_pmids = compare_to_truth_or_tool(
+                    term, rare_disease_papers, 0, ncbi_lookup, train_mgt_paper_finding_dict
+                )
 
-    #         # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to the MGT training data papers (PMIDs)
-    #         if count_r_d_papers != 0:
-    #             correct_pmids, missed_pmids, irrelevant_pmids = compare_to_truth_or_tool(
-    #                 term, rare_disease_papers, 0, ncbi_lookup, train_mgt_paper_finding_dict
-    #             )
+                # Report comparison between ev.agg. and MGT training data
+                f.write("\nOf Ev. Agg.'s rare disease papers...\n")
+                f.write(f"E.A. # Correct Papers: {len(correct_pmids)}\n")
+                f.write(f"E.A. # Missed Papers: {len(missed_pmids)}\n")
+                f.write(f"E.A. # Irrelevant Papers: {len(irrelevant_pmids)}\n")
 
-    #             # Report comparison between ev.agg. and MGT training data
-    #             f.write("\nOf Ev. Agg.'s rare disease papers...\n")
-    #             f.write(f"E.A. # Correct Papers: {len(correct_pmids)}\n")
-    #             f.write(f"E.A. # Missed Papers: {len(missed_pmids)}\n")
-    #             f.write(f"E.A. # Irrelevant Papers: {len(irrelevant_pmids)}\n")
+                f.write(f"\nFound E.A. {len(correct_pmids)} correct.\n")
+                for i, p in enumerate(correct_pmids):
+                    f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
 
-    #             f.write(f"\nFound E.A. {len(correct_pmids)} correct.\n")
-    #             for i, p in enumerate(correct_pmids):
-    #                 f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
+                f.write(f"\nFound E.A. {len(missed_pmids)} missed.\n")
+                for i, p in enumerate(missed_pmids):
+                    f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
 
-    #             f.write(f"\nFound E.A. {len(missed_pmids)} missed.\n")
-    #             for i, p in enumerate(missed_pmids):
-    #                 f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
+                f.write(f"\nFound E.A. {len(irrelevant_pmids)} irrelevant.\n")
+                for i, p in enumerate(irrelevant_pmids):
+                    f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
+            else:
+                f.write("\nOf Ev. Agg.'s rare disease papers...\n")
+                f.write(f"E.A. # Correct Papers: 0\n")
+                f.write(f"E.A. # Missed Papers: 0\n")
+                f.write(f"E.A. # Irrelevant Papers: 0\n")
 
-    #             f.write(f"\nFound E.A. {len(irrelevant_pmids)} irrelevant.\n")
-    #             for i, p in enumerate(irrelevant_pmids):
-    #                 f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
+            # Compare PubMed papers to  MGT training data papers
+            p_corr, p_miss, p_irr = compare_to_truth_or_tool(term, papers, 1, ncbi_lookup, train_mgt_paper_finding_dict)
+            f.write("\nOf PubMed papers...\n")
+            f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
+            f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
+            f.write(f"Pubmed # Irrelevant Papers: {len(p_irr)}\n")
 
-    #         # Compare PubMed papers to  MGT training data papers
-    #         p_corr, p_miss, p_irr = compare_to_truth_or_tool(term, papers, 1, ncbi_lookup, train_mgt_paper_finding_dict)
-    #         f.write("\nOf PubMed papers...\n")
-    #         f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
-    #         f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
-    #         f.write(f"Pubmed # Irrelevant Papers: {len(p_irr)}\n")
+            f.write(f"\nFound Pubmed {len(p_corr)} correct.\n")
+            for i, p in enumerate(p_corr):
+                f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # TODO: update with f string # PMID and title output
 
-    #         f.write(f"\nFound Pubmed {len(p_corr)} correct.\n")
-    #         for i, p in enumerate(p_corr):
-    #             f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
+            f.write(f"\nFound Pubmed {len(p_miss)} missed.\n")
+            for i, p in enumerate(p_miss):
+                f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
 
-    #         f.write(f"\nFound Pubmed {len(p_miss)} missed.\n")
-    #         for i, p in enumerate(p_miss):
-    #             f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
-
-    #         f.write(f"\nFound Pubmed {len(p_irr)} irrelevant.\n")
-    #         for i, p in enumerate(p_irr):
-    #             f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
+            f.write(f"\nFound Pubmed {len(p_irr)} irrelevant.\n")
+            for i, p in enumerate(p_irr):
+                f.write("* %s * %s * %s\n" % (i + 1, p[0], p[1]))  # PMID and title output
 
     # Parse benchmarking results from file (its analyst readable format) and plot them
     benchmark_file = os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt")
@@ -464,25 +543,25 @@ if __name__ == "__main__":
         "-l",
         "--library-config",
         nargs="?",
-        default="/home/azureuser/ev-agg-exp/lib/config/pubmed_library_config.yaml",
+        default="lib/config/pubmed_library_config.yaml",
         type=str,
-        help="Default is /ev-agg-exp/lib/config/pubmed_library_config.yaml",
+        help="Default is lib/config/pubmed_library_config.yaml",
     )
     parser.add_argument(
         "-m",
         "--mgt-path",
         nargs="?",
-        default="/home/azureuser/ev-agg-exp/data/Manual_Ground_Truth_find_right_papers.csv",
+        default="data/Manual_Ground_Truth_find_right_papers.csv",
         type=str,
-        help="Default is /ev-agg-exp/data/Manual_Ground_Truth_find_right_papers.csv",
+        help="Default is data/Manual_Ground_Truth_find_right_papers.csv",
     )
     parser.add_argument("--log_level", default="CRITICAL", type=str, help="Default is CRITICAL")
     parser.add_argument(
         "--outdir",
-        default="/home/azureuser/ev-agg-exp/.out/paper_finding_results_%s"
+        default=".out/paper_finding_results_%s"
         % (datetime.today().strftime("%Y-%m-%d")),  # TODO: consider more granular date format
         type=str,
-        help="Results output directory. Default is /ev-agg-exp/.out/paper_finding_results_%s/"
+        help="Results output directory. Default is .out/paper_finding_results_%s/"
         % (datetime.today().strftime("%Y-%m-%d")),
     )
     args = parser.parse_args()

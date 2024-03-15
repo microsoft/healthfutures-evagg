@@ -7,6 +7,7 @@ from datetime import datetime
 from functools import cache
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
+from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
@@ -178,6 +179,7 @@ class RareDiseaseFileLibrary(IGetPapers):
     def __init__(
         self,
         paper_client: IPaperLookupClient,
+        llm_client: IPromptClient,
         max_papers: int = 5,
     ) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
@@ -186,6 +188,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
         """
         self._paper_client = paper_client
+        self._llm_client = llm_client
         self._max_papers = max_papers
 
     def get_papers(self, query: Dict[str, Any]):
