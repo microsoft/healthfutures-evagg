@@ -179,7 +179,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         self,
         paper_client: IPaperLookupClient,
         max_papers: int = 5,
-        date_type: str = "pdat",
     ) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
         Args:
@@ -188,7 +187,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         """
         self._paper_client = paper_client
         self._max_papers = max_papers
-        self._date_type = date_type
 
     def get_papers(self, query: Dict[str, Any]):
         """Search for papers based on the given query.
@@ -222,11 +220,13 @@ class RareDiseaseFileLibrary(IGetPapers):
         # "_, _" are non_rare_disease_papers and other_papers, respectively
         rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(
             papers
-        )  # TODO: We only need count_r_d_papers, non_rare_disease_papers and other_papers for benchmarking, so is returning them the right way to handle this? Otherwise I can call the search() and  _filter_rare_disease_papers() directly.
+        )  # TODO: We only need count_r_d_papers, non_rare_disease_papers and other_papers for benchmarking, so is
+        # returning them the right way to handle this? Otherwise I can call the search() and
+        # _filter_rare_disease_papers() directly.
 
         if count_r_d_papers == 0:
             rare_disease_papers = set()
-        return rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers
+        return rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers, papers
 
     def _filter_rare_disease_papers(self, papers: Set[Paper]):
         """Filter papers to only include those that are related to rare diseases.
