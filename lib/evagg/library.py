@@ -204,7 +204,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Get gene term
         term = query["gene_symbol"]
-        print("\nGENE: ", term, query["min_date"])  # better to use term, s.t. term = query["gene_symbol"]?
+        print("\nGENE: ", term)  # better to use term, s.t. term = query["gene_symbol"]?
 
         # Find paper IDs
         paper_ids = self._paper_client.search(
@@ -222,20 +222,11 @@ class RareDiseaseFileLibrary(IGetPapers):
         # "_, _" are non_rare_disease_papers and other_papers, respectively
         rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(
             papers
-        )  # TODO: We only need non_rare_disease_papers and other_papers for benchmarking, so is returning them the right way to handle this? Otherwise I can call the search() and  _filter_rare_disease_papers() directly.
-
-        # TO REMOVE
-        # if count_r_d_papers != 0:
-        #     # Compare the ground truth papers PMIDs to the paper PMIDs that were found
-        #     # correct_pmids_papers, missed_pmids_papers, irrelevant_pmids_papers
-        #     _, _, _ = self._compare_to_truth_or_tool(term, rare_disease_papers, 0)
-
-        # # pn_corr, pn_miss, pn_extra
-        # _, _, _ = self._compare_to_truth_or_tool(term, papers, 1)
+        )  # TODO: We only need count_r_d_papers, non_rare_disease_papers and other_papers for benchmarking, so is returning them the right way to handle this? Otherwise I can call the search() and  _filter_rare_disease_papers() directly.
 
         if count_r_d_papers == 0:
             rare_disease_papers = set()
-        return rare_disease_papers, non_rare_disease_papers, other_papers
+        return rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers
 
     # def _get_ground_truth_gene(self, gene: str):
     #     # Ground truth papers
