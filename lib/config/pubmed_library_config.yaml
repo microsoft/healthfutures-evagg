@@ -38,135 +38,202 @@ queries:
     "min_date": "2014/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 89
+  
   - "gene_symbol": "RHOH"
     "min_date": "2012/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 80
+  
   - "gene_symbol": "FBN2"
     "min_date": "1998/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 303
+  
   - "gene_symbol": "ACAT2"
     "min_date": "2021/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 77
+  
   - "gene_symbol": "TAPBP"
     "min_date": "2002/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 55
+  
   - "gene_symbol": "LRRC10"
     "min_date": "2015/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 14
+  
   - "gene_symbol": "EXOC2"
     "min_date": "2020/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 12
+  
   - "gene_symbol": "CTF1"
     "min_date": "2000/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 105
+  
   - "gene_symbol": "TOPBP1"
     "min_date": "2014/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 250
+  
   - "gene_symbol": "TNNC2"
     "min_date": "2023/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 9
+  
   - "gene_symbol": "PEX11A"
     "min_date": "2020/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 8
+  
   - "gene_symbol": "KMO"
     "min_date": "2023/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 160
+  
   - "gene_symbol": "GRXCR2"
     "min_date": "2014/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 9
+  
   - "gene_symbol": "CPT1B"
     "min_date": "2021/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 142
+  
   - "gene_symbol": "COG4"
     "min_date": "2009/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 53
+  
   - "gene_symbol": "MLH3"
     "min_date": "2001/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 263
+  
   - "gene_symbol": "HYAL1"
     "min_date": "1999/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 306
+  
   - "gene_symbol": "EMC1"
     "min_date": "2016/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 27
+  
   - "gene_symbol": "TOP2B"
     "min_date": "2019/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 92
+  
   - "gene_symbol": "OTUD7A"
     "min_date": "2020/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 16
+  
   - "gene_symbol": "DNAJC7"
     "min_date": "2019/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 24
+  
   - "gene_symbol": "SARS1"
     "min_date": "2017/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 36
+  
   - "gene_symbol": "NPPA"
     "min_date": "2020/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 223
+  
   - "gene_symbol": "RNASEH1"
     "min_date": "2019/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 52
+  
   - "gene_symbol": "IGKC"
     "min_date": "1976/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 112
+  
   - "gene_symbol": "RGS9"
     "min_date": "2004/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 175
+  
   - "gene_symbol": "SLFN14"
     "min_date": "2015/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 18
+  
   - "gene_symbol": "SLC38A9"
     "min_date": "2022/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 19
+  
   - "gene_symbol": "B4GAT1"
     "min_date": "2013/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 19
+  
   - "gene_symbol": "ZNF423"
     "min_date": "2012/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 70
+  
   - "gene_symbol": "BAZ2B"
     "min_date": "2020/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 22
+  
   - "gene_symbol": "JPH2"
     "min_date": "2007/01/01"
     "max_date": "3000/01/01"
     "date_type": "pdat"
+    "max_papers": 107
+  
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
-  max_papers: 5 # min_date: # [2014, 2012, 1998, 2021, 2002, 2015, 2020, 2000, 2014, 2023, 2020, 2023, 2014, 2021, 2009, 2001, 1999, 2016, 2019, 2020, 2019, 2017, 2020, 2019, 1976, 2004, 2015, 2022, 2013, 2012, 2020, 2007]
-  # max_date: "2024/03/12"
+  llm_client:
+    di_factory: lib.evagg.llm.OpenAIClient
+    config:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "AZURE_OPENAI_"
   date_type: "pdat"
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
