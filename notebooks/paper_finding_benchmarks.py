@@ -255,7 +255,7 @@ def main(args):
 
         # Get the gene name from the query
         term = query["gene_symbol"]
-        print("\nGENE:", term)  # better to use term, s.t. term = query["gene_symbol"]?
+        print("\nGENE:", term)
 
         # Get the papers from the library for the query (i.e. gene/term)
         rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers = library.get_papers(query)
