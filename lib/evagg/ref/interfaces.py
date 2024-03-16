@@ -16,9 +16,7 @@ class IGeneLookupClient(Protocol):
 
 
 class IPaperLookupClient(Protocol):
-    def search(
-        self, query: Dict[str, Any], max_papers: Optional[int] = None, **extra_params: Optional[Dict[str, Any]]
-    ) -> Sequence[str]:
+    def search(self, query: Dict[str, Any], **extra_params: Optional[Dict[str, Any]]) -> Sequence[str]:
         """Search the paper database for the given query."""
         ...  # pragma: no cover
 

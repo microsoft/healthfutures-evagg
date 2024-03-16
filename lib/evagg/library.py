@@ -179,26 +179,23 @@ class RareDiseaseFileLibrary(IGetPapers):
     def __init__(
         self,
         paper_client: IPaperLookupClient,
-        llm_client: IPromptClient,
-        max_papers: int = 5,
+        # llm_client: IPromptClient,  # TODO: will add in this code for 3rd PR in this series
     ) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
         Args:
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
-            max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
+            llm_client (IPromptClient): A class to leveral LLMs to filter to the right papers.
         """
         self._paper_client = paper_client
-        self._llm_client = llm_client
-        self._max_papers = max_papers
+        # self._llm_client = llm_client  # TODO: will add in this code for 3rd PR in this series
 
     def get_papers(self, query: Dict[str, Any]):
         """Search for papers based on the given query.
-
         Args:
             query (str): The query to search for.
 
         Returns:
-            Set[Paper]: The set of papers that match the query.
+           Four Set[Paper]: The sets of papers that match the query, across categories.
         """
         if not query["gene_symbol"]:
             raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
@@ -210,10 +207,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Find paper IDs
         paper_ids = self._paper_client.search(
             query=term,
-            max_papers=self._max_papers,  # ,
-            min_date=query["min_date"],
-            max_date=query["max_date"],
-            date_type=query["date_type"],
+            min_date=query.get("min_date", None),
+            max_date=query.get("max_date", None),
+            date_type=query.get("date_type", None),
+            retmax=query.get("retmax", None),  # default retmax (i.e. max_papers) is 20
         )
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
