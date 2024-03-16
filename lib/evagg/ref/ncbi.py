@@ -48,19 +48,16 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
-    EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
+    EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&tool=biopython"
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
-        self._default_max_papers = 5  # TODO: make configurable?
         self._web_client = web_client
 
-    def _esearch(
-        self, db: str, term: str, sort: str, retmax: int, retmode: Optional[str], **extra_params: Optional[str]
-    ) -> Any:
+    def _esearch(self, db: str, term: str, sort: str, retmode: Optional[str], **extra_params: Optional[str]) -> Any:
         key_string = self._config.get_key_string()
-        url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
-        # If mindate, maxdate, and datetype, not none - add above to url
+        url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort)
+        # If mindate, maxdate, datetype, and max_papers/retmax not none - add above to url
         url += "&".join([f"{k}={v}" for k, v in extra_params.items()])
         return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
 
@@ -122,11 +119,9 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
     def search(
         self,
         query: str,
-        max_papers: Optional[int] = None,
         **extra_params: Optional[str],
     ) -> Sequence[str]:
-        retmax = max_papers or self._default_max_papers
-        root = self._esearch(db="pubmed", term=query, sort="relevance", retmax=retmax, retmode="xml", **extra_params)
+        root = self._esearch(db="pubmed", term=query, sort="relevance", retmode="xml", **extra_params)
         pmids = [id.text for id in root.findall("./IdList/Id") if id.text]
         return pmids
 

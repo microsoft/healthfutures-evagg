@@ -32,18 +32,6 @@ from lib.evagg.types import Paper
 logger = logging.getLogger(__name__)
 
 
-# Set the logging level to CRITICAL
-def set_log_level():
-    logging.getLogger().setLevel(logging.CRITICAL)
-
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-
-    for name, logger in logging.Logger.manager.loggerDict.items():
-        if isinstance(logger, logging.Logger):  # Just to be sure it is a Logger object
-            logger.setLevel(logging.CRITICAL)
-
-
 # Function to read the manual ground truth (MGT) data from the CSV file
 def read_mgt(mgt_paper_finding_path):
     """Read the manual ground truth (MGT) data from the CSV file.
@@ -417,15 +405,9 @@ def plot_paper_categories(rare_disease_papers, non_rare_disease_papers, other_pa
 
 def main(args):
 
-    # Set the logging level
-    set_log_level()  # TODO: set_log_level() to something that can be configured from CRITICAL
-
     # Open and load the .yaml file
     with open(args.library_config, "r") as file:
         yaml_data = yaml.safe_load(file)
-
-    # Get max_papers parameter
-    max_papers = yaml_data["library"]["max_papers"]  # TODO: use this parameter to limit the number of papers to fetch
 
     # Read the manual ground truth (MGT) data from the CSV file
     mgt_gene_pmids_dict = read_mgt(args.mgt_path)
@@ -439,13 +421,20 @@ def main(args):
     query_list_yaml = []
     for query in yaml_data["queries"]:
         # Extract the values, or use an empty string if they're missing
-        gene_symbol = query.get("gene_symbol", "")
+        gene_symbol = query.get("gene_symbol", None)
         min_date = query.get("min_date", "")
         max_date = query.get("max_date", "")
         date_type = query.get("date_type", "")
+        retmax = query.get("retmax", "")  # default retmax (i.e. max_papers) is 20
 
         # Create a new dictionary with the gene_symbol and the values, '' in places where .yaml does not show a value
-        new_dict = {"gene_symbol": gene_symbol, "min_date": min_date, "max_date": max_date, "date_type": date_type}
+        new_dict = {
+            "gene_symbol": gene_symbol,
+            "min_date": min_date,
+            "max_date": max_date,
+            "date_type": date_type,
+            "retmax": retmax,
+        }
 
         # Add the new dictionary to the list
         query_list_yaml.append(new_dict)
@@ -463,6 +452,7 @@ def main(args):
             # Get the gene name from the query
             term = query["gene_symbol"]
             f.write("\nGENE: %s\n" % term)
+            print("Finding papers for: ", query["gene_symbol"], "...")
 
             # Get the papers from the library for the query (i.e. gene/term)
             rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers, papers = library.get_papers(
@@ -484,6 +474,9 @@ def main(args):
                 f.write("Other Papers: %s\n" % len(other_papers))
 
             # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to the MGT training data papers (PMIDs)
+            print(
+                "Comparing Evidence Aggregator results to manual ground truth data for: ", query["gene_symbol"], "..."
+            )
             if count_r_d_papers != 0:
                 correct_pmids, missed_pmids, irrelevant_pmids = compare_to_truth_or_tool(
                     term, rare_disease_papers, 0, ncbi_lookup, train_mgt_paper_finding_dict
@@ -513,6 +506,7 @@ def main(args):
                 f.write(f"E.A. # Irrelevant Papers: 0\n")
 
             # Compare PubMed papers to  MGT training data papers
+            print("Comparing PubMed results to manual ground truth data for: ", query["gene_symbol"], "...")
             p_corr, p_miss, p_irr = compare_to_truth_or_tool(term, papers, 1, ncbi_lookup, train_mgt_paper_finding_dict)
             f.write("\nOf PubMed papers...\n")
             f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
@@ -555,7 +549,6 @@ if __name__ == "__main__":
         type=str,
         help="Default is data/Manual_Ground_Truth_find_right_papers.csv",
     )
-    parser.add_argument("--log_level", default="CRITICAL", type=str, help="Default is CRITICAL")
     parser.add_argument(
         "--outdir",
         default=".out/paper_finding_results_%s"
