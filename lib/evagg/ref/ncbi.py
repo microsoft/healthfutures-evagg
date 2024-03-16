@@ -1,6 +1,7 @@
 import logging
 import urllib.parse as urlparse
 from typing import Any, Dict, List, Optional, Sequence
+from xml.etree.ElementTree import ParseError
 
 from pydantic import Extra, root_validator
 
@@ -97,6 +98,11 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
     def _get_full_text_xml(self, pmcid: str | None, is_pmc_oa: bool, license: str) -> Optional[str]:
         """Get the full text of a paper from PMC."""
+        try:
+            response_root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
+        except ParseError:
+            print(f"Failed to parse XML for pmcid: {pmcid}")
+            response_root = None
         if not pmcid or not is_pmc_oa or license.find("nd") >= 0:
             logger.warning(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
             return None
