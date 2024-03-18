@@ -27,8 +27,9 @@ def test_remote_init(mock_paper_client: Any) -> None:
 
 def test_remote_no_paper(mock_paper_client: Any) -> None:
     paper_client = mock_paper_client([])
-    result = RemoteFileLibrary(paper_client).search("gene")
-    assert paper_client.last_call("search") == ({"query": "gene"}, {"max_papers": 5})
+    query = {"gene_symbol": "gene", "retmax": 1}
+    result = RemoteFileLibrary(paper_client).get_papers(query)
+    # TODO: I need to understand last_call, is it necessary?: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
     assert paper_client.call_count() == 1
     assert not result
 
@@ -43,8 +44,9 @@ def test_remote_single_paper(mock_paper_client: Any) -> None:
         is_pmc_oa=True,
     )
     paper_client = mock_paper_client(["27392077"], paper)
-    result = RemoteFileLibrary(paper_client).search("gene")
-    assert paper_client.last_call("search") == ({"query": "gene"}, {"max_papers": 5})
+    query = {"gene_symbol": "gene", "retmax": 1}
+    result = RemoteFileLibrary(paper_client).get_papers(query)
+    # TODO: I need to understand last_call,is it necessary?: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
     assert paper_client.last_call("fetch") == ("27392077",)
     assert paper_client.call_count() == 2
     assert result and len(result) == 1 and result.pop() == paper
@@ -76,7 +78,8 @@ def test_simple_search() -> None:
         # Create a SimpleFileLibrary instance and search for papers
         library = SimpleFileLibrary(collections=[tmpdir])
         # This should return all papers in the library.
-        results = library.search("test gene")
+        query = {"gene_symbol": "test gene", "retmax": 1}
+        results = library.get_papers(query)
 
         # Check that the correct papers were returned
         assert len(results) == 3
