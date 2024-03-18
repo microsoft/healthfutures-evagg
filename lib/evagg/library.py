@@ -199,7 +199,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         self._paper_client = paper_client
         # self._llm_client = llm_client  # TODO: will add in this code for 3rd PR in this series
 
-    def get_papers(self, query: Dict[str, Any]):
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         """Search for papers based on the given query.
 
         Args:
@@ -235,9 +235,9 @@ class RareDiseaseFileLibrary(IGetPapers):
         # returning them the right way to handle this? Otherwise I can call the search() and
         # _filter_rare_disease_papers() directly.
 
-        return rare_disease_papers, non_rare_disease_papers, other_papers, papers
+        return rare_disease_papers
 
-    def _filter_rare_disease_papers(self, papers: Set[Paper]):
+    def _filter_rare_disease_papers(self, papers: Set[Paper]) -> Tuple[Set[Paper], Set[Paper], Set[Paper]]:
         """Filter papers to only include those that are related to rare diseases.
 
         Args:
@@ -246,9 +246,9 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             Set[Paper]: The set of papers that are related to rare diseases.
         """
-        rare_disease_papers = set()
-        non_rare_disease_papers = set()
-        other_papers = set()
+        rare_disease_papers: Set[Paper] = set()
+        non_rare_disease_papers: Set[Paper] = set()
+        other_papers: Set[Paper] = set()
 
         # Iterate through each paper and filter into 1 of 3 categories based on title and abstract
         for paper in papers:
@@ -347,13 +347,5 @@ class RareDiseaseFileLibrary(IGetPapers):
         logger.info("Rare Disease Papers: ", len(rare_disease_papers))
         logger.info("Non-Rare Disease Papers: ", len(non_rare_disease_papers))
         logger.info("Other Papers: ", len(other_papers))
-
-        # Check if any papers in 3 categories is empty
-        if len(rare_disease_papers) == 0:
-            rare_disease_papers = Set[Paper]
-        if len(non_rare_disease_papers) == 0:
-            non_rare_disease_papers = Set[Paper]
-        if len(other_papers) == 0:
-            other_papers = Set[Paper]
 
         return rare_disease_papers, non_rare_disease_papers, other_papers

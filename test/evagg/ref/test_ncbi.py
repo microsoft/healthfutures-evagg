@@ -110,7 +110,7 @@ def test_pubmed_pmc_full_text(mock_web_client):
     web_client = mock_web_client(
         "efetch_pubmed_paper_33688625.xml", "ncbi_pmc_is_oa_PMC7933980.xml", "ncbi_bioc_full_text_PMC7933980.xml"
     )
-    result = NcbiLookupClient(web_client).fetch("33688625")
+    result = NcbiLookupClient(web_client).fetch("33688625", include_fulltext=True)
     assert result and result.props["is_pmc_oa"] is True
     assert len(result.props["full_text_xml"]) > 0
     assert len(result.props["full_text_sections"]) > 0
