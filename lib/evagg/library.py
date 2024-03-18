@@ -3,11 +3,9 @@ import json
 import logging
 import os
 from collections import defaultdict
-from datetime import datetime
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set, Tuple
+from typing import Any, Dict, Sequence, Set, Tuple
 
-from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
@@ -162,13 +160,24 @@ class RemoteFileLibrary(IGetPapers):
 
         Args:
             query (IPaperQuery): The query to search for.
+
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
-        if len(query) > 1:
-            raise NotImplementedError("Multiple term extraction not yet implemented.")
-        term = next(iter(query))
-        paper_ids = self._paper_client.search(query=term, max_papers=self._max_papers)
+        if not query["gene_symbol"]:
+            raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
+
+        # Get gene term
+        term = query["gene_symbol"]
+        logger.info("\nFinding papers for gene:", term, "...")
+
+        paper_ids = self._paper_client.search(
+            query=term,
+            min_date=query.get("min_date", None),
+            max_date=query.get("max_date", None),
+            date_type=query.get("date_type", None),
+            retmax=query.get("retmax", None),  # default retmax (i.e. max_papers) is 20
+        )
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
         return papers
 
@@ -182,6 +191,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # llm_client: IPromptClient,  # TODO: will add in this code for 3rd PR in this series
     ) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
+
         Args:
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
             llm_client (IPromptClient): A class to leveral LLMs to filter to the right papers.
@@ -191,11 +201,13 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     def get_papers(self, query: Dict[str, Any]):
         """Search for papers based on the given query.
+
         Args:
-            query (str): The query to search for.
+            query (Dict[str, Any]): The query to search for.
 
         Returns:
-           Four Set[Paper]: The sets of papers that match the query, across categories.
+           Four Set[Paper]s: The sets of papers that match the query, across categories and overall (rare disease,
+           non-rare disease, other, and the union).
         """
         if not query["gene_symbol"]:
             raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
@@ -217,29 +229,28 @@ class RareDiseaseFileLibrary(IGetPapers):
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
 
         # Call private function to filter for rare disease papers
-        # "_, _" are non_rare_disease_papers and other_papers, respectively
-        rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(
+        rare_disease_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(
             papers
-        )  # TODO: We only need count_r_d_papers, non_rare_disease_papers and other_papers for benchmarking, so is
+        )  # TODO: We only need non_rare_disease_papers and other_papers for benchmarking, so is
         # returning them the right way to handle this? Otherwise I can call the search() and
         # _filter_rare_disease_papers() directly.
 
-        if count_r_d_papers == 0:
-            rare_disease_papers = set()
-        return rare_disease_papers, count_r_d_papers, non_rare_disease_papers, other_papers, papers
+        return rare_disease_papers, non_rare_disease_papers, other_papers, papers
 
     def _filter_rare_disease_papers(self, papers: Set[Paper]):
         """Filter papers to only include those that are related to rare diseases.
+
         Args:
             papers (Set[Paper]): The set of papers to filter.
+
         Returns:
             Set[Paper]: The set of papers that are related to rare diseases.
         """
-
         rare_disease_papers = set()
         non_rare_disease_papers = set()
         other_papers = set()
 
+        # Iterate through each paper and filter into 1 of 3 categories based on title and abstract
         for paper in papers:
             paper_title = paper.props.get("title", "Unknown")
             paper_abstract = paper.props.get("abstract", "Unknown")
@@ -306,21 +317,21 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "copy number variants",
             ]
 
-            # include
+            # include in rare disease category
             if paper_title is not None and any(keyword in paper_title.lower() for keyword in inclusion_keywords):
                 rare_disease_papers.add(paper)
             elif paper_abstract is not None and any(
                 keyword in paper_abstract.lower() for keyword in inclusion_keywords
             ):
                 rare_disease_papers.add(paper)
-            # exclude
+            # exclude from rare disease category, include in non-rare disease category
             elif paper_title is not None and any(keyword in paper_title.lower() for keyword in exclusion_keywords):
                 non_rare_disease_papers.add(paper)
             elif paper_abstract is not None and any(
                 keyword in paper_abstract.lower() for keyword in exclusion_keywords
             ):
                 non_rare_disease_papers.add(paper)
-            # other
+            # exclude from rare disease category, exclude from non-rare disease category, include in other category
             else:
                 other_papers.add(paper)
 
@@ -330,16 +341,19 @@ class RareDiseaseFileLibrary(IGetPapers):
             # Exclude papers that only describe animal models and do not have human data
             # TODO: Implement this
 
+            # TODO: add in GPT-4 code
+
+        # Output the number of papers in each category
         logger.info("Rare Disease Papers: ", len(rare_disease_papers))
         logger.info("Non-Rare Disease Papers: ", len(non_rare_disease_papers))
         logger.info("Other Papers: ", len(other_papers))
 
-        # Check if rare_disease_papers is empty or if non_rare_disease_papers is empty
-        cnt_r_d_p = 1
+        # Check if any papers in 3 categories is empty
         if len(rare_disease_papers) == 0:
-            cnt_r_d_p = 0
             rare_disease_papers = Set[Paper]
         if len(non_rare_disease_papers) == 0:
             non_rare_disease_papers = Set[Paper]
+        if len(other_papers) == 0:
+            other_papers = Set[Paper]
 
-        return rare_disease_papers, cnt_r_d_p, non_rare_disease_papers, other_papers
+        return rare_disease_papers, non_rare_disease_papers, other_papers
