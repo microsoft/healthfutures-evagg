@@ -1,7 +1,6 @@
 import logging
 import urllib.parse as urlparse
 from typing import Any, Dict, List, Optional, Sequence
-from xml.etree.ElementTree import ParseError
 
 from pydantic import Extra, root_validator
 
@@ -55,12 +54,11 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
         self._web_client = web_client
 
-    def _esearch(self, db: str, term: str, sort: str, retmode: Optional[str], **extra_params: Optional[str]) -> Any:
+    def _esearch(self, db: str, term: str, sort: str, **extra_params: Dict[str, Any]) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort)
-        # If mindate, maxdate, datetype, and max_papers/retmax not none - add above to url
         url += "&".join([f"{k}={v}" for k, v in extra_params.items()])
-        return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
+        return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type="xml", url_extra=key_string)
 
     def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
         key_string = self._config.get_key_string()
@@ -98,11 +96,6 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
     def _get_full_text_xml(self, pmcid: str | None, is_pmc_oa: bool, license: str) -> Optional[str]:
         """Get the full text of a paper from PMC."""
-        try:
-            response_root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
-        except ParseError:
-            print(f"Failed to parse XML for pmcid: {pmcid}")
-            response_root = None
         if not pmcid or not is_pmc_oa or license.find("nd") >= 0:
             logger.warning(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
             return None
@@ -122,16 +115,12 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         return [p.text for p in root.findall("./passage/text")]
 
     # IPaperLookupClient
-    def search(
-        self,
-        query: str,
-        **extra_params: Optional[str],
-    ) -> Sequence[str]:
-        root = self._esearch(db="pubmed", term=query, sort="relevance", retmode="xml", **extra_params)
+    def search(self, query: str, **extra_params: Dict[str, Any]) -> Sequence[str]:
+        root = self._esearch(db="pubmed", term=query, sort="relevance", **extra_params)
         pmids = [id.text for id in root.findall("./IdList/Id") if id.text]
         return pmids
 
-    def fetch(self, paper_id: str) -> Optional[Paper]:
+    def fetch(self, paper_id: str, include_fulltext: bool = False) -> Optional[Paper]:
         if (root := self._efetch(db="pubmed", id=paper_id, retmode="xml", rettype="abstract")) is None:
             return None
 
@@ -142,12 +131,13 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         props.update(self._get_oa_props(props["pmcid"]))
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         props["pmid"] = paper_id
-        props["full_text_xml"] = self._get_full_text_xml(
-            pmcid=props["pmcid"], is_pmc_oa=props["is_pmc_oa"], license=props["license"]
-        )
-        props["full_text_sections"] = (
-            self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
-        )
+        if include_fulltext:
+            props["full_text_xml"] = self._get_full_text_xml(
+                pmcid=props["pmcid"], is_pmc_oa=props["is_pmc_oa"], license=props["license"]
+            )
+            props["full_text_sections"] = (
+                self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
+            )
 
         return Paper(id=props["doi"], **props)
 
