@@ -171,13 +171,7 @@ class RemoteFileLibrary(IGetPapers):
         term = query["gene_symbol"]
         logger.info("\nFinding papers for gene:", term, "...")
 
-        paper_ids = self._paper_client.search(
-            query=term,
-            min_date=query.get("min_date", None),
-            max_date=query.get("max_date", None),
-            date_type=query.get("date_type", None),
-            retmax=query.get("retmax", None),  # default retmax (i.e. max_papers) is 20
-        )
+        paper_ids = self._paper_client.search(query=term)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
         return papers
 
@@ -217,11 +211,14 @@ class RareDiseaseFileLibrary(IGetPapers):
         logger.info("\nFinding papers for gene:", term, "...")
 
         # Find paper IDs
+        # TODO: define logic here and its okay to invoke defaults (e.g. "pdat")
         paper_ids = self._paper_client.search(
             query=term,
             min_date=query.get("min_date", None),
             max_date=query.get("max_date", None),
-            date_type=query.get("date_type", None),
+            date_type=query.get(
+                "date_type", None
+            ),  # TODO: should depend on min_date and max_date, fill in depencencies
             retmax=query.get("retmax", None),  # default retmax (i.e. max_papers) is 20
         )
 
