@@ -16,11 +16,11 @@ class IGeneLookupClient(Protocol):
 
 
 class IPaperLookupClient(Protocol):
-    def search(self, query: Dict[str, Any], **extra_params: Optional[Dict[str, Any]]) -> Sequence[str]:
+    def search(self, query: str, **extra_params: Dict[str, Any]) -> Sequence[str]:
         """Search the paper database for the given query."""
         ...  # pragma: no cover
 
-    def fetch(self, paper_id: str) -> Optional[Paper]:
+    def fetch(self, paper_id: str, include_fulltext: bool = False) -> Optional[Paper]:
         """Fetch the paper with the given id."""
         ...  # pragma: no cover
 
