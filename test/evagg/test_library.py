@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import pytest
 
-from lib.evagg import RemoteFileLibrary, SimpleFileLibrary
+from lib.evagg import RareDiseaseFileLibrary, RemoteFileLibrary, SimpleFileLibrary
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
 
@@ -46,10 +46,52 @@ def test_remote_single_paper(mock_paper_client: Any) -> None:
     paper_client = mock_paper_client(["27392077"], paper)
     query = {"gene_symbol": "gene", "retmax": 1}
     result = RemoteFileLibrary(paper_client).get_papers(query)
-    # TODO: I need to understand last_call,is it necessary?: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
+    # TODO: go back once fetch is fixed:
+    assert paper_client.last_call("search") == ("gene", {"retmax": 1})
     assert paper_client.last_call("fetch") == ("27392077",)
     assert paper_client.call_count() == 2
     assert result and len(result) == 1 and result.pop() == paper
+
+
+def test_rare_disease_init(mock_paper_client: Any) -> None:
+    paper_client = mock_paper_client()
+    library = RareDiseaseFileLibrary(paper_client)
+    assert library._paper_client == paper_client
+
+
+def test_rare_disease_extra_params(mock_paper_client: Any) -> None:
+    paper_client = mock_paper_client([])
+    query = {"gene_symbol": "gene", "retmax": 1, "mindate": "2020-01-01", "maxdate": "2020-12-31"}
+    result = RareDiseaseFileLibrary(paper_client).get_papers(query)
+    # TODO: go back once fetch is fixed: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
+    assert paper_client.call_count() == 1
+    assert result[3] == set() and len(result) == 4
+
+
+def test_rare_disease_no_paper(mock_paper_client: Any) -> None:
+    paper_client = mock_paper_client([])
+    query = {"gene_symbol": "gene", "retmax": 1}
+    result = RareDiseaseFileLibrary(paper_client).get_papers(query)
+    # TODO: go back once fetch is fixed: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
+    assert paper_client.call_count() == 1
+    assert result[3] == set() and len(result) == 4
+
+
+def test_rare_disease_single_paper(mock_paper_client: Any) -> None:
+    paper = Paper(
+        id="10.1016/j.ajhg.2016.05.014",
+        citation="Makrythanasis et al. (2016) AJHG",
+        abstract="We report on five individuals who presented with intellectual disability and other...",
+        pmid="27392077",
+        pmcid="PMC5005447",
+        is_pmc_oa=True,
+    )
+    paper_client = mock_paper_client(["27392077"], paper)
+    query = {"gene_symbol": "gene", "retmax": 1}
+    result = RareDiseaseFileLibrary(paper_client).get_papers(query)
+    # TODO: go back once fetch is fixed: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
+    assert paper_client.last_call("fetch") == ("27392077",)
+    assert result and len(result) == 4  # and result.pop() == paper
 
 
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
