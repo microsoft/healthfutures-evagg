@@ -50,14 +50,6 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
             raise e
 
         if "errors" in response or ("custom" in response and "errors" in response["custom"]):
-            # # frame_shift variants are not supported by mutalyzer, so we're not going to try to normalize them, just
-            # # return the response and leave the responsibility of interpretation to the caller.
-            # if any(
-            #     err["code"] == "EVARIANTNOTSUPPORTED" and err["details"].find("frame_shift") >= 0
-            #     for err in response["custom"]["errors"]
-            # ):
-            #     return response
-
             logger.warning(f"Mutalyzer returned an unhandleable error for {hgvs}: {response['custom']['errors']}")
             return {}
         return response
