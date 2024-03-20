@@ -16,17 +16,13 @@ class IGeneLookupClient(Protocol):
 
 
 class IPaperLookupClient(Protocol):
-    def search(self, query: str, max_papers: Optional[int] = None) -> Sequence[str]:
+    def search(self, query: str, max_papers: int) -> Sequence[str]:
         """Search the paper database for the given query."""
         ...  # pragma: no cover
 
     def fetch(self, paper_id: str) -> Optional[Paper]:
         """Fetch the paper with the given id."""
         ...  # pragma: no cover
-
-    def full_text(self, paper: Paper, kept_section_types: Optional[Sequence[str]] = None) -> Optional[str]:
-        """Fetch the full text of the paper."""
-        ...
 
 
 class IAnnotateEntities(Protocol):
@@ -47,6 +43,10 @@ class IRefSeqLookupClient(Protocol):
     def genomic_accession_for_symbol(self, symbol: str) -> str | None:
         """Get 'Reference Standard' RefSeq genomic accession ID for the given gene symbol."""
         ...
+
+    def accession_autocomplete(self, accession: str) -> Optional[str]:
+        """Get the latest RefSeq version for a versionless accession."""
+        ...  # pragma: no cover
 
 
 class INormalizeVariants(Protocol):

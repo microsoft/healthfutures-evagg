@@ -33,6 +33,7 @@ refseq_client:
 variant_factory:
   di_factory: lib.evagg.content.HGVSVariantFactory
   validator: "{{mutalyzer_client}}"
+  normalizer: "{{mutalyzer_client}}"
   refseq_client: "{{refseq_client}}"
 
 llm_client:
@@ -81,6 +82,7 @@ extractor:
     llm_client: "{{llm_client}}"
     paper_lookup_client: "{{ncbi_client}}"
     variant_factory: "{{variant_factory}}"
+    normalizer: "{{mutalyzer_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
   output_path: .out/observation_benchmark.tsv

@@ -152,9 +152,6 @@ class TruthsetFileLibrary(IGetPapers):
                                     f"Paper field mismatch: {key}/{mapped_key} ({paper_data[key]} vs"
                                     f" {paper.props[mapped_key]})."
                                 )
-                                import pdb
-
-                                pdb.set_trace()
                         else:
                             logger.error(f"Adding {mapped_key}:{paper_data[key]} to paper props.")
                             paper.props[mapped_key] = paper_data[key]
