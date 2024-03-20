@@ -33,6 +33,7 @@ class HGVSVariant:
     refseq: str | None
     refseq_predicted: bool
     valid: bool
+    protein_consequence: "HGVSVariant | None"
 
     def __str__(self) -> str:
         """Obtain a string representation of the variant."""
@@ -47,12 +48,20 @@ class HGVSVariant:
         return (
             self.refseq == other.refseq
             and self.gene_symbol == other.gene_symbol
-            and self.desc_no_paren() == other.desc_no_paren()
+            and self._comparable() == other._comparable()
         )
 
-    def desc_no_paren(self) -> str:
-        """Return a string representation of the variant description without prediction parentheses.
+    def __hash__(self) -> int:
+        return hash((self.refseq, self.gene_symbol, self._comparable()))
 
-        For example: p.(Arg123Cys) -> p.Arg123Cys
+    def _comparable(self) -> str:
+        """Return a string representation of the variant description that is suitable for direct string comparison.
+
+        This includes
+          - dropping of prediction parentheses.
+          - substitution of * for Ter in the three letter amino acid representation.
+
+        For example: p.(Arg123Ter) -> p.Arg123*
         """
-        return self.hgvs_desc.replace("(", "").replace(")", "")
+        # TODO, consider normalization via mutalyzer
+        return self.hgvs_desc.replace("(", "").replace(")", "").replace("Ter", "*")
