@@ -57,7 +57,7 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
     def _esearch(self, db: str, term: str, sort: str, **extra_params: Dict[str, Any]) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort)
-        url += "&".join([f"{k}={v}" for k, v in extra_params.items()])
+        url += "".join([f"&{k}={v}" for k, v in extra_params.items()])
         return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type="xml", url_extra=key_string)
 
     def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
