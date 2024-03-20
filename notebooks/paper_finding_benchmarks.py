@@ -216,7 +216,6 @@ def plot_benchmarking_results(benchmarking_train_results):
 
     # Save barplot
     plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train.png")
-
     return results_to_plot
 
 

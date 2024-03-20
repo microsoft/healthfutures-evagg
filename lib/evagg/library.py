@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 from datetime import date
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set, Tuple
+from typing import Any, Dict, Sequence, Set, Tuple
 
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
@@ -212,7 +212,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         logger.info("\nFinding papers for gene:", term, "...")
 
         # Find paper IDs
-        paper_ids = self._paper_client.search(query=term)
+        paper_ids = self._partition_search_query(query)
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
@@ -235,7 +235,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         if not query["gene_symbol"]:
             raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
 
-        paper_ids = _create_query(query)
+        paper_ids = self._partition_search_query(query)
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
@@ -245,7 +245,8 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return rare_disease_papers, non_rare_disease_papers, other_papers, papers
 
-    def _create_query(self, query: Dict[str, Any]) -> Sequence[str]:
+    def _partition_search_query(self, query: Dict[str, Any]) -> Sequence[str]:
+        """Partition the query and run search to generate the paper IDs list for a given gene."""
         # Get gene term
         term = query["gene_symbol"]
         logger.info("\nFinding papers for gene:", term, "...")
@@ -256,24 +257,52 @@ class RareDiseaseFileLibrary(IGetPapers):
         date_type = query.get("date_type", None)
         retmax = query.get("retmax", None)
 
-        # If min_date is the only thing provided from this set of terms,
+        # If the most basic query is provided, search for papers with just the gene symbol
+        if term and not min_date and not max_date and not date_type and not retmax:
+            paper_ids = self._paper_client.search(query=term)
+        # If min_date is the only extra parameter provided from this query,
         # max_date should be today's date and date_type should be "pdat".
-        if min_date and not max_date and not date_type:
+        elif (
+            min_date and not max_date and not date_type
+        ):  # NLM requires min and max date: https://www.nlm.nih.gov/dataguide/eutilities/utilities.html
             max_date = date.today().strftime("%Y/%m/%d")
             date_type = "pdat"
+            paper_ids = self._paper_client.search(query=term, min_date=min_date, date_type=date_type)  # type: ignore
+        # If min_date and date_type are the only extra parameters provided from this query,
+        # max_date should be today's date.
+        elif min_date and date_type and not max_date:
+            max_date = date.today().strftime("%Y/%m/%d")
+            paper_ids = self._paper_client.search(
+                query=term, min_date=min_date, max_date=max_date, date_type=date_type  # type: ignore
+            )
+        # If date_type is the only parameter provided,
+        # we need to raise an error to say that a min_date and/or max_date should be provided.
+        elif date_type and not min_date and not max_date:
+            raise ValueError("A min_date and max_date should be provided when date_type is provided")
+        # If max_date is provided but min_date and date_type are not provided,
+        # throw an error to say that min_date and date_type should be provided.
+        elif max_date and not min_date and not date_type:
+            raise ValueError("A min_date (and optionally date_type) should be provided when max_date is provided")
+        elif max_date and date_type and not min_date:
+            raise ValueError("A min_date should be provided when max_date and date_type are provided")
+        # If min and max dates are provided but not date_type, set to default: publication date.
+        elif min_date and max_date and not date_type:
+            date_type = "pdat"
+            paper_ids = self._paper_client.search(
+                query=term,
+                min_date=min_date,
+                max_date=max_date,
+                date_type=date_type,  # type: ignore
+            )
+        else:
+            paper_ids = self._paper_client.search(
+                query=term,
+                min_date=min_date,
+                max_date=max_date,  # type: ignore
+                date_type=date_type,  # type: ignore
+                retmax=retmax,  # default retmax (i.e. max_papers) is 20
+            )
 
-        # If date_type is the only argument provided,
-        # then we need to raise an error to say that a min_date and/or max_date should be provided.
-        if date_type and not min_date and not max_date:
-            raise ValueError("A min_date and/or max_date should be provided when date_type is provided")
-
-        paper_ids = self._paper_client.search(
-            query=term,
-            min_date=min_date,
-            max_date=max_date,  # type: ignore
-            date_type=date_type,  # type: ignore
-            retmax=retmax,  # default retmax (i.e. max_papers) is 20
-        )
         return paper_ids
 
     def _filter_rare_disease_papers(self, papers: Set[Paper]) -> Tuple[Set[Paper], Set[Paper], Set[Paper]]:
