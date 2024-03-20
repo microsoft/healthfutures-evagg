@@ -59,10 +59,14 @@ if missing_from_test:
 
 # Ensure that the index columns are unique.
 if not truth_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
-    raise ValueError("Truth table has non-unique index columns.")
+    # Get a list of the non-unique indices
+    non_unique_indices = truth_df[truth_df.duplicated(subset=list(INDEX_COLUMNS), keep=False)][list(INDEX_COLUMNS)]
+    raise ValueError(f"Truth table has non-unique index columns: {non_unique_indices}")
 
 if not test_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
-    raise ValueError("Test table has non-unique index columns.")
+    # Ge ta list of the non-unique indices
+    non_unique_indices = test_df[test_df.duplicated(subset=list(INDEX_COLUMNS), keep=False)][list(INDEX_COLUMNS)]
+    raise ValueError(f"Test table has non-unique index columns: {non_unique_indices}")
 
 # %% Consolidate the indices.
 
