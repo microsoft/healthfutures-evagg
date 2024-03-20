@@ -4,7 +4,6 @@ import os
 from typing import Any, Dict, List, Sequence
 
 from lib.evagg.llm import IPromptClient
-from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import Paper
 
 from ..interfaces import IExtractFields
@@ -24,6 +23,7 @@ class PromptBasedContentExtractor(IExtractFields):
         "phenotype",
         "zygosity",
         "variant_inheritance",
+        "valid",
     }
     _PROMPTS = {
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
@@ -92,11 +92,16 @@ class PromptBasedContentExtractor(IExtractFields):
                 elif field == "individual_id":
                     result = individual
                 elif field == "hgvs_c":
-                    result = variant.hgvs_desc
+                    result = variant.hgvs_desc if not variant.hgvs_desc.startswith("p.") else "NA"
                 elif field == "hgvs_p":
-                    result = variant.hgvs_desc
+                    if variant.protein_consequence:
+                        result = variant.protein_consequence.hgvs_desc
+                    else:
+                        result = variant.hgvs_desc if variant.hgvs_desc.startswith("p.") else "NA"
                 elif field == "transcript":
                     result = variant.refseq if variant.refseq else "unknown"
+                elif field == "valid":
+                    result = str(variant.valid)
                 else:
                     # TODO, should be the original text representation of the variant from the paper. When we switch to
                     # actual mention objects, we can fix this.

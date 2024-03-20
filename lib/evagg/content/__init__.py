@@ -1,12 +1,8 @@
 """Package for interacting with literature sources."""
 
 from .interfaces import IFindObservations, IFindVariantMentions
-from .mention import (
+from .mention import (  # HGVSVariantMention,; TruthsetVariantMentionFinder,; VariantMentionFinder,; VariantTopic,
     HGVSVariantFactory,
-    HGVSVariantMention,
-    TruthsetVariantMentionFinder,
-    VariantMentionFinder,
-    VariantTopic,
 )
 from .observation import ObservationFinder
 from .prompt_based import PromptBasedContentExtractor
@@ -23,10 +19,6 @@ __all__ = [
     "IFindObservations",
     # Mention.
     "HGVSVariantFactory",
-    "HGVSVariantMention",
-    "TruthsetVariantMentionFinder",
-    "VariantMentionFinder",
-    "VariantTopic",
     # Observation.
     "ObservationFinder",
 ]
