@@ -349,7 +349,8 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "-oses",
                 "variant of unknown significance",
                 "variants of unknown significance",
-                "variant of uncertain significance" "variants of uncertain significance",
+                "variant of uncertain significance",
+                "variants of uncertain significance",
             ]
 
             inclusion_keywords_no_plural = [
@@ -386,47 +387,47 @@ class RareDiseaseFileLibrary(IGetPapers):
             ]
 
             # include in rare disease category
-            if paper_title is not None:
-                if any(
-                    keyword in paper_title.lower() for keyword in inclusion_keywords if not keyword.startswith("-")
-                ) or any(
+            if paper_title is not None and (
+                any(keyword in paper_title.lower() for keyword in inclusion_keywords if not keyword.startswith("-"))
+                or any(
                     re.search(f"{keyword[1:]}$", word)  # remove the "-" from "-" keywords
                     for keyword in inclusion_keywords
                     if keyword.startswith("-")  # match end of all words with these keywords
                     for word in paper_title.lower().split()
-                ):
-                    rare_disease_papers.add(paper)
-            elif paper_abstract is not None:
-                if any(
-                    keyword in paper_abstract.lower() for keyword in inclusion_keywords if not keyword.startswith("-")
-                ) or any(
+                )
+            ):
+                rare_disease_papers.add(paper)
+            elif paper_abstract is not None and (
+                any(keyword in paper_abstract.lower() for keyword in inclusion_keywords if not keyword.startswith("-"))
+                or any(
                     re.search(f"{keyword[1:]}$", word)
                     for keyword in inclusion_keywords
                     if keyword.startswith("-")
                     for word in paper_abstract.lower().split()
-                ):
-                    rare_disease_papers.add(paper)
+                )
+            ):
+                rare_disease_papers.add(paper)
             # exclude from rare disease category, include in non-rare disease category
-            elif paper_title is not None:
-                if any(
-                    keyword in paper_title.lower() for keyword in exclusion_keywords if not keyword.startswith("-")
-                ) or any(
+            elif paper_title is not None and (
+                any(keyword in paper_title.lower() for keyword in exclusion_keywords if not keyword.startswith("-"))
+                or any(
                     re.search(f"{keyword[1:]}$", word)
                     for keyword in exclusion_keywords
                     if keyword.startswith("-")
                     for word in paper_title.lower().split()
-                ):
-                    non_rare_disease_papers.add(paper)
-            elif paper_abstract is not None:
-                if any(
-                    keyword in paper_abstract.lower() for keyword in exclusion_keywords if not keyword.startswith("-")
-                ) or any(
+                )
+            ):
+                non_rare_disease_papers.add(paper)
+            elif paper_abstract is not None and (
+                any(keyword in paper_abstract.lower() for keyword in exclusion_keywords if not keyword.startswith("-"))
+                or any(
                     re.search(f"{keyword[1:]}$", word)
                     for keyword in exclusion_keywords
                     if keyword.startswith("-")
                     for word in paper_abstract.lower().split()
-                ):
-                    non_rare_disease_papers.add(paper)
+                )
+            ):
+                non_rare_disease_papers.add(paper)
             # exclude from rare disease category, exclude from non-rare disease category, include in other category
             else:
                 other_papers.add(paper)
