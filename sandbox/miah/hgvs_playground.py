@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Sequence, Set
 
 import requests
 
-from lib.evagg.content import HGVSVariantFactory, HGVSVariantMention, VariantTopic
+from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
 from lib.evagg.svc import CosmosCachingWebClient, RequestsWebContentClient, get_dotenv_settings
 from lib.evagg.types import Paper
@@ -127,7 +127,11 @@ for idx, paper in enumerate(papers):
 
 # %% Try to assemble all of the topics based on the extracted topics above.
 
-ref_seq_lookup_client = NcbiReferenceLookupClient()
+web_client = CosmosCachingWebClient(
+    get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"max_retries": 0, "retry_codes": []}
+)
+
+ref_seq_lookup_client = NcbiReferenceLookupClient(web_client)
 
 #   web_client:
 #     # di_factory: lib.evagg.svc.RequestsWebContentClient
@@ -138,34 +142,31 @@ ref_seq_lookup_client = NcbiReferenceLookupClient()
 #     web_settings:
 #       max_retries: 3
 
-web_client = CosmosCachingWebClient(
-    get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"max_retries": 0, "retry_codes": []}
-)
-mutalyzer_client = MutalyzerClient(web_client)
+# mutalyzer_client = MutalyzerClient(web_client)
 
-variant_factory = HGVSVariantFactory(
-    normalizer=mutalyzer_client, back_translator=mutalyzer_client, refseq_client=ref_seq_lookup_client
-)
-variant_topics: List[VariantTopic] = []
+# variant_factory = HGVSVariantFactory(
+#     validator=mutalyzer_client, normalizer=mutalyzer_client, refseq_client=ref_seq_lookup_client
+# )
+# variant_topics: List[VariantTopic] = []
 
-for vt in variant_tuples:
-    print(vt)
-    try:
-        v = variant_factory.try_parse(
-            text_desc=vt["hgvs"] if vt["hgvs"] else vt["text"], gene_symbol=vt["gene"], refseq=vt["refseq"]
-        )
-    except ValueError as e:
-        print(f"Error parsing variant {vt['text']}: {e}")
-        continue
-    vm = HGVSVariantMention(text=vt["text"], context="Some words", variant=v)
-    # Check all the topics for a match, if none, add a new topic.
-    found = False
-    for topic in variant_topics:
-        if topic.match(vm):
-            topic.add_mention(vm)
-            found = True
-            break
-    if not found:
-        variant_topics.append(VariantTopic([vm], normalizer=mutalyzer_client, back_translator=mutalyzer_client))
+# for vt in variant_tuples:
+#     print(vt)
+#     try:
+#         v = variant_factory.try_parse(
+#             text_desc=vt["hgvs"] if vt["hgvs"] else vt["text"], gene_symbol=vt["gene"], refseq=vt["refseq"]
+#         )
+#     except ValueError as e:
+#         print(f"Error parsing variant {vt['text']}: {e}")
+#         continue
+#     vm = HGVSVariantMention(text=vt["text"], context="Some words", variant=v)
+#     # Check all the topics for a match, if none, add a new topic.
+#     found = False
+#     for topic in variant_topics:
+#         if topic.match(vm):
+#             topic.add_mention(vm)
+#             found = True
+#             break
+#     if not found:
+#         variant_topics.append(VariantTopic([vm], normalizer=mutalyzer_client, back_translator=mutalyzer_client))
 
 # %%
