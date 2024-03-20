@@ -1,11 +1,11 @@
-"""Scipt to compare our Evidence Aggregator's paper finding pipeline to the manual ground truth (MGT) training data.
+"""Scipt to compare our Evidence Aggregator's paper finding pipeline to the manual ground truth (MGT)  data.
 
 Inputs
-- MGT data
+- MGT intermediate/train-test split data file (e.g. data/v1/papers_train_v1.tsv)
 - .yaml of queries
 
 Outputs:
-- benchmarking_paper_finding_results_train.txt: comparison of the papers that were found to the MGT training data
+- benchmarking_paper_finding_results_train.txt: comparison of the papers that were found to the MGT data
 papers
 - benchmarking_paper_finding_results_train.png: barplot of average number of correct, missed, and irrelevant papers
 for the Evidence Aggregator tool and PubMed
@@ -38,103 +38,48 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)  # want to suppre
 logger = logging.getLogger(__name__)
 
 
-def read_mgt(mgt_paper_finding_path):
-    """Read the manual ground truth (MGT) data from the CSV file.
+def read_mgt_split_tsv(mgt_split_tsv):
+    """Build a gene:["PMID_1, "PMID_2", ...] dictionary from an input tsv file.
 
-    Return a dictionary with the gene names and their corresponding PMIDs.
+    Returns a dictionary of gene:["PMID_1, "PMID_2", ...].
     """
-    mgt_gene_pmids_df = pd.read_csv(mgt_paper_finding_path)
-
-    # Initialize dictionary to store the gene names and their corresponding PMIDs
-    mgt_gene_pmids_dict = {}
-
-    # Iterate over the rows and parse the ones we care about
-    for index in range(len(mgt_gene_pmids_df) - 1):
-        # Get the gene name
-        gene = mgt_gene_pmids_df.iloc[index]["gene"]
-
-        # Skip rows without a gene name (e.g. notes or process)
-        if pd.isna(gene):
-            continue
-
-        # Get the PMIDs
-        pmids = mgt_gene_pmids_df.iloc[index, 5:].dropna().tolist()
-
-        # Get the exclusion marks (to exclude PMIDs that are marked with 'x', i.e. not relevant for V1)
-        marks = mgt_gene_pmids_df.iloc[index + 1, 5:].tolist()
-
-        # Exclude the PMIDs that are marked with 'x'
-        pmids = [pmid for pmid, mark in zip(pmids, marks) if mark != "x"]
-
-        # Add the gene and PMIDs to the dictionary
-        mgt_gene_pmids_dict[gene] = pmids
-
-    # Get the first key-value pair
-    first_key = list(mgt_gene_pmids_dict.keys())[0]
-    first_value = mgt_gene_pmids_dict[first_key]
-
-    logger.info(f"Structure of manual ground truth data dataframe:\n {first_key}: {first_value}\n ...")
-    return mgt_gene_pmids_dict
+    mgt_paper_finding_dict = {}
+    with open(mgt_split_tsv, "r") as file:
+        next(file)  # Skip the header
+        for line in file:
+            gene, pmid, _ = line.strip().split("\t")
+            if gene in mgt_paper_finding_dict:
+                mgt_paper_finding_dict[gene].append(pmid)
+            else:
+                mgt_paper_finding_dict[gene] = [pmid]
+    return mgt_paper_finding_dict
 
 
-def create_train_test_split(mgt_gene_pmids_dict):
-    """Split the genes into train 70% and test 30%.
+def get_ground_truth_pmids(gene, mgt_gene_pmids_dict):
+    """Get the manual ground truth (MGT)  data PMIDs for a gene.
 
-    Return the train and test dictionaries of gene names and their corresponding PMIDs.
+    Return the PMIDs for the gene if it is in the ground truth  data, otherwise return None.
     """
-    # Get the list of genes
-    genes = sorted(list(mgt_gene_pmids_dict.keys()))  # noqa
-
-    # Shuffle the list
-    random.seed(0)
-    random.shuffle(genes)
-
-    # Calculate the index for splitting
-    split_index = math.ceil(0.7 * len(genes))
-
-    # Split the list into train and test
-    train = genes[:split_index]
-    test = genes[split_index:]
-
-    # Show the train and test sets
-    logger.info("Training set of genes:", len(train), train)
-    logger.info("Testing set of genes:", len(test), test)
-
-    # Filter mgt_paper_finding_dict to only include genes in train
-    train_mgt_paper_finding_dict = {gene: mgt_gene_pmids_dict[gene] for gene in train}
-
-    # Filter mgt_paper_finding_dict to only include genes in train
-    test_mgt_paper_finding_dict = {gene: mgt_gene_pmids_dict[gene] for gene in test}
-
-    return train_mgt_paper_finding_dict, test_mgt_paper_finding_dict
-
-
-def get_ground_truth_pmids(gene, train_mgt_paper_finding_dict):
-    """Get the manual ground truth (MGT) training data PMIDs for a gene.
-
-    Return the PMIDs for the gene if it is in the ground truth training data, otherwise return None.
-    """
-    if gene in train_mgt_paper_finding_dict.keys():
-        return train_mgt_paper_finding_dict[gene]
+    if gene in mgt_gene_pmids_dict.keys():
+        return mgt_gene_pmids_dict[gene]
     else:
         return None
 
 
-def compare_to_truth_or_tool(gene, input_papers, is_pubmed, ncbi_lookup, train_mgt_paper_finding_dict):
+def compare_to_truth_or_tool(gene, input_papers, ncbi_lookup, mgt_gene_pmids_dict):
     """Compare the PMIDs that were found either by ev. agg. or competing too (e.g. PubMed) to the MGT PMIDs.
 
     Args:
         gene (str): the gene name
         input_papers (set): the papers that were found
-        is_pubmed (int): 1 if comparing to PubMed results, 0 if comparing to our E.A. tool
         ncbi_lookup (IPaperLookupClient): the PubMed lookup client
 
     Returns:
-        correct_pmids (list): the PMIDs and titles of the papers that were found that match the MGT training data papers
-        missed_pmids (list): the PMIDs and titles of the papers that are in the MGT training data papers but not in the
+        correct_pmids (list): the PMIDs and titles of the papers that were found that match the MGT data papers
+        missed_pmids (list): the PMIDs and titles of the papers that are in the MGT data papers but not in the
         papers that were found
         irrelevant_pmids (list): the PMIDs and titles of the papers that are in the papers that were found but not in
-        the MGT training data papers
+        the MGT data papers
     """
     # Get all the PMIDs from all of the papers
     input_paper_pmids = [
@@ -142,15 +87,15 @@ def compare_to_truth_or_tool(gene, input_papers, is_pubmed, ncbi_lookup, train_m
         for paper in input_papers
     ]
 
-    ground_truth_gene_pmids = get_ground_truth_pmids(gene, train_mgt_paper_finding_dict)
+    ground_truth_gene_pmids = get_ground_truth_pmids(gene, mgt_gene_pmids_dict)
 
-    # Keep track of the correct and extra PMIDs to subtract from the MGT training data papers PMIDs
+    # Keep track of the correct and extra PMIDs to subtract from the MGT data papers PMIDs
     counted_pmids = []
     correct_pmids = []
     missed_pmids = []
     irrelevant_pmids = []
 
-    # For each gene, get MGT training data PMIDs from ground_truth_papers_pmids and compare those PMIDS to the PMIDS
+    # For each gene, get MGT data PMIDs from ground_truth_papers_pmids and compare those PMIDS to the PMIDS
     # from the papers that the tool found (e.g. our ev. agg. tool or PubMed).
     if ground_truth_gene_pmids is not None:
         for pmid, title in input_paper_pmids:
@@ -162,8 +107,8 @@ def compare_to_truth_or_tool(gene, input_papers, is_pubmed, ncbi_lookup, train_m
                 counted_pmids.append(pmid)
                 irrelevant_pmids.append((pmid, title))
 
-        # For any PMIDs in the MGT training data that are not in the papers that were found, increment n_missed, use
-        # counted_pmids to subtract from the MGT training data papers PMIDs
+        # For any PMIDs in the MGT data that are not in the papers that were found, increment n_missed, use
+        # counted_pmids to subtract from the MGT data papers PMIDs
         for pmid in ground_truth_gene_pmids:
             if pmid not in counted_pmids:
                 missed_paper_title = ncbi_lookup.fetch(str(pmid))
@@ -175,75 +120,8 @@ def compare_to_truth_or_tool(gene, input_papers, is_pubmed, ncbi_lookup, train_m
     return correct_pmids, missed_pmids, irrelevant_pmids
 
 
-def parse_benchmarking_results(file_path):
-    """Parse benchmarking results from its analyst readable format to a dictionary."""
-    benchmarking_train_results = {}
-    with open(file_path, "r") as f:
-        lines = f.readlines()
-        i = 0
-        while i < len(lines):
-            line = lines[i].strip()
-            if line.startswith("GENE:"):
-                gene = line.split()[1]
-                i += 1
-                while i < len(lines) and not lines[i].startswith("GENE:"):
-                    if lines[i].startswith("Rare Disease Papers:"):
-                        rare_disease_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("Non-Rare Disease Papers:"):
-                        non_rare_disease_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("Other Papers:"):
-                        other_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("E.A. # Correct Papers:"):
-                        tool_correct_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("E.A. # Missed Papers:"):
-                        tool_missed_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("E.A. # Irrelevant Papers:"):
-                        tool_irrelevant_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("Pubmed # Correct Papers:"):
-                        pubmed_correct_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("Pubmed # Missed Papers:"):
-                        pubmed_missed_papers = int(lines[i].split(":")[1].strip())
-                    elif lines[i].startswith("Pubmed # Irrelevant Papers:"):
-                        pubmed_irrelevant_papers = int(lines[i].split(":")[1].strip())
-                    i += 1
-                if "rare_disease_papers" not in locals():
-                    rare_disease_papers = 0
-                if "non_rare_disease_papers" not in locals():
-                    non_rare_disease_papers = 0
-                if "other_papers" not in locals():
-                    other_papers = 0
-                if "tool_correct_papers" not in locals():
-                    tool_correct_papers = 0
-                if "tool_missed_papers" not in locals():
-                    tool_missed_papers = 0
-                if "tool_irrelevant_papers" not in locals():
-                    tool_irrelevant_papers = 0
-                if "pubmed_correct_papers" not in locals():
-                    pubmed_correct_papers = 0
-                if "pubmed_missed_papers" not in locals():
-                    pubmed_missed_papers = 0
-                if "pubmed_irrelevant_papers" not in locals():
-                    pubmed_irrelevant_papers = 0
-
-                benchmarking_train_results[gene] = [
-                    rare_disease_papers,
-                    non_rare_disease_papers,
-                    other_papers,
-                    tool_correct_papers,
-                    tool_missed_papers,
-                    tool_irrelevant_papers,
-                    pubmed_correct_papers,
-                    pubmed_missed_papers,
-                    pubmed_irrelevant_papers,
-                ]
-            else:
-                i += 1  # Go to the next line
-
-    return benchmarking_train_results
-
-
 def plot_benchmarking_results(benchmarking_train_results):
-    """Plot the benchmarking results from the training set in a barplot.
+    """Plot the benchmarking results from the  set in a barplot.
 
     Return the results dataframe (see keys below) for subsequent plotting.
     """
@@ -402,12 +280,7 @@ def main(args):
         yaml_data = yaml.safe_load(file)
 
     # Read the manual ground truth (MGT) data from the CSV file
-    mgt_gene_pmids_dict = read_mgt(args.mgt_path)
-
-    # Create train and test split from MGT data
-    train_mgt_paper_finding_dict, _ = create_train_test_split(
-        mgt_gene_pmids_dict
-    )  # TODO: fill in _ with test data benchmarking, or reconfigure to accept train or test data
+    mgt_gene_pmids_dict = read_mgt_split_tsv(args.mgt_train_test_path)
 
     # Get the query/ies from .yaml file
     query_list_yaml = []
@@ -435,50 +308,65 @@ def main(args):
     library: RareDiseaseFileLibrary = DiContainer().create_instance({"di_factory": "lib/config/library.yaml"}, {})
     ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
 
-    # For each query, get papers, compare ev. agg. papers to MGT training data papers,
-    # compare PubMed papers to MGT training data papers. Write results to benchmarking against training set file.
+    # Initialize the dictionary
+    benchmarking_results = {}
+
+    # For each query, get papers, compare ev. agg. papers to MGT data papers,
+    # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
     os.makedirs(args.outdir, exist_ok=True)
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
         for query in query_list_yaml:
 
             # Get the gene name from the query
             term = query["gene_symbol"]
-            f.write("\nGENE: %s\n" % term)
+            f.write(f"\nGENE: {term}\n")
             print("Finding papers for: ", query["gene_symbol"], "...")
 
+            # Initialize the list for this gene
+            benchmarking_results[term] = [0] * 9
+
             # Get the papers from the library for the query (i.e. gene/term)
-            rare_disease_papers, non_rare_disease_papers, other_papers, papers = library.get_papers(
+            rare_disease_papers, non_rare_disease_papers, other_papers, papers = library.get_all_papers(
                 query
             )  # TODO: better to union 3 sets or keep papers?
 
             # Check if =<3 papers categories are empty, and report the number of papers in each category
             if rare_disease_papers == Set[Paper]:
-                f.write("Rare Disease Papers: 0\n")
+                f.write(f"Rare Disease Papers: {0}\n")
+                benchmarking_results[term][0] = 0
             else:
-                f.write("Rare Disease Papers: %s\n" % len(rare_disease_papers))  # type: ignore
+                f.write(f"Rare Disease Papers: {len(rare_disease_papers)}\n")
+                benchmarking_results[term][0] = len(rare_disease_papers)
             if non_rare_disease_papers == Set[Paper]:
-                f.write("Non-Rare Disease Papers: 0\n")
+                f.write(f"Non-Rare Disease Papers: {0}\n")
+                benchmarking_results[term][1] = 0
             else:
-                f.write("Non-Rare Disease Papers: %s\n" % len(non_rare_disease_papers))  # type: ignore
+                f.write(f"Non-Rare Disease Papers: {len(non_rare_disease_papers)}\n")
+                benchmarking_results[term][1] = len(non_rare_disease_papers)
             if other_papers == Set[Paper]:
-                f.write("Other Papers: 0\n")
+                f.write(f"Other Papers: {0}\n")
+                benchmarking_results[term][2] = 0
             else:
-                f.write("Other Papers: %s\n" % len(other_papers))
+                f.write(f"Other Papers: {len(other_papers)}\n")
+                benchmarking_results[term][2] = len(other_papers)
 
-            # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to MGT training data papers (PMIDs)
-            print(
-                "Comparing Evidence Aggregator results to manual ground truth data for: ", query["gene_symbol"], "..."
-            )
+            # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to MGT data papers (PMIDs)
+            print("Comparing Evidence Aggregator results to manual ground truth data for:", query["gene_symbol"], "...")
             if rare_disease_papers != Set[Paper]:
                 correct_pmids, missed_pmids, irrelevant_pmids = compare_to_truth_or_tool(
-                    term, rare_disease_papers, 0, ncbi_lookup, train_mgt_paper_finding_dict
+                    term, rare_disease_papers, ncbi_lookup, mgt_gene_pmids_dict
                 )
 
-                # Report comparison between ev.agg. and MGT training data
+                # Report comparison between ev.agg. and MGT data
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
                 f.write(f"E.A. # Correct Papers: {len(correct_pmids)}\n")
                 f.write(f"E.A. # Missed Papers: {len(missed_pmids)}\n")
                 f.write(f"E.A. # Irrelevant Papers: {len(irrelevant_pmids)}\n")
+
+                # Update the metrics in the list for this gene
+                benchmarking_results[term][3] = len(correct_pmids)
+                benchmarking_results[term][4] = len(missed_pmids)
+                benchmarking_results[term][5] = len(irrelevant_pmids)
 
                 f.write(f"\nFound E.A. {len(correct_pmids)} correct.\n")
                 for i, p in enumerate(correct_pmids):
@@ -497,13 +385,18 @@ def main(args):
                 f.write(f"E.A. # Missed Papers: {0}\n")
                 f.write(f"E.A. # Irrelevant Papers: {0}\n")
 
-            # Compare PubMed papers to  MGT training data papers
+            # Compare PubMed papers to  MGT data papers
             print("Comparing PubMed results to manual ground truth data for: ", query["gene_symbol"], "...")
-            p_corr, p_miss, p_irr = compare_to_truth_or_tool(term, papers, 1, ncbi_lookup, train_mgt_paper_finding_dict)
+            p_corr, p_miss, p_irr = compare_to_truth_or_tool(term, papers, ncbi_lookup, mgt_gene_pmids_dict)
             f.write("\nOf PubMed papers...\n")
             f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
             f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
             f.write(f"Pubmed # Irrelevant Papers: {len(p_irr)}\n")
+
+            # Update the counts in the list for this gene
+            benchmarking_results[term][6] = len(p_corr)
+            benchmarking_results[term][7] = len(p_miss)
+            benchmarking_results[term][8] = len(p_irr)
 
             f.write(f"\nFound Pubmed {len(p_corr)} correct.\n")
             for i, p in enumerate(p_corr):
@@ -517,12 +410,8 @@ def main(args):
             for i, p in enumerate(p_irr):
                 f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
 
-    # Parse benchmarking and filtering results from file (analyst readable format)
-    benchmark_file = os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt")
-    benchmarking_train_results = parse_benchmarking_results(benchmark_file)
-
     # Plot benchmarking results
-    results_to_plot = plot_benchmarking_results(benchmarking_train_results)
+    results_to_plot = plot_benchmarking_results(benchmarking_results)
 
     # Plot filtering results
     plot_filtered_categories(results_to_plot)
@@ -540,19 +429,20 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-m",
-        "--mgt-path",
+        "--mgt-train-test-path",
         nargs="?",
-        default="data/Manual_Ground_Truth_find_right_papers.csv",
+        default="data/v1/papers_train_v1.tsv",
         type=str,
-        help="Default is data/Manual_Ground_Truth_find_right_papers.csv",
+        help="Default is data/v1/papers_train_v1.tsv",
     )
     parser.add_argument(
         "--outdir",
-        default=".out/paper_finding_results_%s"
-        % (datetime.today().strftime("%Y-%m-%d")),  # TODO: consider more granular date format
+        default=f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}",
         type=str,
-        help="Results output directory. Default is .out/paper_finding_results_%s/"
-        % (datetime.today().strftime("%Y-%m-%d")),
+        help=(
+            "Results output directory. Default is "
+            f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}/"
+        ),
     )
     args = parser.parse_args()
 
