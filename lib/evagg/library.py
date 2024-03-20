@@ -141,21 +141,19 @@ class TruthsetFileLibrary(IGetPapers):
         all_papers = self._load_truthset()
 
         # Filter to just the papers with variants that have evidence for the gene specified in the query.
-        return {p for p in all_papers if query in {v[0].gene_symbol for v in p.evidence.keys()}}
+        return {p for p in all_papers if query["gene_symbol"] in {v[0].gene_symbol for v in p.evidence.keys()}}
 
 
 class RemoteFileLibrary(IGetPapers):
     """A class for retrieving papers from PubMed."""
 
-    def __init__(self, paper_client: IPaperLookupClient, max_papers: int = 5) -> None:
+    def __init__(self, paper_client: IPaperLookupClient) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
 
         Args:
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
-            max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
         """
         self._paper_client = paper_client
-        self._max_papers = max_papers
 
     def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         """Search for papers based on the given query.
@@ -171,8 +169,7 @@ class RemoteFileLibrary(IGetPapers):
 
         # Get gene term
         term = query["gene_symbol"]
-        logger.info("\nFinding papers for gene:", term, "...")
-
+        logger.info(f"Finding papers for gene: {term}...")
         paper_ids = self._paper_client.search(query=term)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
         return papers
@@ -204,12 +201,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
-        if not query["gene_symbol"]:
+        if not query.get("gene_symbol"):
             raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
-
-        # Get gene term
-        term = query["gene_symbol"]
-        logger.info("\nFinding papers for gene:", term, "...")
 
         # Find paper IDs
         paper_ids = self._partition_search_query(query)
@@ -232,7 +225,7 @@ class RareDiseaseFileLibrary(IGetPapers):
            Tuple of Set[Paper]s: The sets of papers that match the query, across categories and overall (rare disease,
            non-rare disease, other, and the union).
         """
-        if not query["gene_symbol"]:
+        if not query.get("gene_symbol"):
             raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
 
         paper_ids = self._partition_search_query(query)
@@ -249,7 +242,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Partition the query and run search to generate the paper IDs list for a given gene."""
         # Get gene term
         term = query["gene_symbol"]
-        logger.info("\nFinding papers for gene:", term, "...")
+        logger.info(f"Finding papers for gene: {term}...")
 
         # Find paper IDs
         min_date = query.get("min_date", None)
@@ -258,7 +251,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         retmax = query.get("retmax", None)
 
         # If the most basic query is provided, search for papers with just the gene symbol
-        if term and not min_date and not max_date and not date_type and not retmax:
+        if not min_date and not max_date and not date_type and not retmax:
             paper_ids = self._paper_client.search(query=term)
         # If min_date is the only extra parameter provided from this query,
         # max_date should be today's date and date_type should be "pdat".
