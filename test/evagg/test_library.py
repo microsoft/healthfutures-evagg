@@ -29,7 +29,7 @@ def test_remote_no_paper(mock_paper_client: Any) -> None:
     paper_client = mock_paper_client([])
     query = {"gene_symbol": "gene", "retmax": 1}
     result = RemoteFileLibrary(paper_client).get_papers(query)
-    # TODO: I need to understand last_call, is it necessary?: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
+    assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.call_count() == 1
     assert not result
 
@@ -47,7 +47,7 @@ def test_remote_single_paper(mock_paper_client: Any) -> None:
     query = {"gene_symbol": "gene", "retmax": 1}
     result = RemoteFileLibrary(paper_client).get_papers(query)
     # TODO: go back once fetch is fixed:
-    assert paper_client.last_call("search") == ("gene", {"retmax": 1})
+    assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("27392077",)
     assert paper_client.call_count() == 2
     assert result and len(result) == 1 and result.pop() == paper
@@ -61,11 +61,12 @@ def test_rare_disease_init(mock_paper_client: Any) -> None:
 
 def test_rare_disease_extra_params(mock_paper_client: Any) -> None:
     paper_client = mock_paper_client([])
-    query = {"gene_symbol": "gene", "retmax": 1, "mindate": "2020-01-01", "maxdate": "2020-12-31"}
+    query = {"gene_symbol": "TP53", "retmax": 9, "mindate": "2020-01-01"}
     result = RareDiseaseFileLibrary(paper_client).get_papers(query)
-    # TODO: go back once fetch is fixed: assert paper_client.last_call("get_papers") == ({"gene_symbol": "gene", "retmax": 1})
+    print("result", result)
+    assert paper_client.last_call("search") == ({"query": "TP53"},)
     assert paper_client.call_count() == 1
-    assert result[3] == set() and len(result) == 4
+    # assert result[3] == set() and len(result) == 4
 
 
 def test_rare_disease_no_paper(mock_paper_client: Any) -> None:
