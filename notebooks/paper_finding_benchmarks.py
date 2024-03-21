@@ -30,6 +30,7 @@ import yaml
 
 from lib.di import DiContainer
 from lib.evagg.library import RareDiseaseFileLibrary
+from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
 
@@ -303,9 +304,10 @@ def main(args):
         # Add the new dictionary to the list
         query_list_yaml.append(new_dict)
 
-    # Create the library and the PubMed lookup clients
+    # Create the library, the PubMed lookup clients, and the LLM client
     library: RareDiseaseFileLibrary = DiContainer().create_instance({"di_factory": "lib/config/library.yaml"}, {})
     ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
+    # llm_client: IPromptClient = DiContainer().create_instance({"di_factory": "lib/config/llm_client.yaml"}, {})
 
     # Initialize the dictionary
     benchmarking_results = {}

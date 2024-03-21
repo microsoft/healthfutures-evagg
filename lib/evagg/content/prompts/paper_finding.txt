@@ -1,0 +1,17 @@
+Is this paper (given title and abstract below) talking about a rare disease patient, cohort, or context, or something else? If the paper is talking about rare disease, return the paper category "rare disease". If additional information is helpful, rare diseases can sometimes be characterized as "mendelian", "monogenic", "monoallelic", and "inherited". You might find mention of "germline mutations" in rare disease contexts, "variants of unknown or undertain significance", or mention of very few people with the condition. 
+
+If not, see if the paper is talking about a "non-rare disease" context, which we are defining as papers that discuss "digenic", "familial", "structural variant", "somatic", "somatic cancer", "cancer", "tumor", "copy number variant" (CNV), or "carcinoma" topics.
+
+If the paper doesn't fit in either the "rare disease" or "non-rare disease" categories, please return paper category "other". 
+
+Please use both the title and abstract to make your determination of category (rare disease, non-rare disease, or other). 
+
+Below is the title and abstract:
+
+Title: {{$title}}
+Abstract: {{$abstract}}
+
+Provide your response in the following format:
+{
+  "paper_category": "rare disease" | "non-rare disease" | "other"
+}
