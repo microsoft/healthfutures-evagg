@@ -8,12 +8,15 @@ from datetime import date
 from functools import cache
 from typing import Any, Dict, Sequence, Set, Tuple
 
+from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
+from lib.evagg.svc.logging import LogProvider
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .interfaces import IGetPapers
 
 logger = logging.getLogger(__name__)
+# TODO: ways to improve: process full text of paper to filter to rare disease papers when PMC OA
 
 
 class SimpleFileLibrary(IGetPapers):
@@ -178,14 +181,10 @@ class RemoteFileLibrary(IGetPapers):
         return papers
 
 
-class RareDiseaseFileLibrary(IGetPapers):
+class RareDiseaseFileLibrary(IGetPapers, IPaperLookupClient, IPromptClient):
     """A class for filtering to rare disease papers from PubMed."""
 
-    def __init__(
-        self,
-        paper_client: IPaperLookupClient,
-        # llm_client: IPromptClient,  # TODO: will add in this code for 3rd PR in this series
-    ) -> None:
+    def __init__(self, paper_client: IPaperLookupClient, llm_client: IPromptClient) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
 
         Args:
@@ -193,7 +192,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             llm_client (IPromptClient): A class to leveral LLMs to filter to the right papers.
         """
         self._paper_client = paper_client
-        # self._llm_client = llm_client  # TODO: will add in this code for 3rd PR in this series
+        self._llm_client = llm_client
 
     def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         """Search for papers based on the given query.
@@ -220,6 +219,11 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Call private function to filter for rare disease papers
         rare_disease_papers, _, _ = self._filter_rare_disease_papers(papers)
 
+        # TODO: figure out how best to integrate these outputs (rare_disease_papers and llm_rare_disease_papers)
+        llm_rare_disease_papers, _, _ = self._prompts_for_rare_disease_papers(papers)
+
+        print("get_papers, RESULTS", len(llm_rare_disease_papers))
+
         return rare_disease_papers
 
     def get_all_papers(self, query: Dict[str, Any]) -> Tuple[Set[Paper], Set[Paper], Set[Paper], Set[Paper]]:
@@ -241,9 +245,72 @@ class RareDiseaseFileLibrary(IGetPapers):
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
 
         # Call private function to filter for rare disease papers
-        rare_disease_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(papers)
+        # TODO: fix
+        # rare_disease_papers, non_rare_disease_papers, other_papers = self._filter_rare_disease_papers(papers)
 
-        return rare_disease_papers, non_rare_disease_papers, other_papers, papers
+        llm_rare_disease_papers, llm_non_rare_disease_papers, llm_other_papers = self._prompts_for_rare_disease_papers(
+            papers
+        )
+        print("RESULTS", len(llm_rare_disease_papers), len(llm_non_rare_disease_papers), len(llm_other_papers))
+
+        return llm_rare_disease_papers, llm_non_rare_disease_papers, llm_other_papers, papers
+
+    def _prompts_for_rare_disease_papers(self, papers: Set[Paper]) -> Tuple[Set[Paper], Set[Paper], Set[Paper]]:
+        """Apply LLM prompts to categorize papers into rare, non-rare, or other group."""
+        # TODO: this should likely only re-check non-rare and other papers as the base implementation.
+        #       call a filter and a prompt function on one runthrough of each paper, rather than
+        #       iterate through papers twice?
+
+        LogProvider(prompts_to_console=False)
+
+        prompt = {
+            "paper_category": os.path.dirname(__file__) + "/content/prompts/paper_finding.txt",
+        }
+
+        rare_disease_papers: Set[Paper] = set()
+        non_rare_disease_papers: Set[Paper] = set()
+        other_papers: Set[Paper] = set()
+
+        for paper in papers:
+            paper_pmid = paper.props.get("pmid", "Unknown")
+            print("PMID:", paper_pmid)
+            paper_title = paper.props.get("title", "Unknown")
+            paper_abstract = paper.props.get("abstract", "Unknown")
+
+            # print("paper_title", paper_title)
+            # print("paper_abstract", paper_abstract)
+            if paper_title is None:
+                paper_title = "Unknown"
+            if paper_abstract is None:
+                paper_abstract = "Unknown"
+
+            params = {"abstract": paper_abstract, "title": paper_title}
+
+            response = self._llm_client.prompt_file(
+                user_prompt_file=prompt["paper_category"],
+                system_prompt="Extract field",
+                params=params,
+                prompt_settings={"prompt_tag": "paper_category"},
+            )
+
+            try:
+                result = json.loads(response)["paper_category"]
+            except Exception:
+                result = "failed"  # TODO: how to handle this?
+
+            print("llm result", result)
+            # Categorize the paper based on LLM result
+            if result == "rare disease":
+                rare_disease_papers.add(paper)
+            elif result == "non-rare disease":
+                non_rare_disease_papers.add(paper)
+            elif result == "other":
+                other_papers.add(paper)
+            elif result == "failed":
+                logger.warning(f"Failed to categorize paper: {paper.id}")
+            else:
+                raise ValueError(f"Unexpected result: {result}")
+        return rare_disease_papers, non_rare_disease_papers, other_papers
 
     def _partition_search_query(self, query: Dict[str, Any]) -> Sequence[str]:
         """Partition the query and run search to generate the paper IDs list for a given gene."""
@@ -320,8 +387,8 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Iterate through each paper and filter into 1 of 3 categories based on title and abstract
         for paper in papers:
-            paper_title = paper.props.get("title", "Unknown")
-            paper_abstract = paper.props.get("abstract", "Unknown")
+            paper_title = paper.props.get("title", None)
+            paper_abstract = paper.props.get("abstract", None)
 
             inclusion_keywords = [
                 "variant",
@@ -371,20 +438,19 @@ class RareDiseaseFileLibrary(IGetPapers):
             inclusion_keywords = inclusion_keywords + inclusion_keywords_odd_plurals + inclusion_keywords_no_plural
 
             exclusion_keywords = [
-                "digenic",
-                "familial",
+                "digenic",  # not meaningful in plural form
+                "familial",  # not meaningful in plural form
                 "structural variant",
-                "structural variants",
-                "somatic",
+                "somatic",  # not meaningful in plural form
                 "somatic cancer",
-                "somatic cancers",
                 "cancer",
-                "cancers",
+                "tumor",
                 "CNV",
-                "CNVs",
+                "carcinoma",
                 "copy number variant",
-                "copy number variants",
             ]
+
+            exclusion_keywords = exclusion_keywords + [word + "s" for word in exclusion_keywords]
 
             # include in rare disease category
             if paper_title is not None and (
