@@ -10,12 +10,13 @@ This notebook compares the performance of the two components separately.
 # %% Imports.
 
 import os
-from typing import Any, Set
+from collections import defaultdict
+from typing import Any, List, Set
 
 import pandas as pd
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import MutalyzerClient, NcbiReferenceLookupClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
 from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
@@ -40,6 +41,26 @@ if "doi" in truth_df.columns:
     truth_df.rename(columns={"doi": "paper_id"}, inplace=True)
 
 output_df = pd.read_csv(OUTPUT_PATH, sep="\t", skiprows=1)
+
+
+# Preprocessing of the individual ID column is necessary because there's so much variety here.
+# Treat anything that is  the proband, proband, unknown, and patient as the same.
+def _normalize_individual_id(individual_id: Any) -> str:
+    if pd.isna(individual_id):
+        return "inferred proband"
+    individual_id = individual_id.lower()
+    if individual_id in ["the proband", "proband", "the patient", "patient", "unknown"]:
+        return "inferred proband"
+    return individual_id
+
+
+if "individual_id" in truth_df.columns:
+    truth_df["individual_id_orig"] = truth_df["individual_id"]
+    truth_df["individual_id"] = truth_df["individual_id"].apply(_normalize_individual_id)
+
+if "individual_id" in output_df.columns:
+    output_df["individual_id_orig"] = output_df["individual_id"]
+    output_df["individual_id"] = output_df["individual_id"].apply(_normalize_individual_id)
 
 # %% Restrict the truth set to the genes in the output set.
 if RESTRICT_TRUTH_GENES_TO_OUTPUT:
@@ -81,9 +102,13 @@ web_client = CosmosCachingWebClient(
     get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"no_raise_codes": [422]}
 )
 mutalyzer_client = MutalyzerClient(web_client)
+ncbi_client = NcbiLookupClient(web_client)
 refseq_client = NcbiReferenceLookupClient(web_client)
 variant_factory = HGVSVariantFactory(
-    validator=mutalyzer_client, normalizer=mutalyzer_client, refseq_client=refseq_client
+    validator=mutalyzer_client,
+    normalizer=mutalyzer_client,
+    variant_lookup_client=ncbi_client,
+    refseq_client=refseq_client,
 )
 
 
@@ -130,7 +155,9 @@ def _normalize_hgvs(gene: str, transcript: Any, hgvs_desc: Any) -> str:
         print(f"Error normalizing {gene} {transcript} {hgvs_desc}: {e}")
         variant_obj = None
 
-    if (variant_obj is None or not variant_obj.valid) and hgvs_desc.startswith("p."):
+    if variant_obj and variant_obj.valid:
+        return variant_obj.hgvs_desc
+    elif hgvs_desc.startswith("p."):
         return _bioc_convert(hgvs_desc)
     return hgvs_desc
 
@@ -151,6 +178,8 @@ def _normalize_hgvs_p(row: pd.Series) -> str:
     )
 
 
+# %% Apply the normalization to the truth and output dataframes.
+
 if "hgvs_c" in truth_df.columns:
     truth_df["hgvs_c_orig"] = truth_df["hgvs_c"]
     truth_df["hgvs_c"] = truth_df.apply(_normalize_hgvs_c, axis=1)
@@ -169,6 +198,7 @@ if "hgvs_p" in output_df.columns:
     output_df["hgvs_p_orig"] = output_df["hgvs_p"]
     output_df["hgvs_p"] = output_df.apply(_normalize_hgvs_p, axis=1)
 
+
 # %% Consolidate the indices.
 
 if "hgvs_c" in INDEX_COLUMNS and "hgvs_p" in INDEX_COLUMNS:
@@ -186,6 +216,45 @@ if "hgvs_c" in INDEX_COLUMNS and "hgvs_p" in INDEX_COLUMNS:
     # Reset all_columns
     all_columns = CONTENT_COLUMNS.union(INDEX_COLUMNS).union(EXTRA_COLUMNS)
 
+# %% Before merging, we want to Consolidate near-misses in the individual ID column on a per paper/variant basis.
+
+for group, truth_group_df in truth_df.groupby(["paper_id", "hgvs_desc"]):
+    # make a dict keyed on individual_id, with values that are the consolidated individual_ids.
+    individual_id_map: dict[str, List[str]] = defaultdict(list)
+
+    output_group_df = output_df[(output_df["paper_id"] == group[0]) & (output_df["hgvs_desc"] == group[1])]
+
+    for individual_id in set(truth_group_df.individual_id.unique()).union(output_group_df.individual_id.unique()):
+        found = False
+        for key in individual_id_map:
+            if individual_id == key:
+                found = True
+                break
+            elif any(individual_id == token.lstrip("(").rstrip(")") for token in key.split()):
+                values = individual_id_map.pop(key)
+                values.append(individual_id)
+                individual_id_map[individual_id] = values
+                found = True
+                break
+            elif any(key == token.lstrip("(").rstrip(")") for token in individual_id.split()):
+                individual_id_map[key].append(individual_id)
+                found = True
+                break
+
+        if not found:
+            individual_id_map[individual_id] = [individual_id]
+
+    if any(len(v) > 1 for v in individual_id_map.values()):
+        print(individual_id_map)
+        # invert the map
+        mapping = {v: k for k, values in individual_id_map.items() for v in values}
+
+        truth_df.loc[(truth_df["paper_id"] == group[0]) & (truth_df["hgvs_desc"] == group[1]), "individual_id"] = (
+            truth_group_df.individual_id.map(mapping)
+        )
+        output_df.loc[(output_df["paper_id"] == group[0]) & (output_df["hgvs_desc"] == group[1]), "individual_id"] = (
+            output_df.individual_id.map(mapping)
+        )
 
 # %% Merge the dataframes.
 columns_of_interest = list(all_columns)
@@ -244,7 +313,11 @@ print()
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
-merged_df[merged_df.in_supplement != "Y"].sort_values("gene")
+printable_df = merged_df.reset_index()  #
+printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
+# printable_df[
+#     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
+# ].sort_values(["gene", "paper_id", "hgvs_desc"])
 
 # %% Assess content extraction.
 
