@@ -10,9 +10,13 @@ This notebook compares the performance of the two components separately.
 # %% Imports.
 
 import os
-from typing import Set
+from typing import Any, Set
 
 import pandas as pd
+
+from lib.evagg.content import HGVSVariantFactory
+from lib.evagg.ref import MutalyzerClient, NcbiReferenceLookupClient
+from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
@@ -68,6 +72,102 @@ if not output_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
     # Ge ta list of the non-unique indices
     non_unique_indices = output_df[output_df.duplicated(subset=list(INDEX_COLUMNS), keep=False)][list(INDEX_COLUMNS)]
     raise ValueError(f"Output table has non-unique index columns: {non_unique_indices}")
+
+# %% Normalize the HGVS representations from the truth data.
+
+# TODO, consider normalizing truthset variants during generation of the truthset?
+
+web_client = CosmosCachingWebClient(
+    get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"no_raise_codes": [422]}
+)
+mutalyzer_client = MutalyzerClient(web_client)
+refseq_client = NcbiReferenceLookupClient(web_client)
+variant_factory = HGVSVariantFactory(
+    validator=mutalyzer_client, normalizer=mutalyzer_client, refseq_client=refseq_client
+)
+
+
+def _convert_single_to_three(single_code: str) -> str:
+    """Convert a single letter amino acid code to three letter."""
+    from Bio.SeqUtils import IUPACData
+
+    result = ""
+    for c in single_code:
+        if c.upper() == "X" or c == "*":
+            result += "Ter"
+        else:
+            result += IUPACData.protein_letters_1to3[c.upper()]
+    return result
+
+
+def _bioc_convert(hgvs_desc: str) -> str:
+    """Convert a p. using single letter to three letter."""
+    import re
+
+    result = re.match(r"p\.([A-Z])([0-9]+)([A-Z])", hgvs_desc)
+    if not result:
+        return hgvs_desc
+
+    ref = result.group(1)
+    pos = result.group(2)
+    alt = result.group(3)
+
+    ref = _convert_single_to_three(ref)
+    alt = _convert_single_to_three(alt)
+
+    result = f"p.{ref}{pos}{alt}"  # type: ignore
+    return result  # type: ignore
+
+
+def _normalize_hgvs(gene: str, transcript: Any, hgvs_desc: Any) -> str:
+    if pd.isna(hgvs_desc):
+        return hgvs_desc
+    if pd.isna(transcript):
+        transcript = None
+    try:
+        variant_obj = variant_factory.parse(text_desc=hgvs_desc, gene_symbol=gene, refseq=transcript)
+    except Exception as e:
+        print(f"Error normalizing {gene} {transcript} {hgvs_desc}: {e}")
+        variant_obj = None
+
+    if (variant_obj is None or not variant_obj.valid) and hgvs_desc.startswith("p."):
+        return _bioc_convert(hgvs_desc)
+    return hgvs_desc
+
+
+def _normalize_hgvs_c(row: pd.Series) -> str:
+    return _normalize_hgvs(
+        row.gene,
+        row.transcript,
+        row.hgvs_c,
+    )
+
+
+def _normalize_hgvs_p(row: pd.Series) -> str:
+    return _normalize_hgvs(
+        row.gene,
+        row.transcript,
+        row.hgvs_p,
+    )
+
+
+if "hgvs_c" in truth_df.columns:
+    truth_df["hgvs_c_orig"] = truth_df["hgvs_c"]
+    truth_df["hgvs_c"] = truth_df.apply(_normalize_hgvs_c, axis=1)
+
+if "hgvs_p" in truth_df.columns:
+    truth_df["hgvs_p_orig"] = truth_df["hgvs_p"]
+    truth_df["hgvs_p"] = truth_df.apply(_normalize_hgvs_p, axis=1)
+
+# No need to normalize hgvs_c in output, since it's already normalized by the pipeline.
+# hgvs_p on the other hand should be normalized because
+
+# TODO: this is a hack, we should have fallback normalization in the pipeline and that truth set should be normalized
+# during generation.
+
+if "hgvs_p" in output_df.columns:
+    output_df["hgvs_p_orig"] = output_df["hgvs_p"]
+    output_df["hgvs_p"] = output_df.apply(_normalize_hgvs_p, axis=1)
 
 # %% Consolidate the indices.
 
@@ -141,7 +241,10 @@ print(f"  Variant finding precision: {precision_no_supplement:.2f}")
 print(f"  Variant finding recall: {recall_no_supplement:.2f}")
 print()
 
-print(merged_df)
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", None)
+
+merged_df[merged_df.in_supplement != "Y"].sort_values("gene")
 
 # %% Assess content extraction.
 
