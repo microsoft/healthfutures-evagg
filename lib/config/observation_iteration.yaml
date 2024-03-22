@@ -76,6 +76,7 @@ extractor:
     - hgvs_p
     - individual_id
     - transcript
+    - valid
   llm_client: "{{llm_client}}"
   observation_finder:
     di_factory: lib.evagg.content.ObservationFinder

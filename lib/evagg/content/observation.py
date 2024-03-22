@@ -68,42 +68,73 @@ uninterrupted sequences of whitespace characters.
 
         return result
 
-    def _find_patients(self, full_text: str) -> Sequence[str]:
+    def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
-        response = self._run_json_prompt(
+        full_text_response = self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_patients"],
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_patients"},
         )
 
-        result = response.get("patients", [])
-        if result == ["unknown"]:
-            return []
-        return result
+        unique_patients = set(full_text_response.get("patients", []))
 
-    def _find_variant_descriptions(self, full_text: str, query: str) -> Sequence[str]:
+        if focus_texts:
+            for focus_text in focus_texts:
+                focus_response = self._run_json_prompt(
+                    prompt_filepath=self._PROMPTS["find_patients"],
+                    params={"text": focus_text},
+                    prompt_settings={"prompt_tag": "observation__find_patients"},
+                )
+                unique_patients.update(focus_response.get("patients", []))
+
+        patients = list(unique_patients)
+
+        # TODO: rationalize and fuzzy dedupe.
+
+        if "unknown" in patients:
+            patients.remove("unknown")
+        return patients
+
+    def _find_variant_descriptions(
+        self, full_text: str, focus_texts: Sequence[str] | None, query: str
+    ) -> Sequence[str]:
         """Identify the genetic variants relevant to the query described in the full text of the paper.
 
         `query` should be a gene symbol.
+        Returned variants will be _as described_ in the source text. Downstream manipulations to make them
+        HGVS-compliant may be required.
         """
-        response = self._run_json_prompt(
+        full_text_response = self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_variants"],
             params={"text": full_text, "gene_symbol": query},
             prompt_settings={"prompt_tag": "observation__find_variants"},
         )
 
+        unique_variants = set(full_text_response.get("variants", []))
+
+        if focus_texts:
+            for focus_text in focus_texts:
+                focus_response = self._run_json_prompt(
+                    prompt_filepath=self._PROMPTS["find_variants"],
+                    params={"text": focus_text, "gene_symbol": query},
+                    prompt_settings={"prompt_tag": "observation__find_variants"},
+                )
+                unique_variants.update(focus_response.get("variants", []))
+
         # Often, the gene-symbol is provided as a prefix to the variant, remove it.
-        # TODO, consider hunting through the text for plausible transcripts.
+        # Note: we do additional similar checks later, but it's useful to do it now to remove redundancy.
         def _strip_query(x: str) -> str:
             # If x starts with query, remove that and any subsequent colon.
             if x.startswith(query):
                 return x[len(query) :].lstrip(":")
             return x
 
-        candidates = [_strip_query(x) for x in response.get("variants", [])]
+        candidates = list({_strip_query(x) for x in list(unique_variants)})
 
-        if candidates == ["unknown"]:
-            return []
+        if "unknown" in candidates:
+            candidates.remove("unknown")
+        if not candidates:
+            return candidates
 
         # Often, the variant is reported with both coding and protein-level descriptions, separate these out to
         # two distinct candidates.
@@ -162,6 +193,11 @@ uninterrupted sequences of whitespace characters.
         else:
             refseq = None
             variant_str = variant_str.strip()
+
+        # Occassionally, protein level descriptions do not include the p. prefix, add it if it's missing.
+        # This will only currently handle fairly simple protein level descriptions.
+        if re.search(r"^[A-Za-z]+\d+[A-Za-z]+$", variant_str):
+            variant_str = "p." + variant_str
 
         try:
             return self._variant_factory.parse(variant_str, gene_symbol, refseq)
@@ -270,19 +306,36 @@ uninterrupted sequences of whitespace characters.
         values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
         """
         # Obtain the full-text of the paper.
+        # TODO: encapsulate
         full_text = "\n".join(paper.props.get("full_text_sections", []))
+
+        # TODO: encapsulate
+        table_texts = {}
+        root = paper.props.get("full_text_xml")
+        if root is not None:
+            for passage in root.findall("./passage"):
+                if bool(passage.findall("infon[@key='section_type'][.='TABLE']")):
+                    id = passage.find("infon[@key='id']").text
+                    if not id:
+                        logger.error("No id for table, using None as key")
+                    if id not in table_texts:
+                        table_texts[id] = passage.find("text").text
+                    else:
+                        table_texts[id] += "\n" + passage.find("text").text
 
         if not full_text:
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
             return {}
 
         # Determine all of the patients specifically referred to in the paper, if any.
-        patients = self._find_patients(full_text)
+        patients = self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
         logger.info(f"Found the following patients in {paper}: {patients}")
 
-        # Determine all of the genetic variants matching `query`
-        variant_descriptions = self._find_variant_descriptions(full_text, query)
-        logger.info(f"Found the following variants for {query} in {paper}: {variant_descriptions}")
+        # Determine the candidate genetic variants matching `query`
+        variant_descriptions = self._find_variant_descriptions(
+            full_text=full_text, focus_texts=list(table_texts.values()), query=query
+        )
+        logger.info(f"Found the following variants described for {query} in {paper}: {variant_descriptions}")
 
         # Variant objects, keyed by variant description, those that fail to parse are discarded.
         variants = {v: self._create_variant(v, query) for v in variant_descriptions}
@@ -322,6 +375,12 @@ uninterrupted sequences of whitespace characters.
                 if (variant, individual) in result:
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
+                # Only keep variants associated with the "unmatched_variants" individual if they're not already
+                # associated with a "real" individual.
+                if individual == "unmatched_variants":
+                    if any(x[0] == variant for x in result):
+                        continue
+
                 result[(variant, individual)] = [full_text]
 
         return result

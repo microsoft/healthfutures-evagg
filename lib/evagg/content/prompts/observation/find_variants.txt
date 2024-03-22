@@ -1,17 +1,25 @@
-Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
+Here is some text from a paper describing genetic variants and potentially the patients or subjects who possessed 
 these variants. Provide for me a list of all of the genetic variants associated with the gene {{$gene_symbol}} that are
-desecribed in this text.
+described in this text.
 
 If a transcript identifier (e.g., NM_000123.1 or ENST0001234) or protein identifier (e.g., NP_000123.1 or ENSP0001234) 
 is included in the description of the variant, please feel free to include that, but it is not mandatory.
 
 Genetic variants can be described a number of different ways, here are a few examples:
  - "c.1234A>T"
+ - "c.1234A > T"
+ - "c.A1234T"
  - "NM_000123.1:c.1234A>T"
  - "p.K34T"
+ - "p.Ala55Lys"
  - "NP_000123.1:p.K34T"
  - "A substition of Thymine for Adenosine at base position 1234"
  - "A Threonine in place of Lysine as the 34th amino acid in the resultant protein."
+ - "rs123456789"
+
+Note that a variant is also often represented with a gene symbol followed by a description of the variant, for example
+"BRCA1 (c.123A>T)" or "BRCA1:(p.A55T)". In these cases, the gene symbol should not be returned, just the variant
+description and reference sequence (if included).
 
 The same logical variant can be identified in multiple different ways within the text of a paper, within reason try
 not to list the same variant twice, but it is not obvious that the text is talking about the same variant in two 
@@ -35,7 +43,8 @@ or alternatively:
 Do not provide any additional text in your response other than the json object.
 
 Remember, you're searching only for variants associated with the gene {{$gene_symbol}}, other genes in the same pathway 
-may be named very similarly, please be careful.
+may be named very similarly, please be careful. Sometimes the capitalizaiton of {{$gene_symbol}} may vary throughout the
+text.
 
 --
 
