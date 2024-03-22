@@ -1,6 +1,6 @@
 import logging
 
-from lib.evagg.ref import INormalizeVariants, IRefSeqLookupClient, IValidateVariants
+from lib.evagg.ref import INormalizeVariants, IRefSeqLookupClient, IValidateVariants, IVariantLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants
 
 logger = logging.getLogger(__name__)
@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class HGVSVariantFactory(ICreateVariants):
     _validator: IValidateVariants
     _normalizer: INormalizeVariants
+    _variant_lookup_client: IVariantLookupClient
     _refseq_client: IRefSeqLookupClient
 
     MITO_REFSEQ = "NC_012920.1"
@@ -17,16 +18,21 @@ class HGVSVariantFactory(ICreateVariants):
         self,
         validator: IValidateVariants,
         normalizer: INormalizeVariants,
+        variant_lookup_client: IVariantLookupClient,
         refseq_client: IRefSeqLookupClient,
     ) -> None:
         self._validator = validator
         self._normalizer = normalizer
+        self._variant_lookup_client = variant_lookup_client
         self._refseq_client = refseq_client
 
     def _predict_refseq(self, text_desc: str, gene_symbol: str | None) -> str | None:
         """Predict the RefSeq for a variant based on its description and gene symbol."""
         if text_desc.startswith("p.") and gene_symbol:
-            return self._refseq_client.protein_accession_for_symbol(gene_symbol)
+            protein_accession = self._refseq_client.protein_accession_for_symbol(gene_symbol)
+            if transcript_accession := self._refseq_client.transcript_accession_for_symbol(gene_symbol):
+                return f"{transcript_accession}({protein_accession})"
+            return protein_accession
         elif text_desc.startswith("c.") and gene_symbol:
             # TODO: consider also pulling the genomic refseq for the gene_symbol?
             return self._refseq_client.transcript_accession_for_symbol(gene_symbol)
@@ -38,6 +44,24 @@ class HGVSVariantFactory(ICreateVariants):
         else:
             logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}")
             return None
+
+    def parse_rsid(self, rsid: str) -> HGVSVariant:
+        """Parse a variant based on an rsid."""
+        hgvs_lookup = self._variant_lookup_client.hgvs_from_rsid(rsid)
+        full_hgvs = None
+        if rsid in hgvs_lookup:
+            if "hgvs_c" in hgvs_lookup[rsid]:
+                full_hgvs = hgvs_lookup[rsid]["hgvs_c"]
+            elif "hgvs_p" in hgvs_lookup[rsid]:
+                full_hgvs = hgvs_lookup[rsid]["hgvs_p"]
+
+        if not full_hgvs:
+            raise ValueError(f"Could not find HGVS for info rsid {rsid}")
+
+        refseq = full_hgvs.split(":")[0]
+        text_desc = full_hgvs.split(":")[1]
+
+        return self.parse(text_desc, None, refseq)
 
     def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
         """Attempt to parse a variant based on description and an optional gene symbol and optional refseq.
@@ -83,7 +107,9 @@ class HGVSVariantFactory(ICreateVariants):
             # Intronic sequence variant, ensure that we've got an NG_ or NC_ refseq to start
             if refseq.startswith("NM_"):
                 # Find the associated genomic reference sequence.
-                logger.info(f"Intronic variant without genomic reference, attempting to fix: {text_desc} {gene_symbol}")
+                logger.debug(
+                    f"Intronic variant without genomic reference, attempting to fix: {text_desc} {gene_symbol}"
+                )
                 if gene_symbol:
                     chrom_refseq = self._refseq_client.genomic_accession_for_symbol(gene_symbol)
                     refseq = f"{chrom_refseq}({refseq})" if chrom_refseq else refseq
