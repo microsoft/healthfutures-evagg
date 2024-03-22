@@ -23,7 +23,7 @@ class SynchronousLocalApp(IEvAggApp):
         all_fields: Dict[str, List[Dict[str, str]]] = {}
 
         for query in self._queries:
-            term = query["gene_symbol"]
+            term = query.get("gene_symbol")
             # Get the papers that match this query.
             papers = self._library.get_papers(query)
             logger.info(f"Found {len(papers)} papers for {term}")

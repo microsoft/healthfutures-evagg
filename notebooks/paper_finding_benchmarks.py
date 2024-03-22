@@ -89,6 +89,7 @@ def compare_to_truth_or_tool(gene, input_papers, ncbi_lookup, mgt_gene_pmids_dic
     ]
 
     ground_truth_gene_pmids = get_ground_truth_pmids(gene, mgt_gene_pmids_dict)
+    print("ground_truth_gene_pmids", ground_truth_gene_pmids)
 
     # Keep track of the correct and extra PMIDs to subtract from the MGT data papers PMIDs
     counted_pmids = []
@@ -117,6 +118,10 @@ def compare_to_truth_or_tool(gene, input_papers, ncbi_lookup, mgt_gene_pmids_dic
                     missed_paper_title.props.get("title", "Unknown") if missed_paper_title is not None else "Unknown"
                 )
                 missed_pmids.append((pmid, missed_paper_title))
+    else:
+        for pmid, title in input_paper_pmids:
+            counted_pmids.append(pmid)
+            irrelevant_pmids.append((pmid, title))
 
     return correct_pmids, missed_pmids, irrelevant_pmids
 
@@ -200,7 +205,7 @@ def plot_benchmarking_results(benchmarking_train_results):
     ax.set_ylabel("Average")
     ax.set_xlabel("Categories")
     plt.legend(loc="upper right")
-    plt.title("Average number of correct, missed and extra papers for our tool and PubMed")
+    plt.title("Avg. # correct, missed & irrelevant papers: E.A. vs. PubMed")
 
     # Function to add average value in bar plot labels
     def add_labels(bars):
@@ -410,7 +415,7 @@ def main(args):
             f.write(f"\nFound Pubmed {len(p_irr)} irrelevant.\n")
             for i, p in enumerate(p_irr):
                 f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
-
+    print("benchmarking", benchmarking_results)
     # Plot benchmarking results
     results_to_plot = plot_benchmarking_results(benchmarking_results)
 
