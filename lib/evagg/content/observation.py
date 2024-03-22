@@ -46,6 +46,7 @@ uninterrupted sequences of whitespace characters.
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
         default_settings = {
+            "max_tokens": 2048,
             "prompt_tag": "observation",
             "temperature": 0.7,
             "top_p": 0.95,
@@ -153,6 +154,16 @@ uninterrupted sequences of whitespace characters.
 
         return expanded_candidates
 
+    def _find_genome_build(self, full_text: str) -> str | None:
+        """Identify the genome build used in the paper."""
+        response = self._run_json_prompt(
+            prompt_filepath=self._PROMPTS["find_genome_build"],
+            params={"text": full_text},
+            prompt_settings={"prompt_tag": "observation__find_genome_build"},
+        )
+
+        return response.get("genome_build", "unknown")
+
     def _link_entities(
         self, full_text: str, patients: Sequence[str], variants: Sequence[str], query: str
     ) -> Dict[str, List[str]]:
@@ -170,9 +181,17 @@ uninterrupted sequences of whitespace characters.
 
         return response
 
-    def _create_variant(self, variant_str: str, gene_symbol: str) -> HGVSVariant | None:
+    def _create_variant(self, variant_str: str, gene_symbol: str, genome_build: str | None) -> HGVSVariant | None:
         """Create an HGVSVariant object from `variant_str` and `gene_symbol`."""
-        # First, let's do some preprocessing.
+        # If the variant_str contains a dbsnp rsid, parse it and return the variant.
+        if matched := re.match(r"(rs\d+)", variant_str):
+            try:
+                return self._variant_factory.parse_rsid(matched.group(1))
+            except Exception as e:
+                logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
+                return None
+
+        # Otherwise, assume we're working with an hgvs-like variant.
 
         # Remove all the spaces from the variant string.
         variant_str = variant_str.replace(" ", "")
@@ -193,6 +212,11 @@ uninterrupted sequences of whitespace characters.
         else:
             refseq = None
             variant_str = variant_str.strip()
+
+        # If the refseq looks like a chromosome designation, we've got to figure out the corresponding refseq, which
+        # will depend on the genome build.
+        if refseq and refseq.find("chr") >= 0:
+            refseq = f"{genome_build}({refseq})"
 
         # Occassionally, protein level descriptions do not include the p. prefix, add it if it's missing.
         # This will only currently handle fairly simple protein level descriptions.
@@ -216,6 +240,7 @@ uninterrupted sequences of whitespace characters.
          - if they are the same variant
          - if the protein consequence of one is the the same variant as the other
          - if they have the same hgvs_description and their refseq versions only differ by version number
+         - if they have the same hgvs_description and their refseqs are different (TODO: fix this logic)
 
         Note: this method draws no distinction between valid and invalid variants, invalid variants will not be
         normalized, nor will they have a protein consequence, so they are very likely to be considered distinct from
@@ -247,6 +272,19 @@ uninterrupted sequences of whitespace characters.
             """Return the refseq accession of the variant, "" if it's not present."""
             return _get_primary_refseq(v).split(".")[0] if v.refseq else ""
 
+        def _score_refseq_completeness(v: HGVSVariant) -> int:
+            """Return a score for the completeness refseq for a variant."""
+            if not v.refseq:
+                return 0
+            if v.refseq.find("(") >= 0:
+                return 3
+            if (v.hgvs_desc.startswith("p.") and v.refseq.startswith("NP_")) or (
+                v.hgvs_desc.startswith("c.")
+                and (v.refseq.startswith("NM_") or v.refseq.startswith("NG_") or v.refseq.startswith("NC_"))
+            ):
+                return 2
+            return 1
+
         for variant, description in variants.items():
             found = False
             for saved_variant, saved_descriptions in consolidated_variants.items():
@@ -265,25 +303,38 @@ uninterrupted sequences of whitespace characters.
                     saved_descriptions.append(description)
                     found = True
 
-                # - if they have the same hgvs_description and their refseq versions only differ by version number
-                # In this case keep the variant with the highest observed refseq version. If neither have one, keep the
-                # saved variant. If they both do, also keep the saved variant but log a warning.
-                if (variant.hgvs_desc == saved_variant.hgvs_desc) and (
-                    _get_refseq_accession(variant) == _get_refseq_accession(saved_variant)
-                ):
-                    saved_version = _get_refseq_version(saved_variant)
-                    version = _get_refseq_version(variant)
-                    if version > saved_version:
-                        consolidated_variants.pop(saved_variant)
-                        saved_descriptions.append(description)
-                        consolidated_variants[variant] = saved_descriptions
+                if variant.hgvs_desc == saved_variant.hgvs_desc:
+                    # - if they have the same hgvs_description and their refseq versions only differ by version number
+                    # In this case keep the variant with the highest observed refseq version. If neither have one, keep
+                    # the saved variant. If they both do, also keep the saved variant but log a warning.
+                    if _get_refseq_accession(variant) == _get_refseq_accession(saved_variant):
+                        saved_version = _get_refseq_version(saved_variant)
+                        version = _get_refseq_version(variant)
+                        if version > saved_version:
+                            consolidated_variants.pop(saved_variant)
+                            saved_descriptions.append(description)
+                            consolidated_variants[variant] = saved_descriptions
+                        else:
+                            if saved_version == 0 and version == 0:
+                                logger.warning(
+                                    f"Both {variant} and {saved_variant} have no refseq "
+                                    "version. Keeping {saved_variant}."
+                                )
+                            saved_descriptions.append(description)
+                    # - if they have the same hgvs_description and their refseq versions are different, keep the more
+                    # complete one, where more complete to less complete is defined as:
+                    #   1) having both a refseq and a selector
+                    #   2) having a refseq that is appropriate to the variant description
+                    #   3) having a refseq that is not predicted
+                    #   4) having a refseq at all
+                    # Ties go to the saved_variant.
                     else:
-                        if saved_version == 0 and version == 0:
-                            logger.warning(
-                                f"Both {variant} and {saved_variant} have no refseq "
-                                "version. Keeping {saved_variant}."
-                            )
-                        saved_descriptions.append(description)
+                        if _score_refseq_completeness(variant) > _score_refseq_completeness(saved_variant):
+                            consolidated_variants.pop(saved_variant)
+                            saved_descriptions.append(description)
+                            consolidated_variants[variant] = saved_descriptions
+                        else:
+                            saved_descriptions.append(description)
                     found = True
 
                 if found:
@@ -337,8 +388,16 @@ uninterrupted sequences of whitespace characters.
         )
         logger.info(f"Found the following variants described for {query} in {paper}: {variant_descriptions}")
 
+        # If necessary, determine the genome build most likely used for those variants.
+        # TODO: consider doing this on a per-variant bases.
+        if any(v.find("chr") >= 0 or v.find("g.") >= 0 for v in variant_descriptions):
+            genome_build = self._find_genome_build(full_text=full_text)
+            logger.info(f"Found the following genome build in {paper}: {genome_build}")
+        else:
+            genome_build = None
+
         # Variant objects, keyed by variant description, those that fail to parse are discarded.
-        variants = {v: self._create_variant(v, query) for v in variant_descriptions}
+        variants = {v: self._create_variant(v, query, genome_build) for v in variant_descriptions}
         # Note we're keeping invalid variants here.
         variants = {k: v for k, v in variants.items() if v is not None}
 
@@ -352,7 +411,7 @@ uninterrupted sequences of whitespace characters.
         else:
             observations = {}
 
-        result = {}
+        result: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
         for individual, variant_strs in observations.items():
             # Consolidate variants within each observation so we only get one variant object per observation,
             # deferring to genomic variants over protein variants. If an observation referrs to a variant_str that
@@ -380,7 +439,9 @@ uninterrupted sequences of whitespace characters.
                 if individual == "unmatched_variants":
                     if any(x[0] == variant for x in result):
                         continue
-
-                result[(variant, individual)] = [full_text]
+                    else:
+                        result[(variant, "unknown")] = [full_text]
+                else:
+                    result[(variant, individual)] = [full_text]
 
         return result

@@ -66,6 +66,7 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         # Mutalyzer doesn't currently support normalizing frame shift variants, so we can't validate them.
         # TODO, consider tweaking to be a stop gain and normalizing that.
         if hgvs.split(":")[1].find("fs") != -1:
-            return True
+            logger.debug(f"Skipping validation of frame shift variant {hgvs}")
+            return False
 
         return bool(self.normalize(hgvs))
