@@ -16,7 +16,8 @@ from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 from .interfaces import IGetPapers
 
 logger = logging.getLogger(__name__)
-# TODO: ways to improve: process full text of paper to filter to rare disease papers when PMC OA
+# TODO: ways to improve:
+#       - process full text of paper to filter to rare disease papers when PMC OA
 
 
 class SimpleFileLibrary(IGetPapers):
