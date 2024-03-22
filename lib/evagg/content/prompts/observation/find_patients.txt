@@ -2,14 +2,30 @@ Here is some text from a paper describing genetic variants and potentially the h
 these variants. Provide for me a list of all of the human patients desecribed in this text. This information can often 
 be found in tables within the text, especially if there is a large number of patients.
 
-Patient identifiers should not be long, they should not be complete sentences, they will generally be something short 
-like "Patient X", "subject 123", "S_xyz", or even initials, like "A.C.". Sometimes, patients are only identified by 
-their relationships to each other, e.g., "the proband's mother" or "the older affected child".
+Patient identifiers should not be long, they should not be complete sentences, they will generally be something short.
+Only report patient identifiers that are formatted similarly to the following examples:
+ - "I-1"
+ - "II6"
+ - "1:IV-8"
+ - "patient"
+ - "proband"
+ - "mother"
+ - "father"
+
+Occassionally, patients are identified only by their relationship to each other, e.g., "proband's sister", this is fine.
 
 Some papers, specifically case reports will be talking about just one patient. In this case, simply provide "patient" as
 your response.
 
 If no specific human patients are identified, or you are uncertain, simply provide "unknown" as your response.
+
+It's better to be picky here and respond with "unknown" unless you are fairly confident in your assessment that specific
+human patients are being discussed in the text.
+
+Occassionally, strings of digits are used as patient identifiers, e.g., "34" or "75987", but it is often difficult to
+differentiate these patient identifiers from other strings of digits within a text, so I specifically do not want you
+to return these identifiers. In these cases it is better to omit them (if there are others to report) or report 
+"unknown" as the sole patient identifier.
 
 Provide your response as a json object, in the following format:
 {

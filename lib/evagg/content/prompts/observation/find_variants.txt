@@ -11,14 +11,25 @@ Genetic variants can be described a number of different ways, here are a few exa
  - "c.A1234T"
  - "NM_000123.1:c.1234A>T"
  - "p.K34T"
+ - "p.(K34T)"
+ - "chr1:1234567A>T"
  - "p.Ala55Lys"
+ - "p.(Ala55Lys)"
  - "NP_000123.1:p.K34T"
  - "A substition of Thymine for Adenosine at base position 1234"
  - "A Threonine in place of Lysine as the 34th amino acid in the resultant protein."
  - "rs123456789"
+ - "T65I"
+ - "Ser195Gly"
+
+They are also commonly found as combinations of any of the above descriptions separated by punctuation and/or 
+whitespace, for example:
+ - "NM_000123.1:c.1234A>T (p.K412T)"
+ - "rs123456789, p.Ala55Lys"
+ - "c.1234A>T/p.K412T"
 
 Note that a variant is also often represented with a gene symbol followed by a description of the variant, for example
-"BRCA1 (c.123A>T)" or "BRCA1:(p.A55T)". In these cases, the gene symbol should not be returned, just the variant
+"BRCA1 (c.123A>T)" or "BRCA1:p.A55T". In these cases, the gene symbol should not be returned, just the variant
 description and reference sequence (if included).
 
 The same logical variant can be identified in multiple different ways within the text of a paper, within reason try
@@ -32,7 +43,7 @@ If no specific genetic variants are described, or you are uncertain, simply prov
 
 Provide your response as a json object in the following format:
 {
-    "variants": ["c.1234A>T", "NM_000123.1:c.2345del", "NP_000123.1:p.K34T"]
+    "variants": ["c.1234A>T", "NM_000123.1:c.2345del", "NP_000123.1:p.K34T", "K34T"]
 }
 
 or alternatively:

@@ -56,6 +56,7 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
+    @retry.retry(openai.RateLimitError, tries=3, delay=5, backoff=2)
     def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         start_ts = time.time()
         prompt_tag = settings.pop("prompt_tag", "prompt")
