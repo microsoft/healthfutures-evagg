@@ -178,7 +178,7 @@ def _normalize_hgvs_p(row: pd.Series) -> str:
     )
 
 
-# %% Apply the normalization to the truth and output dataframes.
+# %% Apply the normalization to the truth dataframes.
 
 if "hgvs_c" in truth_df.columns:
     truth_df["hgvs_c_orig"] = truth_df["hgvs_c"]
@@ -187,6 +187,8 @@ if "hgvs_c" in truth_df.columns:
 if "hgvs_p" in truth_df.columns:
     truth_df["hgvs_p_orig"] = truth_df["hgvs_p"]
     truth_df["hgvs_p"] = truth_df.apply(_normalize_hgvs_p, axis=1)
+
+# %% Apply the normalization to the output dataframe.
 
 # No need to normalize hgvs_c in output, since it's already normalized by the pipeline.
 # hgvs_p on the other hand should be normalized because
@@ -212,6 +214,8 @@ if "hgvs_c" in INDEX_COLUMNS and "hgvs_p" in INDEX_COLUMNS:
     # remove the original hgvs colummns from INDEX_COLUMNS and add the new index
     INDEX_COLUMNS -= {"hgvs_c", "hgvs_p"}
     INDEX_COLUMNS.add("hgvs_desc")
+
+    EXTRA_COLUMNS.update({"hgvs_c", "hgvs_p"})
 
     # Reset all_columns
     all_columns = CONTENT_COLUMNS.union(INDEX_COLUMNS).union(EXTRA_COLUMNS)
@@ -245,7 +249,6 @@ for group, truth_group_df in truth_df.groupby(["paper_id", "hgvs_desc"]):
             individual_id_map[individual_id] = [individual_id]
 
     if any(len(v) > 1 for v in individual_id_map.values()):
-        print(individual_id_map)
         # invert the map
         mapping = {v: k for k, values in individual_id_map.items() for v in values}
 

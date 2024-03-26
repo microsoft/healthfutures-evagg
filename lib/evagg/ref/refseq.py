@@ -40,6 +40,13 @@ class NcbiReferenceLookupClient(NcbiClientBase, IRefSeqLookupClient):
             "RNA": "NM_201550.4",
             "Protein": "NP_963844.2",
         },
+        "TOPBP1": {  # No RefSeqGene accession, thus not in reference table. Using chromosomal genomic reference.
+            "GeneID": "11073",
+            "Symbol": "TOPBP1",
+            "RSG": "NC_000003.12",
+            "RNA": "NM_007027.4",
+            "Protein": "NP_008958.2",
+        },
     }
 
     def __init__(

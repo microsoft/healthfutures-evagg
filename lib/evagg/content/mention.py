@@ -1,7 +1,11 @@
 import logging
+from collections import defaultdict
+from typing import Dict, Sequence, Set
 
 from lib.evagg.ref import INormalizeVariants, IRefSeqLookupClient, IValidateVariants, IVariantLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants
+
+from .interfaces import ICompareVariants
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +121,9 @@ class HGVSVariantFactory(ICreateVariants):
         is_valid = self._validator.validate(f"{refseq}:{text_desc}")
 
         protein_consequence = None
-        if is_valid:
+        if (
+            is_valid or text_desc.find("fs") >= 0
+        ):  # frame shift variants are not validated by mutalyzer, but they can be normalized.
             normalized = self._normalizer.normalize(f"{refseq}:{text_desc}")
 
             # Normalize the variant.
@@ -125,7 +131,7 @@ class HGVSVariantFactory(ICreateVariants):
                 normalized_hgvs = normalized["normalized_description"]
                 refseq = normalized_hgvs.split(":")[0]
                 new_text_desc = normalized_hgvs.split(":")[1]
-                if text_desc.find("(") < 0:
+                if new_text_desc.find("(") >= 0 and new_text_desc.find(")") >= 0:
                     text_desc = new_text_desc.replace("(", "").replace(")", "")
                 else:
                     text_desc = new_text_desc
@@ -156,3 +162,152 @@ class HGVSVariantFactory(ICreateVariants):
             valid=is_valid,
             protein_consequence=protein_consequence,
         )
+
+
+class HGVSVariantComparator(ICompareVariants):
+
+    def _score_refseq_completeness(self, v: HGVSVariant) -> int:
+        """Return a score for the completeness refseq for a variant."""
+        # Scores are assigned as follows:
+        #   3) having a refseq that is not predicted
+        #   2) having both a refseq and a selector
+        #   1) having a refseq at all
+
+        if not v.refseq:
+            raise ValueError("Variant has no refseq.")
+
+        if not v.refseq_predicted:
+            return 3
+        elif v.refseq.find("(") >= 0:
+            return 2
+        # At least we have a refseq.
+        return 1
+
+    def _parse_refseq_parts(self, refseq: str) -> Dict[str, int]:
+        """Parse a refseq accession string into a dictionary of accessions and versions."""
+        return {tok.rstrip(")").split(".")[0]: int(tok.rstrip(")").split(".")[1]) for tok in refseq.split("(")}
+
+    def _more_complete_by_refseq(self, variant1: HGVSVariant, variant2: HGVSVariant) -> HGVSVariant:
+        # We know we share at least one refseq accession. Accessions are not None.
+        v1score = self._score_refseq_completeness(variant1)
+        v2score = self._score_refseq_completeness(variant2)
+        if v1score > v2score:
+            return variant1
+        elif v1score < v2score:
+            return variant2
+
+        # All other things being equal, if they have the same refseq accession, keep the one with the highest version.
+        v1rs_dict = self._parse_refseq_parts(variant1.refseq) if variant1.refseq else {}
+        v2rs_dict = self._parse_refseq_parts(variant2.refseq) if variant2.refseq else {}
+
+        shared_keys = v1rs_dict.keys() & v2rs_dict.keys()
+        if not shared_keys:
+            raise ValueError(
+                "Expectation mismatch: comparing refseq completeness for variants with no shared accessions."
+            )
+
+        for k in shared_keys:
+            if v1rs_dict[k] > v2rs_dict[k]:
+                return variant1
+            elif v1rs_dict[k] < v2rs_dict[k]:
+                return variant2
+
+        # If none of the above conditions are met, keep the first one but log.
+        logger.info(f"Unable to determine more complete variant based on refseq completeness: {variant1}, {variant2}")
+        return variant1
+
+    def consolidate(self, variants: Sequence[HGVSVariant]) -> Dict[HGVSVariant, Set[HGVSVariant]]:
+        """Consolidate equivalent variants.
+
+        Return a mapping from the retained variants to all variants collapsed into that variant.
+        """
+        consolidated_variants: Dict[HGVSVariant, Set[HGVSVariant]] = defaultdict(set)
+
+        for variant in variants:
+            found = False
+
+            for saved_variant in consolidated_variants.keys():
+                # - if they are the same variant
+                if (keeper := self.compare(variant, saved_variant)) is not None:
+                    if saved_variant == keeper:
+                        consolidated_variants[saved_variant].add(variant)
+                    else:  # variant == keeper
+                        matches = consolidated_variants.pop(saved_variant)
+                        matches.add(variant)
+                        consolidated_variants[variant] = matches
+                    found = True
+                    break
+
+            # It's a new variant, save it.
+            if not found:
+                consolidated_variants[variant] = {variant}
+
+        return consolidated_variants
+
+    def _fuzzy_compare(self, variant1: HGVSVariant, variant2: HGVSVariant, disregard_refseq: bool) -> bool:
+        """Compare a variant to a protein consequence."""
+        desc_match = variant1.hgvs_desc.replace("(", "").replace(")", "") == variant2.hgvs_desc.replace(
+            "(", ""
+        ).replace(")", "")
+
+        if not desc_match:
+            return False
+        else:
+            if disregard_refseq:
+                return True
+            else:
+                # We know at least one of the refseqs is not None, otherwise the variants would already have been
+                # determined to be equivalent.
+                v1accessions = (
+                    {tok.rstrip(")").split(".")[0] for tok in variant1.refseq.split("(")} if variant1.refseq else set()
+                )
+                v2accessions = (
+                    {tok.rstrip(")").split(".")[0] for tok in variant2.refseq.split("(")} if variant2.refseq else set()
+                )
+
+                return bool(v1accessions.intersection(v2accessions))
+
+    def compare(
+        self, variant1: HGVSVariant, variant2: HGVSVariant, disregard_refseq: bool = False
+    ) -> HGVSVariant | None:
+        """Compare to variants for biological equivalence.
+
+        The logic below is a little gnarly, so it's worth a short description here. Effectively this method is
+        attempting to remove any redundancy in `variants` so any keys in that dict that are biologically "linked" are
+        merged, and the string descriptions of those variants that were observed in the paper are retained.
+
+        Note that variants are be biologically linked under the following conditions:
+        - if they are the same variant
+        - if the protein consequence of one is the the same variant as the other
+        - they have the same hgvs_description and share at least one refseq accession (regardless of version)
+
+        Optionally, one can disregard the refseq entirely.
+
+        Note: this method draws no distinction between valid and invalid variants, invalid variants will not be
+        normalized, nor will they have a protein consequence, so they are very likely to be considered distinct from
+        other biologically linked variants.
+
+        Return the more complete variant if they are equivalent, None if they are not.
+        """
+        if variant1 == variant2:
+            # Direct equivalence of the variant class handles the easy stuff.
+            return variant1
+
+        if self._fuzzy_compare(variant1, variant2, disregard_refseq):
+            # Same desc, determine the more complete variant WRT refseq.
+            # These two variants are guaranteed to share one or more refseq accessions.
+            return self._more_complete_by_refseq(variant1, variant2)
+
+        if variant2.protein_consequence and self._fuzzy_compare(
+            variant1, variant2.protein_consequence, disregard_refseq
+        ):
+            # Variant2 is DNA, so more complete.
+            return variant2
+
+        if variant1.protein_consequence and self._fuzzy_compare(
+            variant1.protein_consequence, variant2, disregard_refseq
+        ):
+            # Variant1 is DNA, so more complete.
+            return variant1
+
+        return None
