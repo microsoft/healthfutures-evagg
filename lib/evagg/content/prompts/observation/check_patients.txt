@@ -1,0 +1,39 @@
+Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
+these variants. I'm going to give you the identifier for a potential patient that is mentioned in this text. I want
+you to tell me whether the patient identifier actually refers to a patient in the text.
+
+Patient identifiers should not be long, they should not be complete sentences, they will generally be something short.
+Only report patient identifiers that are formatted similarly to the following examples:
+ - "I-1"
+ - "II6"
+ - "1:IV-8"
+ - "patient"
+ - "proband"
+ - "mother"
+ - "father"
+
+Occassionally, patients are identified only by their relationship to each other, e.g., "proband's sister".
+
+Some papers, specifically case reports will be talking about just one patient.
+
+It's better to be picky here and respond with "false" unless you are fairly confident in your assessment that specific
+patient is being discussed in the text.
+
+Provide your response as a json object, in the following format:
+{
+    "is_patient": "true"
+}
+
+or alternatively:
+{
+    "is_patient": "false"
+}
+
+Do not provide any additional text in your response other than the json object.
+
+--
+
+The patient identifier you are checking for in the text below is: {{$patient}}
+
+{{$text}}
+

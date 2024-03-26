@@ -1,7 +1,9 @@
 import logging
+import re
 from functools import cache
 from typing import Any, Dict, Sequence
 
+from Bio.SeqUtils import IUPACData
 from requests.exceptions import HTTPError
 
 from lib.evagg.svc import IWebContentClient
@@ -27,6 +29,11 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         return self._web_client.get(url, "json")
 
     def back_translate(self, hgvsp: str) -> Sequence[str]:
+        # Mutalyzer doesn't currently support normalizing frame shift variants, so we can't back-translate them.
+        if hgvsp.split(":")[1].find("fs") != -1:
+            logger.debug(f"Skipping back-translation of frameshift variant: {hgvsp}")
+            return []
+
         return self._cached_back_translate(hgvsp)
 
     @cache
@@ -52,13 +59,55 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         if "errors" in response or ("custom" in response and "errors" in response["custom"]):
             logger.warning(f"Mutalyzer returned an unhandleable error for {hgvs}: {response['custom']['errors']}")
             return {}
-        return response
+
+        # Only return a subset of the fields in the response.
+        response_dict = {}
+        if "normalized_description" in response:
+            response_dict["normalized_description"] = response["normalized_description"]
+        if "protein" in response and "description" in response["protein"]:
+            response_dict["protein"] = {"description": response["protein"]["description"]}
+        return response_dict
+
+    @cache
+    def _normalize_frame_shift(self, hgvs: str) -> Dict[str, Any]:
+        """Normalize a frame shift variant using a custom approach."""
+        # fs variants are of any of the following forms
+        # - p.XNNNfs
+        # - p.XNNNYfs
+        # - p.XNNNYfs*
+        # - p.XNNNYfs*7
+        #
+        # X and Y can be a one-letter or three-letter amino acid, N is a number, and * is a stop codon,
+        # which can alternatively be expressed as Ter.
+        #
+        # p.(XNNNfs) and p.XNNNfs are both acceptable, the normalized form should retain parentheses.
+        #
+        # The normalized representation should be p.XNNNfs where X is the three letter amino acid code.
+
+        logger.debug(f"Normalizing frame shift variant {hgvs}")
+
+        refseq, hgvs_desc = hgvs.split(":")
+
+        # Drop anything past NNN and replace with fs.
+        hgvs_desc = re.sub(r"(\(?)([A-Za-z]+[0-9]+)[A-Za-z0-9\*]+(\)?)", r"\1\2fs\3", hgvs_desc)
+
+        # Now replace the single letter code with the three letter code, if that's what was used.
+        if matched := re.match(r"(p.\(?)([A-Z])([0-9]+fs\)?)", hgvs_desc):
+            hgvs_desc = matched.group(1) + IUPACData.protein_letters_1to3[matched.group(2)] + matched.group(3)
+
+        # return {"normalized_description": f"{refseq}:{hgvs_desc}", "protein": {"description": f"{refseq}:{hgvs_desc}"}}
+        return {"normalized_description": f"{refseq}:{hgvs_desc}"}
 
     def normalize(self, hgvs: str) -> Dict[str, Any]:
         """Normalize an HGVS description using Mutalyzer.
 
         hgvs: The HGVS description to normalize, e.g., NM_000551.3:c.1582G>A
         """
+        # Mutalyzer doesn't currently support normalizing frame shift variants, so we have to take our own approach
+        # here.
+        if hgvs.split(":")[1].find("fs") != -1:
+            return self._normalize_frame_shift(hgvs)
+
         return self._cached_normalize(hgvs)
 
     def validate(self, hgvs: str) -> bool:

@@ -8,15 +8,20 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
+from .interfaces import ICompareVariants
+
 logger = logging.getLogger(__name__)
 
 
 class ObservationFinder:
     _PROMPTS = {
+        "check_patients": os.path.dirname(__file__) + "/prompts/observation/check_patients.txt",
+        "find_genome_build": os.path.dirname(__file__) + "/prompts/observation/find_genome_build.txt",
         "find_patients": os.path.dirname(__file__) + "/prompts/observation/find_patients.txt",
         "find_variants": os.path.dirname(__file__) + "/prompts/observation/find_variants.txt",
-        "split_variants": os.path.dirname(__file__) + "/prompts/observation/split_variants.txt",
         "link_entities": os.path.dirname(__file__) + "/prompts/observation/link_entities.txt",
+        "split_patients": os.path.dirname(__file__) + "/prompts/observation/split_patients.txt",
+        "split_variants": os.path.dirname(__file__) + "/prompts/observation/split_variants.txt",
     }
     _SYSTEM_PROMPT = """
 You are an intelligent assistant to a genetic analyst. Their task is to identify the genetic variant or variants that
@@ -35,11 +40,13 @@ uninterrupted sequences of whitespace characters.
         llm_client: IPromptClient,
         paper_lookup_client: IPaperLookupClient,
         variant_factory: ICreateVariants,
+        variant_comparator: ICompareVariants,
         normalizer: INormalizeVariants,
     ) -> None:
         self._llm_client = llm_client
         self._paper_lookup_client = paper_lookup_client
         self._variant_factory = variant_factory
+        self._variant_comparator = variant_comparator
         self._normalizer = normalizer
 
     def _run_json_prompt(
@@ -79,6 +86,9 @@ uninterrupted sequences of whitespace characters.
 
         unique_patients = set(full_text_response.get("patients", []))
 
+        # TODO, logically deduplicate patients here, e.g., if a patient is referred to as both "proband" and "IV-1",
+        # we should ask the LLM to determine if these are the same individual.
+
         if focus_texts:
             for focus_text in focus_texts:
                 focus_response = self._run_json_prompt(
@@ -88,13 +98,50 @@ uninterrupted sequences of whitespace characters.
                 )
                 unique_patients.update(focus_response.get("patients", []))
 
-        patients = list(unique_patients)
+        patient_candidates = list(unique_patients)
+        if "unknown" in patient_candidates:
+            patient_candidates.remove("unknown")
 
-        # TODO: rationalize and fuzzy dedupe.
+        # Occassionally, multiple patients are referred to in a single string, split these out.
+        expanded_patients: List[str] = []
 
-        if "unknown" in patients:
-            patients.remove("unknown")
-        return patients
+        for patient in patient_candidates:
+            if any(term in patient for term in ["and", "or"]):
+                split_response = self._run_json_prompt(
+                    prompt_filepath=self._PROMPTS["split_patients"],
+                    params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
+                    prompt_settings={"prompt_tag": "observation__split_patients"},
+                )
+                expanded_patients.extend(split_response.get("patients", []))
+            else:
+                expanded_patients.append(patient)
+
+        # If more than 5 patients are identified, risk of false positives is increased.
+        # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
+        # If there are no focus texts, use the full text of the paper.
+        if len(expanded_patients) >= 5:
+            logger.info(f"Identified {len(expanded_patients)} patients, cross-checking.")
+            final_patients: List[str] = []
+            texts_to_check = focus_texts if focus_texts else [full_text]
+
+            # TODO: optimization, prototype doing this in bulk, one call for all the candidate patients.
+            for patient in expanded_patients:
+                for text in texts_to_check:
+                    validation_response = self._run_json_prompt(
+                        prompt_filepath=self._PROMPTS["check_patients"],
+                        params={"text": text, "patient": patient},
+                        prompt_settings={"prompt_tag": "observation__check_patients"},
+                    )
+                    if validation_response.get("is_patient", "false") == "true":
+                        final_patients.append(patient)
+                        break
+                if patient not in final_patients:
+                    logger.debug(f"Removing {patient} from list of patients as it didn't pass final checks.")
+            logger.info(f"After cross-checking, {len(final_patients)} patients remain.")
+        else:
+            final_patients = expanded_patients
+
+        return final_patients
 
     def _find_variant_descriptions(
         self, full_text: str, focus_texts: Sequence[str] | None, query: str
@@ -179,10 +226,19 @@ uninterrupted sequences of whitespace characters.
             prompt_settings={"prompt_tag": "observation__link_entities"},
         )
 
+        # TODO, consider validating the links.
+
         return response
 
-    def _create_variant(self, variant_str: str, gene_symbol: str, genome_build: str | None) -> HGVSVariant | None:
-        """Create an HGVSVariant object from `variant_str` and `gene_symbol`."""
+    def _create_variant_from_text(
+        self, variant_str: str, gene_symbol: str, genome_build: str | None
+    ) -> HGVSVariant | None:
+        """Attempt to create an HGVSVariant object from `variant_str` and `gene_symbol`.
+
+        variant_str is a string representation of a variant, but since it's being extracted from paper text it can take
+        a variety of formats. It is the responsibility of this method to handle much of this preprocessing and provide
+        standardized representations to the _variant_factory for parsing.
+        """
         # If the variant_str contains a dbsnp rsid, parse it and return the variant.
         if matched := re.match(r"(rs\d+)", variant_str):
             try:
@@ -220,8 +276,23 @@ uninterrupted sequences of whitespace characters.
 
         # Occassionally, protein level descriptions do not include the p. prefix, add it if it's missing.
         # This will only currently handle fairly simple protein level descriptions.
-        if re.search(r"^[A-Za-z]+\d+[A-Za-z]+$", variant_str):
+        if re.search(r"^[A-Za-z]+\d+[A-Za-z]", variant_str):
             variant_str = "p." + variant_str
+
+        # Single-letter protein level descriptions should use * for a stop codon, not X.
+        variant_str = re.sub(r"(p\.[A-Z]\d+)X", r"\1*", variant_str)
+
+        # Fix c. descriptions that are erroneously written as c.{ref}{pos}{alt} instead of c.{pos}{ref}>{alt}.
+        variant_str = re.sub(r"c\.([ACTG])(\d+)([A-Z]+)", r"c.\2\1>\3", variant_str)
+
+        # Fix three-letter p. descriptions that don't follow the capitalization convention.
+        # For now, only handle reference AAs and single missense alternate AAs.
+        if match := re.match(r"p\.([A-za-z][a-z]{2})(\d+)([A-za-z][a-z]{2})*(.*?)$", variant_str):
+            ref_aa, pos, alt_aa, extra = match.groups()
+            variant_str = f"p.{ref_aa.capitalize()}{pos}{alt_aa.capitalize() if alt_aa else ''}{extra}"
+
+        # Frameshift should be designated with fs, not frameshift
+        variant_str = variant_str.replace("frameshift", "fs")
 
         try:
             return self._variant_factory.parse(variant_str, gene_symbol, refseq)
@@ -229,122 +300,26 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    def _consolidate_variants(self, variants: Mapping[HGVSVariant, str]) -> Dict[HGVSVariant, List[str]]:
-        """Consolidate the Variant objects, retaining all descriptions used.
+    def _get_paper_texts(self, paper: Paper) -> Dict[str, Any]:
+        texts: Dict[str, Any] = {}
 
-        The logic below is a little gnarly, so it's worth a short description here. Effectively this method is
-        attempting to remove any redundancy in `variants` so any keys in that dict that are biologically "linked" are
-        merged, and the string descriptions of those variants that were observed in the paper are retained.
+        texts["full_text"] = "\n".join(paper.props.get("full_text_sections", []))
 
-        Note that variants are be biologically linked under the following conditions:
-         - if they are the same variant
-         - if the protein consequence of one is the the same variant as the other
-         - if they have the same hgvs_description and their refseq versions only differ by version number
-         - if they have the same hgvs_description and their refseqs are different (TODO: fix this logic)
-
-        Note: this method draws no distinction between valid and invalid variants, invalid variants will not be
-        normalized, nor will they have a protein consequence, so they are very likely to be considered distinct from
-        other biologically linked variants.
-        """
-        consolidated_variants: Dict[HGVSVariant, List[str]] = {}
-
-        def _get_primary_refseq(v: HGVSVariant) -> str:
-            """Return the primary refseq for the variant."""
-            if not v.refseq:
-                return ""
-
-            start = v.refseq.find("(")
-            end = v.refseq.find(")")
-            if start >= 0 and end >= 0:
-                return v.refseq[start + 1 : end]
-            return v.refseq
-
-        def _get_refseq_version(v: HGVSVariant) -> int:
-            """Return the refseq version of the variant, 0 if it's predicted and -1 if it's not present."""
-            if not v.refseq:
-                return -1
-            primary_refseq = _get_primary_refseq(v)
-            return (
-                int(primary_refseq.split(".")[1]) * int(not v.refseq_predicted) if primary_refseq.find(".") >= 0 else -1
-            )
-
-        def _get_refseq_accession(v: HGVSVariant) -> str:
-            """Return the refseq accession of the variant, "" if it's not present."""
-            return _get_primary_refseq(v).split(".")[0] if v.refseq else ""
-
-        def _score_refseq_completeness(v: HGVSVariant) -> int:
-            """Return a score for the completeness refseq for a variant."""
-            if not v.refseq:
-                return 0
-            if v.refseq.find("(") >= 0:
-                return 3
-            if (v.hgvs_desc.startswith("p.") and v.refseq.startswith("NP_")) or (
-                v.hgvs_desc.startswith("c.")
-                and (v.refseq.startswith("NM_") or v.refseq.startswith("NG_") or v.refseq.startswith("NC_"))
-            ):
-                return 2
-            return 1
-
-        for variant, description in variants.items():
-            found = False
-            for saved_variant, saved_descriptions in consolidated_variants.items():
-                # - if they are the same variant
-                if variant == saved_variant and description not in saved_descriptions:
-                    consolidated_variants[saved_variant].append(description)
-                    found = True
-
-                # - if the protein consequence of one is the the same variant as the other
-                if variant.protein_consequence and variant.protein_consequence == saved_variant:
-                    consolidated_variants.pop(saved_variant)
-                    saved_descriptions.append(description)
-                    consolidated_variants[variant] = saved_descriptions
-                    found = True
-                if variant == saved_variant.protein_consequence:
-                    saved_descriptions.append(description)
-                    found = True
-
-                if variant.hgvs_desc == saved_variant.hgvs_desc:
-                    # - if they have the same hgvs_description and their refseq versions only differ by version number
-                    # In this case keep the variant with the highest observed refseq version. If neither have one, keep
-                    # the saved variant. If they both do, also keep the saved variant but log a warning.
-                    if _get_refseq_accession(variant) == _get_refseq_accession(saved_variant):
-                        saved_version = _get_refseq_version(saved_variant)
-                        version = _get_refseq_version(variant)
-                        if version > saved_version:
-                            consolidated_variants.pop(saved_variant)
-                            saved_descriptions.append(description)
-                            consolidated_variants[variant] = saved_descriptions
-                        else:
-                            if saved_version == 0 and version == 0:
-                                logger.warning(
-                                    f"Both {variant} and {saved_variant} have no refseq "
-                                    "version. Keeping {saved_variant}."
-                                )
-                            saved_descriptions.append(description)
-                    # - if they have the same hgvs_description and their refseq versions are different, keep the more
-                    # complete one, where more complete to less complete is defined as:
-                    #   1) having both a refseq and a selector
-                    #   2) having a refseq that is appropriate to the variant description
-                    #   3) having a refseq that is not predicted
-                    #   4) having a refseq at all
-                    # Ties go to the saved_variant.
+        tables = {}
+        root = paper.props.get("full_text_xml")
+        if root is not None:
+            for passage in root.findall("./passage"):
+                if bool(passage.findall("infon[@key='section_type'][.='TABLE']")):
+                    id = passage.find("infon[@key='id']").text
+                    if not id:
+                        logger.error("No id for table, using None as key")
+                    if id not in tables:
+                        tables[id] = passage.find("text").text
                     else:
-                        if _score_refseq_completeness(variant) > _score_refseq_completeness(saved_variant):
-                            consolidated_variants.pop(saved_variant)
-                            saved_descriptions.append(description)
-                            consolidated_variants[variant] = saved_descriptions
-                        else:
-                            saved_descriptions.append(description)
-                    found = True
+                        tables[id] += "\n" + passage.find("text").text
 
-                if found:
-                    break
-
-            # It's a new variant, save it.
-            if not found:
-                consolidated_variants[variant] = [description]
-
-        return consolidated_variants
+        texts["tables"] = tables
+        return texts
 
     def find_observations(self, query: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
         """Identify all observations relevant to `query` in `paper`.
@@ -356,23 +331,10 @@ uninterrupted sequences of whitespace characters.
         keyed by tuples of variants and string representations of the individual in which that variant was observed. The
         values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
         """
-        # Obtain the full-text of the paper.
-        # TODO: encapsulate
-        full_text = "\n".join(paper.props.get("full_text_sections", []))
 
-        # TODO: encapsulate
-        table_texts = {}
-        root = paper.props.get("full_text_xml")
-        if root is not None:
-            for passage in root.findall("./passage"):
-                if bool(passage.findall("infon[@key='section_type'][.='TABLE']")):
-                    id = passage.find("infon[@key='id']").text
-                    if not id:
-                        logger.error("No id for table, using None as key")
-                    if id not in table_texts:
-                        table_texts[id] = passage.find("text").text
-                    else:
-                        table_texts[id] += "\n" + passage.find("text").text
+        texts = self._get_paper_texts(paper)
+        full_text = texts.get("full_text", None)
+        table_texts = texts.get("tables", {})
 
         if not full_text:
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
@@ -397,9 +359,11 @@ uninterrupted sequences of whitespace characters.
             genome_build = None
 
         # Variant objects, keyed by variant description, those that fail to parse are discarded.
-        variants = {v: self._create_variant(v, query, genome_build) for v in variant_descriptions}
+        variants = {desc: self._create_variant_from_text(desc, query, genome_build) for desc in variant_descriptions}
         # Note we're keeping invalid variants here.
-        variants = {k: v for k, v in variants.items() if v is not None}
+        variants = {desc: variant for desc, variant in variants.items() if variant is not None}
+
+        # TODO, consider consolidating variants here, before linking with patients.
 
         # If there are both variants and patients, build a mapping between the two,
         # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
@@ -410,6 +374,11 @@ uninterrupted sequences of whitespace characters.
             observations = {"unknown": list(variants.keys())}
         else:
             observations = {}
+
+        # TODO, if we've split variant descriptions above, then we run the risk of the observations returning the
+        # unsplit variant entity, which will not match the keys in variant objects. Either try to convince the LLM to
+        # only use the specific variants we provide, or find a way to be robust to the split during variant object
+        # lookup below.
 
         result: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
         for individual, variant_strs in observations.items():
@@ -427,7 +396,8 @@ uninterrupted sequences of whitespace characters.
             if not variants_to_consolidate:
                 continue
 
-            consolidated_variants = self._consolidate_variants(variants_to_consolidate)
+            consolidation_map = self._variant_comparator.consolidate(list(variants_to_consolidate.keys()))
+            consolidated_variants = {k: variants_to_consolidate[v] for k, vl in consolidation_map.items() for v in vl}
 
             for variant, _ in consolidated_variants.items():
                 # TODO: use values to find tagged sections, that's why we're leaving the use of '.items()' here.
