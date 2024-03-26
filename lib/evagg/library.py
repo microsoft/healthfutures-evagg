@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 from datetime import date
 from functools import cache
-from typing import Any, Dict, Sequence, Set, Tuple
+from typing import Any, Dict, List, Sequence, Set, Tuple
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
@@ -170,9 +170,6 @@ class RemoteFileLibrary(IGetPapers):
         Returns:
             Set[Paper]: The set of papers that match the query.
         """
-        if not query["gene_symbol"]:
-            raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
-
         # Get gene term
         term = query["gene_symbol"]
         logger.info("\nFinding papers for gene:", term, "...")
@@ -185,7 +182,12 @@ class RemoteFileLibrary(IGetPapers):
 class RareDiseaseFileLibrary(IGetPapers, IPaperLookupClient, IPromptClient):
     """A class for filtering to rare disease papers from PubMed."""
 
-    def __init__(self, paper_client: IPaperLookupClient, llm_client: IPromptClient) -> None:
+    def __init__(
+        self,
+        paper_client: IPaperLookupClient,
+        # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
+        # so that the user of this class can specify which types of papers they want to filter for.
+    ) -> None:
         """Initialize a new instance of the RemoteFileLibrary class.
 
         Args:
@@ -202,30 +204,10 @@ class RareDiseaseFileLibrary(IGetPapers, IPaperLookupClient, IPromptClient):
             query (Dict[str, Any]): The query to search for.
 
         Returns:
-            Set[Paper]: The set of papers that match the query.
+            Set[Paper]: The set of rare disease papers that match the query.
         """
-        if not query["gene_symbol"]:
-            raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
-
-        # Get gene term
-        term = query["gene_symbol"]
-        logger.info("\nFinding papers for gene:", term, "...")
-
-        # Find paper IDs
-        paper_ids = self._partition_search_query(query)
-
-        # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
-        papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
-
-        # Call private function to filter for rare disease papers
-        rare_disease_papers, _, _ = self._filter_rare_disease_papers(papers)
-
-        # TODO: figure out how best to integrate these outputs (rare_disease_papers and llm_rare_disease_papers)
-        llm_rare_disease_papers, _, _ = self._prompts_for_rare_disease_papers(papers)
-
-        print("get_papers, RESULTS", len(llm_rare_disease_papers))
-
-        return rare_disease_papers
+        print("Query:", query)
+        return self.get_all_papers(query)[0]
 
     def get_all_papers(self, query: Dict[str, Any]) -> Tuple[Set[Paper], Set[Paper], Set[Paper], Set[Paper]]:
         """Search for papers based on the given query.
@@ -237,8 +219,8 @@ class RareDiseaseFileLibrary(IGetPapers, IPaperLookupClient, IPromptClient):
            Tuple of Set[Paper]s: The sets of papers that match the query, across categories and overall (rare disease,
            non-rare disease, other, and the union).
         """
-        if not query["gene_symbol"]:
-            raise NotImplementedError("Minimum requirement to search is to input a gene symbol.")
+        if not query.get("gene_symbol"):
+            raise ValueError("Minimum requirement to search is to input a gene symbol.")
 
         paper_ids = self._partition_search_query(query)
 
@@ -325,53 +307,47 @@ class RareDiseaseFileLibrary(IGetPapers, IPaperLookupClient, IPromptClient):
         date_type = query.get("date_type", None)
         retmax = query.get("retmax", None)
 
-        # If the most basic query is provided, search for papers with just the gene symbol
-        if term and not min_date and not max_date and not date_type and not retmax:
-            paper_ids = self._paper_client.search(query=term)
-        # If min_date is the only extra parameter provided from this query,
-        # max_date should be today's date and date_type should be "pdat".
-        elif (
-            min_date and not max_date and not date_type
-        ):  # NLM requires min and max date: https://www.nlm.nih.gov/dataguide/eutilities/utilities.html
+        # Check for missing parameters and set defaults
+        if (
+            min_date and not max_date
+        ):  # If min_date is the only extra parameter provided from this query,max_date should be today's date and
+            # date_type will default to "pdat". NLM requires min and max date:
+            # https://www.nlm.nih.gov/dataguide/eutilities/utilities.html
             max_date = date.today().strftime("%Y/%m/%d")
+        if (
+            min_date and max_date and not date_type
+        ):  # If min and max dates are provided but not date_type, set to default: publication date.
             date_type = "pdat"
-            paper_ids = self._paper_client.search(query=term, min_date=min_date, date_type=date_type)  # type: ignore
-        # If min_date and date_type are the only extra parameters provided from this query,
-        # max_date should be today's date.
-        elif min_date and date_type and not max_date:
-            max_date = date.today().strftime("%Y/%m/%d")
-            paper_ids = self._paper_client.search(
-                query=term, min_date=min_date, max_date=max_date, date_type=date_type  # type: ignore
-            )
-        # If date_type is the only parameter provided,
-        # we need to raise an error to say that a min_date and/or max_date should be provided.
-        elif date_type and not min_date and not max_date:
-            raise ValueError("A min_date and max_date should be provided when date_type is provided")
-        # If max_date is provided but min_date and date_type are not provided,
-        # throw an error to say that min_date and date_type should be provided.
-        elif max_date and not min_date and not date_type:
-            raise ValueError("A min_date (and optionally date_type) should be provided when max_date is provided")
-        elif max_date and date_type and not min_date:
-            raise ValueError("A min_date should be provided when max_date and date_type are provided")
-        # If min and max dates are provided but not date_type, set to default: publication date.
-        elif min_date and max_date and not date_type:
-            date_type = "pdat"
-            paper_ids = self._paper_client.search(
-                query=term,
-                min_date=min_date,
-                max_date=max_date,
-                date_type=date_type,  # type: ignore
-            )
-        else:
-            paper_ids = self._paper_client.search(
-                query=term,
-                min_date=min_date,
-                max_date=max_date,  # type: ignore
-                date_type=date_type,  # type: ignore
-                retmax=retmax,  # default retmax (i.e. max_papers) is 20
-            )
+        if date_type and not min_date and not max_date:
+            raise ValueError("A min_date and optionally max_date should be provided when date_type is provided")
+        if max_date and not min_date:
+            raise ValueError("A min_date should be provided when max_date is provided")
+
+        # Perform the search
+        params = {
+            "query": term,
+            "min_date": min_date,
+            "max_date": max_date,
+            "date_type": date_type,
+            "retmax": retmax,
+        }
+
+        # Remove None values
+        params = {k: v for k, v in params.items() if v is not None}
+
+        # Perform the search
+        paper_ids = self._paper_client.search(**params)
 
         return paper_ids
+
+    def _contains_keywords(self, text: str, keywords: List[str]) -> bool:  # type: ignore
+        """Check if a text contains any of the keywords."""
+        return any(keyword in text.lower() for keyword in keywords if not keyword.startswith("-")) or any(
+            re.search(f"{keyword[1:]}$", word)
+            for keyword in keywords
+            if keyword.startswith("-")
+            for word in text.lower().split()
+        )
 
     def _filter_rare_disease_papers(self, papers: Set[Paper]) -> Tuple[Set[Paper], Set[Paper], Set[Paper]]:
         """Filter papers to only include those that are related to rare diseases.
@@ -386,168 +362,92 @@ class RareDiseaseFileLibrary(IGetPapers, IPaperLookupClient, IPromptClient):
         non_rare_disease_papers: Set[Paper] = set()
         other_papers: Set[Paper] = set()
 
+        # Keywords
+        inclusion_keywords = [
+            "variant",
+            "rare disease",
+            "rare variant",
+            "disorder",
+            "syndrome",
+            "-emia",
+            "-cardia",
+            "-phagia",
+            "pathogenic",
+            "benign",
+            "inherited cancer",
+            "germline",
+        ]
+
+        inclusion_keywords = inclusion_keywords + [word + "s" for word in inclusion_keywords]
+
+        inclusion_keywords_odd_plurals = [
+            "-lepsy",
+            "-lepsies",
+            "-pathy",
+            "-pathies",
+            "-osis",
+            "-oses",
+            "variant of unknown significance",
+            "variants of unknown significance",
+            "variant of uncertain significance",
+            "variants of uncertain significance",
+        ]
+
+        inclusion_keywords_no_plural = [
+            "mendelian",
+            "monogenic",
+            "monogenicity",
+            "monoallelic",
+            "syndromic",
+            "inherited",
+            "hereditary",
+            "dominant",
+            "recessive",
+            "de novo",
+            "VUS",
+            "disease causing",
+        ]
+
+        inclusion_keywords = inclusion_keywords + inclusion_keywords_odd_plurals + inclusion_keywords_no_plural
+
+        exclusion_keywords = [
+            "digenic",
+            "familial",
+            "structural variant",
+            "structural variants",
+            "somatic",
+            "somatic cancer",
+            "somatic cancers",
+            "cancer",
+            "cancers",
+            "CNV",
+            "CNVs",
+            "copy number variant",
+            "copy number variants",
+        ]
+
         # Iterate through each paper and filter into 1 of 3 categories based on title and abstract
         for paper in papers:
-            paper_title = paper.props.get("title", None)
-            paper_abstract = paper.props.get("abstract", None)
+            paper_title = paper.props.get("title", "Unknown")
+            paper_abstract = paper.props.get("abstract", "Unknown")
 
-            inclusion_keywords = [
-                "variant",
-                "rare disease",
-                "rare variant",
-                "disorder",
-                "syndrome",
-                "-emia",
-                "-cardia",
-                "-phagia",
-                "pathogenic",
-                "benign",
-                "inherited cancer",
-                "germline",
-            ]
-
-            inclusion_keywords = inclusion_keywords + [word + "s" for word in inclusion_keywords]
-
-            inclusion_keywords_odd_plurals = [
-                "-lepsy",
-                "-lepsies",
-                "-pathy",
-                "-pathies",
-                "-osis",
-                "-oses",
-                "variant of unknown significance",
-                "variants of unknown significance",
-                "variant of uncertain significance",
-                "variants of uncertain significance",
-            ]
-
-            inclusion_keywords_no_plural = [
-                "mendelian",
-                "monogenic",
-                "monogenicity",
-                "monoallelic",
-                "syndromic",
-                "inherited",
-                "hereditary",
-                "dominant",
-                "recessive",
-                "de novo",
-                "VUS",
-                "disease causing",
-            ]
-
-            inclusion_keywords = inclusion_keywords + inclusion_keywords_odd_plurals + inclusion_keywords_no_plural
-
-            exclusion_keywords = [
-                "digenic",  # not meaningful in plural form
-                "familial",  # not meaningful in plural form
-                "structural variant",
-                "somatic",  # not meaningful in plural form
-                "somatic cancer",
-                "cancer",
-                "tumor",
-                "CNV",
-                "carcinoma",
-                "copy number variant",
-            ]
-
-            exclusion_keywords = exclusion_keywords + [word + "s" for word in exclusion_keywords]
-
-            # include in rare disease category
-            if paper_title is not None and (
-                any(keyword in paper_title.lower() for keyword in inclusion_keywords if not keyword.startswith("-"))
-                or any(
-                    re.search(f"{keyword[1:]}$", word)  # remove the "-" from "-" keywords
-                    for keyword in inclusion_keywords
-                    if keyword.startswith("-")  # match end of all words with these keywords
-                    for word in paper_title.lower().split()
-                )
+            # Check if the paper should be included in the rare disease category
+            if self._contains_keywords(paper_title, inclusion_keywords) or self._contains_keywords(
+                paper_abstract, inclusion_keywords
             ):
                 rare_disease_papers.add(paper)
-            elif paper_abstract is not None and (
-                any(keyword in paper_abstract.lower() for keyword in inclusion_keywords if not keyword.startswith("-"))
-                or any(
-                    re.search(f"{keyword[1:]}$", word)
-                    for keyword in inclusion_keywords
-                    if keyword.startswith("-")
-                    for word in paper_abstract.lower().split()
-                )
-            ):
-                rare_disease_papers.add(paper)
-            # exclude from rare disease category, include in non-rare disease category
-            elif paper_title is not None and (
-                any(keyword in paper_title.lower() for keyword in exclusion_keywords if not keyword.startswith("-"))
-                or any(
-                    re.search(f"{keyword[1:]}$", word)
-                    for keyword in exclusion_keywords
-                    if keyword.startswith("-")
-                    for word in paper_title.lower().split()
-                )
+            # Check if the paper should be included in the non-rare disease category
+            elif self._contains_keywords(paper_title, exclusion_keywords) or self._contains_keywords(
+                paper_abstract, exclusion_keywords
             ):
                 non_rare_disease_papers.add(paper)
-            elif paper_abstract is not None and (
-                any(keyword in paper_abstract.lower() for keyword in exclusion_keywords if not keyword.startswith("-"))
-                or any(
-                    re.search(f"{keyword[1:]}$", word)
-                    for keyword in exclusion_keywords
-                    if keyword.startswith("-")
-                    for word in paper_abstract.lower().split()
-                )
-            ):
-                non_rare_disease_papers.add(paper)
-            # exclude from rare disease category, exclude from non-rare disease category, include in other category
+            # If the paper doesn't fit in the other categories, add it to the other category
             else:
                 other_papers.add(paper)
 
-            # include in rare disease category
-            if paper_title is not None:
-                if any(
-                    keyword in paper_title.lower() for keyword in inclusion_keywords if not keyword.startswith("-")
-                ) or any(
-                    paper_title.lower().endswith(keyword[1:])
-                    for keyword in inclusion_keywords
-                    if keyword.startswith("-")
-                ):
-                    rare_disease_papers.add(paper)
-            elif paper_abstract is not None:
-                if any(
-                    keyword in paper_abstract.lower() for keyword in inclusion_keywords if not keyword.startswith("-")
-                ) or any(
-                    paper_abstract.lower().endswith(keyword[1:])
-                    for keyword in inclusion_keywords
-                    if keyword.startswith("-")
-                ):
-                    rare_disease_papers.add(paper)
-            # exclude from rare disease category, include in non-rare disease category
-            elif paper_title is not None:
-                if any(
-                    keyword in paper_title.lower() for keyword in exclusion_keywords if not keyword.startswith("-")
-                ) or any(
-                    paper_title.lower().endswith(keyword[1:])
-                    for keyword in exclusion_keywords
-                    if keyword.startswith("-")
-                ):
-                    non_rare_disease_papers.add(paper)
-            elif paper_abstract is not None:
-                if any(
-                    keyword in paper_abstract.lower() for keyword in exclusion_keywords if not keyword.startswith("-")
-                ) or any(
-                    paper_abstract.lower().endswith(keyword[1:])
-                    for keyword in exclusion_keywords
-                    if keyword.startswith("-")
-                ):
-                    non_rare_disease_papers.add(paper)
-            # exclude from rare disease category, exclude from non-rare disease category, include in other category
-            else:
-                other_papers.add(paper)
+            # TODO: Exclude papers that are not written in English by scanning the title or abstract
 
-            # Exclude papers that are not written in English by scanning the title or abstract
-            # TODO: Implement this
-
-            # Exclude papers that only describe animal models and do not have human data
-            # TODO: Implement this
-
-            # TODO: add in GPT-4 code
+            # TODO: Exclude papers that only describe animal models and do not have human data
 
         # Output the number of papers in each category
         logger.info("Rare Disease Papers: ", len(rare_disease_papers))
