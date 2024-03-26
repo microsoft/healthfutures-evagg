@@ -17,7 +17,7 @@ Provide your response as a json object, in the following format:
 or alternatively just an empty list if you don't see any valid variants in the input:
 {"variants": []}
 
-Do not provide any additional text in your response other than the json obkect.
+Do not provide any additional text in your response other than the json object.
 
 Here are some examples:
 

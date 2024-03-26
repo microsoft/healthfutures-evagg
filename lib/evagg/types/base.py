@@ -58,8 +58,8 @@ class HGVSVariant:
         """Return a string representation of the variant description that is suitable for direct string comparison.
 
         This includes
-          - dropping of prediction parentheses.
-          - substitution of * for Ter in the three letter amino acid representation.
+        - dropping of prediction parentheses.
+        - substitution of * for Ter in the three letter amino acid representation.
 
         For example: p.(Arg123Ter) -> p.Arg123*
         """

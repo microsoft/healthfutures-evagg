@@ -1,0 +1,48 @@
+Sometimes patient identifiers extracted from the biomedical literature bundle together multiple patients.
+I am going to provide you a list of patient patient identifiers below. If any of those identifiers refer to multiple
+patients, I would like you to split it into a separate elements in your output.
+
+I will provide examples below.
+
+Provide your response as a json object, in the following format:
+{"patients": ["Patient 1", "Patient 2"]}
+
+or alternatively just an empty list if you don't see any valid patients in the input:
+{"patients": []}
+
+Do not provide any additional text in your response other than the json object.
+
+Here are some examples:
+
+Input:
+
+"Patients 1 and 2"
+
+Output:
+
+{"patients": ["Patient 1", "Patient 2"]}
+
+Input:
+
+"i.III3"
+
+Output:
+
+{"patients": ["i.III3"]}
+
+Input:
+
+"Subject 3", "Subjects 4 and 5"
+
+Output:
+
+{"patients": ["Subject 3", "Subject 4", "Subject 5"]}
+
+--
+
+Input:
+
+{{$patient_list}}
+
+Output:
+

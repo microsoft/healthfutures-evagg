@@ -1,9 +1,24 @@
-from typing import Any, Dict, Protocol, Sequence, Tuple
+from typing import Any, Dict, Protocol, Sequence, Set, Tuple
 
 from lib.evagg.types import HGVSVariant, Paper
 
 
-# TODO, this should be keyed on HGVSVariant, not a string representation of the variant.
+class ICompareVariants(Protocol):
+    def consolidate(self, variants: Sequence[HGVSVariant]) -> Dict[HGVSVariant, Set[HGVSVariant]]:
+        """Consolidate equivalent variants.
+
+        Return a mapping from the retained variants to all variants collapsed into that variant.
+        """
+        ...  # pragma: no cover
+
+    def compare(self, variant1: HGVSVariant, variant2: HGVSVariant) -> HGVSVariant | None:
+        """Compare two variants to determine if they are biologically equivalent.
+
+        If they are, return the more complete one, otherwise return None.
+        """
+        ...  # pragma: no cover
+
+
 class IFindVariantMentions(Protocol):
     def find_mentions(self, query: str, paper: Paper) -> Dict[HGVSVariant, Sequence[Dict[str, Any]]]:
         """Find variant mentions relevant to query that are mentioned in `paper`.
