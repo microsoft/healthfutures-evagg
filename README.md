@@ -164,7 +164,7 @@ You can optionally add or override any leaf value within an app spec dictionary 
 the `-o` argument one or more times:
 
 ```bash
-run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv -o log.log_level:DEBUG
+run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv -o log.level:DEBUG
 ```
 
 ### Configuration and secrets

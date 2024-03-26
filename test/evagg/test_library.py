@@ -18,11 +18,9 @@ def mock_paper_client(mock_client: type) -> IPaperLookupClient:
 
 
 def test_remote_init(mock_paper_client: Any) -> None:
-    max_papers = 4
     paper_client = mock_paper_client()
-    library = RemoteFileLibrary(paper_client, max_papers)
+    library = RemoteFileLibrary(paper_client)
     assert library._paper_client == paper_client
-    assert library._max_papers == max_papers
 
 
 def test_remote_no_paper(mock_paper_client: Any) -> None:
@@ -66,9 +64,6 @@ def test_rare_disease_extra_params(mock_paper_client: Any) -> None:
     print("result", result)
     assert paper_client.last_call("search") == (
         {"query": "gene"},
-        {"min_date": None},
-        {"max_date": None},  # dates are None as max_date would change based on the day the test is run
-        {"date_type": None},
         {"retmax": 9},
     )
     assert paper_client.call_count() == 1
@@ -80,9 +75,6 @@ def test_rare_disease_no_paper(mock_paper_client: Any) -> None:
     result = RareDiseaseFileLibrary(paper_client).get_papers(query)
     assert paper_client.last_call("search") == (
         {"query": "gene"},
-        {"min_date": None},
-        {"max_date": None},
-        {"date_type": None},
         {"retmax": 1},
     )
     assert paper_client.call_count() == 1
