@@ -1,4 +1,4 @@
-from typing import Dict, Mapping, Protocol, Sequence, Set
+from typing import Any, Dict, Mapping, Protocol, Sequence, Set
 
 from lib.evagg.types import Paper
 
@@ -10,7 +10,7 @@ class IEvAggApp(Protocol):
 
 
 class IGetPapers(Protocol):
-    def search(self, query: str) -> Set[Paper]:
+    def get_papers(self, query: Dict[str, Any]) -> Set[Paper]:
         """Search for papers based on the query."""
         ...  # pragma: no cover
 
