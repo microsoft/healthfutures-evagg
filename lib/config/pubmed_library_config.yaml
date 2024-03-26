@@ -34,9 +34,7 @@ variant_factory:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  - "gene_symbol": "ADCY1"
-    "min_date": "2014/01/01"
-    "retmax": 99
+  di_factory: lib/config/benchmark_queries.yaml
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
