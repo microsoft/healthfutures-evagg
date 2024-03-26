@@ -48,17 +48,17 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
 
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
-    EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&retmax={retmax}&tool=biopython"
+    EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&tool=biopython"
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
-        self._default_max_papers = 5  # TODO: make configurable?
         self._web_client = web_client
 
-    def _esearch(self, db: str, term: str, sort: str, retmax: int, retmode: str | None = None) -> Any:
+    def _esearch(self, db: str, term: str, sort: str, **extra_params: Dict[str, Any]) -> Any:
         key_string = self._config.get_key_string()
-        url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort, retmax=retmax)
-        return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
+        url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort)
+        url += "".join([f"&{k}={v}" for k, v in extra_params.items()])
+        return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type="xml", url_extra=key_string)
 
     def _efetch(self, db: str, id: str, retmode: str | None = None, rettype: str | None = None) -> Any:
         key_string = self._config.get_key_string()
@@ -115,14 +115,12 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         return [p.text for p in root.findall("./passage/text")]
 
     # IPaperLookupClient
-
-    def search(self, query: str, max_papers: Optional[int] = None) -> Sequence[str]:
-        retmax = max_papers or self._default_max_papers
-        root = self._esearch(db="pubmed", term=query, sort="relevance", retmax=retmax, retmode="xml")
+    def search(self, query: str, **extra_params: Dict[str, Any]) -> Sequence[str]:
+        root = self._esearch(db="pubmed", term=query, sort="relevance", **extra_params)
         pmids = [id.text for id in root.findall("./IdList/Id") if id.text]
         return pmids
 
-    def fetch(self, paper_id: str) -> Optional[Paper]:
+    def fetch(self, paper_id: str, include_fulltext: bool = False) -> Optional[Paper]:
         if (root := self._efetch(db="pubmed", id=paper_id, retmode="xml", rettype="abstract")) is None:
             return None
 
@@ -133,12 +131,13 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         props.update(self._get_oa_props(props["pmcid"]))
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         props["pmid"] = paper_id
-        props["full_text_xml"] = self._get_full_text_xml(
-            pmcid=props["pmcid"], is_pmc_oa=props["is_pmc_oa"], license=props["license"]
-        )
-        props["full_text_sections"] = (
-            self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
-        )
+        if include_fulltext:
+            props["full_text_xml"] = self._get_full_text_xml(
+                pmcid=props["pmcid"], is_pmc_oa=props["is_pmc_oa"], license=props["license"]
+            )
+            props["full_text_sections"] = (
+                self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
+            )
 
         return Paper(id=props["doi"], **props)
 
