@@ -1,4 +1,4 @@
-from typing import Any, Dict, Protocol, Sequence, Set, Tuple
+from typing import Dict, Protocol, Sequence, Set, Tuple
 
 from lib.evagg.types import HGVSVariant, Paper
 
@@ -23,20 +23,11 @@ class ICompareVariants(Protocol):
         ...  # pragma: no cover
 
 
-class IFindVariantMentions(Protocol):
-    def find_mentions(self, query: str, paper: Paper) -> Dict[HGVSVariant, Sequence[Dict[str, Any]]]:
-        """Find variant mentions relevant to query that are mentioned in `paper`.
-
-        Returns a dictionary mapping each variant to a list of text chunks that mention it.
-        """
-        ...  # pragma: no cover
-
-
 class IFindObservations(Protocol):
-    def find_observations(self, query: str, paper: Paper) -> Dict[Tuple[HGVSVariant, str], Sequence[str]]:
-        """Identify all observations relevant to `query` in `paper`.
+    def find_observations(self, gene_symbol: str, paper: Paper) -> Dict[Tuple[HGVSVariant, str], Sequence[str]]:
+        """Identify all observations relevant to `gene_sybmol` in `paper`.
 
-        `query` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be in the
-        PMC-OA dataset.
+        `paper` is the paper to search for relevant observations. Paper must be in the PMC-OA dataset and have
+        appropriate license terms.
         """
         ...  # pragma: no cover
