@@ -331,7 +331,6 @@ uninterrupted sequences of whitespace characters.
         keyed by tuples of variants and string representations of the individual in which that variant was observed. The
         values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
         """
-
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
         table_texts = texts.get("tables", {})

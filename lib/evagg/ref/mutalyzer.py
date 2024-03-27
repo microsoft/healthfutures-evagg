@@ -95,7 +95,6 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         if matched := re.match(r"(p.\(?)([A-Z])([0-9]+fs\)?)", hgvs_desc):
             hgvs_desc = matched.group(1) + IUPACData.protein_letters_1to3[matched.group(2)] + matched.group(3)
 
-        # return {"normalized_description": f"{refseq}:{hgvs_desc}", "protein": {"description": f"{refseq}:{hgvs_desc}"}}
         return {"normalized_description": f"{refseq}:{hgvs_desc}"}
 
     def normalize(self, hgvs: str) -> Dict[str, Any]:
