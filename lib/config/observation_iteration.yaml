@@ -89,7 +89,7 @@ extractor:
     normalizer: "{{mutalyzer_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
-  output_path: .out/observation_benchmark_temp.tsv
+  output_path: .out/observation_benchmark.tsv
 
 
 
