@@ -141,7 +141,7 @@ class TruthsetFileLibrary(IGetPapers):
             # Create a Paper object with the extracted fields.
             if paper_id is not None and paper_id.startswith("pmid:"):
                 pmid = paper_id[5:]
-                paper = self._paper_client.fetch(pmid)
+                paper = self._paper_client.fetch(pmid, include_fulltext=True)
                 if paper:
                     # Compare and potentially add in truthset data that we don't get from the paper client.
                     for key in TRUTHSET_PAPER_KEYS:
@@ -175,8 +175,10 @@ class TruthsetFileLibrary(IGetPapers):
         """For the TruthsetFileLibrary, query is expected to be a gene symbol."""
         all_papers = self._load_truthset()
 
-        # Filter to just the papers with variants that have evidence for the gene specified in the query.
-        return {p for p in all_papers if query in {v[0].gene_symbol for v in p.evidence.keys()}}
+        if gene_symbol := query.get("gene_symbol"):
+            # Filter to just the papers with variants that have evidence for the gene specified in the query.
+            return {p for p in all_papers if gene_symbol in {v[0].gene_symbol for v in p.evidence.keys()}}
+        return set()
 
 
 class RemoteFileLibrary(IGetPapers):
