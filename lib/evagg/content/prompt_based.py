@@ -44,7 +44,7 @@ class PromptBasedContentExtractor(IExtractFields):
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
+    def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         # Only process papers in PMC-OA.
         if (
             "pmcid" not in paper.props
@@ -56,7 +56,7 @@ class PromptBasedContentExtractor(IExtractFields):
             return []
 
         # Find all the observations in the paper relating to the query.
-        observations = self._observation_finder.find_observations(query, paper)
+        observations = self._observation_finder.find_observations(gene_symbol, paper)
 
         logger.info(f"Found {len(observations)} observations in {paper.id}")
 
@@ -79,7 +79,7 @@ class PromptBasedContentExtractor(IExtractFields):
 
             # Simplest thing we can think of is to just concatenate all the chunks.
             paper_excerpts = "\n\n".join(mentions)
-            gene_symbol = query
+            gene_symbol = gene_symbol
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:

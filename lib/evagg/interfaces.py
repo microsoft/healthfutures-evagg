@@ -16,8 +16,8 @@ class IGetPapers(Protocol):
 
 
 class IExtractFields(Protocol):
-    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
-        """Extract fields from the paper based on the query."""
+    def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
+        """Extract fields from the paper based on the gene_symbol."""
         ...  # pragma: no cover
 
 
