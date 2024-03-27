@@ -34,7 +34,11 @@ variant_factory:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib/config/benchmark_queries.yaml
+  # di_factory: lib/config/benchmark_queries.yaml
+  - "gene_symbol": "LRRC10"
+    "min_date": "2015/01/01"
+    "retmax": 24
+  
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"

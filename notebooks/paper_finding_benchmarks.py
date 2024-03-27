@@ -28,7 +28,6 @@ import yaml
 
 from lib.di import DiContainer
 from lib.evagg.library import RareDiseaseFileLibrary
-from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
 
