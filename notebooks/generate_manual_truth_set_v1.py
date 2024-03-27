@@ -36,7 +36,7 @@ from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
-TRUTH_XLSX = "./.tmp/Manual Ground Truth - 2024.03.12.xlsx"
+TRUTH_XLSX = "./.tmp/Manual Ground Truth - 2024.03.27.xlsx"
 GROUP_ASSIGNMENT_CSV = "./data/v1/group_assignments.tsv"
 OUTPUT_ROOT = "./data/v1"
 
