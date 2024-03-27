@@ -1,6 +1,16 @@
 log:
   di_factory: lib.evagg.svc.init_logger
   level: INFO
+ncbi_client: 
+  di_factory: lib.evagg.ref.NcbiLookupClient
+  web_client:
+    di_factory: lib.evagg.svc.CosmosCachingWebClient
+    cache_settings:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "EVAGG_CONTENT_CACHE_"
+  settings:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "NCBI_EUTILS_"  
 mutalyzer_client:
   di_factory: lib.evagg.ref.MutalyzerClient
   web_client:
@@ -17,8 +27,9 @@ refseq_client:
     di_factory: lib.evagg.svc.RequestsWebContentClient
 variant_factory:
   di_factory: lib.evagg.content.HGVSVariantFactory
+  validator: "{{mutalyzer_client}}"
   normalizer: "{{mutalyzer_client}}"
-  back_translator: "{{mutalyzer_client}}"
+  variant_lookup_client: "{{ncbi_client}}"
   refseq_client: "{{refseq_client}}"
 
 di_factory: lib.evagg.SynchronousLocalApp
@@ -47,11 +58,12 @@ library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
   variant_factory: "{{variant_factory}}"
+  paper_client: "{{ncbi_client}}"
 extractor:
   di_factory: lib.evagg.TruthsetContentExtractor
   field_map:
     - gene: gene_symbol
-    - paper_id: paper_id
+    - id: paper_id
     - hgvs_c: hgvs_c
     - hgvs_p: hgvs_p
     - individual_id: individual_id
@@ -61,8 +73,7 @@ extractor:
     - study_type: study_type
     - functional_study: functional_study
     - variant_type: variant_type
-    - paper_title: paper_title
-    - link: link
+    - title: paper_title
 writer:
   di_factory: lib.evagg.TableOutputWriter
 
