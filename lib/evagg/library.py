@@ -185,6 +185,7 @@ class RareDiseaseFileLibrary(IGetPapers, IPaperLookupClient, IPromptClient):
     def __init__(
         self,
         paper_client: IPaperLookupClient,
+        llm_client: IPromptClient,
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
     ) -> None:
