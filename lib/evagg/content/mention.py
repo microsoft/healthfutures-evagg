@@ -174,8 +174,7 @@ class HGVSVariantComparator(ICompareVariants):
         #   1) having a refseq at all
 
         if not v.refseq:
-            raise ValueError("Variant has no refseq.")
-
+            return 0
         if not v.refseq_predicted:
             return 3
         elif v.refseq.find("(") >= 0:
@@ -187,10 +186,16 @@ class HGVSVariantComparator(ICompareVariants):
         """Parse a refseq accession string into a dictionary of accessions and versions."""
         return {tok.rstrip(")").split(".")[0]: int(tok.rstrip(")").split(".")[1]) for tok in refseq.split("(")}
 
-    def _more_complete_by_refseq(self, variant1: HGVSVariant, variant2: HGVSVariant) -> HGVSVariant:
-        # We know we share at least one refseq accession. Accessions are not None.
+    def _more_complete_by_refseq(
+        self, variant1: HGVSVariant, variant2: HGVSVariant, allow_mismatch: bool = False
+    ) -> HGVSVariant:
         v1score = self._score_refseq_completeness(variant1)
         v2score = self._score_refseq_completeness(variant2)
+
+        if v1score == 0 and v2score == 0:
+            # Neither has a refseq.
+            return variant1
+
         if v1score > v2score:
             return variant1
         elif v1score < v2score:
@@ -201,7 +206,8 @@ class HGVSVariantComparator(ICompareVariants):
         v2rs_dict = self._parse_refseq_parts(variant2.refseq) if variant2.refseq else {}
 
         shared_keys = v1rs_dict.keys() & v2rs_dict.keys()
-        if not shared_keys:
+
+        if not shared_keys and not allow_mismatch:
             raise ValueError(
                 "Expectation mismatch: comparing refseq completeness for variants with no shared accessions."
             )
@@ -216,7 +222,9 @@ class HGVSVariantComparator(ICompareVariants):
         logger.info(f"Unable to determine more complete variant based on refseq completeness: {variant1}, {variant2}")
         return variant1
 
-    def consolidate(self, variants: Sequence[HGVSVariant]) -> Dict[HGVSVariant, Set[HGVSVariant]]:
+    def consolidate(
+        self, variants: Sequence[HGVSVariant], disregard_refseq: bool = False
+    ) -> Dict[HGVSVariant, Set[HGVSVariant]]:
         """Consolidate equivalent variants.
 
         Return a mapping from the retained variants to all variants collapsed into that variant.
@@ -228,7 +236,7 @@ class HGVSVariantComparator(ICompareVariants):
 
             for saved_variant in consolidated_variants.keys():
                 # - if they are the same variant
-                if (keeper := self.compare(variant, saved_variant)) is not None:
+                if (keeper := self.compare(variant, saved_variant, disregard_refseq)) is not None:
                     if saved_variant == keeper:
                         consolidated_variants[saved_variant].add(variant)
                     else:  # variant == keeper
@@ -295,8 +303,8 @@ class HGVSVariantComparator(ICompareVariants):
 
         if self._fuzzy_compare(variant1, variant2, disregard_refseq):
             # Same desc, determine the more complete variant WRT refseq.
-            # These two variants are guaranteed to share one or more refseq accessions.
-            return self._more_complete_by_refseq(variant1, variant2)
+            # If disregard_refseq == False, these two variants are guaranteed to share one or more refseq accessions.
+            return self._more_complete_by_refseq(variant1, variant2, allow_mismatch=disregard_refseq)
 
         if variant2.protein_consequence and self._fuzzy_compare(
             variant1, variant2.protein_consequence, disregard_refseq
