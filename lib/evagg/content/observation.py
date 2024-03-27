@@ -396,7 +396,9 @@ uninterrupted sequences of whitespace characters.
             if not variants_to_consolidate:
                 continue
 
-            consolidation_map = self._variant_comparator.consolidate(list(variants_to_consolidate.keys()))
+            consolidation_map = self._variant_comparator.consolidate(
+                list(variants_to_consolidate.keys()), disregard_refseq=True
+            )
             consolidated_variants = {k: variants_to_consolidate[v] for k, vl in consolidation_map.items() for v in vl}
 
             for variant, _ in consolidated_variants.items():
