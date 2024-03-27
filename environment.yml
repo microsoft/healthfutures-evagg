@@ -26,6 +26,7 @@ dependencies:
   - python-dotenv
   - urllib3
   - azure-cosmos
+  - gh
 
   # AI/ML.
   - openai
