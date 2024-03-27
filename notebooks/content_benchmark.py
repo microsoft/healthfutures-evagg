@@ -49,7 +49,7 @@ def _normalize_individual_id(individual_id: Any) -> str:
     if pd.isna(individual_id):
         return "inferred proband"
     individual_id = individual_id.lower()
-    if individual_id in ["the proband", "proband", "the patient", "patient", "unknown"]:
+    if individual_id in ["the proband", "proband", "the patient", "patient", "unknown", "one proband"]:
         return "inferred proband"
     return individual_id
 
@@ -155,7 +155,7 @@ def _normalize_hgvs(gene: str, transcript: Any, hgvs_desc: Any) -> str:
         print(f"Error normalizing {gene} {transcript} {hgvs_desc}: {e}")
         variant_obj = None
 
-    if variant_obj and variant_obj.valid:
+    if variant_obj and (variant_obj.valid or variant_obj.hgvs_desc.find("fs") != -1):
         return variant_obj.hgvs_desc
     elif hgvs_desc.startswith("p."):
         return _bioc_convert(hgvs_desc)
@@ -294,7 +294,7 @@ if "gene_truth" in merged_df.columns:
 # Reorder columns, keeping in_truth and in_output as the last two.
 merged_df = merged_df[[c for c in merged_df.columns if c not in {"in_truth", "in_output"}] + ["in_truth", "in_output"]]
 
-# %% Assess variant finding.
+# %% Assess observation finding.
 
 precision = merged_df.in_truth[merged_df.in_output == True].mean()
 recall = merged_df.in_output[merged_df.in_truth == True].mean()
@@ -321,6 +321,10 @@ printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id",
 # printable_df[
 #     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
 # ].sort_values(["gene", "paper_id", "hgvs_desc"])
+
+# %% Redo the merge and assess variant finding.
+
+# TODO
 
 # %% Assess content extraction.
 
