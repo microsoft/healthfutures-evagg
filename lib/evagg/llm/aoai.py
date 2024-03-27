@@ -78,7 +78,7 @@ class OpenAIClient(IPromptClient):
     def prompt(
         self,
         user_prompt: str,
-        system_prompt: Optional[str],
+        system_prompt: Optional[str] = None,
         params: Optional[Dict[str, str]] = None,
         prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
@@ -104,7 +104,7 @@ class OpenAIClient(IPromptClient):
     def prompt_file(
         self,
         user_prompt_file: str,
-        system_prompt: Optional[str],
+        system_prompt: Optional[str] = None,
         params: Optional[Dict[str, str]] = None,
         prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
