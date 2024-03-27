@@ -10,7 +10,7 @@ def _parse_args(args: Sequence[str] | None = None) -> Namespace:
     parser = ArgumentParser()
 
     # Accept a path to a config file (required).
-    parser.add_argument("config", help="Path to config file.")
+    parser.add_argument("config", help="Path to config file for an IEvAggApp object.")
 
     # Accept an optional list of key/value pairs to override or add to config dictionary.
     parser.add_argument(
@@ -59,7 +59,7 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict[str, Any]:
 
 def run_sync() -> None:
     args = _parse_args()
-    # Make an instance spec dictionary out of the factory yaml and the override args and instantiate it.
+    # Make a spec dictionary out of the factory yaml and the override args and instantiate it.
     spec = {"di_factory": args.config, **_parse_override_args(args.override)}
     app: IEvAggApp = DiContainer().create_instance(spec, {})
 
