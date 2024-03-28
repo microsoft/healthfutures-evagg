@@ -1,5 +1,5 @@
 Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
-these variants. Provide for me a list of all of the human patients desecribed in this text. This information can often 
+these variants. Provide for me a list of all of the human patients described in this text. This information can often 
 be found in tables within the text, especially if there is a large number of patients.
 
 Patient identifiers should not be long, they should not be complete sentences, they will generally be something short.
