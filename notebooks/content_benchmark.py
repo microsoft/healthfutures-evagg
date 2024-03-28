@@ -304,13 +304,13 @@ merged_df_no_supplement = merged_df[merged_df.in_supplement != "Y"]
 precision_no_supplement = merged_df_no_supplement.in_truth[merged_df_no_supplement.in_output == True].mean()
 recall_no_supplement = merged_df_no_supplement.in_output[merged_df_no_supplement.in_truth == True].mean()
 
-print("---- Variant finding performance ----")
+print("---- Observation finding performance ----")
 print("Overall")
-print(f"  Variant finding precision: {precision:.2f}")
-print(f"  Variant finding recall: {recall:.2f}")
+print(f"  Observation finding precision: {precision:.2f}")
+print(f"  Observation finding recall: {recall:.2f}")
 print("Ignoring truth papers from supplement")
-print(f"  Variant finding precision: {precision_no_supplement:.2f}")
-print(f"  Variant finding recall: {recall_no_supplement:.2f}")
+print(f"  Observation finding precision: {precision_no_supplement:.2f}")
+print(f"  Observation finding recall: {recall_no_supplement:.2f}")
 print()
 
 pd.set_option("display.max_columns", None)
