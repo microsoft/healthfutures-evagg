@@ -76,6 +76,24 @@ uninterrupted sequences of whitespace characters.
 
         return result
 
+    def _check_patients(self, patient_candidates: Sequence[str], texts_to_check: Sequence[str]) -> List[str]:
+        checked_patients: List[str] = []
+
+        for patient in patient_candidates:
+            for text in texts_to_check:
+                validation_response = self._run_json_prompt(
+                    prompt_filepath=self._PROMPTS["check_patients"],
+                    params={"text": text, "patient": patient},
+                    prompt_settings={"prompt_tag": "observation__check_patients"},
+                )
+                if validation_response.get("is_patient", "false") == "true":
+                    checked_patients.append(patient)
+                    break
+            if patient not in checked_patients:
+                logger.debug(f"Removing {patient} from list of patients as it didn't pass final checks.")
+
+        return checked_patients
+
     def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
         full_text_response = self._run_json_prompt(
@@ -102,7 +120,7 @@ uninterrupted sequences of whitespace characters.
         if "unknown" in patient_candidates:
             patient_candidates.remove("unknown")
 
-        # Occassionally, multiple patients are referred to in a single string, split these out.
+        # Occassionally, multiple patients are referred to in a single string, e.g. "patients 9 and 10" split these out.
         expanded_patients: List[str] = []
 
         for patient in patient_candidates:
@@ -116,45 +134,32 @@ uninterrupted sequences of whitespace characters.
             else:
                 expanded_patients.append(patient)
 
-        # If more than 5 patients are identified, risk of false positives is increased.
+        # If more than 5 (TODO parameterize?) patients are identified, risk of false positives is increased.
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
         if len(expanded_patients) >= 5:
-            logger.info(f"Identified {len(expanded_patients)} patients, cross-checking.")
-            final_patients: List[str] = []
             texts_to_check = focus_texts if focus_texts else [full_text]
+            final_patients = self._check_patients(expanded_patients, texts_to_check)
 
-            # TODO: optimization, prototype doing this in bulk, one call for all the candidate patients.
-            for patient in expanded_patients:
-                for text in texts_to_check:
-                    validation_response = self._run_json_prompt(
-                        prompt_filepath=self._PROMPTS["check_patients"],
-                        params={"text": text, "patient": patient},
-                        prompt_settings={"prompt_tag": "observation__check_patients"},
-                    )
-                    if validation_response.get("is_patient", "false") == "true":
-                        final_patients.append(patient)
-                        break
-                if patient not in final_patients:
-                    logger.debug(f"Removing {patient} from list of patients as it didn't pass final checks.")
-            logger.info(f"After cross-checking, {len(final_patients)} patients remain.")
+            if not final_patients and texts_to_check == focus_texts:
+                # All patients failed checking in focus texts, try the full text.
+                final_patients = self._check_patients(expanded_patients, [full_text])
         else:
             final_patients = expanded_patients
 
         return final_patients
 
     def _find_variant_descriptions(
-        self, full_text: str, focus_texts: Sequence[str] | None, query: str
+        self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str
     ) -> Sequence[str]:
-        """Identify the genetic variants relevant to the query described in the full text of the paper.
+        """Identify the genetic variants relevant to the gene_symbol described in the full text of the paper.
 
-        `query` should be a gene symbol.
         Returned variants will be _as described_ in the source text. Downstream manipulations to make them
         HGVS-compliant may be required.
         """
         full_text_response = self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_variants"],
-            params={"text": full_text, "gene_symbol": query},
+            params={"text": full_text, "gene_symbol": gene_symbol},
             prompt_settings={"prompt_tag": "observation__find_variants"},
         )
 
@@ -164,21 +169,22 @@ uninterrupted sequences of whitespace characters.
             for focus_text in focus_texts:
                 focus_response = self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["find_variants"],
-                    params={"text": focus_text, "gene_symbol": query},
+                    params={"text": focus_text, "gene_symbol": gene_symbol},
                     prompt_settings={"prompt_tag": "observation__find_variants"},
                 )
                 unique_variants.update(focus_response.get("variants", []))
 
         # Often, the gene-symbol is provided as a prefix to the variant, remove it.
-        # Note: we do additional similar checks later, but it's useful to do it now to remove redundancy.
-        def _strip_query(x: str) -> str:
-            # If x starts with query, remove that and any subsequent colon.
-            if x.startswith(query):
-                return x[len(query) :].lstrip(":")
+        # Note: we do additional similar checks later, but it's useful to do it now to reduce redundancy.
+        def _strip_gene_symbol(x: str) -> str:
+            # If x starts with gene_symbol, remove that and any subsequent colon.
+            if x.startswith(gene_symbol):
+                return x[len(gene_symbol) :].lstrip(":")
             return x
 
-        candidates = list({_strip_query(x) for x in list(unique_variants)})
+        candidates = list({_strip_gene_symbol(x) for x in list(unique_variants)})
 
+        # TODO: evaluate tasking the LLM to return an empty list instead of "unknown" when no variants are found.
         if "unknown" in candidates:
             candidates.remove("unknown")
         if not candidates:
@@ -212,13 +218,13 @@ uninterrupted sequences of whitespace characters.
         return response.get("genome_build", "unknown")
 
     def _link_entities(
-        self, full_text: str, patients: Sequence[str], variants: Sequence[str], query: str
+        self, full_text: str, patients: Sequence[str], variants: Sequence[str], gene_symbol: str
     ) -> Dict[str, List[str]]:
         params = {
             "text": full_text,
             "patients": ", ".join(patients),
             "variants": ", ".join(variants),
-            "gene_symbol": query,
+            "gene_symbol": gene_symbol,
         }
         response = self._run_json_prompt(
             prompt_filepath=self._PROMPTS["link_entities"],
@@ -227,17 +233,18 @@ uninterrupted sequences of whitespace characters.
         )
 
         # TODO, consider validating the links.
+        # TODO, consider evaluating focus texts in addition to the full-text.
 
         return response
 
     def _create_variant_from_text(
         self, variant_str: str, gene_symbol: str, genome_build: str | None
     ) -> HGVSVariant | None:
-        """Attempt to create an HGVSVariant object from `variant_str` and `gene_symbol`.
+        """Attempt to create an HGVSVariant object from a variant description extracted from free text.
 
         variant_str is a string representation of a variant, but since it's being extracted from paper text it can take
         a variety of formats. It is the responsibility of this method to handle much of this preprocessing and provide
-        standardized representations to the _variant_factory for parsing.
+        standardized representations to `self._variant_factory` for parsing.
         """
         # If the variant_str contains a dbsnp rsid, parse it and return the variant.
         if matched := re.match(r"(rs\d+)", variant_str):
@@ -321,11 +328,11 @@ uninterrupted sequences of whitespace characters.
         texts["tables"] = tables
         return texts
 
-    def find_observations(self, query: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
-        """Identify all observations relevant to `query` in `paper`.
+    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
+        """Identify all observations relevant to `gene_symbol` in `paper`.
 
-        `query` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be in the
-        PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
+        `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
+        in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
 
         Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
         keyed by tuples of variants and string representations of the individual in which that variant was observed. The
@@ -343,11 +350,11 @@ uninterrupted sequences of whitespace characters.
         patients = self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
         logger.info(f"Found the following patients in {paper}: {patients}")
 
-        # Determine the candidate genetic variants matching `query`
+        # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = self._find_variant_descriptions(
-            full_text=full_text, focus_texts=list(table_texts.values()), query=query
+            full_text=full_text, focus_texts=list(table_texts.values()), gene_symbol=gene_symbol
         )
-        logger.info(f"Found the following variants described for {query} in {paper}: {variant_descriptions}")
+        logger.info(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
         # If necessary, determine the genome build most likely used for those variants.
         # TODO: consider doing this on a per-variant bases.
@@ -358,7 +365,9 @@ uninterrupted sequences of whitespace characters.
             genome_build = None
 
         # Variant objects, keyed by variant description, those that fail to parse are discarded.
-        variants = {desc: self._create_variant_from_text(desc, query, genome_build) for desc in variant_descriptions}
+        variants = {
+            desc: self._create_variant_from_text(desc, gene_symbol, genome_build) for desc in variant_descriptions
+        }
         # Note we're keeping invalid variants here.
         variants = {desc: variant for desc, variant in variants.items() if variant is not None}
 
@@ -368,7 +377,7 @@ uninterrupted sequences of whitespace characters.
         # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
         # if there are no variants (regardless of patients), then there are no observations to report.
         if variant_descriptions and patients:
-            observations = self._link_entities(full_text, patients, list(variants.keys()), query)
+            observations = self._link_entities(full_text, patients, list(variants.keys()), gene_symbol)
         elif variant_descriptions:
             observations = {"unknown": list(variants.keys())}
         else:
@@ -381,9 +390,7 @@ uninterrupted sequences of whitespace characters.
 
         result: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
         for individual, variant_strs in observations.items():
-            # Consolidate variants within each observation so we only get one variant object per observation,
-            # deferring to genomic variants over protein variants. If an observation referrs to a variant_str that
-            # isn't in our list of variants, log a warning and drop it.
+            # Consolidate variants within each observation so we only get one variant object per observation.
             variants_to_consolidate: Dict[HGVSVariant, str] = {}
             for variant_str in variant_strs:
                 variant = variants.get(variant_str)
@@ -398,10 +405,13 @@ uninterrupted sequences of whitespace characters.
             consolidation_map = self._variant_comparator.consolidate(
                 list(variants_to_consolidate.keys()), disregard_refseq=True
             )
-            consolidated_variants = {k: variants_to_consolidate[v] for k, vl in consolidation_map.items() for v in vl}
 
-            for variant, _ in consolidated_variants.items():
-                # TODO: use values to find tagged sections, that's why we're leaving the use of '.items()' here.
+            # TODO, if we care to retain the text descriptions of the variants, this will need to change.
+            consolidated_variants = list(consolidation_map.keys())
+
+            for variant in consolidated_variants:
+                # TODO: use values (variant descriptions) to find tagged sections, that's why we're leaving the use of
+                # '.items()' here.
                 if (variant, individual) in result:
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
