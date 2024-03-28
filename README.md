@@ -161,10 +161,10 @@ print the results of these operations to `stdout`. While this doesn't actually d
 verify that the pipeline and dependencies are configured correctly.
 
 You can optionally add or override any leaf value within an app spec dictionary or sub-dictionary using
-the `-o` argument one or more times:
+the `-o` argument followed by one or more dictionary key:value specifications separated by a space:
 
 ```bash
-run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv -o log.level:DEBUG
+run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv log.level:DEBUG
 ```
 
 ### Configuration and secrets
