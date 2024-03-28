@@ -1,5 +1,5 @@
 Sometimes patient identifiers extracted from the biomedical literature bundle together multiple patients.
-I am going to provide you a list of patient patient identifiers below. If any of those identifiers refer to multiple
+I am going to provide you a list of patient identifiers below. If any of those identifiers refer to multiple
 patients, I would like you to split it into a separate elements in your output.
 
 I will provide examples below.
