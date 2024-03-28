@@ -94,10 +94,10 @@ def test_pubmed_search(mock_web_client):
     assert result == ["24290490"]
 
 
-# def test_pubmed_fetch(mock_web_client, json_load):
-#     web_client = mock_web_client("efetch_pubmed_paper_24290490.xml")
-#     result = NcbiLookupClient(web_client).fetch("24290490")
-#     assert result and result.props == json_load("efetch_paper_24290490.json")
+def test_pubmed_fetch(mock_web_client, json_load):
+    web_client = mock_web_client("efetch_pubmed_paper_24290490.xml")
+    result = NcbiLookupClient(web_client).fetch("24290490")
+    assert result and result.props == json_load("efetch_paper_24290490.json")
 
 
 def test_pubmed_pmc_oa_fetch(mock_web_client):

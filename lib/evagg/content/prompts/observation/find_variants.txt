@@ -32,8 +32,8 @@ Note that a variant is also often represented with a gene symbol followed by a d
 "BRCA1 (c.123A>T)" or "BRCA1:p.A55T". In these cases, the gene symbol should not be returned, just the variant
 description and reference sequence (if included).
 
-The same logical variant can be identified in multiple different ways within the text of a paper, within reason try
-not to list the same variant twice, but it is not obvious that the text is talking about the same variant in two 
+The same logical variant can be identified in multiple different ways within the text of a paper - within reason try
+not to list the same variant twice, but if it is not obvious that the text is talking about the same variant in two 
 different ways, please feel free to list both.
 
 This information can often be found in tables within the text, especially if there is a large number of variants 
@@ -54,7 +54,7 @@ or alternatively:
 Do not provide any additional text in your response other than the json object.
 
 Remember, you're searching only for variants associated with the gene {{$gene_symbol}}, other genes in the same pathway 
-may be named very similarly, please be careful. Sometimes the capitalizaiton of {{$gene_symbol}} may vary throughout the
+may be named very similarly, please be careful. Sometimes the capitalization of {{$gene_symbol}} may vary throughout the
 text.
 
 --
