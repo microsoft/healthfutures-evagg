@@ -57,7 +57,9 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
             raise e
 
         if "errors" in response or ("custom" in response and "errors" in response["custom"]):
-            logger.warning(f"Mutalyzer returned an unhandleable error for {hgvs}: {response['custom']['errors']}")
+            logger.debug(
+                f"Unable to normalize variant. Mutalyzer returned an error for {hgvs}: {response['custom']['errors']}"
+            )
             return {}
 
         # Only return a subset of the fields in the response.
