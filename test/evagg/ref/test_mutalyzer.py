@@ -36,24 +36,20 @@ def test_back_translate_caching(mock_web_client: Any) -> None:
 def test_normalize_success(mock_web_client: Any) -> None:
     web_client = mock_web_client("mutalyzer_normalize.json")
     result = MutalyzerClient(web_client).normalize("NP_001267.2:p.Arg35Gln")
-    assert result["input_description"] == "NP_001267.2:p.Arg35Gln"
-    assert result["corrected_description"] == "NP_001267.2:p.Arg35Gln"
+    assert result["normalized_description"] == "NP_001267.2:p.(Arg35Gln)"
 
 
 def test_normalize_failure(mock_web_client: Any) -> None:
     web_client = mock_web_client("mutalyzer_normalize_fail.json")
     result = MutalyzerClient(web_client).normalize("NP_001267.2:FOO")
-    assert result["custom"]["input_description"] == "NP_001267.2:FOO"
-    assert result["message"] == "Errors encountered. Check the 'custom' field."
+    assert not result
 
 
 def test_normalize_caching(mock_web_client: Any) -> None:
     web_client = mock_web_client("mutalyzer_normalize.json", "mutalyzer_normalize_fail.json")
     mutalyzer = MutalyzerClient(web_client)
     result = mutalyzer.normalize("NP_001267.2:p.Arg35Gln")
-    assert result["input_description"] == "NP_001267.2:p.Arg35Gln"
-    assert result["corrected_description"] == "NP_001267.2:p.Arg35Gln"
+    assert result["normalized_description"] == "NP_001267.2:p.(Arg35Gln)"
 
     result = mutalyzer.normalize("NP_001267.2:p.Arg35Gln")
-    assert result["input_description"] == "NP_001267.2:p.Arg35Gln"
-    assert result["corrected_description"] == "NP_001267.2:p.Arg35Gln"
+    assert result["normalized_description"] == "NP_001267.2:p.(Arg35Gln)"
