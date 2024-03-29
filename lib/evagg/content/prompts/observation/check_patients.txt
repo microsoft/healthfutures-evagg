@@ -21,12 +21,12 @@ patient is being discussed in the text.
 
 Provide your response as a json object, in the following format:
 {
-    "is_patient": "true"
+    "is_patient": true
 }
 
 or alternatively:
 {
-    "is_patient": "false"
+    "is_patient": false
 }
 
 Do not provide any additional text in your response other than the json object.
