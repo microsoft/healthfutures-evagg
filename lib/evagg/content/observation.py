@@ -8,12 +8,12 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
-from .interfaces import ICompareVariants
+from .interfaces import ICompareVariants, IFindObservations
 
 logger = logging.getLogger(__name__)
 
 
-class ObservationFinder:
+class ObservationFinder(IFindObservations):
     _PROMPTS = {
         "check_patients": os.path.dirname(__file__) + "/prompts/observation/check_patients.txt",
         "find_genome_build": os.path.dirname(__file__) + "/prompts/observation/find_genome_build.txt",
@@ -121,7 +121,7 @@ uninterrupted sequences of whitespace characters.
             patient_candidates.remove("unknown")
 
         # Occassionally, multiple patients are referred to in a single string, e.g. "patients 9 and 10" split these out.
-        expanded_patients: List[str] = []
+        patients_after_splitting: List[str] = []
 
         for patient in patient_candidates:
             if any(term in patient for term in [" and ", " or "]):
@@ -130,24 +130,24 @@ uninterrupted sequences of whitespace characters.
                     params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
                     prompt_settings={"prompt_tag": "observation__split_patients"},
                 )
-                expanded_patients.extend(split_response.get("patients", []))
+                patients_after_splitting.extend(split_response.get("patients", []))
             else:
-                expanded_patients.append(patient)
+                patients_after_splitting.append(patient)
 
         # If more than 5 (TODO parameterize?) patients are identified, risk of false positives is increased.
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
-        if len(expanded_patients) >= 5:
+        if len(patients_after_splitting) >= 5:
             texts_to_check = focus_texts if focus_texts else [full_text]
-            final_patients = self._check_patients(expanded_patients, texts_to_check)
+            checked_patients = self._check_patients(patients_after_splitting, texts_to_check)
 
-            if not final_patients and texts_to_check == focus_texts:
+            if not checked_patients and texts_to_check == focus_texts:
                 # All patients failed checking in focus texts, try the full text.
-                final_patients = self._check_patients(expanded_patients, [full_text])
+                checked_patients = self._check_patients(patients_after_splitting, [full_text])
         else:
-            final_patients = expanded_patients
+            checked_patients = patients_after_splitting
 
-        return final_patients
+        return checked_patients
 
     def _find_variant_descriptions(
         self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str
