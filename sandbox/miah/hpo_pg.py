@@ -1,49 +1,9 @@
-# # %% Download latest phenio.db from HPO site.
-# # !wget https://data.monarchinitiative.org/monarch-kg/latest/phenio.db.gz -O .ref/phenio.db.gz
-# # !gunzip .ref/phenio.db.gz
-
-# # %% Imports.
-# # from semsimian import Semsimian
-# from semsimian.semsimian import Semsimian
-# # %% Initialize things.
-
-# db = ".ref/phenio.db"
-
-# #  Predicates basicly define what types of edges in the graph should be considered a "link".
-# # For HPO we are only interested in the "rdfs:subClassOf" predicate.
-# predicates = ["rdfs:subClassOf"]
-
-# semsimian = Semsimian(
-#     spo=None,
-#     predicates=predicates,
-#     resource_path=db,
-# )
-# # %% Basic test
-
-# # some example HPO sets
-# hpo1 = {"HP:0012469", "HP:0020219"}
-# hpo2 = {"HP:0007270", "HP:0100763"}
-
-# # Run a termset comparison. First run sets up some internal data structures, so it's slower.
-# full_result = semsimian.termset_pairwise_similarity(
-#     set(hpo1),
-#     set(hpo2),
-# )
-
-# print(full_result)
-
-# # %%
-
-# semsimian.
-
-# ########
-
 # %%
 # pip install hpo3
-from pyhpo import HPOSet, HPOTerm, Ontology, helper
+from pyhpo import HPOSet, Ontology, helper
 
 # %% Instantiate the Ontology
-Ontology()
+Ontology()  # 600 msec
 
 # %% Compare two terms
 
@@ -67,9 +27,6 @@ gene_sets = [g.hpo_set() for g in Ontology.genes]
 
 all_terms_from_genes = {term for gs in gene_sets for term in gs.terms()}
 
-# subset to the first 100 elements.
-all_terms_from_genes = set(list(all_terms_from_genes)[:1000])
-
 comparisons = []
 for term in all_terms_from_genes:
     for relative in term.parents.union(term.children):
@@ -90,22 +47,12 @@ for term in all_terms_from_genes:
 
 random_batch_result = helper.batch_similarity(random_comparisons, kind="omim", method=method)
 
-# %% Plot these two distributions using seaborn
-
-# %% generate a pandas dataframe with 2 columns, named real and random and 30,000 rows with a simple numeric index.
+# %% Plot.
 import pandas as pd
 import seaborn as sns
 
-# import matplotlib.pyplot as plt
-
-# sns.histplot(batch_result, color="blue", label="Real comparisons")
-# sns.histplot(random_batch_result, color="red", label="Random comparisons")
-# plt.show()
-
-
 df = pd.DataFrame({"real": batch_result, "random": random_batch_result})
-
-# Plot hte dataframe using seaborn
-sns.histplot(data=df)
+plt = sns.histplot(data=df)
+plt.set_title(f"Real vs. Random similarity scores ({method}; N={len(df)})")
 
 # %%
