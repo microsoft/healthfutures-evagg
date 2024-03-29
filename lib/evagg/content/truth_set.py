@@ -10,11 +10,11 @@ class TruthsetContentExtractor(IExtractFields):
         # Turn list of single-element key-mapping dicts into a list of tuples.
         self._field_map = [kv for [kv] in [kv.items() for kv in field_map]]
 
-    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
+    def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         extracted_fields = []
         # For each queried variant for which we have evidence in the paper...
         for v in paper.evidence.keys():
-            if v[0].gene_symbol != query:
+            if v[0].gene_symbol != gene_symbol:
                 continue
             # Union the evidence props with the paper props.
             properties = paper.props | paper.evidence[v]
