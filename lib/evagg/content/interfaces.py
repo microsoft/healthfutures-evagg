@@ -1,13 +1,33 @@
-from typing import Any, Dict, Protocol, Sequence
+from typing import Dict, Protocol, Sequence, Set, Tuple
 
 from lib.evagg.types import HGVSVariant, Paper
 
 
-# TODO, this should be keyed on HGVSVariant, not a string representation of the variant.
-class IFindVariantMentions(Protocol):
-    def find_mentions(self, query: str, paper: Paper) -> Dict[HGVSVariant, Sequence[Dict[str, Any]]]:
-        """Find variant mentions relevant to query that are mentioned in `paper`.
+class ICompareVariants(Protocol):
+    def consolidate(
+        self, variants: Sequence[HGVSVariant], disregard_refseq: bool = False
+    ) -> Dict[HGVSVariant, Set[HGVSVariant]]:
+        """Consolidate equivalent variants.
 
-        Returns a dictionary mapping each variant to a list of text chunks that mention it.
+        Return a mapping from the retained variants to all variants collapsed into that variant.
+        """
+        ...  # pragma: no cover
+
+    def compare(
+        self, variant1: HGVSVariant, variant2: HGVSVariant, disregard_refseq: bool = False
+    ) -> HGVSVariant | None:
+        """Compare two variants to determine if they are biologically equivalent.
+
+        If they are, return the more complete one, otherwise return None.
+        """
+        ...  # pragma: no cover
+
+
+class IFindObservations(Protocol):
+    def find_observations(self, gene_symbol: str, paper: Paper) -> Dict[Tuple[HGVSVariant, str], Sequence[str]]:
+        """Identify all observations relevant to `gene_sybmol` in `paper`.
+
+        `paper` is the paper to search for relevant observations. Paper must be in the PMC-OA dataset and have
+        appropriate license terms.
         """
         ...  # pragma: no cover

@@ -121,7 +121,7 @@ class CosmosCachingWebClient(RequestsWebContentClient):
 
         try:
             item = container.read_item(item=cache_key, partition_key=cache_key)
-            logger.info(f"{item['url']} served from cache.")
+            logger.debug(f"{item['url']} served from cache.")
             code = item.get("status_code", 200)
         except CosmosResourceNotFoundError:
             code, content = super()._get_content(url + (url_extra or ""))

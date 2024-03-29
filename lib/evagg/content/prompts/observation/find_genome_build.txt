@@ -1,0 +1,39 @@
+Here is some text from a paper describing genetic variants and potentially the patients or subjects who possessed 
+these variants. In order to correctly interpret the variants discussed in this paper, it is helpful to know the
+genome build against which the patient's genomes were aligned in order to identifier these variants.
+
+Typically the genome build will be one of the following:
+ - hg19
+ - hg38
+ - GRCh37
+ - GRCh38
+ - T2T
+
+Some papers will not report the genome build used in which case your response should be "unknown".
+
+If the paper reports variants aligned to a variety of genome builds, your response should be "multiple".
+
+This information will often be found in the methods section of the paper, but may also be found in or near the 
+description of the genetic variants themselves.
+
+Provide your response as a json object in the following format:
+{
+    "genome_build": "GRCh38"
+}
+
+or alternatively:
+{
+    "genome_build": "unknown"
+}
+
+or:
+{
+    "genome_build": "multiple"
+}
+
+Do not provide any additional text in your response other than the json object.
+
+--
+
+{{$text}}
+
