@@ -35,6 +35,6 @@ class SimpleContentExtractor(IExtractFields):
         else:
             return "Unknown"
 
-    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
+    def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         # Dummy implementation that returns a single variant with a static set of fields.
         return [{field: self._field_to_value(field, paper) for field in self._fields}]

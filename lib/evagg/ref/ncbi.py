@@ -1,5 +1,6 @@
 import logging
 import urllib.parse as urlparse
+from abc import ABC
 from typing import Any, Dict, List, Optional, Sequence
 
 from pydantic import Extra, root_validator
@@ -33,19 +34,7 @@ class NcbiApiSettings(PydanticYamlModel, extra=Extra.forbid):
         return values
 
 
-class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClient, IAnnotateEntities):
-    """A client for querying the various services in the NCBI API."""
-
-    # According to https://support.nlm.nih.gov/knowledgebase/article/KA-05316/en-us the max
-    # RPS for NCBI API endpoints is 3 without an API key, and 10 with an API key.
-    SYMBOL_GET_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
-    PMCOA_GET_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
-    PUBTATOR_GET_URL = (
-        "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/pmc_export/bioc{fmt}?pmcids={id}"
-    )
-    # TODO: consider unicode encoding for the BioC response.
-    BIOC_GET_URL = "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_xml/{pmcid}/ascii"
-
+class NcbiClientBase(ABC):
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
     EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&tool=biopython"
@@ -64,6 +53,23 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
         key_string = self._config.get_key_string()
         url = self.EUTILS_FETCH_URL.format(db=db, id=id, retmode=retmode, rettype=rettype)
         return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
+
+
+class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IVariantLookupClient, IAnnotateEntities):
+    """A client for querying the various services in the NCBI API."""
+
+    # According to https://support.nlm.nih.gov/knowledgebase/article/KA-05316/en-us the max
+    # RPS for NCBI API endpoints is 3 without an API key, and 10 with an API key.
+    SYMBOL_GET_URL = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/{symbols}/taxon/Human"
+    PMCOA_GET_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id={pmcid}"
+    PUBTATOR_GET_URL = (
+        "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/pmc_export/bioc{fmt}?pmcids={id}"
+    )
+    # TODO: consider unicode encoding for the BioC response.
+    BIOC_GET_URL = "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_xml/{pmcid}/ascii"
+
+    def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
+        super().__init__(web_client, settings)
 
     def _get_oa_props(self, pmcid: str) -> Dict[str, Any]:
         """Get the OA status for a paper from the PMC OA API."""
@@ -139,7 +145,7 @@ class NcbiLookupClient(IPaperLookupClient, IGeneLookupClient, IVariantLookupClie
                 self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
             )
 
-        return Paper(id=props["doi"], **props)
+        return Paper(id="pmid:" + paper_id, **props)
 
     # IGeneLookupClient
     def gene_id_for_symbol(self, *symbols: str, allow_synonyms: bool = False) -> Dict[str, int]:
