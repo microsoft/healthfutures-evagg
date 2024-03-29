@@ -34,10 +34,10 @@ variant_factory:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  # di_factory: lib/config/benchmark_queries.yaml
-  - "gene_symbol": "LRRC10"
-    "min_date": "2015/01/01"
-    "retmax": 24
+  #di_factory: lib/config/benchmark_queries.yaml
+  - "gene_symbol": "EXOC2"
+    "min_date": "2020/01/01"
+    "retmax": 22
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
