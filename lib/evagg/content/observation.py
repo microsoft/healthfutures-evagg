@@ -86,7 +86,7 @@ uninterrupted sequences of whitespace characters.
                     params={"text": text, "patient": patient},
                     prompt_settings={"prompt_tag": "observation__check_patients"},
                 )
-                if validation_response.get("is_patient", "false") == "true":
+                if validation_response.get("is_patient", False) is True:
                     checked_patients.append(patient)
                     break
             if patient not in checked_patients:
@@ -124,7 +124,7 @@ uninterrupted sequences of whitespace characters.
         expanded_patients: List[str] = []
 
         for patient in patient_candidates:
-            if any(term in patient for term in ["and", "or"]):
+            if any(term in patient for term in [" and ", " or "]):
                 split_response = self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["split_patients"],
                     params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
