@@ -56,7 +56,8 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "link", "is_pmc_oa", "license"]
+TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "is_pmc_oa", "license"]
+TRUTHSET_PAPER_KEYS_MAPPING = {"paper_title": "title"}
 # These are the columns in the truthset that are specific to the variant.
 TRUTHSET_VARIANT_KEYS = [
     "gene",
@@ -78,10 +79,12 @@ class TruthsetFileLibrary(IGetPapers):
     """A class for retrieving papers from a truthset file."""
 
     _variant_factory: ICreateVariants
+    _paper_client: IPaperLookupClient
 
-    def __init__(self, file_path: str, variant_factory: ICreateVariants) -> None:
+    def __init__(self, file_path: str, variant_factory: ICreateVariants, paper_client: IPaperLookupClient) -> None:
         self._file_path = file_path
         self._variant_factory = variant_factory
+        self._paper_client = paper_client
 
     @cache
     def _load_truthset(self) -> Set[Paper]:
@@ -92,7 +95,7 @@ class TruthsetFileLibrary(IGetPapers):
             reader = csv.reader(tsvfile, delimiter="\t")
             for line in reader:
                 fields = dict(zip(header, [field.strip() for field in line]))
-                paper_id = fields.get("doi") or fields.get("pmid") or fields.get("pmcid") or "MISSING_ID"
+                paper_id = fields.get("paper_id")
                 paper_groups[paper_id].append(fields)
 
         papers: Set[Paper] = set()
@@ -100,6 +103,10 @@ class TruthsetFileLibrary(IGetPapers):
             if paper_id == "MISSING_ID":
                 logger.warning(f"Skipped {len(rows)} rows with no paper ID.")
                 continue
+
+            for row in rows:
+                if "is_pmc_oa" in row:
+                    row["is_pmc_oa"] = row["is_pmc_oa"].lower() == "true"  # type: ignore
 
             # For each paper, extract the paper-specific key/value pairs into a new dict.
             # These are repeated on every paper/variant row, so we can just take the first row.
@@ -142,7 +149,35 @@ class TruthsetFileLibrary(IGetPapers):
                 continue
 
             # Create a Paper object with the extracted fields.
-            papers.add(Paper(id=paper_id, evidence=variants, **paper_data))
+            if paper_id is not None and paper_id.startswith("pmid:"):
+                pmid = paper_id[5:]
+                paper = self._paper_client.fetch(pmid, include_fulltext=True)
+                if paper:
+                    # Compare and potentially add in truthset data that we don't get from the paper client.
+                    for key in TRUTHSET_PAPER_KEYS:
+                        if key == "paper_id":
+                            continue
+                        mapped_key = TRUTHSET_PAPER_KEYS_MAPPING.get(key, key)
+                        if mapped_key in paper.props:
+                            if paper.props[mapped_key] != paper_data[key]:
+                                logger.warning(
+                                    f"Paper field mismatch: {key}/{mapped_key} ({paper_data[key]} vs"
+                                    f" {paper.props[mapped_key]})."
+                                )
+                        else:
+                            logger.error(f"Adding {mapped_key}:{paper_data[key]} to paper props.")
+                            paper.props[mapped_key] = paper_data[key]
+                if not paper:
+                    logger.warning(f"Failed to fetch paper with PMID {pmid}.")
+                    paper = Paper(id=paper_id, evidence=variants, **paper_data)
+                else:
+                    # Add in evidence.
+                    paper.evidence = variants
+            else:
+                logger.warning("Paper ID does not appear to be a pmid, cannot fetch paper content.")
+                paper = Paper(id=paper_id, evidence=variants, **paper_data)
+
+            papers.add(paper)
 
         return papers
 
@@ -150,8 +185,10 @@ class TruthsetFileLibrary(IGetPapers):
         """For the TruthsetFileLibrary, query is expected to be a gene symbol."""
         all_papers = self._load_truthset()
 
-        # Filter to just the papers with variants that have evidence for the gene specified in the query.
-        return {p for p in all_papers if query in {v[0].gene_symbol for v in p.evidence.keys()}}
+        if gene_symbol := query.get("gene_symbol"):
+            # Filter to just the papers with variants that have evidence for the gene specified in the query.
+            return {p for p in all_papers if gene_symbol in {v[0].gene_symbol for v in p.evidence.keys()}}
+        return set()
 
 
 class RemoteFileLibrary(IGetPapers):
