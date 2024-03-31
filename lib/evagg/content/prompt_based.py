@@ -4,11 +4,10 @@ import os
 from typing import Any, Dict, List, Sequence
 
 from lib.evagg.llm import IPromptClient
-from lib.evagg.ref import IVariantLookupClient
 from lib.evagg.types import Paper
 
 from ..interfaces import IExtractFields
-from .interfaces import IFindVariantMentions
+from .interfaces import IFindObservations
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +18,12 @@ class PromptBasedContentExtractor(IExtractFields):
         "paper_id",
         "hgvs_c",
         "hgvs_p",
+        "transcript",
         "individual_id",
         "phenotype",
         "zygosity",
         "variant_inheritance",
+        "valid",
     }
     _PROMPTS = {
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
@@ -34,46 +35,51 @@ class PromptBasedContentExtractor(IExtractFields):
         self,
         fields: Sequence[str],
         llm_client: IPromptClient,
-        mention_finder: IFindVariantMentions,
-        variant_lookup_client: IVariantLookupClient,
+        observation_finder: IFindObservations,
     ) -> None:
         self._fields = fields
         self._llm_client = llm_client
-        self._mention_finder = mention_finder
-        self._variant_lookup_client = variant_lookup_client
+        self._observation_finder = observation_finder
 
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def extract(self, paper: Paper, query: str) -> Sequence[Dict[str, str]]:
-        # Only process papers in PMC.
-        if "pmcid" not in paper.props or paper.props["pmcid"] == "":
+    def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
+        # Only process papers in PMC-OA.
+        if (
+            "pmcid" not in paper.props
+            or paper.props["pmcid"] == ""
+            or "is_pmc_oa" not in paper.props
+            or paper.props["is_pmc_oa"] is False
+        ):
+            logger.warning(f"Skipping {paper.id} because it is not in PMC-OA")
             return []
 
-        # Find all the variant mentions in the paper relating to the query.
-        variant_mentions = self._mention_finder.find_mentions(query, paper)
+        # Find all the observations in the paper relating to the query.
+        observations = self._observation_finder.find_observations(gene_symbol, paper)
 
-        logger.info(f"Found {len(variant_mentions)} variant mentions in {paper.id}")
+        logger.info(f"Found {len(observations)} observations in {paper.id}")
 
-        if not variant_mentions:
-            logger.warning(f"No variant mentions found in {paper.id}")
+        if not observations:
+            logger.warning(f"No observations found in {paper.id}")
             return []
 
-        # For each variant/field pair, extract the appropriate content.
+        # For each observation, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
-        for variant, mentions in variant_mentions.items():
-            variant_results: Dict[str, str] = {}
+        for observation, mentions in observations.items():
+            variant, individual = observation
+            observation_results: Dict[str, str] = {}
 
-            logger.info(f"Extracting fields for {variant} in {paper.id}")
+            logger.info(f"Extracting fields for {observation} in {paper.id}")
 
             if not mentions:
-                logger.warning(f"No mentions found for {variant} in {paper.id}")
+                logger.warning(f"No mentions found for {observation} in {paper.id}")
                 continue
 
             # Simplest thing we can think of is to just concatenate all the chunks.
-            paper_excerpts = self._excerpt_from_mentions(mentions)
-            gene_symbol = mentions[0].get("gene_symbol", "unknown")  # Mentions should never be empty.
+            paper_excerpts = "\n\n".join(mentions)
+            gene_symbol = gene_symbol
 
             for field in self._fields:
                 if field not in self._SUPPORTED_FIELDS:
@@ -84,11 +90,18 @@ class PromptBasedContentExtractor(IExtractFields):
                 elif field == "paper_id":
                     result = paper.id
                 elif field == "individual_id":
-                    result = "unknown"
+                    result = individual
                 elif field == "hgvs_c":
-                    result = variant.hgvs_desc
+                    result = variant.hgvs_desc if not variant.hgvs_desc.startswith("p.") else "NA"
                 elif field == "hgvs_p":
-                    result = variant.hgvs_desc
+                    if variant.protein_consequence:
+                        result = variant.protein_consequence.hgvs_desc
+                    else:
+                        result = variant.hgvs_desc if variant.hgvs_desc.startswith("p.") else "NA"
+                elif field == "transcript":
+                    result = variant.refseq if variant.refseq else "unknown"
+                elif field == "valid":
+                    result = str(variant.valid)
                 else:
                     # TODO, should be the original text representation of the variant from the paper. When we switch to
                     # actual mention objects, we can fix this.
@@ -105,6 +118,6 @@ class PromptBasedContentExtractor(IExtractFields):
                         result = json.loads(raw)[field]
                     except Exception:
                         result = "failed"
-                variant_results[field] = result
-            results.append(variant_results)
+                observation_results[field] = result
+            results.append(observation_results)
         return results
