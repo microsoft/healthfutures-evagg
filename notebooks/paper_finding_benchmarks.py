@@ -77,7 +77,6 @@ def read_queries(yaml_data):
 
         # Add the new dictionary to the list
         query_list_yaml.append(new_dict)
-    print(query_list_yaml)
     return query_list_yaml
 
 
