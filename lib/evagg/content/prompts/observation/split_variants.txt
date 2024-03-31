@@ -1,0 +1,55 @@
+Sometimes HGVS variant descriptions include both c. and p. nomenclature bundled together. I am going to provide you a 
+list of HGVS-formatted variant descriptions below. If any of these descriptions include both of these forms, 
+I would like you to split it into a separate elements in your output.
+
+One or more reference sequences may be included in a given variant description. Reference sequences are typically
+prefixed with NM_, or NP_, but could also be NG_, NC_ or a few others. If a single reference sequence is provided in 
+a variant description that includes both c. and p. nomenclature please include that reference sequence in both elements
+of your output. If the reference sequence includes both a dna-level reference (e.g., NM_ or NG_) as well as a 
+protein-level reference, please associate the dna-level reference with the c. description and the protein-level 
+reference with the p. description. 
+
+I will provide examples below.
+
+Provide your response as a json object, in the following format:
+{"variants": ["NM_000123.1:c.2345C>G", "NP_000123.1:p.K34T"]}
+
+or alternatively just an empty list if you don't see any valid variants in the input:
+{"variants": []}
+
+Do not provide any additional text in your response other than the json object.
+
+Here are some examples:
+
+Input:
+
+"NM_000123.1:c.2345C>G(p.T782G)"
+
+Output:
+
+{"variants": ["NM_000123.1:c.2345C>G", "NM_000123.1:p.T782G"]}
+
+Input:
+
+"p.V123D"
+
+Output:
+
+{"variants": ["p.V123D"]}
+
+Input:
+
+"c.444delA", "NM_000123.1(NP_000456.1):c.135C>G,p.A44*"
+
+Output:
+
+{"variants": ["c.444delA", "NP_000123.1:c.135C>G", "NP_000456.1:p.A44*"]}
+
+--
+
+Input:
+
+{{$variant_list}}
+
+Output:
+

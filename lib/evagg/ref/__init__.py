@@ -7,6 +7,7 @@ from .interfaces import (
     INormalizeVariants,
     IPaperLookupClient,
     IRefSeqLookupClient,
+    IValidateVariants,
     IVariantLookupClient,
 )
 from .litvar import LitVarReference
@@ -25,6 +26,7 @@ __all__ = [
     "IRefSeqLookupClient",
     "INormalizeVariants",
     "IBackTranslateVariants",
+    "IValidateVariants",
     # NCBI.
     "NcbiLookupClient",
     "NcbiReferenceLookupClient",

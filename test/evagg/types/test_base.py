@@ -3,16 +3,26 @@ from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 def test_i_create_variants() -> None:
     class TestCreateVariants(ICreateVariants):
-        def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
-            return HGVSVariant(text_desc, gene_symbol, refseq, False, True)
+        def parse_rsid(self, rsid: str) -> HGVSVariant:
+            return HGVSVariant("c.123A>C", None, None, False, True, None)
+
+        def parse(
+            self,
+            text_desc: str,
+            gene_symbol: str | None,
+            refseq: str | None = None,
+            protein_consequence: HGVSVariant | None = None,
+        ) -> HGVSVariant:
+            return HGVSVariant(text_desc, gene_symbol, refseq, False, True, protein_consequence)
 
     test_create_variants = TestCreateVariants()
     variant = test_create_variants.parse("var", "gene", "ref")
     assert variant.hgvs_desc == "var"
     assert variant.gene_symbol == "gene"
     assert variant.refseq == "ref"
-    assert variant.refseq_predicted == False
-    assert variant.valid == True
+    assert variant.refseq_predicted is False
+    assert variant.valid is True
+    assert variant.protein_consequence is None
 
 
 def test_paper_from_dict() -> None:
@@ -49,9 +59,9 @@ def test_paper_repr() -> None:
 
 
 def test_variant_equality() -> None:
-    variant1 = HGVSVariant("var1", "gene1", "ref1", False, True)
-    variant2 = HGVSVariant("var1", "gene1", "ref1", False, True)
-    variant3 = HGVSVariant("var1", "gene2", "ref2", False, True)
+    variant1 = HGVSVariant("var1", "gene1", "ref1", False, True, None)
+    variant2 = HGVSVariant("var1", "gene1", "ref1", False, True, None)
+    variant3 = HGVSVariant("var1", "gene2", "ref2", False, True, None)
 
     assert variant1 == variant1
     assert variant1 == variant2
@@ -60,16 +70,16 @@ def test_variant_equality() -> None:
 
 
 def test_variant_hash() -> None:
-    variant1 = HGVSVariant("var1", "gene1", "ref1", False, True)
-    variant2 = HGVSVariant("var2", "gene1", "ref1", False, True)
+    variant1 = HGVSVariant("var1", "gene1", "ref1", False, True, None)
+    variant2 = HGVSVariant("var2", "gene1", "ref1", False, True, None)
     assert hash(variant1) != hash(variant2)
 
 
 def test_variant_str() -> None:
-    variant = HGVSVariant("var", "gene", "ref", False, True)
+    variant = HGVSVariant("var", "gene", "ref", False, True, None)
     assert str(variant) == "ref:var"
 
 
 def test_variant_repr() -> None:
-    variant = HGVSVariant("var", "gene", "ref", False, True)
+    variant = HGVSVariant("var", "gene", "ref", False, True, None)
     assert variant.__repr__() == "ref:var"
