@@ -15,12 +15,6 @@ from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .interfaces import IGetPapers
 
-# import pdb
-
-# pdb.set_trace()
-
-# # python debugger
-
 logger = logging.getLogger(__name__)
 # TODO: ways to improve:
 #       - process full text of paper to filter to rare disease papers when PMC OA
@@ -250,7 +244,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             Set[Paper]: The set of rare disease papers that match the query.
         """
-        print("Query:", query)
         return self.get_all_papers(query)[0]
 
     def get_all_papers(
@@ -269,11 +262,9 @@ class RareDiseaseFileLibrary(IGetPapers):
             raise ValueError("Minimum requirement to search is to input a gene symbol.")
 
         paper_ids = self._partition_search_query(query)
-        print("PAPER IDS:", paper_ids)
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = {paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None}
-        print("papers:", papers)
 
         (
             rare_disease_tie_break,
@@ -282,11 +273,6 @@ class RareDiseaseFileLibrary(IGetPapers):
             discordant_human_in_loop,
             counts_discordant_hil,
         ) = self._tie_breaking_assessment(papers)
-        print("final rare disease papers:", rare_disease_tie_break)
-        print("final non rare disease papers:", non_rare_disease_tie_break)
-        print("final other papers:", other_tie_break)
-        print("final discordant papers:", discordant_human_in_loop)
-        print("final counts discordant hil:", counts_discordant_hil)
         return (
             rare_disease_tie_break,
             non_rare_disease_tie_break,
@@ -300,7 +286,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Partition the query and run search to generate the paper IDs list for a given gene."""
         # Get gene term
         term = query["gene_symbol"]
-        print("term:", term)
         logger.info("\nFinding papers for gene:", term, "...")
 
         # Find paper IDs
@@ -336,7 +321,6 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Remove None values
         params = {k: v for k, v in params.items() if v is not None}
-        print("PARAMS:", params)
 
         # Perform the search for papers
         paper_ids = self._paper_client.search(**params)
@@ -475,26 +459,20 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         for paper in papers:
             paper_pmid = paper.props.get("pmid", "Unknown")
-            print("PMID being considered by LLM:", paper_pmid)
             logger.info("PMID being considered by LLM:", paper_pmid)
             paper_title = paper.props.get("title", "Unknown")
-            print("PAPER TITLE:", paper_title)
             paper_abstract = paper.props.get("abstract", "Unknown")
-            print("PAPER ABSTRACT:", paper_abstract)
             params = {"abstract": paper_abstract or "Unknown", "title": paper_title or "Unknown"}
-            print("PARAMS:", params)
             response = self._llm_client.prompt_file(
                 user_prompt_file=prompt["paper_category"],
                 system_prompt="Extract field",
                 params=params,
                 prompt_settings={"prompt_tag": "paper_category"},
             )
-            print("response:", response)
             try:
                 result = json.loads(response)["paper_category"]
             except Exception:
                 result = "failed"  # TODO: how to handle this?
-            print("what? result", result)
             # Categorize the paper based on LLM result
             if result in paper_categories:
                 paper_categories[result].add(paper)
@@ -503,7 +481,6 @@ class RareDiseaseFileLibrary(IGetPapers):
             else:
                 raise ValueError(f"Unexpected result: {result}")
 
-        print("PAPER CATEGORIES:", paper_categories)
         return paper_categories["rare disease"], paper_categories["non-rare disease"], paper_categories["other"]
 
     def _tie_breaking_assessment(self, papers: Set[Paper]) -> Tuple[set, set, set, set, List]:
@@ -513,9 +490,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         discordant_human_in_loop = set()
 
         filter_papers = self._filter_rare_disease_papers(papers)
-        print("FILTER PAPERS:", filter_papers)
         llm_papers = self._prompts_for_rare_disease_papers(papers)
-        print("LLM PAPERS:", llm_papers)
 
         # Compare filter and llm classifications (rare, non, other) and see if any discordant papers
         for i, (category, filter_set) in enumerate(zip(categories, filter_papers)):
@@ -527,7 +502,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         # If discordant papers, run 2 llm methods to see if we can break the tie, otherwise add to discordant list for
         # manual review
         count_discordant_hil = []
-        print("DISCORDANT PAPERS:", discordant)
         if discordant:
             llm_papers_2 = self._prompts_for_rare_disease_papers(discordant)
             llm_papers_3 = self._prompts_for_rare_disease_papers(discordant)
@@ -552,11 +526,6 @@ class RareDiseaseFileLibrary(IGetPapers):
                 else:
                     discordant_human_in_loop.add(paper)
                     count_discordant_hil.append(counts)
-        print("RARE DISEASE PAPERS:", tie_breaks["rare_disease"])
-        print("NON RARE DISEASE PAPERS:", tie_breaks["non_rare_disease"])
-        print("OTHER PAPERS:", tie_breaks["other"])
-        print("DISCORDANT PAPERS:", discordant_human_in_loop)
-        print("COUNT DISCORDANT HIL:", count_discordant_hil)
         return (
             tie_breaks["rare_disease"],
             tie_breaks["non_rare_disease"],

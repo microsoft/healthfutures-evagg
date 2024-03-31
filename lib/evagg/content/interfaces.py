@@ -1,4 +1,4 @@
-from typing import Dict, Protocol, Sequence, Set, Tuple
+from typing import Dict, Mapping, Protocol, Sequence, Set, Tuple
 
 from lib.evagg.types import HGVSVariant, Paper
 
@@ -24,7 +24,7 @@ class ICompareVariants(Protocol):
 
 
 class IFindObservations(Protocol):
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Dict[Tuple[HGVSVariant, str], Sequence[str]]:
+    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
         """Identify all observations relevant to `gene_sybmol` in `paper`.
 
         `paper` is the paper to search for relevant observations. Paper must be in the PMC-OA dataset and have
