@@ -13,11 +13,14 @@ for the Evidence Aggregator tool and PubMed
 other categories
 """
 
-# Libraries
 import argparse
 import logging
 import os
+
+# Libraries
+import re
 import warnings
+from collections import Counter
 from datetime import datetime
 from typing import Set
 
