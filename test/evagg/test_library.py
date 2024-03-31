@@ -104,7 +104,9 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any)
     )
     paper_client = mock_paper_client(["33057194"], rare_disease_paper)
     llm_client = mock_llm_client()
-    llm_client._responses = iter([json.dumps({"paper_category": "rare disease"})])
+    llm_client._responses = iter(
+        [json.dumps({"paper_category": "rare disease"}), json.dumps({"paper_category": "rare disease"})]
+    )
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
@@ -150,7 +152,12 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any) -
     paper_client = mock_paper_client(["33057194", "34512170"], rare_disease_paper, non_rare_disease_paper)
     llm_client = mock_llm_client()
     llm_client._responses = iter(
-        [json.dumps({"paper_category": "rare disease"}), json.dumps({"paper_category": "non-rare disease"})]
+        [
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+        ]
     )
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
@@ -196,7 +203,12 @@ def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: An
     paper_client = mock_paper_client(["33057194", "34512170"], rare_disease_paper, non_rare_disease_paper)
     llm_client = mock_llm_client()
     llm_client._responses = iter(
-        [json.dumps({"paper_category": "rare disease"}), json.dumps({"paper_category": "non-rare disease"})]
+        [
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+        ]
     )
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_all_papers(query)
