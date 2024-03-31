@@ -37,7 +37,7 @@ queries:
   #di_factory: lib/config/benchmark_queries.yaml
   - "gene_symbol": "EXOC2"
     "min_date": "2020/01/01"
-    "retmax": 22
+    "retmax": 2
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
