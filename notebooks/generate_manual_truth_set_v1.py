@@ -36,7 +36,7 @@ from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
-TRUTH_XLSX = "./.tmp/Manual Ground Truth.xlsx"
+TRUTH_XLSX = "./.tmp/Manual Ground Truth - 2024.03.27.xlsx"
 GROUP_ASSIGNMENT_CSV = "./data/v1/group_assignments.tsv"
 OUTPUT_ROOT = "./data/v1"
 
@@ -95,19 +95,24 @@ def _phenotype_validator(x: Any) -> Tuple[bool, str]:
 
 
 def _transcript_validator(x: Any) -> Tuple[bool, str]:
-    result = x is None or x.startswith("NM_") or x.startswith("ENST")  # Transcript is optional.
+    # Actually validate any refseq here.
+    result = (
+        x is None or x.startswith("NM_") or x.startswith("ENST") or x.startswith("NP_") or x.startswith("ENSP")
+    )  # Transcript is optional.
     return result, "Value must be None or start with NM_ or ENST" if not result else ""
 
 
 def _hgvs_c_validator(x: Any) -> Tuple[bool, str]:
     # TODO, not particularly sophisticated.
-    result = x is None or x.startswith("c.")
+    # But shouldn't contain spaces at least.
+    result = x is None or x.startswith("c.") and x.find(" ") == -1
     return result, "Value must be None or start with 'c.'" if not result else ""
 
 
 def _hgvs_p_validator(x: Any) -> Tuple[bool, str]:
     # TODO, not particularly sophisticated.
-    result = x is None or x.startswith("p.")  # hgvs.p is optional
+    # But shouldn't contain spaces at least.
+    result = x is None or x.startswith("p.") and x.find(" ") == -1  # hgvs.p is optional
     return result, "Value must be None or start with 'p.'" if not result else ""
 
 
@@ -202,8 +207,8 @@ VALIDATORS = {
     "pheno_text_description": _all_pass_validator,
     "phenotype": _phenotype_validator,
     "transcript": _transcript_validator,
-    "hgvsc": _hgvs_c_validator,
-    "hgvsp": _hgvs_p_validator,
+    "hgvs_c": _hgvs_c_validator,
+    "hgvs_p": _hgvs_p_validator,
     "variant_type": _variant_type_validator,
     "zygosity": _zygosity_validator,
     "variant_inheritance": _variant_inheritance_validator,
@@ -352,6 +357,8 @@ for gene_tuple in genes:
                 validation_result, validation_info = VALIDATORS[col](getattr(row, col))
                 if not validation_result:
                     failed_cols.append(col)
+            elif col not in ["drop", "gene", "questions", "notes"]:
+                print(f"WARNING: No validator found for column {col}")
 
         if failed_cols:
             print(
