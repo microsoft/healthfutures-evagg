@@ -399,7 +399,6 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         exclusion_keywords = [
             "digenic",
-            "familial",
             "structural variant",
             "structural variants",
             "somatic",
