@@ -112,17 +112,15 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("33057194",)
     assert paper_client.call_count() == 2
-    assert llm_client.last_call("prompt_file") == (
-        {"user_prompt_file": "/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/paper_finding.txt"},
-        {"system_prompt": "Extract field"},
-        {
-            "params": {
-                "abstract": "We report on ...",
-                "title": "Evidence for 28 genetic disorders discovered by combining healthcare and research data",
-            }
-        },
-        {"prompt_settings": {"prompt_tag": "paper_category"}},
-    )
+    assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
+    assert llm_client.last_call("prompt_file")[2] == {
+        "params": {
+            "abstract": "We report on ...",
+            "title": "Evidence for 28 genetic disorders discovered by combining healthcare and research data",
+        }
+    }
+    assert llm_client.last_call("prompt_file")[3] == {"prompt_settings": {"prompt_tag": "paper_category"}}
+
     assert llm_client.call_count() == 1
     assert len(result) == 1
     assert result and result.pop() == rare_disease_paper
@@ -163,17 +161,14 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any) -
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("34512170",)
-    assert llm_client.last_call("prompt_file") == (
-        {"user_prompt_file": "/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/paper_finding.txt"},
-        {"system_prompt": "Extract field"},
-        {
-            "params": {
-                "abstract": "We report on ...",
-                "title": "Pancreatic cancer-derived exosomal microRNA-19a induces β-cell dysfunction by targeting ADCY1 and EPAC2",
-            }
-        },
-        {"prompt_settings": {"prompt_tag": "paper_category"}},
-    )
+    assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
+    assert llm_client.last_call("prompt_file")[2] == {
+        "params": {
+            "abstract": "We report on ...",
+            "title": "Pancreatic cancer-derived exosomal microRNA-19a induces β-cell dysfunction by targeting ADCY1 and EPAC2",
+        }
+    }
+    assert llm_client.last_call("prompt_file")[3] == {"prompt_settings": {"prompt_tag": "paper_category"}}
     assert result
     assert len(result) == 1
     assert result.pop() == rare_disease_paper
