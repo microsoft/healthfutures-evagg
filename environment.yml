@@ -11,6 +11,7 @@ dependencies:
   # Scientific computing.
   - numpy
   - pandas
+  - pyarrow # Required by pandas.
   - openpyxl # To work with Excel files in pandas.
   - ipykernel # IPython kernel for jupyter.
   - jinja2 # Required for jupyter notebooks.
@@ -30,6 +31,7 @@ dependencies:
 
   # AI/ML.
   - openai
+  - scikit-learn
 
   # Bioinformatics.
   - biopython
@@ -58,8 +60,9 @@ dependencies:
   #? - snakeviz
 
   # # pip dependencies. Before adding a package to this list, make sure it's not available in conda.
-  # - pip
-  # - pip:
+  - pip
+  - pip:
+    - hpo3
   #   - semantic-kernel
   #   # do not change the pydantic version here, this is specified identically to the pydantic req above, forcing pip to leave it alone.
   #   - pydantic==1.10.*
