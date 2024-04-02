@@ -14,6 +14,10 @@ ncbi_client:
   di_factory: lib.evagg.ref.NcbiLookupClient
   web_client: "{{web_client}}"
   settings: "{{ncbi_settings}}"
- 
 di_factory: lib.evagg.RareDiseaseFileLibrary
 paper_client: "{{ncbi_client}}"
+llm_client: # depends on above services
+  di_factory: lib.evagg.llm.OpenAIClient
+  config:
+    di_factory: lib.evagg.svc.get_dotenv_settings # required for llm_client
+    filter_prefix: "AZURE_OPENAI_"
