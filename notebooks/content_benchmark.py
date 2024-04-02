@@ -10,8 +10,9 @@ This notebook compares the performance of the two components separately.
 # %% Imports.
 
 import os
+import re
 from collections import defaultdict
-from typing import Any, List, Set
+from typing import Any, List
 
 import pandas as pd
 
@@ -25,7 +26,7 @@ TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "eviden
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
-# CONTENT_COLUMNS: Set[str] = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
+# CONTENT_COLUMNS = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
 CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"}  # noqa
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
@@ -331,12 +332,9 @@ printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id",
 # %% Assess content extraction.
 
 hpo = HPOReference()
-import re
 
 
 def _fuzzy_match_hpo_sets(hpo_set1: str, hpo_set2: str) -> bool:
-    # hpo_terms_cands1 = [term.strip() for term in hpo_set1.split(",") if term]
-    # hpo_terms_cands2 = [term.strip() for term in hpo_set2.split(",") if term]
     hpo_terms1 = re.findall(r"HP:\d+", hpo_set1)
     hpo_terms2 = re.findall(r"HP:\d+", hpo_set2)
 
