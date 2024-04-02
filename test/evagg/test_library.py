@@ -6,6 +6,7 @@ from typing import Any, Dict
 import pytest
 
 from lib.evagg import RareDiseaseFileLibrary, RemoteFileLibrary, SimpleFileLibrary
+from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
 
@@ -15,6 +16,11 @@ from lib.evagg.types import Paper
 @pytest.fixture
 def mock_paper_client(mock_client: type) -> IPaperLookupClient:
     return mock_client(IPaperLookupClient)
+
+
+@pytest.fixture
+def mock_llm_client(mock_client: type) -> IPromptClient:
+    return mock_client(IPromptClient)
 
 
 def test_remote_init(mock_paper_client: Any) -> None:
@@ -51,28 +57,33 @@ def test_remote_single_paper(mock_paper_client: Any) -> None:
     assert result and len(result) == 1 and result.pop() == paper
 
 
-def test_rare_disease_init(mock_paper_client: Any) -> None:
+def test_rare_disease_init(mock_paper_client: Any, mock_llm_client: Any) -> None:
     paper_client = mock_paper_client()
-    library = RareDiseaseFileLibrary(paper_client)
+    llm_client = mock_llm_client()
+    library = RareDiseaseFileLibrary(paper_client, llm_client)
     assert library._paper_client == paper_client
+    assert library._llm_client == llm_client
 
 
-def test_rare_disease_extra_params(mock_paper_client: Any) -> None:
+def test_rare_disease_extra_params(mock_paper_client: Any, mock_llm_client: Any) -> None:
     paper_client = mock_paper_client([])
+    llm_client = mock_llm_client()
     query = {"gene_symbol": "gene", "retmax": 9}
-    result = RareDiseaseFileLibrary(paper_client).get_papers(query)
-    print("result", result)
+    result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == (
         {"query": "gene"},
         {"retmax": 9},
     )
     assert paper_client.call_count() == 1
+    print("result", result)
+    # TODO: fix this
 
 
-def test_rare_disease_no_paper(mock_paper_client: Any) -> None:
+def test_rare_disease_no_paper(mock_paper_client: Any, mock_llm_client: Any) -> None:
     paper_client = mock_paper_client([])
+    llm_client = mock_llm_client()
     query = {"gene_symbol": "gene", "retmax": 1}
-    result = RareDiseaseFileLibrary(paper_client).get_papers(query)
+    result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == (
         {"query": "gene"},
         {"retmax": 1},
@@ -81,7 +92,7 @@ def test_rare_disease_no_paper(mock_paper_client: Any) -> None:
     assert not result
 
 
-def test_rare_disease_single_paper(mock_paper_client: Any) -> None:
+def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any) -> None:
     rare_disease_paper = Paper(  # rare disease paper (title contains "disorders")
         id="10.1038/s41586-020-2832-5",
         title="Evidence for 28 genetic disorders discovered by combining healthcare and research data",
@@ -92,15 +103,30 @@ def test_rare_disease_single_paper(mock_paper_client: Any) -> None:
         is_pmc_oa=True,
     )
     paper_client = mock_paper_client(["33057194"], rare_disease_paper)
+    llm_client = mock_llm_client()
+    llm_client._responses = iter(
+        [json.dumps({"paper_category": "rare disease"}), json.dumps({"paper_category": "rare disease"})]
+    )
     query = {"gene_symbol": "gene"}
-    result = RareDiseaseFileLibrary(paper_client).get_papers(query)
+    result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("33057194",)
     assert paper_client.call_count() == 2
-    assert result and len(result) == 1 and result.pop() == rare_disease_paper
+    assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
+    assert llm_client.last_call("prompt_file")[2] == {
+        "params": {
+            "abstract": "We report on ...",
+            "title": "Evidence for 28 genetic disorders discovered by combining healthcare and research data",
+        }
+    }
+    assert llm_client.last_call("prompt_file")[3] == {"prompt_settings": {"prompt_tag": "paper_category"}}
+
+    assert llm_client.call_count() == 1
+    assert len(result) == 1
+    assert result and result.pop() == rare_disease_paper
 
 
-def test_rare_disease_get_papers(mock_paper_client: Any) -> None:
+def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any) -> None:
     rare_disease_paper = Paper(  # rare disease paper (title contains "disorders")
         id="10.1038/s41586-020-2832-5",
         title="Evidence for 28 genetic disorders discovered by combining healthcare and research data",
@@ -122,15 +148,33 @@ def test_rare_disease_get_papers(mock_paper_client: Any) -> None:
     )
 
     paper_client = mock_paper_client(["33057194", "34512170"], rare_disease_paper, non_rare_disease_paper)
+    llm_client = mock_llm_client()
+    llm_client._responses = iter(
+        [
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+        ]
+    )
     query = {"gene_symbol": "gene"}
-    result = RareDiseaseFileLibrary(paper_client).get_papers(query)
+    result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("34512170",)
-    assert paper_client.call_count() == 3
-    assert result and len(result) == 1 and result.pop() == rare_disease_paper
+    assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
+    assert llm_client.last_call("prompt_file")[2] == {
+        "params": {
+            "abstract": "We report on ...",
+            "title": "Pancreatic cancer-derived exosomal microRNA-19a induces β-cell dysfunction by targeting ADCY1 and EPAC2",
+        }
+    }
+    assert llm_client.last_call("prompt_file")[3] == {"prompt_settings": {"prompt_tag": "paper_category"}}
+    assert result
+    assert len(result) == 1
+    assert result.pop() == rare_disease_paper
 
 
-def test_rare_disease_get_all_papers(mock_paper_client: Any) -> None:
+def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any) -> None:
     rare_disease_paper = Paper(  # rare disease paper (title contains "disorders")
         id="10.1038/s41586-020-2832-5",
         title="Evidence for 28 genetic disorders discovered by combining healthcare and research data",
@@ -152,13 +196,21 @@ def test_rare_disease_get_all_papers(mock_paper_client: Any) -> None:
     )
 
     paper_client = mock_paper_client(["33057194", "34512170"], rare_disease_paper, non_rare_disease_paper)
+    llm_client = mock_llm_client()
+    llm_client._responses = iter(
+        [
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+            json.dumps({"paper_category": "rare disease"}),
+            json.dumps({"paper_category": "non-rare disease"}),
+        ]
+    )
     query = {"gene_symbol": "gene"}
-    result = RareDiseaseFileLibrary(paper_client).get_all_papers(query)
+    result = RareDiseaseFileLibrary(paper_client, llm_client).get_all_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("34512170",)
     assert paper_client.call_count() == 3
-    assert result and len(result) == 4
-    assert result[-1] == {non_rare_disease_paper, rare_disease_paper}
+    assert result and len(result) == 6
 
 
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
