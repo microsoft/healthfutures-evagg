@@ -16,22 +16,26 @@ from typing import Any, List, Set
 import pandas as pd
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
+from lib.evagg.ref import HPOReference, MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
 from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "observation_benchmark.tsv")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
-CONTENT_COLUMNS: Set[str] = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-# CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"} # noqa
+# CONTENT_COLUMNS: Set[str] = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
+CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"}  # noqa
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
 # TODO, just get the gene list from the yaml?
-RESTRICT_TRUTH_GENES_TO_OUTPUT = False  # if True, only compare the genes in the output set to the truth set.
+RESTRICT_TRUTH_GENES_TO_OUTPUT = True  # if True, only compare the genes in the output set to the truth set.
+
+HPO_SIMILARITY_THRESHOLD = (
+    0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
+)
 
 # %% Read in the truth and output tables.
 
@@ -324,9 +328,24 @@ printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id",
 
 # %% Redo the merge and assess variant finding.
 
-# TODO
-
 # %% Assess content extraction.
+
+hpo = HPOReference()
+import re
+
+
+def _fuzzy_match_hpo_sets(hpo_set1: str, hpo_set2: str) -> bool:
+    # hpo_terms_cands1 = [term.strip() for term in hpo_set1.split(",") if term]
+    # hpo_terms_cands2 = [term.strip() for term in hpo_set2.split(",") if term]
+    hpo_terms1 = re.findall(r"HP:\d+", hpo_set1)
+    hpo_terms2 = re.findall(r"HP:\d+", hpo_set2)
+
+    if not hpo_terms1 or not hpo_terms2:
+        return False
+
+    result = hpo.compare_set(hpo_terms1, hpo_terms2)
+    return all(v[0] > HPO_SIMILARITY_THRESHOLD for v in result.values())
+
 
 if CONTENT_COLUMNS:
     shared_df = merged_df[merged_df.in_truth & merged_df.in_output]
@@ -334,12 +353,18 @@ if CONTENT_COLUMNS:
     print("---- Content extraction performance ----")
 
     for column in CONTENT_COLUMNS:
-        match = shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_output"].str.lower()
-        print(f"Content extraction accuracy for {column}: {match.mean()}")
+        if column == "phenotype":
+            # Phenotype matching can't be a direct string compare.
+            # compare phenotype_truth and phenotype_output using _fuzzy_match_hpo_sets
+            match = shared_df.apply(
+                lambda row: _fuzzy_match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
+            )
+            print(f"Content extraction accuracy for {column}: {match.mean()}")
+        else:
+            # Currently other content columns are just string compares.
+            match = shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_output"].str.lower()
+            print(f"Content extraction accuracy for {column}: {match.mean()}")
 
         for idx, row in shared_df[~match].iterrows():
             print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
         print()
-
-
-# %%
