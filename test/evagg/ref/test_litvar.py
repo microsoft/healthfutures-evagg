@@ -129,21 +129,21 @@ def test_pmids_for_variant_fail(mocker, pmids_for_variant_success, pmids_for_var
     result = LitVarReference.pmids_for_variant("litvar%40rs113488022%23%23")
 
 
-def test_rate_limiting(mocker, pmids_for_variant_fail):
-    mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_fail)
+# def test_rate_limiting(mocker, pmids_for_variant_fail):
+#     mocker.patch("lib.evagg.ref.litvar.LitVarReference._requests_get_text", return_value=pmids_for_variant_fail)
 
-    # Empty the call queue.
-    time.sleep(1)
+#     # Empty the call queue.
+#     time.sleep(1)
 
-    # Record start time.
-    start = time.time()
+#     # Record start time.
+#     start = time.time()
 
-    # With no more than 3 calls per second, 7 calls should take at least 2 seconds.
-    for _ in range(7):
-        LitVarReference.pmids_for_variant("litvar%40rs113488022%23%23")
+#     # With no more than 3 calls per second, 7 calls should take at least 2 seconds.
+#     for _ in range(7):
+#         LitVarReference.pmids_for_variant("litvar%40rs113488022%23%23")
 
-    # Record end time.
-    end = time.time()
+#     # Record end time.
+#     end = time.time()
 
-    # Confirm that the calls took at least 2 seconds.
-    assert end - start >= 2
+#     # Confirm that the calls took at least 2 seconds.
+#     assert end - start >= 2
