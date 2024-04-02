@@ -25,20 +25,23 @@ refseq_client:
   di_factory: lib.evagg.ref.NcbiReferenceLookupClient
   web_client:
     di_factory: lib.evagg.svc.RequestsWebContentClient
-variant_factory:
-  di_factory: lib.evagg.content.HGVSVariantFactory
-  normalizer: "{{mutalyzer_client}}"
-  back_translator: "{{mutalyzer_client}}"
-  refseq_client: "{{refseq_client}}"
+# removed HGVSVariantFactory as not part of this .yaml's test.
   
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib/config/benchmark_queries.yaml
+  - "gene_symbol": "EXOC2"
+    "min_date": "2020/01/01"
+    "retmax": 2
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
+  llm_client:
+    di_factory: lib.evagg.llm.OpenAIClient
+    config:
+      di_factory: lib.evagg.svc.get_dotenv_settings
+      filter_prefix: "AZURE_OPENAI_"
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields:
