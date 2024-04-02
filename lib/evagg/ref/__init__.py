@@ -1,12 +1,15 @@
 """Package for interacting with reference resources."""
 
+from .hpo import HPOReference
 from .interfaces import (
     IAnnotateEntities,
     IBackTranslateVariants,
+    ICompareHPO,
     IGeneLookupClient,
     INormalizeVariants,
     IPaperLookupClient,
     IRefSeqLookupClient,
+    ITranslateTextToHPO,
     IValidateVariants,
     IVariantLookupClient,
 )
@@ -27,9 +30,13 @@ __all__ = [
     "INormalizeVariants",
     "IBackTranslateVariants",
     "IValidateVariants",
+    "ICompareHPO",
+    "ITranslateTextToHPO",
     # NCBI.
     "NcbiLookupClient",
     "NcbiReferenceLookupClient",
     # Mutalyzer.
     "MutalyzerClient",
+    # HPO.
+    "HPOReference",
 ]
