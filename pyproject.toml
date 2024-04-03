@@ -38,6 +38,3 @@ omit = [
     "test/*",
     "lib/scripts/*",
 ]
-
-[tool.pytest.ini_options]
-filterwarnings = "ignore::DeprecationWarning:semantic_kernel.*:"

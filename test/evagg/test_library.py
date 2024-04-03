@@ -92,17 +92,9 @@ def test_rare_disease_no_paper(mock_paper_client: Any, mock_llm_client: Any) -> 
     assert not result
 
 
-def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any) -> None:
-    rare_disease_paper = Paper(  # rare disease paper (title contains "disorders")
-        id="10.1038/s41586-020-2832-5",
-        title="Evidence for 28 genetic disorders discovered by combining healthcare and research data",
-        citation="Kaplanis et al. (2020) Nature",
-        abstract="We report on ...",
-        pmid="33057194",
-        pmcid="PMC7116826",
-        is_pmc_oa=True,
-    )
-    paper_client = mock_paper_client(["33057194"], rare_disease_paper)
+def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+    rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
+    paper_client = mock_paper_client([rare_disease_paper.props["pmid"]], rare_disease_paper)
     llm_client = mock_llm_client()
     llm_client._responses = iter(
         [json.dumps({"paper_category": "rare disease"}), json.dumps({"paper_category": "rare disease"})]
@@ -126,91 +118,46 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any)
     assert result and result.pop() == rare_disease_paper
 
 
-def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any) -> None:
-    rare_disease_paper = Paper(  # rare disease paper (title contains "disorders")
-        id="10.1038/s41586-020-2832-5",
-        title="Evidence for 28 genetic disorders discovered by combining healthcare and research data",
-        citation="Kaplanis et al. (2020) Nature",
-        abstract="We report on ...",
-        pmid="33057194",
-        pmcid="PMC7116826",
-        is_pmc_oa=True,
-    )
-
-    non_rare_disease_paper = Paper(  # non-rare disease paper (title contains "cancer")
-        id="10.7150/ijbs.56271",
-        title="Pancreatic cancer-derived exosomal microRNA-19a induces β-cell dysfunction by targeting ADCY1 and EPAC2",
-        citation="Pang et al. (2021) Int J Biol Sci.",
-        abstract="We report on ...",
-        pmid="34512170",
-        pmcid="PMC8416731",
-        is_pmc_oa=True,
-    )
-
-    paper_client = mock_paper_client(["33057194", "34512170"], rare_disease_paper, non_rare_disease_paper)
-    llm_client = mock_llm_client()
-    llm_client._responses = iter(
-        [
-            json.dumps({"paper_category": "rare disease"}),
-            json.dumps({"paper_category": "non-rare disease"}),
-            json.dumps({"paper_category": "rare disease"}),
-            json.dumps({"paper_category": "non-rare disease"}),
-        ]
+def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+    rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
+    non_rare_disease_paper = Paper(**json_load("non_rare_disease_paper.json"))
+    ids = [rare_disease_paper.props["pmid"], non_rare_disease_paper.props["pmid"]]
+    paper_client = mock_paper_client(ids, rare_disease_paper, non_rare_disease_paper)
+    llm_client = mock_llm_client(
+        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "non-rare disease"}),
     )
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.last_call("fetch") == ("34512170",)
-    assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
+    assert paper_client.last_call("fetch") == (non_rare_disease_paper.props["pmid"],)
     assert llm_client.last_call("prompt_file")[2] == {
         "params": {
             "abstract": "We report on ...",
             "title": "Pancreatic cancer-derived exosomal microRNA-19a induces β-cell dysfunction by targeting ADCY1 and EPAC2",
         }
     }
-    assert llm_client.last_call("prompt_file")[3] == {"prompt_settings": {"prompt_tag": "paper_category"}}
-    assert result
-    assert len(result) == 1
-    assert result.pop() == rare_disease_paper
+    assert result and len(result) == 1
+    assert result[0] == rare_disease_paper
 
 
-def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any) -> None:
-    rare_disease_paper = Paper(  # rare disease paper (title contains "disorders")
-        id="10.1038/s41586-020-2832-5",
-        title="Evidence for 28 genetic disorders discovered by combining healthcare and research data",
-        citation="Kaplanis et al. (2020) Nature",
-        abstract="We report on ...",
-        pmid="33057194",
-        pmcid="PMC7116826",
-        is_pmc_oa=True,
-    )
-
-    non_rare_disease_paper = Paper(  # non-rare disease paper (title contains "cancer")
-        id="10.7150/ijbs.56271",
-        title="Pancreatic cancer-derived exosomal microRNA-19a induces β-cell dysfunction by targeting ADCY1 and EPAC2",
-        citation="Pang et al. (2021) Int J Biol Sci.",
-        abstract="We report on ...",
-        pmid="34512170",
-        pmcid="PMC8416731",
-        is_pmc_oa=True,
-    )
-
-    paper_client = mock_paper_client(["33057194", "34512170"], rare_disease_paper, non_rare_disease_paper)
-    llm_client = mock_llm_client()
-    llm_client._responses = iter(
-        [
-            json.dumps({"paper_category": "rare disease"}),
-            json.dumps({"paper_category": "non-rare disease"}),
-            json.dumps({"paper_category": "rare disease"}),
-            json.dumps({"paper_category": "non-rare disease"}),
-        ]
+def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+    # TODO test tie-breaking
+    rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
+    non_rare_disease_paper = Paper(**json_load("non_rare_disease_paper.json"))
+    ids = [rare_disease_paper.props["pmid"], non_rare_disease_paper.props["pmid"]]
+    paper_client = mock_paper_client(ids, rare_disease_paper, non_rare_disease_paper)
+    llm_client = mock_llm_client(
+        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "non-rare disease"}),
     )
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_all_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("34512170",)
     assert paper_client.call_count() == 3
-    assert result and len(result) == 6
+    assert result and len(result) == 2
+    assert result == [rare_disease_paper, non_rare_disease_paper]
 
 
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
