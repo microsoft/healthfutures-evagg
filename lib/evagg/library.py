@@ -221,19 +221,15 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     CATEGORIES = ["rare disease", "non-rare disease", "other"]
 
-    def __init__(
-        self,
-        paper_client: IPaperLookupClient,
-        llm_client: IPromptClient,
-        # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
-        # so that the user of this class can specify which types of papers they want to filter for.
-    ) -> None:
+    def __init__(self, paper_client: IPaperLookupClient, llm_client: IPromptClient) -> None:
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
         Args:
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
-            llm_client (IPromptClient): A class to leveral LLMs to filter to the right papers.
+            llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
         """
+        # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
+        # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
 
