@@ -1,3 +1,4 @@
+import json
 from typing import Dict, Sequence
 
 from lib.evagg.types import Paper
@@ -17,7 +18,7 @@ class SimpleContentExtractor(IExtractFields):
         if field == "paper_disease_category":
             return paper.props.get("disease_category", "Unknown")
         if field == "paper_disease_categorizations":
-            return ", ".join(paper.props.get("disease_categorizations", ["Unknown"]))
+            return json.dumps(paper.props.get("disease_categorizations", {}))
         if field == "pmid":
             return paper.props.get("pmid", "Unknown")
         if field == "pmcid":
