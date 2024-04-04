@@ -353,9 +353,13 @@ class RareDiseaseFileLibrary(IGetPapers):
             assert best_category in self.CATEGORIES and categories[best_category] < 4
 
             # If there are multiple categories and the best one has a low count, mark it conflicting.
-            if len(categories) > 1 and categories[best_category] < 3:
+            if len(categories) > 1:
+                # Always keep categorizations if there's more than one category.
                 paper.props["disease_categorizations"] = categories
-                best_category = "conflicting"
+                # Mark as conflicting if the best category has a low count.
+                if categories[best_category] < 3:
+                    best_category = "conflicting"
+
             paper.props["disease_category"] = best_category
 
         return papers
