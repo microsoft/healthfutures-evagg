@@ -33,38 +33,6 @@ queries:
 - "gene_symbol": "ADCY1"
   "min_date": "2014/01/01"
   "retmax": 99
-
-- "gene_symbol": "RHOH"
-  "min_date": "2012/01/01"
-  "retmax": 90
-  
-- "gene_symbol": "FBN2"
-  "min_date": "1998/01/01"
-  "retmax": 313
-
-- "gene_symbol": "ACAT2"
-  "min_date": "2021/01/01"
-  "retmax": 87
-
-- "gene_symbol": "TAPBP"
-  "min_date": "2002/01/01"
-  "retmax": 65
-
-- "gene_symbol": "LRRC10"
-  "min_date": "2015/01/01"
-  "retmax": 24
-
-- "gene_symbol": "EXOC2"
-  "min_date": "2020/01/01"
-  "retmax": 22
-
-- "gene_symbol": "CTF1"
-  "min_date": "2000/01/01"
-  "retmax": 115
-
-- "gene_symbol": "TOPBP1"
-  "min_date": "2014/01/01"
-  "retmax": 260
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
