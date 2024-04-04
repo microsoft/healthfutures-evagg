@@ -152,7 +152,7 @@ def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: An
         json.dumps({"paper_category": "non-rare disease"}),
     )
     query = {"gene_symbol": "gene"}
-    result = RareDiseaseFileLibrary(paper_client, llm_client).get_all_papers(query)
+    result = RareDiseaseFileLibrary(paper_client, llm_client)._get_all_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("34512170",)
     assert paper_client.call_count() == 3
