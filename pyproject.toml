@@ -29,15 +29,12 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 
-# Asserts are OK in test code.
-[tool.bandit.assert_used]
-skips = ['test/*']
+# Asserts are OK.
+[tool.bandit]
+skips = ['B101']
 
 [tool.coverage.run]
 omit = [
     "test/*",
     "lib/scripts/*",
 ]
-
-[tool.pytest.ini_options]
-filterwarnings = "ignore::DeprecationWarning:semantic_kernel.*:"
