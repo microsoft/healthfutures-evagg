@@ -14,11 +14,11 @@ other categories
 """
 
 import argparse
-import logging
-import os
 
 # Libraries
-import warnings
+import json
+import logging
+import os
 from datetime import datetime
 from functools import cache
 from typing import Dict, Set
@@ -30,8 +30,6 @@ import yaml
 
 from lib.di import DiContainer
 from lib.evagg.ref import IPaperLookupClient
-
-# warnings.filterwarnings("ignore", category=DeprecationWarning)  # want to suppress pandas warning
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -120,7 +118,7 @@ def plot_benchmarking_results(benchmarking_train_results):
         "Rare Disease Papers",
         "Non-Rare Disease Papers",
         "Other Papers",
-        "Discordant Papers",
+        "Conflicting Papers",
         "E.A. Correct",
         "E.A. Missed",
         "E.A. Irrelevant",
@@ -217,7 +215,7 @@ def plot_filtered_categories(results_to_plot):
     rare_disease_avg = results_to_plot["Rare Disease Papers"].mean()
     non_rare_disease_avg = results_to_plot["Non-Rare Disease Papers"].mean()
     other_papers_avg = results_to_plot["Other Papers"].mean()
-    discordant_papers_avg = results_to_plot["Discordant Papers"].mean()
+    conflicting = results_to_plot["Conflicting Papers"].mean()
 
     # Create a figure and a set of subplots
     fig, ax = plt.subplots()
@@ -234,7 +232,7 @@ def plot_filtered_categories(results_to_plot):
     # Create a bar plot
     bars = ax.bar(
         bar_l,
-        [rare_disease_avg, non_rare_disease_avg, other_papers_avg, discordant_papers_avg],
+        [rare_disease_avg, non_rare_disease_avg, other_papers_avg, conflicting],
         width=bar_width,
         alpha=0.5,
         color="b",
@@ -242,7 +240,7 @@ def plot_filtered_categories(results_to_plot):
 
     # Set the ticks to be first names
     plt.xticks(
-        tick_pos, ["Rare Disease Papers", "Non-Rare Disease Papers", "Other Papers", "Discordant Papers"], rotation=10
+        tick_pos, ["Rare Disease Papers", "Non-Rare Disease Papers", "Other Papers", "Conflicting Papers"], rotation=10
     )
     ax.set_ylabel("Average")
     ax.set_xlabel("Categories")
@@ -357,12 +355,15 @@ def main(args):
                 .tolist()
             )
             other_ids = gene_df[gene_df["paper_disease_category"] == "other"]["paper_id"].str.lstrip("pmid:").tolist()
-            discordant_ids = (
-                gene_df[gene_df["paper_disease_category"] == "discordant"]["paper_id"].str.lstrip("pmid:").tolist()
+            conflicting_ids = (
+                gene_df[gene_df["paper_disease_category"] == "conflicting"]["paper_id"].str.lstrip("pmid:").tolist()
             )
-            discordant_counts = gene_df[gene_df["paper_disease_category"] == "discordant"][
-                "paper_disease_categorizations"
-            ].tolist()
+            conflicting_counts = [
+                json.loads(x)
+                for x in gene_df[gene_df["paper_disease_category"] == "conflicting"][
+                    "paper_disease_categorizations"
+                ].tolist()
+            ]
 
             paper_ids = gene_df["paper_id"].str.lstrip("pmid:").tolist()
 
@@ -379,11 +380,11 @@ def main(args):
             benchmarking_results[term][1] = len(non_rare_disease_ids)
             f.write(f"Other Papers: {len(other_ids)}\n")
             benchmarking_results[term][2] = len(other_ids)
-            f.write(f"Discordant Papers: {len(discordant_ids)}\n")
-            benchmarking_results[term][3] = len(discordant_ids)
-            for i, id in enumerate(discordant_ids):
+            f.write(f"Conflicting Papers: {len(conflicting_ids)}\n")
+            benchmarking_results[term][3] = len(conflicting_ids)
+            for i, id in enumerate(conflicting_ids):
                 f.write(f"* {i + 1} * {id} * {titles[id]}\n")
-                f.write(f"* {i + 1}-counts * {discordant_counts[i]}\n")
+                f.write(f"* {i + 1}-counts * {conflicting_counts[i]}\n")
 
             # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to MGT data papers (PMIDs)
             print("Comparing Evidence Aggregator results to manual ground truth data for:", gene_symbol, "...")
