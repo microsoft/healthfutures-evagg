@@ -219,24 +219,31 @@ class RemoteFileLibrary(IGetPapers):
 class RareDiseaseFileLibrary(IGetPapers):
     """A class for fetching and categorizing disease papers from PubMed."""
 
-    CATEGORIES = ["rare disease", "non-rare disease", "other"]
+    CATEGORIES = ["rare disease", "non-rare disease", "other"]  # "conflicting" is another potential category.
 
-    def __init__(self, paper_client: IPaperLookupClient, llm_client: IPromptClient) -> None:
+    def __init__(
+        self,
+        paper_client: IPaperLookupClient,
+        llm_client: IPromptClient,
+        allowed_categories: Sequence[str] | None = None,
+    ) -> None:
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
         Args:
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
+            allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
         """
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
+        self._allowed_categories = allowed_categories if allowed_categories is not None else ["rare disease"]
 
     def _get_keyword_category(self, paper: Paper) -> str:
         """Categorize papers based on keywords in the title and abstract."""
-        title = paper.props.get("title", "")
-        abstract = paper.props.get("abstract", "")
+        title = paper.props.get("title") or ""
+        abstract = paper.props.get("abstract") or ""
 
         # TODO: Exclude papers that are not written in English by scanning the title or abstract
         # TODO: Exclude papers that only describe animal models and do not have human data
@@ -272,7 +279,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         response = self._llm_client.prompt_file(
             user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding.txt"),
             system_prompt="Extract field",
-            params={"abstract": paper.props.get("abstract", "unknown"), "title": paper.props.get("title", "unknown")},
+            params={
+                "abstract": paper.props.get("abstract") or "no abstract",
+                "title": paper.props.get("title") or "no title",
+            },
             prompt_settings={"prompt_tag": "paper_category"},
         )
 
@@ -304,7 +314,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         assert sum(counts.values()) == 4
         return counts
 
-    def get_all_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
+    def _get_all_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
         """Search for papers based on the given query.
 
         Args:
@@ -359,4 +369,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             Sequence[Paper]: The set of rare disease papers that match the query.
         """
-        return list(filter(lambda p: p.props["disease_category"] == "rare disease", self.get_all_papers(query)))
+        return list(
+            filter(lambda p: p.props["disease_category"] in self._allowed_categories, self._get_all_papers(query))
+        )

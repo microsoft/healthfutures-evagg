@@ -18,11 +18,10 @@ import logging
 import os
 
 # Libraries
-import re
 import warnings
-from collections import Counter
 from datetime import datetime
-from typing import Set
+from functools import cache
+from typing import Dict, Set
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,12 +29,11 @@ import pandas as pd
 import yaml
 
 from lib.di import DiContainer
-from lib.evagg.library import RareDiseaseFileLibrary
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import Paper
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)  # want to suppress pandas warning
+# warnings.filterwarnings("ignore", category=DeprecationWarning)  # want to suppress pandas warning
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -91,52 +89,23 @@ def get_ground_truth_pmids(gene, mgt_gene_pmids_dict):
         return None
 
 
-def compare_to_truth_or_tool(gene, input_papers, ncbi_lookup, mgt_gene_pmids_dict):
+def compare_pmid_lists(input_pmids, truth_pmids):
     """Compare the PMIDs that were found either by ev. agg. or competing tool (e.g. PubMed) to the MGT PMIDs.
 
     Args:
-        gene (str): the gene name
-        input_papers (set): the papers that were found
-        ncbi_lookup (IPaperLookupClient): the PubMed lookup client
+        input_pmids (list): the ids of papers that were found
+        truth_pmids (list): the ids of papers from the MGT data
 
     Returns:
-        correct_pmids (list): the PMIDs and titles of the papers that were found that match the MGT data papers
-        missed_pmids (list): the PMIDs and titles of the papers that are in the MGT data papers but not in the
+        correct_pmids (list): the PMIDs of the papers that were found that match the MGT data papers
+        missed_pmids (list): the PMIDs of the papers that are in the MGT data papers but not in the
         papers that were found
-        irrelevant_pmids (list): the PMIDs and titles of the papers that are in the papers that were found but not in
+        irrelevant_pmids (list): the PMIDs of the papers that are in the papers that were found but not in
         the MGT data papers
     """
-    # Get all the PMIDs from all of the papers
-    input_paper_pmids = {
-        paper.props.get("pmid", "Unknown"): paper.props.get("title", "Unknown") for paper in input_papers
-    }
-
-    # Gather ground truth PMIDs for the gene
-    ground_truth_gene_pmids = get_ground_truth_pmids(gene, mgt_gene_pmids_dict)
-
-    correct_pmids = []
-    missed_pmids = []
-    irrelevant_pmids = []
-
-    # Compare the input PMIDs to the ground truth PMIDs
-    if ground_truth_gene_pmids is not None:
-        for pmid, title in input_paper_pmids.items():
-            if pmid in ground_truth_gene_pmids:
-                correct_pmids.append((pmid, title))
-            else:
-                irrelevant_pmids.append((pmid, title))
-
-        missed_pmids = []
-        for pmid in ground_truth_gene_pmids:
-            if pmid not in input_paper_pmids:
-                paper = ncbi_lookup.fetch(str(pmid))
-                if paper is not None:
-                    title = paper.props.get("title", "Unknown")
-                else:
-                    title = "Unknown"
-                missed_pmids.append((pmid, title))
-    else:
-        irrelevant_pmids = list(input_paper_pmids.items())
+    correct_pmids = list(set(input_pmids).intersection(truth_pmids))
+    missed_pmids = list(set(truth_pmids).difference(input_pmids))
+    irrelevant_pmids = list(set(input_pmids).difference(truth_pmids))
 
     return correct_pmids, missed_pmids, irrelevant_pmids
 
@@ -310,6 +279,27 @@ def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
     return precision, recall, f1_score
 
 
+@cache
+def get_lookup_client() -> IPaperLookupClient:
+    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
+    return ncbi_lookup
+
+
+def get_paper_titles(pmids: Set[str]) -> Dict[str, str]:
+    # This increases execution time a fair amount, we could alternatively store the titles in the MGT and the pipeline
+    # output to speed things up if we wanted.
+    client = get_lookup_client()
+    titles = {}
+    for pmid in pmids:
+        try:
+            paper = client.fetch(pmid)
+            titles[pmid] = paper.props.get("title", "Unknown") if paper else "Unknown"
+        except Exception as e:
+            print(f"Error getting title for paper {pmid}: {e}")
+            titles[pmid] = "Unknown"
+    return titles
+
+
 def main(args):
 
     # Open and load the .yaml file
@@ -317,9 +307,9 @@ def main(args):
         yaml_data = yaml.safe_load(file)
 
     # Read the intermediate manual ground truth (MGT) data file from the TSV file
-    mgt_gene_pmids_dict = read_mgt_split_tsv(args.mgt_train_test_path)
+    mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
 
-    # Get the query/ies from .yaml file
+    # Get the query/ies from .yaml file so we know the list of genes processed.
     if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
         with open(yaml_data["queries"]["di_factory"], "r") as file:
             yaml_data = yaml.safe_load(file)
@@ -329,9 +319,13 @@ def main(args):
     else:
         raise ValueError("No queries found in the .yaml file.")
 
-    # Create the library, the PubMed lookup clients, and the LLM client
-    library: RareDiseaseFileLibrary = DiContainer().create_instance({"di_factory": "lib/config/library.yaml"}, {})
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
+    yaml_genes = [query["gene_symbol"] for query in query_list_yaml]
+
+    # Read in the corresponding pipeline output.
+    pipeline_df = pd.read_csv(args.pipeline_output, sep="\t", skiprows=1)
+
+    if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
+        raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
 
     # Initialize the dictionary
     benchmarking_results = {}
@@ -344,56 +338,57 @@ def main(args):
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
     os.makedirs(args.outdir, exist_ok=True)
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
-        for query in query_list_yaml:
-
+        for gene_symbol, gene_df in pipeline_df.groupby("gene"):
             # Get the gene name from the query
-            term = query["gene_symbol"]
+            term = gene_symbol
             f.write(f"\nGENE: {term}\n")
-            print("Finding papers for: ", query["gene_symbol"], "...")
+            print("Analyzing found papers for: ", gene_symbol, "...")
 
             # Initialize the list for this gene
             benchmarking_results[term] = [0] * 10
 
-            # Get  papers from library for the query (i.e. gene/term), TODO: better to union 3 sets or keep 'papers'?
-            (rare_disease_papers, non_rare_disease_papers, other_papers, papers,
-                discordant_human_in_loop, counts_discordant_hil) = library.get_all_papers(query)
+            # Get pmids from pipeline output for this gene.
+            rare_disease_ids = (
+                gene_df[gene_df["paper_disease_category"] == "rare disease"]["paper_id"].str.lstrip("pmid:").tolist()
+            )
+            non_rare_disease_ids = (
+                gene_df[gene_df["paper_disease_category"] == "non-rare disease"]["paper_id"]
+                .str.lstrip("pmid:")
+                .tolist()
+            )
+            other_ids = gene_df[gene_df["paper_disease_category"] == "other"]["paper_id"].str.lstrip("pmid:").tolist()
+            discordant_ids = (
+                gene_df[gene_df["paper_disease_category"] == "discordant"]["paper_id"].str.lstrip("pmid:").tolist()
+            )
+            discordant_counts = gene_df[gene_df["paper_disease_category"] == "discordant"][
+                "paper_disease_categorizations"
+            ].tolist()
 
-            # Check if =<3 papers categories are empty, and report the number of papers in each category
-            if not rare_disease_papers:
-                f.write(f"Rare Disease Papers: {0}\n")
-                benchmarking_results[term][0] = 0
-            else:
-                f.write(f"Rare Disease Papers: {len(rare_disease_papers)}\n")
-                benchmarking_results[term][0] = len(rare_disease_papers)
-            if not non_rare_disease_papers:
-                f.write(f"Non-Rare Disease Papers: {0}\n")
-                benchmarking_results[term][1] = 0
-            else:
-                f.write(f"Non-Rare Disease Papers: {len(non_rare_disease_papers)}\n")
-                benchmarking_results[term][1] = len(non_rare_disease_papers)
-            if not other_papers:
-                f.write(f"Other Papers: {0}\n")
-                benchmarking_results[term][2] = 0
-            else:
-                f.write(f"Other Papers: {len(other_papers)}\n")
-                benchmarking_results[term][2] = len(other_papers)
-            if not discordant_human_in_loop:
-                f.write(f"Discordant Papers: {0}\n")
-                benchmarking_results[term][3] = 0
-            else:
-                f.write(f"Discordant Papers: {len(discordant_human_in_loop)}\n")
-                benchmarking_results[term][3] = len(discordant_human_in_loop)
+            paper_ids = gene_df["paper_id"].str.lstrip("pmid:").tolist()
 
-                for i, p in enumerate(discordant_human_in_loop):
-                    f.write(f"* {i + 1} * {p.props.get("pmid", "Unknown")} * {p.props.get("title", "Unknown")}\n")
-                    f.write(f"* {i + 1}-counts * {counts_discordant_hil[i]}\n")      
+            # Get the pmids from MGT.
+            mgt_ids = mgt_df[mgt_df["gene"] == term]["pmid"].astype(str).tolist()
+
+            # Cache the titles for these pmids.
+            titles = get_paper_titles(set(paper_ids + mgt_ids))
+
+            # Report the number of papers in each category
+            f.write(f"Rare Disease Papers: {len(rare_disease_ids)}\n")
+            benchmarking_results[term][0] = len(rare_disease_ids)
+            f.write(f"Non-Rare Disease Papers: {len(non_rare_disease_ids)}\n")
+            benchmarking_results[term][1] = len(non_rare_disease_ids)
+            f.write(f"Other Papers: {len(other_ids)}\n")
+            benchmarking_results[term][2] = len(other_ids)
+            f.write(f"Discordant Papers: {len(discordant_ids)}\n")
+            benchmarking_results[term][3] = len(discordant_ids)
+            for i, id in enumerate(discordant_ids):
+                f.write(f"* {i + 1} * {id} * {titles[id]}\n")
+                f.write(f"* {i + 1}-counts * {discordant_counts[i]}\n")
 
             # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to MGT data papers (PMIDs)
-            print("Comparing Evidence Aggregator results to manual ground truth data for:", query["gene_symbol"], "...")
-            if rare_disease_papers != Set[Paper]:
-                correct_pmids, missed_pmids, irrelevant_pmids = compare_to_truth_or_tool(
-                    term, rare_disease_papers, ncbi_lookup, mgt_gene_pmids_dict
-                )
+            print("Comparing Evidence Aggregator results to manual ground truth data for:", gene_symbol, "...")
+            if rare_disease_ids:
+                correct_pmids, missed_pmids, irrelevant_pmids = compare_pmid_lists(rare_disease_ids, mgt_ids)
 
                 # Report comparison between ev.agg. and MGT data
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
@@ -402,7 +397,7 @@ def main(args):
                 f.write(f"E.A. # Irrelevant Papers: {len(irrelevant_pmids)}\n")
 
                 # Calculate precision and recall
-                if len(correct_pmids):
+                if len(correct_pmids) > 0:
                     precision, recall, f1_score = calculate_metrics(correct_pmids, missed_pmids, irrelevant_pmids)
 
                     f.write(f"\nPrecision: {precision}\n")
@@ -420,25 +415,25 @@ def main(args):
 
                 f.write(f"\nFound E.A. {len(correct_pmids)} correct.\n")
                 for i, p in enumerate(correct_pmids):
-                    f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
+                    f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
                 f.write(f"\nFound E.A. {len(missed_pmids)} missed.\n")
                 for i, p in enumerate(missed_pmids):
-                    f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
+                    f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
                 f.write(f"\nFound E.A. {len(irrelevant_pmids)} irrelevant.\n")
                 for i, p in enumerate(irrelevant_pmids):
-                    f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
+                    f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
             else:
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
-                f.write(f"E.A. # Correct Papers: {0}\n")
-                f.write(f"E.A. # Missed Papers: {0}\n")
-                f.write(f"E.A. # Irrelevant Papers: {0}\n")
+                f.write("E.A. # Correct Papers: 0\n")
+                f.write("E.A. # Missed Papers: 0\n")
+                f.write("E.A. # Irrelevant Papers: 0\n")
 
             # Compare PubMed papers to  MGT data papers
-            print("Comparing PubMed results to manual ground truth data for: ", query["gene_symbol"], "...")
-            p_corr, p_miss, p_irr = compare_to_truth_or_tool(term, papers, ncbi_lookup, mgt_gene_pmids_dict)
+            print("Comparing PubMed results to manual ground truth data for: ", gene_symbol, "...")
+            p_corr, p_miss, p_irr = compare_pmid_lists(paper_ids, mgt_ids)
             f.write("\nOf PubMed papers...\n")
             f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
             f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
@@ -451,15 +446,15 @@ def main(args):
 
             f.write(f"\nFound Pubmed {len(p_corr)} correct.\n")
             for i, p in enumerate(p_corr):
-                f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
+                f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
             f.write(f"\nFound Pubmed {len(p_miss)} missed.\n")
             for i, p in enumerate(p_miss):
-                f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
+                f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
             f.write(f"\nFound Pubmed {len(p_irr)} irrelevant.\n")
             for i, p in enumerate(p_irr):
-                f.write(f"* {i + 1} * {p[0]} * {p[1]}\n")  # PMID and title output
+                f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
         # Calculate average precision and recall
         if len(avg_precision) != 0:
@@ -471,7 +466,7 @@ def main(args):
             f.write(f"Average Recall: {avg_recall}\n")
         else:
             f.write("\nNo true positives. Precision and recall are undefined.\n")
-            
+
     # Plot benchmarking results
     results_to_plot = plot_benchmarking_results(benchmarking_results)
 
@@ -485,9 +480,9 @@ if __name__ == "__main__":
         "-l",
         "--library-config",
         nargs="?",
-        default="lib/config/pubmed_library_config.yaml",
+        default="lib/config/paper_finding_benchmark.yaml",
         type=str,
-        help="Default is lib/config/pubmed_library_config.yaml",
+        help="Default is lib/config/paper_finding_benchmark.yaml",
     )
     parser.add_argument(
         "-m",
@@ -496,6 +491,14 @@ if __name__ == "__main__":
         default="data/v1/papers_train_v1.tsv",
         type=str,
         help="Default is data/v1/papers_train_v1.tsv",
+    )
+    parser.add_argument(
+        "-p",
+        "--pipeline-output",
+        nargs="?",
+        default=".out/library_benchmark.tsv",
+        type=str,
+        help="Default is .out/library_benchmark.tsv",
     )
     parser.add_argument(
         "--outdir",
