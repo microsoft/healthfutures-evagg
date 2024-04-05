@@ -62,9 +62,13 @@ class DiContainer:
             # Read in the spec dictionary from yaml.
             with open(Path(factory), "r") as f:
                 yaml_spec = yaml.safe_load(f)
-            # Parameters to the yaml are considered overrides to items inside the yaml.
-            yaml_spec = self._nested_update(yaml_spec, parameters)
-            instance = self.create_instance(yaml_spec, resources.copy())
+
+            if isinstance(yaml_spec, dict):
+                # Parameters to the yaml are considered overrides to items inside the yaml.
+                yaml_spec = self._nested_update(yaml_spec, parameters)
+                instance = self.create_instance(yaml_spec, resources.copy())
+            else:  # If it's not a dictionary, treat it as a simple object.
+                instance = yaml_spec
         else:
             # Locate the module and instance factory from module path.
             module_name, _, factory_name = factory.rpartition(".")
