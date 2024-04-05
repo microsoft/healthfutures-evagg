@@ -1,12 +1,12 @@
+import asyncio
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, reduce
 from typing import Any, Dict, List, Optional, Tuple
 
 import openai
 import retry
-from openai import AzureOpenAI, OpenAI
+from openai import AsyncAzureOpenAI, AsyncOpenAI
 from openai.types import CreateEmbeddingResponse
 from openai.types.chat import (
     ChatCompletionMessageParam,
@@ -37,15 +37,15 @@ class OpenAIClient(IPromptClient):
         self._config = OpenAIConfig(**config)
 
     @property
-    def _client(self) -> OpenAI:
+    def _client(self) -> AsyncOpenAI:
         return self._get_client_instance()
 
     @lru_cache
-    def _get_client_instance(self) -> OpenAI:
+    def _get_client_instance(self) -> AsyncOpenAI:
         logger.info("Using Azure OpenAI API")
         # Can configure a default model deployment here, but model is still required in the settings, so there's
         # no point in doing so. Instead we'll just put the deployment from the config into the default settings.
-        return AzureOpenAI(
+        return AsyncAzureOpenAI(
             azure_endpoint=self._config.endpoint,
             api_key=self._config.api_key,
             api_version=self._config.api_version,
@@ -57,10 +57,10 @@ class OpenAIClient(IPromptClient):
             return f.read()
 
     @retry.retry(openai.RateLimitError, tries=3, delay=5, backoff=2)
-    def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
+    async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         start_ts = time.time()
         prompt_tag = settings.pop("prompt_tag", "prompt")
-        completion = self._client.chat.completions.create(messages=messages, **settings)
+        completion = await self._client.chat.completions.create(messages=messages, **settings)
         response = completion.choices[0].message.content or ""
         elapsed = time.time() - start_ts
 
@@ -75,7 +75,7 @@ class OpenAIClient(IPromptClient):
         logger.log(PROMPT, f"Chat '{prompt_tag}' complete in {elapsed:.2f} seconds.", extra=prompt_log)
         return response
 
-    def prompt(
+    async def prompt(
         self,
         user_prompt: str,
         system_prompt: Optional[str] = None,
@@ -99,7 +99,7 @@ class OpenAIClient(IPromptClient):
             **(prompt_settings or {}),
         }
 
-        return self._generate_completion(messages, settings)
+        return await self._generate_completion(messages, settings)
 
     def prompt_file(
         self,
@@ -109,16 +109,25 @@ class OpenAIClient(IPromptClient):
         prompt_settings: Optional[Dict[str, Any]] = None,
     ) -> str:
         user_prompt = self._load_prompt_file(user_prompt_file)
-        return self.prompt(user_prompt, system_prompt, params, prompt_settings)
+        return asyncio.run(self.prompt(user_prompt, system_prompt, params, prompt_settings))
 
-    def embeddings(
+    async def prompt_file_async(
+        self,
+        user_prompt_file: str,
+        system_prompt: Optional[str] = None,
+        params: Optional[Dict[str, str]] = None,
+        prompt_settings: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        user_prompt = self._load_prompt_file(user_prompt_file)
+        return await self.prompt(user_prompt, system_prompt, params, prompt_settings)
+
+    async def embeddings(
         self, inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None
     ) -> Dict[str, List[float]]:
         settings = {"model": "text-embedding-ada-002", **(embedding_settings or {})}
 
         start_overall = time.time()
-        with ThreadPoolExecutor(max_workers=20) as executor:
-            results = executor.map(lambda input: _run_single_embedding(self._client, input, settings), inputs)
+        results = await asyncio.gather(*[_run_single_embedding(self._client, input, settings) for input in inputs])
         elapsed = time.time() - start_overall
 
         embeddings = {}
@@ -132,10 +141,10 @@ class OpenAIClient(IPromptClient):
 
 
 @retry.retry(openai.RateLimitError, tries=3, delay=5, backoff=2)
-def _run_single_embedding(
-    openai_client: OpenAI,
+async def _run_single_embedding(
+    openai_client: AsyncOpenAI,
     input: str,
     settings: Any,
 ) -> Tuple[str, List[float], int]:
-    result: CreateEmbeddingResponse = openai_client.embeddings.create(input=[input], **settings)
+    result: CreateEmbeddingResponse = await openai_client.embeddings.create(input=[input], **settings)
     return (input, result.data[0].embedding, result.usage.prompt_tokens)
