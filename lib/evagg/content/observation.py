@@ -346,10 +346,6 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
             return {}
 
-        # Determine all of the patients specifically referred to in the paper, if any.
-        patients = self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
-        logger.info(f"Found the following patients in {paper}: {patients}")
-
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = self._find_variant_descriptions(
             full_text=full_text, focus_texts=list(table_texts.values()), gene_symbol=gene_symbol
@@ -371,17 +367,22 @@ uninterrupted sequences of whitespace characters.
         # Note we're keeping invalid variants here.
         variants = {desc: variant for desc, variant in variants.items() if variant is not None}
 
-        # TODO, consider consolidating variants here, before linking with patients.
-
-        # If there are both variants and patients, build a mapping between the two,
-        # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
-        # if there are no variants (regardless of patients), then there are no observations to report.
-        if variant_descriptions and patients:
-            observations = self._link_entities(full_text, patients, list(variants.keys()), gene_symbol)
-        elif variant_descriptions:
-            observations = {"unknown": list(variants.keys())}
-        else:
+        if not variants:
             observations = {}
+        else:
+            # Determine all of the patients specifically referred to in the paper, if any.
+            patients = self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
+            logger.info(f"Found the following patients in {paper}: {patients}")
+
+            # TODO, consider consolidating variants here, before linking with patients.
+
+            # If there are both variants and patients, build a mapping between the two,
+            # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
+            # if there are no variants (regardless of patients), then there are no observations to report.
+            if patients:
+                observations = self._link_entities(full_text, patients, list(variants.keys()), gene_symbol)
+            else:
+                observations = {"unknown": list(variants.keys())}
 
         # TODO, if we've split variant descriptions above, then we run the risk of the observations returning the
         # unsplit variant entity, which will not match the keys in variant objects. Either try to convince the LLM to

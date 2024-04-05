@@ -106,7 +106,11 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             logger.warning(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
             return None
 
-        response_root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
+        try:
+            response_root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
+        except Exception as e:
+            logger.warning(f"Unexpected error fetching BioC entry for {pmcid}: {e}")
+            return None
 
         # Find and return the specific document.
         for document in response_root.findall("./document"):
