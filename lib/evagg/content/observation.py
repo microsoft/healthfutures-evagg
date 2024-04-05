@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
@@ -13,7 +14,65 @@ from .interfaces import ICompareVariants, IFindObservations
 logger = logging.getLogger(__name__)
 
 
-class ObservationFinder(IFindObservations):
+class ObservationFinderBase(ABC):
+    @abstractmethod
+    def __init__(self) -> None:
+        pass
+
+    def _get_paper_texts(self, paper: Paper) -> Dict[str, Any]:
+        texts: Dict[str, Any] = {}
+
+        texts["full_text"] = "\n".join(paper.props.get("full_text_sections", []))
+
+        tables = {}
+        root = paper.props.get("full_text_xml")
+        if root is not None:
+            for passage in root.findall("./passage"):
+                if bool(passage.findall("infon[@key='section_type'][.='TABLE']")):
+                    id = passage.find("infon[@key='id']").text
+                    if not id:
+                        logger.error("No id for table, using None as key")
+                    if id not in tables:
+                        tables[id] = passage.find("text").text
+                    else:
+                        tables[id] += "\n" + passage.find("text").text
+
+        texts["tables"] = tables
+        return texts
+
+
+class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
+    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
+        """Identify all observations relevant to `gene_symbol` in `paper`.
+
+        `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
+        in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
+
+        Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
+        keyed by tuples of variants and string representations of the individual in which that variant was observed. The
+        values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
+        """
+        observations: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
+
+        texts = self._get_paper_texts(paper)
+        full_text = texts.get("full_text", None)
+
+        if not full_text:
+            logger.info(f"Skipping {paper.id} because full text could not be retrieved")
+            return observations
+
+        for ob in paper.evidence.keys():
+
+            if ob[0].gene_symbol != gene_symbol:
+                logger.info(f"Unexpected gene symbol found for {paper}: {ob[0].gene_symbol}")
+                continue
+
+            observations[ob] = [full_text]
+
+        return observations
+
+
+class ObservationFinder(ObservationFinderBase, IFindObservations):
     _PROMPTS = {
         "check_patients": os.path.dirname(__file__) + "/prompts/observation/check_patients.txt",
         "find_genome_build": os.path.dirname(__file__) + "/prompts/observation/find_genome_build.txt",
@@ -307,27 +366,6 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    def _get_paper_texts(self, paper: Paper) -> Dict[str, Any]:
-        texts: Dict[str, Any] = {}
-
-        texts["full_text"] = "\n".join(paper.props.get("full_text_sections", []))
-
-        tables = {}
-        root = paper.props.get("full_text_xml")
-        if root is not None:
-            for passage in root.findall("./passage"):
-                if bool(passage.findall("infon[@key='section_type'][.='TABLE']")):
-                    id = passage.find("infon[@key='id']").text
-                    if not id:
-                        logger.error("No id for table, using None as key")
-                    if id not in tables:
-                        tables[id] = passage.find("text").text
-                    else:
-                        tables[id] += "\n" + passage.find("text").text
-
-        texts["tables"] = tables
-        return texts
-
     def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
@@ -425,4 +463,5 @@ uninterrupted sequences of whitespace characters.
                 else:
                     result[(variant, individual)] = [full_text]
 
+        return result
         return result
