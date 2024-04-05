@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Protocol, Sequence
+from typing import Any, Dict, Optional, Protocol, Sequence, Tuple
 
 from lib.evagg.types import Paper
 
@@ -67,4 +67,31 @@ class IBackTranslateVariants(Protocol):
 class IValidateVariants(Protocol):
     def validate(self, hgvs: str) -> bool:
         """Validate the provided variant."""
+        ...  # pragma: no cover
+
+
+class ICompareHPO(Protocol):
+    def compare(self, subject: str, object: str, method: str) -> float:
+        """Compare two HPO terms using the specified method.
+
+        HPO terms should be provided as strings, e.g. "HP:0012469"
+        """
+        ...  # pragma: no cover
+
+    def compare_set(self, subjects: Sequence[str], objects: Sequence[str], method: str) -> Dict[str, Tuple[float, str]]:
+        """Compare two sets of HPO terms using the specified method.
+
+        HPO terms should be provided as a sequence of strings, e.g. ["HP:0012469", "HP:0007270"]
+        Will return a dictionary mapping each subject term to a tuple containing the maximum similarity score from
+        objects, and the term in objects corresponding to that score.
+        """
+        ...  # pragma: no cover
+
+
+class ITranslateTextToHPO(Protocol):
+    def translate(self, text: str) -> str:
+        """Translate a text description to an HPO term.
+
+        Returns the HPO term as a string, e.g. "HP:0012469"
+        """
         ...  # pragma: no cover
