@@ -95,7 +95,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             logger.debug(f"PMC OA record found for {pmcid}")
             if "-ND" in license:
                 # TODO if it has a "no derivatives" license, then we don't consider it open access.
-                logger.warning(f"PMC OA record found for {pmcid} but has a no-derivatives license: {license}")
+                logger.debug(f"PMC OA record found for {pmcid} but has a no-derivatives license: {license}")
                 props["is_pmc_oa"] = False
 
         return props
@@ -103,7 +103,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
     def _get_full_text_xml(self, pmcid: str | None, is_pmc_oa: bool, license: str) -> Optional[str]:
         """Get the full text of a paper from PMC."""
         if not pmcid or not is_pmc_oa or license.find("nd") >= 0:
-            logger.warning(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
+            logger.debug(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
             return None
 
         try:
