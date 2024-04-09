@@ -306,6 +306,8 @@ def main(args):
 
     # Read the intermediate manual ground truth (MGT) data file from the TSV file
     mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
+    if args.mgt_full_text_only:
+        mgt_df = mgt_df[mgt_df["has_fulltext"] == 1]
 
     # Get the query/ies from .yaml file so we know the list of genes processed.
     if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
@@ -500,6 +502,14 @@ if __name__ == "__main__":
         default=".out/library_benchmark.tsv",
         type=str,
         help="Default is .out/library_benchmark.tsv",
+    )
+    parser.add_argument(
+        "-f",
+        "--mgt-full-text-only",
+        nargs="?",
+        default=False,
+        type=bool,
+        help="Default is False",
     )
     parser.add_argument(
         "--outdir",
