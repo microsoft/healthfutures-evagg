@@ -323,6 +323,12 @@ def main(args):
 
     # Read in the corresponding pipeline output.
     pipeline_df = pd.read_csv(args.pipeline_output, sep="\t", skiprows=1)
+    if "paper_disease_category" not in pipeline_df.columns:
+        pipeline_df["paper_disease_category"] = "rare disease"
+    if "paper_disease_categorizations" not in pipeline_df.columns:
+        pipeline_df["paper_disease_categorizations"] = "{}"
+    # We only need one of each paper/gene pair, so we drop duplicates.
+    pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
 
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
