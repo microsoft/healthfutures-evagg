@@ -1,0 +1,10 @@
+Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+What is the described variant type for the genetic variant {{$gene}}: {{$variant}}?
+
+{{$passage}}
+
+Provide your response in the following format:
+{
+  "grounding": "evidence in support of the variant type.",
+  "variant_type": "missense" | "frameshift" | "stop gained" | "splice donor" | "splice acceptor" | "splice region" | "start lost" | "inframe insertion" | "frameshift insertion" | "structural" | "synonymous" | "intron" | "5’ UTR" | "3’UTR" | "non-coding" | "unknown"
+}

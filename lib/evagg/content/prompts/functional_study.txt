@@ -1,0 +1,10 @@
+Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+What are the functional studies described in this paper for the genetic veriant {{$gene}}: {{$variant}}?
+
+{{$passage}}
+
+Provide your response in the following format:
+{
+  "grounding": "evidence in support of the functional studies.",
+  "functional_study": ["animal_model", "patient_cells", "cell_line", "none"]
+}
