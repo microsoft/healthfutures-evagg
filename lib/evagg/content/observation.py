@@ -42,6 +42,9 @@ class ObservationFinderBase(ABC):
 
 
 class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
+    def __init__(self) -> None:
+        pass
+
     def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
