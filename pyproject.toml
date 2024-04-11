@@ -29,9 +29,6 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 
-[tool.mypy-notebooks.*]
-ignore_errors = True
-
 # Asserts are OK.
 [tool.bandit]
 skips = ['B101']
