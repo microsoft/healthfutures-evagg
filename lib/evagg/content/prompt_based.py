@@ -4,8 +4,7 @@ import os
 from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
-from lib.evagg.types import Paper
-from lib.evagg.types import HGVSVariant
+from lib.evagg.types import HGVSVariant, Paper
 
 from ..interfaces import IExtractFields
 from .interfaces import IFindObservations
@@ -128,7 +127,7 @@ uninterrupted sequences of whitespace characters.
             return {}
 
         return result
-    
+
     def _get_observation_field(
         self, gene_symbol: str, observation: Tuple[HGVSVariant, str], mentions: Sequence[str], field: str
     ) -> str:
@@ -157,7 +156,10 @@ uninterrupted sequences of whitespace characters.
             # actual mention objects, we can fix this.
             params = {"passage": paper_excerpts, "variant": variant.__str__(), "gene": gene_symbol}
             response = self._run_json_prompt(self._PROMPTS[field], params, {"prompt_tag": field})
+            # result can be a string or a json object.
             result = response.get(field, "failed")
+            if not isinstance(result, str):
+                result = json.dumps(result)
         return result
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
@@ -208,5 +210,5 @@ uninterrupted sequences of whitespace characters.
                     if field in self._VARIANT_FIELDS:
                         variant_field_cache[(observation[0], field)] = result
                 observation_results[field] = result
-            results.append(observation_results)            
+            results.append(observation_results)
         return results
