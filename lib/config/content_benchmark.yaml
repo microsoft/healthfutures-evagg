@@ -40,8 +40,8 @@ variant_factory:
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   - "gene_symbol": "CTF1"
-  # - "gene_symbol": "FBN2"
-  # - "gene_symbol": "EXOC2"
+  - "gene_symbol": "FBN2"
+  - "gene_symbol": "EXOC2"
   # - "gene_symbol": "RNASEH1"
   # - "gene_symbol": "DNAJC7"
   # - "gene_symbol": "ZNF423"

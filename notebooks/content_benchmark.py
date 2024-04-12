@@ -9,10 +9,11 @@ This notebook compares the performance of the two components separately.
 
 # %% Imports.
 
+import json
 import os
 import re
 from collections import defaultdict
-from typing import Any, List
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -27,7 +28,7 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_ben
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # CONTENT_COLUMNS = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"}  # noqa
+CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}  # noqa
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
@@ -47,9 +48,11 @@ if "doi" in truth_df.columns:
 
 output_df = pd.read_csv(OUTPUT_PATH, sep="\t", skiprows=1)
 
+# %% Preprocess the dataframes.
+
 
 # Preprocessing of the individual ID column is necessary because there's so much variety here.
-# Treat anything that is  the proband, proband, unknown, and patient as the same.
+# Treat anything that is the proband, proband, unknown, and patient as the same.
 def _normalize_individual_id(individual_id: Any) -> str:
     if pd.isna(individual_id):
         return "inferred proband"
@@ -66,6 +69,36 @@ if "individual_id" in truth_df.columns:
 if "individual_id" in output_df.columns:
     output_df["individual_id_orig"] = output_df["individual_id"]
     output_df["individual_id"] = output_df["individual_id"].apply(_normalize_individual_id)
+
+# If the column "functional_study" is included in CONTENT_COLUMNS, we need to decode that column into the corresponding
+# one-shot values to compare to the truth set.
+
+
+def _decode_functional_study(value: str, encoding: str) -> str:
+    items = json.loads(value)
+    return "true" if encoding in items else "false"
+
+
+if "functional_study" in CONTENT_COLUMNS:
+    # Handle output_df.
+    functional_column_map = {
+        "engineered_cells": "cell line",
+        "patient_cells_tissues": "patient cells",
+        "animal_model": "animal model",
+    }
+    for column, encoding in functional_column_map.items():
+        assert column in truth_df.columns, f"Column {column} not found in truth set."
+        output_df[column] = output_df["functional_study"].apply(func=_decode_functional_study, encoding=encoding)
+
+    CONTENT_COLUMNS -= {"functional_study"}
+    CONTENT_COLUMNS.update(functional_column_map.keys())
+
+    output_df = output_df.drop(columns=["functional_study"])
+
+    # Handle truth_df.
+    for column in functional_column_map.keys():
+        truth_df[column] = truth_df[column].apply(lambda x: "true" if x == "x" else "false")
+
 
 # %% Restrict the truth set to the genes in the output set.
 if RESTRICT_TRUTH_GENES_TO_OUTPUT:
