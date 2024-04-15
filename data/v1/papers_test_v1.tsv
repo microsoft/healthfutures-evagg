@@ -1,134 +1,134 @@
-gene	pmid	group
-TDO2	28285122	test
-TDO2	35743796	test
-PTCD3	36450274	test
-PTCD3	30706245	test
-PTCD3	30607703	test
-PRPH	15322088	test
-PRPH	15446584	test
-PRPH	20363051	test
-PRPH	25299611	test
-PRPH	26742954	test
-PRPH	32638105	test
-PRPH	25588603	test
-PRPH	17045786	test
-PRPH	30992453	test
-PRPH	35714755	test
-NDUFA2	18513682	test
-NDUFA2	27159321	test
-NDUFA2	28857146	test
-NDUFA2	32154054	test
-AHCY	19177456	test
-AHCY	20852937	test
-AHCY	22959829	test
-AHCY	26095522	test
-AHCY	26527160	test
-AHCY	26974671	test
-AHCY	28779239	test
-AHCY	30121674	test
-AHCY	31957987	test
-AHCY	32689861	test
-AHCY	33869213	test
-AHCY	35394939	test
-AHCY	35789945	test
-AHCY	38052822	test
-AHCY	15024124	test
-AHCY	16736098	test
-AHCY	27848944	test
-AHCY	35463910	test
-NLGN3	12669065	test
-NLGN3	24126926	test
-NLGN3	25167861	test
-NLGN3	25363768	test
-NLGN3	25533962	test
-NLGN3	28263302	test
-NLGN3	15150161	test
-NLGN3	19360662	test
-NLGN3	20615874	test
-NLGN3	21808020	test
-NLGN3	15274046	test
-NLGN3	15679194	test
-NLGN3	16077734	test
-NLGN3	16429495	test
-NLGN3	16508939	test
-NLGN3	16648374	test
-NLGN3	18189281	test
-NLGN3	18361425	test
-NLGN3	18419324	test
-NLGN3	18555979	test
-NLGN3	19545994	test
-NLGN3	19645625	test
-NLGN3	20227402	test
-NLGN3	21569590	test
-NLGN3	22213401	test
-NLGN3	22934180	test
-NLGN3	23020841	test
-NLGN3	23468870	test
-NLGN3	23761734	test
-NLGN3	23851596	test
-NLGN3	23871722	test
-NLGN3	24362370	test
-NLGN3	24570023	test
-NLGN3	25347860	test
-NLGN3	25464930	test
-NLGN3	25592157	test
-NLGN3	26469287	test
-NLGN3	27743928	test
-NLGN3	27782075	test
-NLGN3	28385162	test
-NLGN3	28584888	test
-NLGN3	28948087	test
-NLGN3	29028156	test
-NLGN3	30201312	test
-NLGN3	30757938	test
-NLGN3	31119867	test
-NLGN3	31184401	test
-NLGN3	31827744	test
-NLGN3	32848696	test
-NLGN3	34262438	test
-NLGN3	34690695	test
-NLGN3	36280753	test
-NLGN3	36810932	test
-NLGN3	38255906	test
-FOXE3	26854927	test
-FOXE3	26995144	test
-FOXE3	27669367	test
-FOXE3	28418495	test
-FOXE3	29136273	test
-FOXE3	29314435	test
-FOXE3	29317205	test
-FOXE3	29461140	test
-FOXE3	29713869	test
-FOXE3	29769628	test
-FOXE3	29878917	test
-FOXE3	30078984	test
-FOXE3	30991053	test
-FOXE3	31884615	test
-FOXE3	32224865	test
-FOXE3	32436650	test
-FOXE3	32499604	test
-FOXE3	32976546	test
-FOXE3	34046667	test
-FOXE3	35051625	test
-FOXE3	35170016	test
-FOXE3	36192130	test
-FOXE3	37628625	test
-FOXE3	37758467	test
-PEX11G	26935981	test
-MPST	16545926	test
-KIF1B	11389829	test
-KIF1B	30126838	test
-KIF1B	16163269	test
-KIF1B	16877806	test
-KIF1B	18726616	test
-KIF1B	22595495	test
-KIF1B	25802885	test
-KIF1B	27986441	test
-KIF1B	32298515	test
-KIF1B	33112832	test
-KIF1B	33362715	test
-KIF1B	33397043	test
-KIF1B	34169998	test
-KIF1B	35046208	test
-KIF1B	37564981	test
-KIF1B	37780619	test
+gene	pmid	has_fulltext	is_pmc_oa	license	group
+TDO2	28285122	False	False	not_open_access	test
+TDO2	35743796	True	True	CC BY	test
+PTCD3	36450274	False	False	CC BY-NC-ND	test
+PTCD3	30706245	False	False	unknown	test
+PTCD3	30607703	False	False	unknown	test
+PRPH	15322088	False	False	unknown	test
+PRPH	15446584	False	False	not_open_access	test
+PRPH	20363051	False	False	unknown	test
+PRPH	25299611	True	True	CC BY	test
+PRPH	26742954	False	False	unknown	test
+PRPH	32638105	False	False	unknown	test
+PRPH	25588603	False	False	unknown	test
+PRPH	17045786	False	False	unknown	test
+PRPH	30992453	True	True	CC BY	test
+PRPH	35714755	False	False	CC BY-NC-ND	test
+NDUFA2	18513682	False	False	not_open_access	test
+NDUFA2	27159321	False	False	not_open_access	test
+NDUFA2	28857146	False	False	unknown	test
+NDUFA2	32154054	True	True	CC BY	test
+AHCY	19177456	False	False	not_open_access	test
+AHCY	20852937	False	False	unknown	test
+AHCY	22959829	False	False	unknown	test
+AHCY	26095522	False	False	unknown	test
+AHCY	26527160	False	False	not_open_access	test
+AHCY	26974671	True	True	CC BY	test
+AHCY	28779239	False	False	not_open_access	test
+AHCY	30121674	False	False	unknown	test
+AHCY	31957987	False	False	unknown	test
+AHCY	32689861	False	False	unknown	test
+AHCY	33869213	True	True	CC BY	test
+AHCY	35394939	False	False	unknown	test
+AHCY	35789945	False	False	CC BY-NC-ND	test
+AHCY	38052822	True	True	CC BY	test
+AHCY	15024124	False	False	not_open_access	test
+AHCY	16736098	False	False	not_open_access	test
+AHCY	27848944	True	True	CC BY	test
+AHCY	35463910	True	True	CC BY	test
+NLGN3	12669065	False	False	not_open_access	test
+NLGN3	24126926	False	False	unknown	test
+NLGN3	25167861	True	True	CC BY-NC	test
+NLGN3	25363768	False	False	not_open_access	test
+NLGN3	25533962	True	True	none	test
+NLGN3	28263302	False	False	not_open_access	test
+NLGN3	15150161	False	False	unknown	test
+NLGN3	19360662	False	False	not_open_access	test
+NLGN3	20615874	False	False	not_open_access	test
+NLGN3	21808020	False	False	not_open_access	test
+NLGN3	15274046	False	False	unknown	test
+NLGN3	15679194	False	False	not_open_access	test
+NLGN3	16077734	False	False	unknown	test
+NLGN3	16429495	False	False	unknown	test
+NLGN3	16508939	False	False	unknown	test
+NLGN3	16648374	False	False	not_open_access	test
+NLGN3	18189281	False	False	unknown	test
+NLGN3	18361425	False	False	not_open_access	test
+NLGN3	18419324	False	False	unknown	test
+NLGN3	18555979	False	False	not_open_access	test
+NLGN3	19545994	False	False	unknown	test
+NLGN3	19645625	False	False	unknown	test
+NLGN3	20227402	False	False	not_open_access	test
+NLGN3	21569590	True	True	CC BY	test
+NLGN3	22213401	False	False	unknown	test
+NLGN3	22934180	True	True	CC BY	test
+NLGN3	23020841	True	True	CC BY	test
+NLGN3	23468870	True	True	CC BY	test
+NLGN3	23761734	True	True	CC BY	test
+NLGN3	23851596	False	False	unknown	test
+NLGN3	23871722	False	False	not_open_access	test
+NLGN3	24362370	False	False	unknown	test
+NLGN3	24570023	False	False	unknown	test
+NLGN3	25347860	True	True	CC BY	test
+NLGN3	25464930	False	False	unknown	test
+NLGN3	25592157	False	False	unknown	test
+NLGN3	26469287	True	True	CC BY	test
+NLGN3	27743928	False	False	unknown	test
+NLGN3	27782075	True	True	CC BY	test
+NLGN3	28385162	True	True	CC BY	test
+NLGN3	28584888	False	False	not_open_access	test
+NLGN3	28948087	True	True	CC BY	test
+NLGN3	29028156	False	False	not_open_access	test
+NLGN3	30201312	False	False	unknown	test
+NLGN3	30757938	False	False	unknown	test
+NLGN3	31119867	True	True	CC BY-NC	test
+NLGN3	31184401	False	False	unknown	test
+NLGN3	31827744	True	True	CC BY	test
+NLGN3	32848696	True	True	CC BY	test
+NLGN3	34262438	True	True	CC BY	test
+NLGN3	34690695	True	True	CC BY	test
+NLGN3	36280753	False	False	unknown	test
+NLGN3	36810932	True	True	CC BY	test
+NLGN3	38255906	True	True	CC BY	test
+FOXE3	26854927	False	False	not_open_access	test
+FOXE3	26995144	False	False	unknown	test
+FOXE3	27669367	False	False	unknown	test
+FOXE3	28418495	False	False	CC BY-NC-ND	test
+FOXE3	29136273	False	False	unknown	test
+FOXE3	29314435	False	False	not_open_access	test
+FOXE3	29317205	False	False	unknown	test
+FOXE3	29461140	False	False	unknown	test
+FOXE3	29713869	False	False	not_open_access	test
+FOXE3	29769628	False	False	not_open_access	test
+FOXE3	29878917	False	False	unknown	test
+FOXE3	30078984	False	False	CC BY-NC-ND	test
+FOXE3	30991053	True	True	CC BY	test
+FOXE3	31884615	False	False	unknown	test
+FOXE3	32224865	True	True	CC BY	test
+FOXE3	32436650	False	False	unknown	test
+FOXE3	32499604	True	True	CC BY-NC-SA	test
+FOXE3	32976546	True	True	CC0	test
+FOXE3	34046667	True	True	CC BY-NC	test
+FOXE3	35051625	False	False	unknown	test
+FOXE3	35170016	False	False	unknown	test
+FOXE3	36192130	True	True	CC BY	test
+FOXE3	37628625	True	True	CC BY	test
+FOXE3	37758467	False	False	unknown	test
+PEX11G	26935981	False	False	unknown	test
+MPST	16545926	False	False	unknown	test
+KIF1B	11389829	False	False	unknown	test
+KIF1B	30126838	True	True	CC BY-NC-SA	test
+KIF1B	16163269	False	False	unknown	test
+KIF1B	16877806	False	False	unknown	test
+KIF1B	18726616	False	False	unknown	test
+KIF1B	22595495	False	False	unknown	test
+KIF1B	25802885	True	True	CC BY	test
+KIF1B	27986441	False	False	unknown	test
+KIF1B	32298515	False	False	unknown	test
+KIF1B	33112832	True	True	CC BY	test
+KIF1B	33362715	True	True	CC BY	test
+KIF1B	33397043	True	True	CC BY-NC	test
+KIF1B	34169998	False	False	unknown	test
+KIF1B	35046208	False	False	unknown	test
+KIF1B	37564981	True	True	CC BY	test
+KIF1B	37780619	True	True	CC BY	test
