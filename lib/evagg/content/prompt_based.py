@@ -1,9 +1,11 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Sequence, Tuple
+import re
+from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
+from lib.evagg.ref import ISearchHPO
 from lib.evagg.types import HGVSVariant, Paper
 
 from ..interfaces import IExtractFields
@@ -46,6 +48,7 @@ class PromptBasedContentExtractor(IExtractFields):
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
         "phenotype": os.path.dirname(__file__) + "/prompts/phenotype.txt",
+        "phenotype_to_hpo": os.path.dirname(__file__) + "/prompts/phenotype_to_hpo.txt",
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
         "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
@@ -66,6 +69,7 @@ uninterrupted sequences of whitespace characters.
         fields: Sequence[str],
         llm_client: IPromptClient,
         observation_finder: IFindObservations,
+        phenotype_searcher: ISearchHPO,
     ) -> None:
         # Pre-check the list of fields being requested.
         if any(f not in self._SUPPORTED_FIELDS for f in fields):
@@ -74,6 +78,7 @@ uninterrupted sequences of whitespace characters.
         self._fields = fields
         self._llm_client = llm_client
         self._observation_finder = observation_finder
+        self._phenotype_searcher = phenotype_searcher
 
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
@@ -128,11 +133,45 @@ uninterrupted sequences of whitespace characters.
 
         return result
 
+    def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
+        if not isinstance(phenotype, list):
+            return ["unknown"]
+
+        params = {"phenotypes": ", ".join(phenotype)}
+        response = self._run_json_prompt(self._PROMPTS["phenotype_to_hpo"], params, {"prompt_tag": "phenotype_to_hpo"})
+
+        # For the matched terms, validate that they're in the HPO, else drop the HPO identifier and move them to
+        # unmatched.
+        matched = response.get("matched", [])
+        unmatched = response.get("unmatched", [])
+        for m in matched:
+            id = re.findall(r"\(?HP:\d+\)?", m)
+            if not id:
+                continue
+            if len(id) > 1:
+                logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
+            id = id[0]
+            if not self._phenotype_searcher.exists(id.strip("()")):
+                logger.info(f"Unable to match {m} as an HPO term, searching for alternatives.")
+                unmatched.append(m.replace(id, "").strip())
+                matched.remove(m)
+
+        # Try to use a query-based search for the unmatched terms.
+        for u in unmatched:
+            result = self._phenotype_searcher.search(u)
+            if result:
+                matched.append(f"{result['name']} ({result['id']})")
+            else:
+                # If we can't find a match, just use the original term.
+                matched.append(u)
+
+        return matched
+
     def _get_observation_field(
-        self, gene_symbol: str, observation: Tuple[HGVSVariant, str], mentions: Sequence[str], field: str
+        self, gene_symbol: str, observation: Tuple[HGVSVariant, str], observation_info: Mapping[str, Any], field: str
     ) -> str:
         variant, individual = observation
-        paper_excerpts = "\n\n".join(mentions)
+        paper_excerpts = "\n\n".join(observation_info["texts"])
 
         if field == "gene":
             result = gene_symbol
@@ -152,14 +191,23 @@ uninterrupted sequences of whitespace characters.
         elif field == "gnomad_frequency":
             result = "unknown"
         else:
-            # TODO, should be the original text representation of the variant from the paper. When we switch to
-            # actual mention objects, we can fix this.
-            params = {"passage": paper_excerpts, "variant": variant.__str__(), "gene": gene_symbol}
+            variant_desc = ", ".join(observation_info["variant_descriptions"])
+            patient_desc = ", ".join(observation_info["patient_descriptions"])
+            params = {
+                "passage": paper_excerpts,
+                "variant_descriptions": variant_desc,
+                "patient_descriptions": patient_desc,
+                "gene": gene_symbol,
+            }
             response = self._run_json_prompt(self._PROMPTS[field], params, {"prompt_tag": field})
             # result can be a string or a json object.
             result = response.get(field, "failed")
+            if field == "phenotype":
+                result = self._convert_phenotype_to_hpo(result)
+            # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
             if not isinstance(result, str):
                 result = json.dumps(result)
+
         return result
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
@@ -190,14 +238,14 @@ uninterrupted sequences of whitespace characters.
         # For each observation, extract the appropriate content.
         results: List[Dict[str, str]] = []
 
-        for observation, mentions in observations.items():
+        for observation, observation_info in observations.items():
             # We've pre-computed the paper fields.
             observation_results: Dict[str, str] = paper_fields.copy()
 
             logger.info(f"Extracting fields for {observation} in {paper.id}")
 
-            if not mentions:
-                logger.warning(f"No mentions found for {observation} in {paper.id}")
+            if not observation_info or not observation_info.get("texts", None):
+                logger.warning(f"No observations found for {observation} in {paper.id}")
                 continue
 
             for field in non_paper_fields:
@@ -205,7 +253,7 @@ uninterrupted sequences of whitespace characters.
                     # Use the cached result for variant fields if available.
                     result = variant_field_cache[(observation[0], field)]
                 else:
-                    result = self._get_observation_field(gene_symbol, observation, mentions, field)
+                    result = self._get_observation_field(gene_symbol, observation, observation_info, field)
                     # Cache the result for variant fields.
                     if field in self._VARIANT_FIELDS:
                         variant_field_cache[(observation[0], field)] = result
