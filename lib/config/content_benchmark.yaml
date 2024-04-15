@@ -35,6 +35,11 @@ variant_factory:
   validator: "{{mutalyzer_client}}"
   variant_lookup_client: "{{ncbi_client}}"
   refseq_client: "{{refseq_client}}"
+llm_client:
+  di_factory: lib.evagg.llm.OpenAIClient
+  config:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "AZURE_OPENAI_"
 
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
@@ -42,21 +47,21 @@ queries:
   - "gene_symbol": "CTF1"
   - "gene_symbol": "FBN2"
   - "gene_symbol": "EXOC2"
-  # - "gene_symbol": "RNASEH1"
-  # - "gene_symbol": "DNAJC7"
-  # - "gene_symbol": "ZNF423"
-  # - "gene_symbol": "SARS1"
-  # - "gene_symbol": "BAZ2B"
-  # - "gene_symbol": "B4GAT1"
-  # - "gene_symbol": "TOP2B"
-  # - "gene_symbol": "SLFN14"
-  # - "gene_symbol": "MLH3"
-  # - "gene_symbol": "COG4"
-  # - "gene_symbol": "JPH2"
-  # - "gene_symbol": "GRXCR2"
-  # - "gene_symbol": "EMC1"
-  # - "gene_symbol": "LRRC10"
-  # - "gene_symbol": "TOPBP1"
+  - "gene_symbol": "RNASEH1"
+  - "gene_symbol": "DNAJC7"
+  - "gene_symbol": "ZNF423"
+  - "gene_symbol": "SARS1"
+  - "gene_symbol": "BAZ2B"
+  - "gene_symbol": "B4GAT1"
+  - "gene_symbol": "TOP2B"
+  - "gene_symbol": "SLFN14"
+  - "gene_symbol": "MLH3"
+  - "gene_symbol": "COG4"
+  - "gene_symbol": "JPH2"
+  - "gene_symbol": "GRXCR2"
+  - "gene_symbol": "EMC1"
+  - "gene_symbol": "LRRC10"
+  - "gene_symbol": "TOPBP1"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
@@ -79,13 +84,19 @@ extractor:
     - gnomad_frequency
     - study_type
     - citation    
-  llm_client:
-    di_factory: lib.evagg.llm.OpenAIClient
-    config:
-      di_factory: lib.evagg.svc.get_dotenv_settings
-      filter_prefix: "AZURE_OPENAI_"
+  llm_client: "{{llm_client}}"
+  phenotype_searcher:
+    di_factory: lib.evagg.ref.HPOReference
   observation_finder:
     di_factory: lib.evagg.content.TruthsetObservationFinder
+  # observation_finder:
+  #   di_factory: lib.evagg.content.ObservationFinder
+  #   llm_client: "{{llm_client}}"
+  #   paper_lookup_client: "{{ncbi_client}}"
+  #   variant_factory: "{{variant_factory}}"
+  #   variant_comparator: 
+  #     di_factory: lib.evagg.content.HGVSVariantComparator
+  #   normalizer: "{{mutalyzer_client}}"    
 writer:
   di_factory: lib.evagg.TableOutputWriter
   output_path: .out/content_benchmark.tsv

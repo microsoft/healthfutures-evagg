@@ -142,7 +142,7 @@ class HGVSVariantFactory(ICreateVariants):
                 # protein description should be NM_1234.1(NP_1234.1):p.(Arg123Gly) or NG_ in place of NM, extract the
                 # NP_ and p. parts.
                 if protein_hgvs.find(":") >= 0:
-                    protein_desc = protein_hgvs.split(":")[1]
+                    protein_desc = protein_hgvs.split(":")[1].replace("(", "").replace(")", "")
                     protein_refseq = protein_hgvs.split(":")[0].split("(")[1].split(")")[0]
 
                     protein_consequence = HGVSVariant(

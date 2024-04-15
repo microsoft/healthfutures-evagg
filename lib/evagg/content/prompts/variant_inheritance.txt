@@ -1,10 +1,23 @@
 Here is some text from a paper describing genetic variants in the gene {{$gene}}.
-What is the described mode of inheritance observed for the patient with the following variant  in {{$gene}}: {{$variant}}?
+
+I would like you to determine the mode of inheritance for the patient and variant described below. Multiple patients
+in the paper might possess this variant, but I want you to determine the mode of inheritance for this patient specifically.
+The patient of interest may be referred to by any of the following identifiers: {{$patient_descriptions}}. The genetic
+variant possessed by this patient for which I want you to determine the mode of inheritance may be described in any of
+the following ways: {{$variant_descriptions}}.
+
+The options for variant inheritance available for you to choose from are: "maternally inherited", 
+"paternally inherited", "inherited", "de novo", "de novo suspected", and "unknown". Choose only one of these options in
+your response.
+
+-- Output format --
+
+Provide your response as a valid JSON object, using the following format.
+{
+  "variant_inheritance": "maternally inherited" | "paternally inherited" | "inherited" | "de novo" | "de novo suspected" | "unknown"
+}
+
+-- Begin paper text --
 
 {{$passage}}
 
-Provide your response in the following format:
-{
-  "grounding": "evidence in support of the variant inheritance.",
-  "variant_inheritance": "de novo" | "inherited" | "unknown"
-}

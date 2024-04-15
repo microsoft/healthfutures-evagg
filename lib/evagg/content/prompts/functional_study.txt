@@ -1,5 +1,6 @@
 Below you will find some text from a paper describing genetic variants in the gene {{$gene}}.
-What are the functional studies described in this paper for the genetic veriant {{$gene}}: {{$variant}}?
+I want you to tell me the functional studies described in this paper for a specific genetic variant. The genetic
+variant of interest can be described in any of the following ways: {{$variant_descriptions}}.
 
 Provide your response as a valid JSON object, using the format below. The only valid values you may provide in the list
 following "functional_study" are "animal model", "patient cells", "cell line" or "none". If "none" is provided, it 
@@ -11,7 +12,6 @@ function prediction, etc.), however they are not relevant here.
 -- Output format --
 
 {
-  "grounding": "evidence in support of the functional studies.",
   "functional_study": ["animal model", "patient cells", "cell line", "none"]
 }
 
