@@ -30,9 +30,9 @@ refseq_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-- "gene_symbol": "ADCY1"
-  "min_date": "2014/01/01"
-  "retmax": 99
+  - "gene_symbol": "EXOC2"
+    "min_date": "2020/01/01"
+    "retmax": 22
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
