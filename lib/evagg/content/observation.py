@@ -45,7 +45,7 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
     def __init__(self) -> None:
         pass
 
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
+    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
@@ -53,9 +53,10 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
 
         Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
         keyed by tuples of variants and string representations of the individual in which that variant was observed. The
-        values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
+        values in this dictionary are dictionaries relevant to this observation throughout the paper. Keys in this
+        dictionary include, "variant_descriptions", "patient_descriptions", "texts".
         """
-        observations: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
+        observations: Dict[Tuple[HGVSVariant, str], Mapping[str, Any]] = {}
 
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
@@ -70,7 +71,17 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
                 logger.info(f"Unexpected gene symbol found for {paper}: {ob[0].gene_symbol}")
                 continue
 
-            observations[ob] = [full_text]
+            variant_descriptions = [ob[0].hgvs_desc]
+            if paper.evidence[ob].get("paper_variant"):
+                variant_descriptions.append(paper.evidence[ob]["paper_variant"])
+            if ob[0].protein_consequence:
+                variant_descriptions.append(ob[0].protein_consequence.hgvs_desc)
+
+            observations[ob] = {
+                "variant_descriptions": list(set(variant_descriptions)),
+                "patient_descriptions": [ob[1]],
+                "texts": [full_text],
+            }
 
         return observations
 
@@ -369,7 +380,7 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
+    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
@@ -377,7 +388,9 @@ uninterrupted sequences of whitespace characters.
 
         Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
         keyed by tuples of variants and string representations of the individual in which that variant was observed. The
-        values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
+        values in this dictionary are dictionaries relevant to this observation throughout the paper. Keys in this
+        dictionary include, "variant_descriptions", "patient_descriptions", "texts".
+
         """
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
@@ -430,7 +443,7 @@ uninterrupted sequences of whitespace characters.
         # only use the specific variants we provide, or find a way to be robust to the split during variant object
         # lookup below.
 
-        result: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
+        result: Dict[Tuple[HGVSVariant, str], Dict[str, str]] = {}
         for individual, variant_strs in observations.items():
             # Consolidate variants within each observation so we only get one variant object per observation.
             variants_to_consolidate: Dict[HGVSVariant, str] = {}
@@ -448,12 +461,30 @@ uninterrupted sequences of whitespace characters.
                 list(variants_to_consolidate.keys()), disregard_refseq=True
             )
 
-            # TODO, if we care to retain the text descriptions of the variants, this will need to change.
-            consolidated_variants = list(consolidation_map.keys())
+            # Reverse the consolidation map so every key is one of the consolidated variants, and the corresponding
+            # value is the variant to which it has been consolidated.
+            reverse_consolidation_map = {
+                source: target for target, sources in consolidation_map.items() for source in sources
+            }
 
-            for variant in consolidated_variants:
-                # TODO: use values (variant descriptions) to find tagged sections, that's why we're leaving the use of
-                # '.items()' here.
+            # Now for all the variants to consolidate, collect their corresponding variant descriptions into a list of
+            # strings, keyed by the consolidated variant.
+            consolidated_variants: Dict[HGVSVariant, List[str]] = {}
+            for variant, variant_desc in variants_to_consolidate.items():
+                consolidated_variant = reverse_consolidation_map.get(variant, variant)
+                if consolidated_variant not in consolidated_variants:
+                    consolidated_variants[consolidated_variant] = []
+                consolidated_variants[consolidated_variant].append(variant_desc)
+                consolidated_variants[consolidated_variant].append(variant.hgvs_desc)  # TODO, reconsider?
+
+            for variant, variant_descs in consolidated_variants.items():
+                payload = {
+                    "variant_descriptions": variant_descs,
+                    "patient_descriptions": [individual],
+                    "texts": [
+                        full_text
+                    ],  # TODO, consider adding focus_texts here, or find variant/patient specific texts.
+                }
                 if (variant, individual) in result:
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
@@ -463,9 +494,8 @@ uninterrupted sequences of whitespace characters.
                     if any(x[0] == variant for x in result):
                         continue
                     else:
-                        result[(variant, "unknown")] = [full_text]
+                        result[(variant, "unknown")] = payload
                 else:
-                    result[(variant, individual)] = [full_text]
+                    result[(variant, individual)] = payload
 
-        return result
         return result
