@@ -306,6 +306,8 @@ def main(args):
 
     # Read the intermediate manual ground truth (MGT) data file from the TSV file
     mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
+    if args.mgt_full_text_only:
+        mgt_df = mgt_df[mgt_df["has_fulltext"] == 1]
 
     # Get the query/ies from .yaml file so we know the list of genes processed.
     if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
@@ -321,6 +323,12 @@ def main(args):
 
     # Read in the corresponding pipeline output.
     pipeline_df = pd.read_csv(args.pipeline_output, sep="\t", skiprows=1)
+    if "paper_disease_category" not in pipeline_df.columns:
+        pipeline_df["paper_disease_category"] = "rare disease"
+    if "paper_disease_categorizations" not in pipeline_df.columns:
+        pipeline_df["paper_disease_categorizations"] = "{}"
+    # We only need one of each paper/gene pair, so we drop duplicates.
+    pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
 
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
@@ -500,6 +508,14 @@ if __name__ == "__main__":
         default=".out/library_benchmark.tsv",
         type=str,
         help="Default is .out/library_benchmark.tsv",
+    )
+    parser.add_argument(
+        "-f",
+        "--mgt-full-text-only",
+        nargs="?",
+        default=False,
+        type=bool,
+        help="Default is False",
     )
     parser.add_argument(
         "--outdir",
