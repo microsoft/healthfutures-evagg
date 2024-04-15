@@ -102,7 +102,7 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.last_call("fetch") == ("33057194",)
+    assert paper_client.last_call("fetch") == ("33057194", {"include_fulltext": True})
     assert paper_client.call_count() == 2
     assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
     assert llm_client.last_call("prompt_file")[2] == {
@@ -115,7 +115,7 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
 
     assert llm_client.call_count() == 1
     assert len(result) == 1
-    assert result and result.pop() == rare_disease_paper
+    assert result and result[0] == rare_disease_paper
 
 
 def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
@@ -130,7 +130,7 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, j
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.last_call("fetch") == (non_rare_disease_paper.props["pmid"],)
+    assert paper_client.last_call("fetch") == (non_rare_disease_paper.props["pmid"], {"include_fulltext": True})
     assert llm_client.last_call("prompt_file")[2] == {
         "params": {
             "abstract": "We report on ...",
@@ -154,7 +154,7 @@ def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: An
     query = {"gene_symbol": "gene"}
     result = RareDiseaseFileLibrary(paper_client, llm_client)._get_all_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.last_call("fetch") == ("34512170",)
+    assert paper_client.last_call("fetch") == ("34512170", {"include_fulltext": True})
     assert paper_client.call_count() == 3
     assert result and len(result) == 2
     assert result == [rare_disease_paper, non_rare_disease_paper]
