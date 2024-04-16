@@ -19,7 +19,6 @@ import argparse
 import json
 import logging
 import os
-import pickle
 from datetime import datetime
 from functools import cache
 from typing import Dict, Set
@@ -329,9 +328,6 @@ def main(args):
     # Initialize benchmarking results dictionary
     benchmarking_results = {}
 
-    # Keep irrelevant PMIDs for each gene
-    irrelevant_pmids_all_genes = {}
-
     # Average precision and recall for all genes
     avg_precision = []
     avg_recall = []
@@ -424,11 +420,8 @@ def main(args):
                 f.write(f"\nFound E.A. {len(missed_pmids)} missed.\n")
                 for i, p in enumerate(missed_pmids):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
-                    # new_row = pd.DataFrame({"gene": term, "pmid": p, "title": titles[p].tolist()})
-                    # irrelevant_paper_ids_titles = irrelevant_paper_ids_titles.append(new_row, ignore_index=True)
 
                 f.write(f"\nFound E.A. {len(irrelevant_pmids)} irrelevant.\n")
-                irrelevant_pmids_all_genes[term] = irrelevant_pmids
                 for i, p in enumerate(irrelevant_pmids):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
@@ -480,10 +473,6 @@ def main(args):
 
     # Plot filtering results
     plot_filtered_categories(results_to_plot)
-
-    # Save the irrelevant PMIDs for each gene to a pickle file for LLM prompt assistance
-    with open(os.path.join(args.outdir, "irrelevant_pmids_all_genes.pkl"), "wb") as f:
-        pickle.dump(irrelevant_pmids_all_genes, f)
 
 
 if __name__ == "__main__":
