@@ -17,7 +17,10 @@ class HPOReference(ICompareHPO, ISearchHPO):
 
     @cache
     def _get_hpo_object(self, term: str) -> HPOTerm:
-        return Ontology.get_hpo_object(term)
+        try:
+            return Ontology.get_hpo_object(term)
+        except Exception as e:
+            raise ValueError(f"Failed to retrieve HPO term {term}: {e}")
 
     def compare(self, subject: str, object: str, method: str = "graphic") -> float:
         term1 = self._get_hpo_object(subject)
