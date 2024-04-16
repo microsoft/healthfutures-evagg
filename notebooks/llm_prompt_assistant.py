@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import warnings
+from collections import defaultdict
 from datetime import datetime
 from functools import cache
 
@@ -24,13 +25,15 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)  # want to suppre
 
 @cache
 def get_lookup_client() -> IPaperLookupClient:
+    """Get the lookup client."""
     ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
     return ncbi_lookup
 
 
 def get_paper_titles_abstracts(pmids: dict[str, str]):
-    # This increases execution time a fair amount, we could alternatively store the titles in the MGT and the pipeline
-    # output to speed things up if we wanted.
+    """Get the abstracts of papers given their PMIDs."""
+    # This increases execution time a fair amount, we could alternatively store the abstracts and the pipeline output
+    # to speed things up.
     client = get_lookup_client()
     abstracts = {}
     for pmid in pmids:
@@ -38,12 +41,12 @@ def get_paper_titles_abstracts(pmids: dict[str, str]):
             paper = client.fetch(pmid)
             abstracts[pmid] = paper.props.get("abstract", "Unknown") if paper else "Unknown"
         except Exception as e:
-            ValueError(f"Error getting title for paper {pmid}: {e}")
+            ValueError(f"Error getting abstract for paper {pmid}: {e}")
     return abstracts
 
 
 def update_prompt(prompt_loc, misclass_papers):
-    """Categorize papers based on LLM prompts."""
+    """Update the prompt given misclassified papers (from irrelevant papers for now)."""
     # Open the file and read its contents
     with open(prompt_loc, "r") as f:
         prompt = f.read()
@@ -68,15 +71,9 @@ def update_prompt(prompt_loc, misclass_papers):
 
 
 def create_misclassified_dict(filepath):
-    # Open the file and read its contents
-    with open(
-        filepath,
-        "r",
-    ) as f:
-        lines = f.read().splitlines()
-
+    """Create a dictionary of misclassified papers (irrelevant for now) from the benchmarking results."""
     # Initialize the dictionary
-    irrelevant_papers = {}
+    irrelevant_papers = defaultdict(dict)
 
     # Initialize current gene
     current_gene = None
@@ -85,60 +82,51 @@ def create_misclassified_dict(filepath):
     in_irrelevant_section = False
 
     # Extract the irrelevant papers
-    for line in lines:
-        if line.startswith("GENE:"):
-            current_gene = line.split(":")[1].strip()
-        elif re.match(r"Found E\.A\. \d+ irrelevant\.", line):
-            in_irrelevant_section = True
-        elif in_irrelevant_section and line.startswith("*"):
-            parts = line.split("*")
-            pmid = parts[2].strip()
-            title = parts[3].strip()
-            abstract = "to_fill"  # placeholder for abstract, replace with actual extraction logic if available
-            if current_gene not in irrelevant_papers:
-                irrelevant_papers[current_gene] = {}
-            irrelevant_papers[current_gene][pmid] = [title, abstract]
-        elif not line.startswith("*"):
-            in_irrelevant_section = False
+    with open(filepath, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("GENE:"):
+                current_gene = line.split(":")[1].strip()
+            elif re.match(r"Found E\.A\. \d+ irrelevant\.", line):
+                in_irrelevant_section = True
+            elif in_irrelevant_section and line.startswith("*"):
+                _, _, pmid, title = line.split("*")
+                irrelevant_papers[current_gene][pmid.strip()] = [title.strip(), "to_fill"]
+            elif not line.startswith("*"):
+                in_irrelevant_section = False
 
-    # Initialize an empty set
-    all_pmids = set()
+    # Get all PMIDs
+    all_pmids = {pmid for pmids in irrelevant_papers.values() for pmid in pmids}
 
-    # Loop through all genes in the dictionary
-    for gene in irrelevant_papers:
-        # Add the PMIDs of the current gene to the set
-        all_pmids.update(irrelevant_papers[gene].keys())
-
-    # Now you can pass all_pmids to the function
+    # Get paper titles and abstracts
     dict_pmids_abstracts = get_paper_titles_abstracts(all_pmids)  # type: ignore
 
-    # Loop through all genes in the dictionary
-    for gene in irrelevant_papers:
-        # Loop through all PMIDs of the current gene
-        for pmid in irrelevant_papers[gene]:
-            # Replace the placeholder abstract with the actual abstract from dict_pmids_abstracts
+    # Replace the placeholder abstract with the actual abstract from dict_pmids_abstracts
+    for gene_pmids in irrelevant_papers.values():
+        for pmid, paper_info in gene_pmids.items():
             if pmid in dict_pmids_abstracts:
-                irrelevant_papers[gene][pmid][1] = dict_pmids_abstracts[pmid]
+                paper_info[1] = dict_pmids_abstracts[pmid]
 
     return irrelevant_papers
 
 
-# Run LLM prompt assistant to improve paper finding.
+# MAIN
+# Run LLM prompt assistant to improve paper finding
 main_prompt_file = "lib/evagg/content/prompts/paper_finding.txt"
 directory = f".out/paper_finding_results_{datetime.today().strftime('%Y-%m-%d')}/"
 updated_prompt_file = f"{directory}paper_finding_prompt_{datetime.today().strftime('%H:%M:%S')}.txt"
 os.makedirs(directory, exist_ok=True)
 
-# Load in the misclassified papers.
+# Load in the misclassified papers (irrelevant only for now)
 benchmark_results = directory + "/benchmarking_paper_finding_results_train.txt"
 
-# Get the paper titles and abstracts for the irrelevant papers for a gene.
+# Get the paper abstracts for the misclassified (irrelevant only for now) papers for a gene
 misclass_papers = create_misclassified_dict(benchmark_results)
 
 # Save last prompt to backup file
 shutil.copyfile(main_prompt_file, updated_prompt_file)
 
-# Update the paper_finding.txt prompt based on the misclassified papers (misclass_papers)
+# Update the paper_finding.txt prompt based on the misclassified (i.e. irrelevant) papers (misclass_papers)
 response = update_prompt("lib/evagg/content/prompts/paper_finding.txt", json.dumps(misclass_papers))
 
 # Save the new prompt to the main prompt file
