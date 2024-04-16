@@ -144,10 +144,12 @@ uninterrupted sequences of whitespace characters.
         # unmatched.
         matched = response.get("matched", [])
         unmatched = response.get("unmatched", [])
-        for m in matched:
+        for m in matched.copy():
             id = re.findall(r"\(?HP:\d+\)?", m)
             if not id:
-                continue
+                logger.info(f"Unable to find HPO identifier in {m}, shifting to unmatched.")
+                unmatched.append(m)
+                matched.remove(m)
             if len(id) > 1:
                 logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
             id = id[0]

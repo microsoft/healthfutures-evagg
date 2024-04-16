@@ -13,7 +13,7 @@ import json
 import os
 import re
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any, List
 
 import pandas as pd
 
@@ -28,12 +28,12 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_ben
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # CONTENT_COLUMNS = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}  # noqa
+CONTENT_COLUMNS = {"zygosity", "variant_inheritance", "variant_type", "functional_study"}  # noqa
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
 # TODO, just get the gene list from the yaml?
-RESTRICT_TRUTH_GENES_TO_OUTPUT = True  # if True, only compare the genes in the output set to the truth set.
+RESTRICT_TRUTH_GENES_TO_OUTPUT = False  # if True, only compare the genes in the output set to the truth set.
 
 HPO_SIMILARITY_THRESHOLD = (
     0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
@@ -354,11 +354,14 @@ print()
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
-printable_df = merged_df.reset_index()  #
-printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
-# printable_df[
-#     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
-# ].sort_values(["gene", "paper_id", "hgvs_desc"])
+if precision < 1 or recall < 1:
+    printable_df = merged_df.reset_index()  #
+    printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
+else:
+    print("All observations found. This is likely because the TruthsetObservationFinder was used.")
+    # printable_df[
+    #     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
+    # ].sort_values(["gene", "paper_id", "hgvs_desc"])
 
 # %% Redo the merge and assess variant finding.
 
@@ -368,8 +371,8 @@ hpo = HPOReference()
 
 
 def _fuzzy_match_hpo_sets(hpo_set1: str, hpo_set2: str) -> bool:
-    hpo_terms1 = re.findall(r"HP:\d+", hpo_set1)
-    hpo_terms2 = re.findall(r"HP:\d+", hpo_set2)
+    hpo_terms1 = re.findall(r"HP:\d+", hpo_set1) if isinstance(hpo_set1, str) else []
+    hpo_terms2 = re.findall(r"HP:\d+", hpo_set2) if isinstance(hpo_set2, str) else []
 
     if not hpo_terms1 or not hpo_terms2:
         return False
@@ -386,7 +389,8 @@ if CONTENT_COLUMNS:
     for column in CONTENT_COLUMNS:
         if column == "phenotype":
             # Phenotype matching can't be a direct string compare.
-            # compare phenotype_truth and phenotype_output using _fuzzy_match_hpo_sets
+            # We'll fuzzy match the HPO terms, note that we're ignoring anything in here that couldn't be matched via
+            # HPO. The non HPO terms are still provided by pipeline output, but
             match = shared_df.apply(
                 lambda row: _fuzzy_match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
             )
@@ -399,3 +403,5 @@ if CONTENT_COLUMNS:
         for idx, row in shared_df[~match].iterrows():
             print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
         print()
+
+# %%
