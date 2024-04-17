@@ -1,5 +1,4 @@
-"""This script is used to implement an LLM assistant to aid in prompt engineering for paper finding.
-"""
+"""This script is an LLM prompt assistant for prompt engineering in paper finding. A copilot copilot."""
 
 # Imports
 import json
@@ -11,8 +10,6 @@ import warnings
 from collections import defaultdict
 from datetime import datetime
 from functools import cache
-
-from dotenv import load_dotenv
 
 from lib.di import DiContainer
 from lib.evagg.llm import OpenAIClient
@@ -30,12 +27,13 @@ def get_lookup_client() -> IPaperLookupClient:
     return ncbi_lookup
 
 
-def get_paper_titles_abstracts(pmids: dict[str, str]):
-    """Get the abstracts of papers given their PMIDs."""
-    # This increases execution time a fair amount, we could alternatively store the abstracts and the pipeline output
-    # to speed things up.
+def get_paper_abstracts(pmids: dict[str, str]) -> dict[str, str]:
+    """Get the abstracts of papers given their PMIDs. TODO: Speed up via e.g. storing abstracts?"""
+    # Get the lookup client
     client = get_lookup_client()
     abstracts = {}
+
+    # Get the abstracts for each PMID
     for pmid in pmids:
         try:
             paper = client.fetch(pmid)
@@ -45,14 +43,11 @@ def get_paper_titles_abstracts(pmids: dict[str, str]):
     return abstracts
 
 
-def update_prompt(prompt_loc, misclass_papers):
+def update_prompt(prompt_loc, misclass_papers) -> str:
     """Update the prompt given misclassified papers (from irrelevant papers for now)."""
-    # Open the file and read its contents
+    # Open the prompt and read its contents
     with open(prompt_loc, "r") as f:
         prompt = f.read()
-
-    # Load environment variables from .env file
-    load_dotenv()
 
     # Get the values of the environment variables
     deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
@@ -60,9 +55,12 @@ def update_prompt(prompt_loc, misclass_papers):
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     api_version = os.getenv("AZURE_OPENAI_API_VERSION")
 
+    # Create an OpenAI client
     client = OpenAIClient(
         {"deployment": deployment, "endpoint": endpoint, "api_key": api_key, "api_version": api_version}
     )
+
+    # Prompt the user to update the prompt
     response = client.prompt_file(
         user_prompt_file=("lib/evagg/content/prompts/update_paper_finding_prompt.txt"),
         params={"prompt": prompt, "dict_gene_titles_abstracts": misclass_papers},
@@ -70,9 +68,11 @@ def update_prompt(prompt_loc, misclass_papers):
     return response
 
 
-def create_misclassified_dict(filepath):
-    """Create a dictionary of misclassified papers (irrelevant for now) from the benchmarking results."""
-    # Initialize the dictionary
+def create_misclassified_dict(filepath) -> dict[str, dict[str, list[str]]]:
+    """Create a dictionary of misclassified papers from the benchmarking results.
+
+    TODO: Update to include missed papers and not just irrelevant ones."""
+    # Initialize the irrelevant papers dictionary
     irrelevant_papers = defaultdict(dict)
 
     # Initialize current gene
@@ -81,7 +81,7 @@ def create_misclassified_dict(filepath):
     # Initialize a flag to indicate whether we're in the irrelevant papers section
     in_irrelevant_section = False
 
-    # Extract the irrelevant papers
+    # Extract the irrelevant papers from the benchmarking results file
     with open(filepath, "r") as f:
         for line in f:
             line = line.strip()
@@ -98,8 +98,8 @@ def create_misclassified_dict(filepath):
     # Get all PMIDs
     all_pmids = {pmid for pmids in irrelevant_papers.values() for pmid in pmids}
 
-    # Get paper titles and abstracts
-    dict_pmids_abstracts = get_paper_titles_abstracts(all_pmids)  # type: ignore
+    # Get paper abstracts
+    dict_pmids_abstracts = get_paper_abstracts(all_pmids)  # type: ignore
 
     # Replace the placeholder abstract with the actual abstract from dict_pmids_abstracts
     for gene_pmids in irrelevant_papers.values():
