@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -56,7 +57,7 @@ class PromptBasedContentExtractor(IExtractFields):
             return []
 
         # Find all the observations in the paper relating to the query.
-        observations = self._observation_finder.find_observations(gene_symbol, paper)
+        observations = asyncio.run(self._observation_finder.find_observations(gene_symbol, paper))
 
         logger.info(f"Found {len(observations)} observations in {paper.id}")
 
