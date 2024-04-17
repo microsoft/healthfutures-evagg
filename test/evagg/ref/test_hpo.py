@@ -29,7 +29,14 @@ def test_compare_set() -> None:
     assert term_near1 in result and result[term_near1][1] == term_near2
 
 
-def test_translate() -> None:
-    # Method has not been implemented.
-    with pytest.raises(NotImplementedError):
-        HPOReference().translate("Nephritis")
+def test_search() -> None:
+    reference = HPOReference()
+
+    assert reference.search("Nephritis") == {"id": "HP:0000123", "name": "Nephritis"}
+
+
+def test_exists() -> None:
+    reference = HPOReference()
+
+    assert reference.exists("HP:0000123")
+    assert not reference.exists("HP:9999999")
