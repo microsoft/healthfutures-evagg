@@ -57,6 +57,7 @@ dependencies:
   - pytest
   - pytest-cov
   - pytest-mock
+  - pytest-asyncio
   #? - snakeviz
 
   # # pip dependencies. Before adding a package to this list, make sure it's not available in conda.

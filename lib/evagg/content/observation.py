@@ -149,7 +149,7 @@ uninterrupted sequences of whitespace characters.
         try:
             result = json.loads(response)
         except Exception:
-            logger.warning(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
+            logger.error(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
             return {}
 
         return result
