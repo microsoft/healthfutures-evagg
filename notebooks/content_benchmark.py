@@ -27,8 +27,8 @@ TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "eviden
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
-# CONTENT_COLUMNS = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"zygosity", "variant_inheritance", "variant_type", "functional_study"}  # noqa
+# alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
+CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
@@ -98,6 +98,17 @@ if "functional_study" in CONTENT_COLUMNS:
     # Handle truth_df.
     for column in functional_column_map.keys():
         truth_df[column] = truth_df[column].apply(lambda x: "true" if x == "x" else "false")
+
+if "variant_type" in CONTENT_COLUMNS:
+    # For both dataframes, recode "splice donor", "splice acceptor" to "splice region"
+    # For both dataframes, recode "frameshift insertion", "frameshift deletion" to "frameshift"
+    for df in [truth_df, output_df]:
+        df["variant_type"] = df["variant_type"].apply(
+            lambda x: "splice region" if x in ["splice donor", "splice acceptor"] else x
+        )
+        df["variant_type"] = df["variant_type"].apply(
+            lambda x: "frameshift" if x in ["frameshift insertion", "frameshift deletion"] else x
+        )
 
 
 # %% Restrict the truth set to the genes in the output set.
@@ -371,6 +382,13 @@ hpo = HPOReference()
 
 
 def _fuzzy_match_hpo_sets(hpo_set1: str, hpo_set2: str) -> bool:
+    # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
+    def _is_unknown(hpo_set: str) -> bool:
+        return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
+
+    if _is_unknown(hpo_set1) and _is_unknown(hpo_set2):
+        return True
+
     hpo_terms1 = re.findall(r"HP:\d+", hpo_set1) if isinstance(hpo_set1, str) else []
     hpo_terms2 = re.findall(r"HP:\d+", hpo_set2) if isinstance(hpo_set2, str) else []
 
@@ -394,11 +412,28 @@ if CONTENT_COLUMNS:
             match = shared_df.apply(
                 lambda row: _fuzzy_match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
             )
-            print(f"Content extraction accuracy for {column}: {match.mean()}")
+            print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
         else:
             # Currently other content columns are just string compares.
             match = shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_output"].str.lower()
-            print(f"Content extraction accuracy for {column}: {match.mean()}")
+            print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
+
+            # truth = shared_df[f"{column}_truth"].str.lower()
+            # output = shared_df[f"{column}_output"].str.lower()
+
+            # cats = sorted(set(truth.unique()) | set(output.unique()))
+
+            # truth_ordered = pd.Categorical(truth, categories=cats)
+            # output_ordered = pd.Categorical(output, categories=cats)
+
+            # df_conf = pd.crosstab(truth_ordered, output_ordered)
+            # import seaborn as sns
+            # import matplotlib.pyplot as plt
+            # plt.figure()
+            # sns.heatmap(df_conf, annot=True, fmt="d", cmap="Blues", cbar=False)
+            # plt.xlabel("Output")
+            # plt.ylabel("Truth")
+            # plt.title(f"Confusion matrix for {column}")
 
         for idx, row in shared_df[~match].iterrows():
             print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
