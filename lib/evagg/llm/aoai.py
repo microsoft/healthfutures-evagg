@@ -101,17 +101,7 @@ class OpenAIClient(IPromptClient):
 
         return await self._generate_completion(messages, settings)
 
-    def prompt_file(
-        self,
-        user_prompt_file: str,
-        system_prompt: Optional[str] = None,
-        params: Optional[Dict[str, str]] = None,
-        prompt_settings: Optional[Dict[str, Any]] = None,
-    ) -> str:
-        user_prompt = self._load_prompt_file(user_prompt_file)
-        return asyncio.run(self.prompt(user_prompt, system_prompt, params, prompt_settings))
-
-    async def prompt_file_async(
+    async def prompt_file(
         self,
         user_prompt_file: str,
         system_prompt: Optional[str] = None,

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -10,6 +11,8 @@ from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .interfaces import ICompareVariants, IFindObservations
+
+PatientVariant = Tuple[HGVSVariant, str]
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +45,7 @@ class ObservationFinderBase(ABC):
 
 
 class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
+    async def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[PatientVariant, Sequence[str]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
@@ -52,7 +55,7 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
         keyed by tuples of variants and string representations of the individual in which that variant was observed. The
         values in this dictionary are a collection of mentions relevant to this observation throughout the paper.
         """
-        observations: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
+        observations: Dict[PatientVariant, Sequence[str]] = {}
 
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
@@ -108,7 +111,7 @@ uninterrupted sequences of whitespace characters.
         self._variant_comparator = variant_comparator
         self._normalizer = normalizer
 
-    def _run_json_prompt(
+    async def _run_json_prompt(
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
         default_settings = {
@@ -120,7 +123,7 @@ uninterrupted sequences of whitespace characters.
         }
         prompt_settings = {**default_settings, **prompt_settings}
 
-        response = self._llm_client.prompt_file(
+        response = await self._llm_client.prompt_file(
             user_prompt_file=prompt_filepath,
             system_prompt=self._SYSTEM_PROMPT,
             params=params,
@@ -135,12 +138,12 @@ uninterrupted sequences of whitespace characters.
 
         return result
 
-    def _check_patients(self, patient_candidates: Sequence[str], texts_to_check: Sequence[str]) -> List[str]:
+    async def _check_patients(self, patient_candidates: Sequence[str], texts_to_check: Sequence[str]) -> List[str]:
         checked_patients: List[str] = []
 
-        for patient in patient_candidates:
+        async def check_patient(patient):
             for text in texts_to_check:
-                validation_response = self._run_json_prompt(
+                validation_response = await self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["check_patients"],
                     params={"text": text, "patient": patient},
                     prompt_settings={"prompt_tag": "observation__check_patients"},
@@ -151,11 +154,12 @@ uninterrupted sequences of whitespace characters.
             if patient not in checked_patients:
                 logger.debug(f"Removing {patient} from list of patients as it didn't pass final checks.")
 
+        await asyncio.gather(*[check_patient(patient) for patient in patient_candidates])
         return checked_patients
 
-    def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
+    async def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
-        full_text_response = self._run_json_prompt(
+        full_text_response = await self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_patients"],
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_patients"},
@@ -166,14 +170,16 @@ uninterrupted sequences of whitespace characters.
         # TODO, logically deduplicate patients here, e.g., if a patient is referred to as both "proband" and "IV-1",
         # we should ask the LLM to determine if these are the same individual.
 
+        async def check_focus_text(focus_text):
+            focus_response = await self._run_json_prompt(
+                prompt_filepath=self._PROMPTS["find_patients"],
+                params={"text": focus_text},
+                prompt_settings={"prompt_tag": "observation__find_patients"},
+            )
+            unique_patients.update(focus_response.get("patients", []))
+
         if focus_texts:
-            for focus_text in focus_texts:
-                focus_response = self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["find_patients"],
-                    params={"text": focus_text},
-                    prompt_settings={"prompt_tag": "observation__find_patients"},
-                )
-                unique_patients.update(focus_response.get("patients", []))
+            await asyncio.gather(*[check_focus_text(focus_text) for focus_text in focus_texts])
 
         patient_candidates = list(unique_patients)
         if "unknown" in patient_candidates:
@@ -182,9 +188,9 @@ uninterrupted sequences of whitespace characters.
         # Occassionally, multiple patients are referred to in a single string, e.g. "patients 9 and 10" split these out.
         patients_after_splitting: List[str] = []
 
-        for patient in patient_candidates:
+        async def split_patient(patient):
             if any(term in patient for term in [" and ", " or "]):
-                split_response = self._run_json_prompt(
+                split_response = await self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["split_patients"],
                     params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
                     prompt_settings={"prompt_tag": "observation__split_patients"},
@@ -193,22 +199,24 @@ uninterrupted sequences of whitespace characters.
             else:
                 patients_after_splitting.append(patient)
 
+        await asyncio.gather(*[split_patient(patient) for patient in patient_candidates])
+
         # If more than 5 (TODO parameterize?) patients are identified, risk of false positives is increased.
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
         if len(patients_after_splitting) >= 5:
             texts_to_check = focus_texts if focus_texts else [full_text]
-            checked_patients = self._check_patients(patients_after_splitting, texts_to_check)
+            checked_patients = await self._check_patients(patients_after_splitting, texts_to_check)
 
             if not checked_patients and texts_to_check == focus_texts:
                 # All patients failed checking in focus texts, try the full text.
-                checked_patients = self._check_patients(patients_after_splitting, [full_text])
+                checked_patients = await self._check_patients(patients_after_splitting, [full_text])
         else:
             checked_patients = patients_after_splitting
 
         return checked_patients
 
-    def _find_variant_descriptions(
+    async def _find_variant_descriptions(
         self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str
     ) -> Sequence[str]:
         """Identify the genetic variants relevant to the gene_symbol described in the full text of the paper.
@@ -216,22 +224,17 @@ uninterrupted sequences of whitespace characters.
         Returned variants will be _as described_ in the source text. Downstream manipulations to make them
         HGVS-compliant may be required.
         """
-        full_text_response = self._run_json_prompt(
-            prompt_filepath=self._PROMPTS["find_variants"],
-            params={"text": full_text, "gene_symbol": gene_symbol},
-            prompt_settings={"prompt_tag": "observation__find_variants"},
-        )
-
-        unique_variants = set(full_text_response.get("variants", []))
-
-        if focus_texts:
-            for focus_text in focus_texts:
-                focus_response = self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["find_variants"],
-                    params={"text": focus_text, "gene_symbol": gene_symbol},
-                    prompt_settings={"prompt_tag": "observation__find_variants"},
-                )
-                unique_variants.update(focus_response.get("variants", []))
+        # Create prompts to find all the unique variants mentioned in the full text and focus texts.
+        prompt_runs = [
+            self._run_json_prompt(
+                prompt_filepath=self._PROMPTS["find_variants"],
+                params={"text": text, "gene_symbol": gene_symbol},
+                prompt_settings={"prompt_tag": "observation__find_variants"},
+            )
+            for text in [full_text] + list(focus_texts or [])
+        ]
+        # Run prompts in parallel.
+        responses = await asyncio.gather(*prompt_runs)
 
         # Often, the gene-symbol is provided as a prefix to the variant, remove it.
         # Note: we do additional similar checks later, but it's useful to do it now to reduce redundancy.
@@ -241,34 +244,31 @@ uninterrupted sequences of whitespace characters.
                 return x[len(gene_symbol) :].lstrip(":")
             return x
 
-        candidates = list({_strip_gene_symbol(x) for x in list(unique_variants)})
-
         # TODO: evaluate tasking the LLM to return an empty list instead of "unknown" when no variants are found.
-        if "unknown" in candidates:
-            candidates.remove("unknown")
-        if not candidates:
-            return candidates
+        candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
-        # Often, the variant is reported with both coding and protein-level descriptions, separate these out to
-        # two distinct candidates.
-        expanded_candidates: List[str] = []
-
-        for candidate in candidates:
-            if candidate.find("p.") >= 0 and candidate.find("c.") >= 0:
-                split_response = self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["split_variants"],
-                    params={"variant_list": f'"{candidate}"'},  # Encase in double-quotes in prep for bulk calling.
-                    prompt_settings={"prompt_tag": "observation__split_variants"},
+        split_prompt_runs = []
+        # If the variant is reported with both coding and protein-level
+        # descriptions, split these into two with another prompt.
+        for i in reversed(range(len(candidates))):
+            if "p." in candidates[i] and "c." in candidates[i]:
+                split_prompt_runs.append(
+                    self._run_json_prompt(
+                        prompt_filepath=self._PROMPTS["split_variants"],
+                        params={"variant_list": f'"{candidates[i]}"'},  # Encase in double-quotes for bulk calling.
+                        prompt_settings={"prompt_tag": "observation__split_variants"},
+                    )
                 )
-                expanded_candidates.extend(split_response.get("variants", []))
-            else:
-                expanded_candidates.append(candidate)
+                del candidates[i]
+        # Run split prompts in parallel.
+        split_responses = await asyncio.gather(*split_prompt_runs)
+        # Add the split variants back in to the candidates list.
+        candidates.extend(v for r in split_responses for v in r.get("variants", []))
+        return candidates
 
-        return expanded_candidates
-
-    def _find_genome_build(self, full_text: str) -> str | None:
+    async def _find_genome_build(self, full_text: str) -> str | None:
         """Identify the genome build used in the paper."""
-        response = self._run_json_prompt(
+        response = await self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_genome_build"],
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_genome_build"},
@@ -276,7 +276,7 @@ uninterrupted sequences of whitespace characters.
 
         return response.get("genome_build", "unknown")
 
-    def _link_entities(
+    async def _link_entities(
         self, full_text: str, patients: Sequence[str], variants: Sequence[str], gene_symbol: str
     ) -> Dict[str, List[str]]:
         params = {
@@ -285,7 +285,7 @@ uninterrupted sequences of whitespace characters.
             "variants": ", ".join(variants),
             "gene_symbol": gene_symbol,
         }
-        response = self._run_json_prompt(
+        response = await self._run_json_prompt(
             prompt_filepath=self._PROMPTS["link_entities"],
             params=params,
             prompt_settings={"prompt_tag": "observation__link_entities"},
@@ -366,7 +366,7 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
+    async def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[PatientVariant, Sequence[str]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
@@ -385,15 +385,15 @@ uninterrupted sequences of whitespace characters.
             return {}
 
         # Determine the candidate genetic variants matching `gene_symbol`
-        variant_descriptions = self._find_variant_descriptions(
+        variant_descriptions = await self._find_variant_descriptions(
             full_text=full_text, focus_texts=list(table_texts.values()), gene_symbol=gene_symbol
         )
         logger.info(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
         # If necessary, determine the genome build most likely used for those variants.
         # TODO: consider doing this on a per-variant bases.
-        if any(v.find("chr") >= 0 or v.find("g.") >= 0 for v in variant_descriptions):
-            genome_build = self._find_genome_build(full_text=full_text)
+        if any("chr" in v or "g." in v for v in variant_descriptions):
+            genome_build = await self._find_genome_build(full_text=full_text)
             logger.info(f"Found the following genome build in {paper}: {genome_build}")
         else:
             genome_build = None
@@ -418,7 +418,7 @@ uninterrupted sequences of whitespace characters.
             # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
             # if there are no variants (regardless of patients), then there are no observations to report.
             if patients:
-                observations = self._link_entities(full_text, patients, list(variants.keys()), gene_symbol)
+                observations = await self._link_entities(full_text, patients, list(variants.keys()), gene_symbol)
             else:
                 observations = {"unknown": list(variants.keys())}
 
@@ -427,7 +427,7 @@ uninterrupted sequences of whitespace characters.
         # only use the specific variants we provide, or find a way to be robust to the split during variant object
         # lookup below.
 
-        result: Dict[Tuple[HGVSVariant, str], Sequence[str]] = {}
+        result: Dict[PatientVariant, Sequence[str]] = {}
         for individual, variant_strs in observations.items():
             # Consolidate variants within each observation so we only get one variant object per observation.
             variants_to_consolidate: Dict[HGVSVariant, str] = {}
