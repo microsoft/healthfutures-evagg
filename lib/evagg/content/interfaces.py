@@ -24,7 +24,9 @@ class ICompareVariants(Protocol):
 
 
 class IFindObservations(Protocol):
-    async def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
+    async def find_observations(
+        self, gene_symbol: str, paper: Paper
+    ) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
         """Identify all observations relevant to `gene_sybmol` in `paper`.
 
         `paper` is the paper to search for relevant observations. Paper must be in the PMC-OA dataset and have
