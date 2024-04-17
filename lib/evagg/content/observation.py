@@ -443,7 +443,7 @@ uninterrupted sequences of whitespace characters.
         # only use the specific variants we provide, or find a way to be robust to the split during variant object
         # lookup below.
 
-        result: Dict[Tuple[HGVSVariant, str], Dict[str, str]] = {}
+        result: Dict[Tuple[HGVSVariant, str], Dict[str, Any]] = {}
         for individual, variant_strs in observations.items():
             # Consolidate variants within each observation so we only get one variant object per observation.
             variants_to_consolidate: Dict[HGVSVariant, str] = {}
