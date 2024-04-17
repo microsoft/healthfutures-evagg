@@ -1,20 +1,26 @@
+import logging
 from functools import cache
 from typing import Dict, Sequence, Tuple
 
 import numpy as np
 from pyhpo import HPOTerm, Ontology, helper
 
-from .interfaces import ICompareHPO, ITranslateTextToHPO
+from .interfaces import ICompareHPO, ISearchHPO
+
+logger = logging.getLogger(__name__)
 
 
-class HPOReference(ICompareHPO, ITranslateTextToHPO):
+class HPOReference(ICompareHPO, ISearchHPO):
     def __init__(self) -> None:
         # Instantiate the Ontology
         Ontology()
 
     @cache
     def _get_hpo_object(self, term: str) -> HPOTerm:
-        return Ontology.get_hpo_object(term)
+        try:
+            return Ontology.get_hpo_object(term)
+        except Exception as e:
+            raise ValueError(f"Failed to retrieve HPO term {term}: {e}")
 
     def compare(self, subject: str, object: str, method: str = "graphic") -> float:
         term1 = self._get_hpo_object(subject)
@@ -37,6 +43,17 @@ class HPOReference(ICompareHPO, ITranslateTextToHPO):
 
         return result
 
-    def translate(self, text: str) -> str:
-        # TODO
-        raise NotImplementedError()
+    def search(self, query: str) -> Dict[str, str] | None:
+        # Give ourselves a fighting chance to find based on name.
+        if not query.startswith("HP:"):
+            query = query.capitalize()
+
+        try:
+            term = self._get_hpo_object(query)
+            return {"id": term.id, "name": term.name}
+        except Exception as e:
+            logger.debug(f"Failed to retrieve HPO term {query}: {e}")
+            return None
+
+    def exists(self, query: str) -> bool:
+        return bool(self.search(query))

@@ -35,6 +35,11 @@ variant_factory:
   validator: "{{mutalyzer_client}}"
   variant_lookup_client: "{{ncbi_client}}"
   refseq_client: "{{refseq_client}}"
+llm_client:
+  di_factory: lib.evagg.llm.OpenAIClient
+  config:
+    di_factory: lib.evagg.svc.get_dotenv_settings
+    filter_prefix: "AZURE_OPENAI_"
 
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
@@ -74,13 +79,24 @@ extractor:
     - phenotype
     - zygosity
     - variant_inheritance
-  llm_client:
-    di_factory: lib.evagg.llm.OpenAIClient
-    config:
-      di_factory: lib.evagg.svc.get_dotenv_settings
-      filter_prefix: "AZURE_OPENAI_"
+    - variant_type
+    - functional_study
+    - gnomad_frequency
+    - study_type
+    - citation    
+  llm_client: "{{llm_client}}"
+  phenotype_searcher:
+    di_factory: lib.evagg.ref.HPOReference
   observation_finder:
     di_factory: lib.evagg.content.TruthsetObservationFinder
+  # observation_finder:
+  #   di_factory: lib.evagg.content.ObservationFinder
+  #   llm_client: "{{llm_client}}"
+  #   paper_lookup_client: "{{ncbi_client}}"
+  #   variant_factory: "{{variant_factory}}"
+  #   variant_comparator: 
+  #     di_factory: lib.evagg.content.HGVSVariantComparator
+  #   normalizer: "{{mutalyzer_client}}"    
 writer:
   di_factory: lib.evagg.TableOutputWriter
   output_path: .out/content_benchmark.tsv
