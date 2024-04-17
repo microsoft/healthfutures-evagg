@@ -150,13 +150,14 @@ uninterrupted sequences of whitespace characters.
                 logger.info(f"Unable to find HPO identifier in {m}, shifting to unmatched.")
                 unmatched.append(m)
                 matched.remove(m)
-            if len(id) > 1:
-                logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
-            id = id[0]
-            if not self._phenotype_searcher.exists(id.strip("()")):
-                logger.info(f"Unable to match {m} as an HPO term, searching for alternatives.")
-                unmatched.append(m.replace(id, "").strip())
-                matched.remove(m)
+            else:
+                if len(id) > 1:
+                    logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
+                id = id[0]
+                if not self._phenotype_searcher.exists(id.strip("()")):
+                    logger.info(f"Unable to match {m} as an HPO term, searching for alternatives.")
+                    unmatched.append(m.replace(id, "").strip())
+                    matched.remove(m)
 
         # Try to use a query-based search for the unmatched terms.
         for u in unmatched:
