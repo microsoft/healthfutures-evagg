@@ -83,7 +83,7 @@ uninterrupted sequences of whitespace characters.
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def _can_process_paper(self, paper) -> bool:
+    def _can_process_paper(self, paper: Paper) -> bool:
         if (
             "pmcid" not in paper.props
             or paper.props["pmcid"] == ""
@@ -145,15 +145,15 @@ uninterrupted sequences of whitespace characters.
         matched = response.get("matched", [])
         unmatched = response.get("unmatched", [])
         for m in matched.copy():
-            id = re.findall(r"\(?HP:\d+\)?", m)
-            if not id:
+            ids = re.findall(r"\(?HP:\d+\)?", m)
+            if not ids:
                 logger.info(f"Unable to find HPO identifier in {m}, shifting to unmatched.")
                 unmatched.append(m)
                 matched.remove(m)
             else:
-                if len(id) > 1:
+                if len(ids) > 1:
                     logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
-                id = id[0]
+                id = ids[0]
                 if not self._phenotype_searcher.exists(id.strip("()")):
                     logger.info(f"Unable to match {m} as an HPO term, searching for alternatives.")
                     unmatched.append(m.replace(id, "").strip())
@@ -206,7 +206,7 @@ uninterrupted sequences of whitespace characters.
             # result can be a string or a json object.
             result = response.get(field, "failed")
             if field == "phenotype":
-                result = self._convert_phenotype_to_hpo(result)
+                result = self._convert_phenotype_to_hpo(result)  # type: ignore
             # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
             if not isinstance(result, str):
                 result = json.dumps(result)
