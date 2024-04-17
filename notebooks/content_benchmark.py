@@ -9,6 +9,7 @@ This notebook compares the performance of the two components separately.
 
 # %% Imports.
 
+import json
 import os
 import re
 from collections import defaultdict
@@ -26,13 +27,13 @@ TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "eviden
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
-# CONTENT_COLUMNS = set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance"}  # noqa
+# alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
+CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
 # TODO, just get the gene list from the yaml?
-RESTRICT_TRUTH_GENES_TO_OUTPUT = True  # if True, only compare the genes in the output set to the truth set.
+RESTRICT_TRUTH_GENES_TO_OUTPUT = False  # if True, only compare the genes in the output set to the truth set.
 
 HPO_SIMILARITY_THRESHOLD = (
     0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
@@ -47,9 +48,11 @@ if "doi" in truth_df.columns:
 
 output_df = pd.read_csv(OUTPUT_PATH, sep="\t", skiprows=1)
 
+# %% Preprocess the dataframes.
+
 
 # Preprocessing of the individual ID column is necessary because there's so much variety here.
-# Treat anything that is  the proband, proband, unknown, and patient as the same.
+# Treat anything that is the proband, proband, unknown, and patient as the same.
 def _normalize_individual_id(individual_id: Any) -> str:
     if pd.isna(individual_id):
         return "inferred proband"
@@ -66,6 +69,47 @@ if "individual_id" in truth_df.columns:
 if "individual_id" in output_df.columns:
     output_df["individual_id_orig"] = output_df["individual_id"]
     output_df["individual_id"] = output_df["individual_id"].apply(_normalize_individual_id)
+
+# If the column "functional_study" is included in CONTENT_COLUMNS, we need to decode that column into the corresponding
+# one-shot values to compare to the truth set.
+
+
+def _decode_functional_study(value: str, encoding: str) -> str:
+    items = json.loads(value)
+    return "true" if encoding in items else "false"
+
+
+if "functional_study" in CONTENT_COLUMNS:
+    # Handle output_df.
+    functional_column_map = {
+        "engineered_cells": "cell line",
+        "patient_cells_tissues": "patient cells",
+        "animal_model": "animal model",
+    }
+    for column, encoding in functional_column_map.items():
+        assert column in truth_df.columns, f"Column {column} not found in truth set."
+        output_df[column] = output_df["functional_study"].apply(func=_decode_functional_study, encoding=encoding)
+
+    CONTENT_COLUMNS -= {"functional_study"}
+    CONTENT_COLUMNS.update(functional_column_map.keys())
+
+    output_df = output_df.drop(columns=["functional_study"])
+
+    # Handle truth_df.
+    for column in functional_column_map.keys():
+        truth_df[column] = truth_df[column].apply(lambda x: "true" if x == "x" else "false")
+
+if "variant_type" in CONTENT_COLUMNS:
+    # For both dataframes, recode "splice donor", "splice acceptor" to "splice region"
+    # For both dataframes, recode "frameshift insertion", "frameshift deletion" to "frameshift"
+    for df in [truth_df, output_df]:
+        df["variant_type"] = df["variant_type"].apply(
+            lambda x: "splice region" if x in ["splice donor", "splice acceptor"] else x
+        )
+        df["variant_type"] = df["variant_type"].apply(
+            lambda x: "frameshift" if x in ["frameshift insertion", "frameshift deletion"] else x
+        )
+
 
 # %% Restrict the truth set to the genes in the output set.
 if RESTRICT_TRUTH_GENES_TO_OUTPUT:
@@ -321,11 +365,14 @@ print()
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
-printable_df = merged_df.reset_index()  #
-printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
-# printable_df[
-#     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
-# ].sort_values(["gene", "paper_id", "hgvs_desc"])
+if precision < 1 or recall < 1:
+    printable_df = merged_df.reset_index()  #
+    printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
+else:
+    print("All observations found. This is likely because the TruthsetObservationFinder was used.")
+    # printable_df[
+    #     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
+    # ].sort_values(["gene", "paper_id", "hgvs_desc"])
 
 # %% Redo the merge and assess variant finding.
 
@@ -335,8 +382,15 @@ hpo = HPOReference()
 
 
 def _fuzzy_match_hpo_sets(hpo_set1: str, hpo_set2: str) -> bool:
-    hpo_terms1 = re.findall(r"HP:\d+", hpo_set1)
-    hpo_terms2 = re.findall(r"HP:\d+", hpo_set2)
+    # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
+    def _is_unknown(hpo_set: str) -> bool:
+        return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
+
+    if _is_unknown(hpo_set1) and _is_unknown(hpo_set2):
+        return True
+
+    hpo_terms1 = re.findall(r"HP:\d+", hpo_set1) if isinstance(hpo_set1, str) else []
+    hpo_terms2 = re.findall(r"HP:\d+", hpo_set2) if isinstance(hpo_set2, str) else []
 
     if not hpo_terms1 or not hpo_terms2:
         return False
@@ -353,16 +407,36 @@ if CONTENT_COLUMNS:
     for column in CONTENT_COLUMNS:
         if column == "phenotype":
             # Phenotype matching can't be a direct string compare.
-            # compare phenotype_truth and phenotype_output using _fuzzy_match_hpo_sets
+            # We'll fuzzy match the HPO terms, note that we're ignoring anything in here that couldn't be matched via
+            # HPO. The non HPO terms are still provided by pipeline output, but
             match = shared_df.apply(
                 lambda row: _fuzzy_match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
             )
-            print(f"Content extraction accuracy for {column}: {match.mean()}")
+            print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
         else:
             # Currently other content columns are just string compares.
             match = shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_output"].str.lower()
-            print(f"Content extraction accuracy for {column}: {match.mean()}")
+            print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
+
+            # truth = shared_df[f"{column}_truth"].str.lower()
+            # output = shared_df[f"{column}_output"].str.lower()
+
+            # cats = sorted(set(truth.unique()) | set(output.unique()))
+
+            # truth_ordered = pd.Categorical(truth, categories=cats)
+            # output_ordered = pd.Categorical(output, categories=cats)
+
+            # df_conf = pd.crosstab(truth_ordered, output_ordered)
+            # import seaborn as sns
+            # import matplotlib.pyplot as plt
+            # plt.figure()
+            # sns.heatmap(df_conf, annot=True, fmt="d", cmap="Blues", cbar=False)
+            # plt.xlabel("Output")
+            # plt.ylabel("Truth")
+            # plt.title(f"Confusion matrix for {column}")
 
         for idx, row in shared_df[~match].iterrows():
             print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
         print()
+
+# %%
