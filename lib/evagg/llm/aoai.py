@@ -57,7 +57,7 @@ class OpenAIClient(IPromptClient):
             return f.read()
 
     @retry.retry(openai.RateLimitError, tries=5, delay=5, backoff=2)
-    def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
+    async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         start_ts = time.time()
         prompt_tag = settings.pop("prompt_tag", "prompt")
         completion = await self._client.chat.completions.create(messages=messages, **settings)

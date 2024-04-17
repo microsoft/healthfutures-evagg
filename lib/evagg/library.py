@@ -281,7 +281,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     async def _get_llm_category(self, paper: Paper) -> str:
         """Categorize papers based on LLM prompts."""
-        response = await self._llm_client.prompt_file_async(
+        response = await self._llm_client.prompt_file(
             user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding.txt"),
             system_prompt="Extract field",
             params={

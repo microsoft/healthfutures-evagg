@@ -48,7 +48,9 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
     def __init__(self) -> None:
         pass
 
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
+    async def find_observations(
+        self, gene_symbol: str, paper: Paper
+    ) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
@@ -155,7 +157,7 @@ uninterrupted sequences of whitespace characters.
     async def _check_patients(self, patient_candidates: Sequence[str], texts_to_check: Sequence[str]) -> List[str]:
         checked_patients: List[str] = []
 
-        async def check_patient(patient):
+        async def check_patient(patient: str) -> None:
             for text in texts_to_check:
                 validation_response = await self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["check_patients"],
@@ -184,7 +186,7 @@ uninterrupted sequences of whitespace characters.
         # TODO, logically deduplicate patients here, e.g., if a patient is referred to as both "proband" and "IV-1",
         # we should ask the LLM to determine if these are the same individual.
 
-        async def check_focus_text(focus_text):
+        async def check_focus_text(focus_text: str) -> None:
             focus_response = await self._run_json_prompt(
                 prompt_filepath=self._PROMPTS["find_patients"],
                 params={"text": focus_text},
@@ -202,7 +204,7 @@ uninterrupted sequences of whitespace characters.
         # Occassionally, multiple patients are referred to in a single string, e.g. "patients 9 and 10" split these out.
         patients_after_splitting: List[str] = []
 
-        async def split_patient(patient):
+        async def split_patient(patient: str) -> None:
             if any(term in patient for term in [" and ", " or "]):
                 split_response = await self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["split_patients"],
@@ -380,7 +382,9 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
+    async def find_observations(
+        self, gene_symbol: str, paper: Paper
+    ) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
@@ -425,7 +429,7 @@ uninterrupted sequences of whitespace characters.
             observations = {}
         else:
             # Determine all of the patients specifically referred to in the paper, if any.
-            patients = self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
+            patients = await self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
             logger.info(f"Found the following patients in {paper}: {patients}")
 
             # TODO, consider consolidating variants here, before linking with patients.
