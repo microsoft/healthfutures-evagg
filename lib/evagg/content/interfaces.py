@@ -24,10 +24,8 @@ class ICompareVariants(Protocol):
 
 
 class IFindObservations(Protocol):
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
-        """Identify all observations relevant to `gene_sybmol` in `paper`.
-
-        `paper` is the paper to search for relevant observations. Paper must be in the PMC-OA dataset and have
-        appropriate license terms.
-        """
+    async def find_observations(
+        self, gene_symbol: str, paper: Paper
+    ) -> Mapping[Tuple[HGVSVariant, str], Sequence[str]]:
+        """Identify all observations relevant to `gene_symbol` in `paper`."""
         ...  # pragma: no cover
