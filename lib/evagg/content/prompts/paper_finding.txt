@@ -1,12 +1,12 @@
-Given a paper's title and abstract below, your task is to categorize the paper into "rare disease", "non-rare disease", or "other" based on the following criteria.
+Given a paper's title and abstract below, your task is to categorize the paper into "rare disease", "non-rare disease", or "other". Please follow the definitions below for how to categorize based on the provided criteria.
 
-For a paper to be categorized as "rare disease," it should discuss aspects directly related to rare diseases, which are often characterized by a small number of affected individuals, specific genetic variations, and hereditary patterns. Papers may mention terms such as "mendelian", "monogenic", "monoallelic", "inherited", "germline mutations", "variants of unknown or uncertain significance", and "zygosity" (e.g., autosomal dominant, recessive, compound heterozygous). The paper may also reference the rarity of the condition or follow the American College of Medical Genetics (ACMG) guidelines. If a known rare disease is described, or if the paper matches any of the criteria for rare diseases, it should be labeled as "rare disease".
+"Rare disease" criteria: Is this paper (given title and abstract below) talking about a rare disease patient, cohort, or context, or something else? If the paper is talking about rare disease, return the paper category "rare disease". If additional information is helpful, rare diseases can sometimes be characterized as "mendelian", "monogenic", "monoallelic", and "inherited". You might find mention of "germline mutations" in rare disease contexts, "variants of unknown or uncertain significance", or mention of very few people with the condition. Other variant descriptors are "pathogenic", "benign", or "unknown" significance. Rare disease variants can be "de novo" or "inherited". The authors of rare disease papers will also talk about the patient or condition zygosity (e.g. autosomal dominant or recessive, compound heterozygous, etc.). The essential key is that the author's describe the scenario they describe as rare (i.e. a rare occurrence, a rarity). The American College of Medical Genetics (ACMG) guidelines are a great resource. While we do not know all rare diseases, if a known rare disease condition is described in the paper, please label this paper as rare disease. If the paper title or abstract meet some/any of the criteria above, categorize the paper as "rare disease".
+	
+"Non-rare disease" criteria: If the paper does not fit into the "rare disease" category, see if the paper is talking about a "non-rare disease" context, which we are defining as papers that discuss "digenic", "familial", "structural variant", "somatic", "somatic cancer", "cancer", "tumor", "copy number variant" (CNV), or "carcinoma" topics. If the paper title or abstract meet some/any of the non-rare disease criteria, categorize the paper as "non-rare disease".
 
-Papers should be categorized as "non-rare disease" if they discuss broader disease contexts, often affecting larger populations or involving more common genetic variations. This category includes papers on "digenic", "familial", "structural variant", "somatic", "somatic cancer", "cancer", "tumor", "copy number variant" (CNV), "carcinoma", and related topics. If the paper's content aligns with these topics, it should be labeled as "non-rare disease".
+"Other" criteria: If the paper doesn't fit in either the "rare disease" or "non-rare disease" categories, please return paper category "other". 
 
-If the paper does not clearly fit into either the "rare disease" or "non-rare disease" categories, it should be categorized as "other".
-
-Use both the title and abstract to determine the appropriate category.
+Please use both the title and abstract to make your determination of category (rare disease, non-rare disease, or other). 
 
 Below are the title and abstract:
 
@@ -17,5 +17,3 @@ Provide your response in the following format:
 {
   "paper_category": "rare disease" | "non-rare disease" | "other"
 }
-
-In your categorization, consider the entire context provided by the title and abstract, and do not overfit to specific examples provided earlier. The objective is to assess the content for relevance to rare diseases broadly, not solely based on the presence of certain keywords or specific rare diseases mentioned in prior examples.
