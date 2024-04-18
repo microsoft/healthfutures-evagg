@@ -88,10 +88,21 @@ class ICompareHPO(Protocol):
         ...  # pragma: no cover
 
 
-class ITranslateTextToHPO(Protocol):
-    def translate(self, text: str) -> str:
-        """Translate a text description to an HPO term.
+class ISearchHPO(Protocol):
+    def search(self, query: str) -> Dict[str, str] | None:
+        """Search for an HPO term based on a query.
 
-        Returns the HPO term as a string, e.g. "HP:0012469"
+        Returns a dictionary representation of the HPO term, e.g.
+        {
+            "id": "HP:0012469",
+            "name": "Abnormality of the eye"
+        }
         """
         ...  # pragma: no cover
+
+    def exists(self, query: str) -> bool:
+        """Check if an HPO term exists based on a query.
+
+        Returns True if the term exists, False otherwise.
+        """
+        ...
