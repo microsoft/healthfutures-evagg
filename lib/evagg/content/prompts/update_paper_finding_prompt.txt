@@ -9,4 +9,4 @@ END OF PROMPT.
 These rare disease paper titles and abstracts are here:
 {{$dict_gene_titles_abstracts}}
 
-Please only provide the updated prompt, with no other text before or after. Do not include "END OF PROMPT" at end of your response. Provide your response in sentence and paragraph format.
+Please only provide the updated prompt, with no other text before or after. NEVER remove the title and abstract from the prompt. Do not include "END OF PROMPT" at end of your response. Provide your response in sentence and paragraph format.
