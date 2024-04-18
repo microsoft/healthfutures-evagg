@@ -467,7 +467,6 @@ def main(args):
         else:
             f.write("\nNo true positives. Precision and recall are undefined.\n")
 
-    print("benchmarking results: ", benchmarking_results)
     # Plot benchmarking results
     results_to_plot = plot_benchmarking_results(benchmarking_results)
 
