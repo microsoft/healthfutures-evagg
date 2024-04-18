@@ -17,6 +17,7 @@ ncbi_client:
   settings: "{{ncbi_settings}}"
 mutalyzer_client:
   di_factory: lib.evagg.ref.MutalyzerClient
+  # Dedicated web-client that doesn't raise on 422 because of mutalyzer's behavior.
   web_client:
     di_factory: lib.evagg.svc.CosmosCachingWebClient
     web_settings:
@@ -27,6 +28,7 @@ mutalyzer_client:
       filter_prefix: "EVAGG_CONTENT_CACHE_"
 refseq_client:
   di_factory: lib.evagg.ref.NcbiReferenceLookupClient
+  # Dedicated web-client without caching, TODO: don't cache large files and use a shared client.
   web_client:
     di_factory: lib.evagg.svc.RequestsWebContentClient
 variant_factory:
@@ -89,14 +91,6 @@ extractor:
     di_factory: lib.evagg.ref.HPOReference
   observation_finder:
     di_factory: lib.evagg.content.TruthsetObservationFinder
-  # observation_finder:
-  #   di_factory: lib.evagg.content.ObservationFinder
-  #   llm_client: "{{llm_client}}"
-  #   paper_lookup_client: "{{ncbi_client}}"
-  #   variant_factory: "{{variant_factory}}"
-  #   variant_comparator: 
-  #     di_factory: lib.evagg.content.HGVSVariantComparator
-  #   normalizer: "{{mutalyzer_client}}"    
 writer:
   di_factory: lib.evagg.TableOutputWriter
   output_path: .out/content_benchmark.tsv
