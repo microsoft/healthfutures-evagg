@@ -56,6 +56,7 @@ TRUTHSET_PAPER_KEYS_MAPPING = {"paper_title": "title"}
 TRUTHSET_VARIANT_KEYS = [
     "gene",
     "transcript",
+    "paper_variant",
     "hgvs_c",
     "hgvs_p",
     "individual_id",
