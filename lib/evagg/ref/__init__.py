@@ -9,7 +9,7 @@ from .interfaces import (
     INormalizeVariants,
     IPaperLookupClient,
     IRefSeqLookupClient,
-    ITranslateTextToHPO,
+    ISearchHPO,
     IValidateVariants,
     IVariantLookupClient,
 )
@@ -31,7 +31,7 @@ __all__ = [
     "IBackTranslateVariants",
     "IValidateVariants",
     "ICompareHPO",
-    "ITranslateTextToHPO",
+    "ISearchHPO",
     # NCBI.
     "NcbiLookupClient",
     "NcbiReferenceLookupClient",
