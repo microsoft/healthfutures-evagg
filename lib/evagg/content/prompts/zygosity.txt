@@ -1,10 +1,21 @@
 Here is some text from a paper describing genetic variants in the gene {{$gene}}.
-What is the described zygosity for the patient with the variant: {{$variant}}?
+
+I would like you to determine the zygosity for the patient and variant described below. Multiple patients
+in the paper might possess this variant, but I want you to determine the zygosity for this patient specifically.
+The patient of interest may be referred to by any of the following identifiers: {{$patient_descriptions}}. The genetic
+variant possessed by this patient for which I want you to determine the zygosity may be described in any of
+the following ways: {{$variant_descriptions}}.
+
+The options for zygosity available for you to choose from are: "homozygous", "heterozygous", 
+"compound heterozygous", and "none". Choose only one of these options in your response.
+
+-- Output format --
+
+Provide your response as a valid JSON object, using the following format.
+{
+  "zygosity": "homozygous" | "heterozygous" | "compound heterozygous" | "none"
+}
+
+-- Begin paper text --
 
 {{$passage}}
-
-Provide your response in the following format:
-{
-  "grounding": "evidence in support of the zygosity.",
-  "zygosity": "homozygous" | "heterozygous" | "compound heterozygous" | "not specified"
-}
