@@ -1,0 +1,48 @@
+Below you will find some text from a paper describing genetic variants in the gene {{$gene}}.
+I want you to tell me variant type for the genetic variant described in any of the following 
+ways: {{$variant_descriptions}}.
+
+Often the variant type can be determined from the description alone, or the description can be used to help narrow
+the set of possible types for a given variant.
+
+Here are some examples of this in action:
+- For simple variants with a single base pair substitution, e.g., c.274G>T, the variant type is generally
+  always synonymous, missense, or stop-gained. This can be determined by looking at the protein consequence for the 
+  variant. In the case of the variant from earlier in this paragraph, the protein consequence is p.Asp92Tyr. Because
+  we're substituting one amino acid (Tyrosine) for a different one (Aspartic Acid), this is a missense mutation. If
+  instead the base pair substitution resulted in no change in amino acid, the protein consequence would be represented
+  as p.Asp92= and the variant type would be synonymous. Finally, if the base pair subsitution resulted in a stop codon,
+  this would be represented as p.Asp92*, p.Asp92Ter, or p.D92X and the variant type would be stop gained.
+- Typically, frameshift variants involve insertion or deletion of base pairs (referred to as frameshift insertion and 
+  frameshift deletion, respectively). They include the text "fs" in the description of the protein consequence. 
+  Examples of this might be c.274_275del, which is a variant with two deleted base pairs and the corresponding protein 
+  consequence p.Asp92Leufs*21. Or alternatively c.274_275insT and c.274dup are both single base pair insertions that
+  both result in frameshifts in protein consequence, p.Asp92Glyfs*22 and p.Asp92Valfs*22 respectively.
+- Note that not all insertions or deletions are frameshifts. An insertion that adds a multiple of 3 bases, or a deletion
+  that removes a multiple of 3 bases are referred to as an inframe insertion or inframe deletion, respectively. An 
+  example of an inframe insertion is c.350_351insGGG (protein consequence p.Gly117dup) and an inframe deletion is 
+  c.350_352del (protein consequence p.Gly117del).
+- Splice donor, splice acceptor, splice region, intronic, 5'UTR, 3'UTR, and non-coding variants are a little bit 
+  trickier, and it might be necessary to derive additional context from the main text of the paper. Very often the
+  descriptions of these variants might include a "+" or "-" symbol, e.g., c.490+2T>G. Alternatively, they might be 
+  described using a chromosomal reference sequence, e.g., g.112088970del - this is challenging to disambiguate from any 
+  other variant type by variant description alone, and the source text must be read for interpretation.
+- Structural variants typically involve hundreds to tens of thousands of base pairs and are often described quite
+  differently in the text.
+
+Provide your response as a valid JSON object, using the format below. The only valid values you may select from in
+your response are "missense", "frameshift", "stop gained", "splice donor", "splice acceptor", "splice region", 
+"start lost", "inframe deletion", "frameshift deletion", "inframe insertion", "frameshift insertion", "structural", 
+"synonymous", "intron", "5’ UTR", "3’UTR", "non-coding", and "unknown".
+
+-- Output format --
+
+Provide your response as a valid JSON object, using the following format.
+{                    .             .              .                   .               .                  .                                 .                        .                      .                     .                                      .
+  "variant_type": "missense" | "frameshift" | "stop gained" | "splice donor" | "splice acceptor" | "splice region" | "start lost" | "inframe deletion" | "frameshift deletion" | "inframe insertion" | "frameshift insertion" | "structural" | "synonymous" | "intron" | "5' UTR" | "3' UTR" | "non-coding" | "unknown"
+}
+
+-- Begin paper text --
+
+{{$passage}}
+

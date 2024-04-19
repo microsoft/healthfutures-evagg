@@ -395,7 +395,7 @@ ncbi_client = NcbiLookupClient(
 
 @cache
 def get_paper(pmid: str) -> Any:
-    return ncbi_client.fetch(pmid)
+    return ncbi_client.fetch(pmid, include_fulltext=True)
 
 
 def get_paper_title(pmid: str) -> str:
@@ -420,6 +420,12 @@ def get_pmcid(pmid: str) -> str | None:
     if paper := get_paper(pmid):
         return paper.props.get("pmcid", None)
     return None
+
+
+def has_full_text(pmid: str) -> bool:
+    if paper := get_paper(pmid):
+        return paper.props.get("full_text_xml", None) is not None
+    return False
 
 
 # Now get the paper title.
@@ -448,6 +454,11 @@ evidence_df["link"] = "https://pubmed.ncbi.nlm.nih.gov/" + evidence_df["pmid"].a
 
 # Remove any newlines from "pheno_text_description".
 evidence_df["pheno_text_description"] = evidence_df["pheno_text_description"].str.replace("\n", " ")
+
+# %% Post process gene_paper_df before writing out.
+gene_paper_df["has_fulltext"] = gene_paper_df["pmid"].apply(has_full_text)
+gene_paper_df["is_pmc_oa"] = gene_paper_df["pmid"].apply(get_pmc_oa)
+gene_paper_df["license"] = gene_paper_df["pmid"].apply(get_license)
 
 # %% Load in the group assignments and merge with gene_df gene_paper_df, and evidence_df.
 
