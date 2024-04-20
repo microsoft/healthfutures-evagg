@@ -369,7 +369,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         if self._require_full_text:
             papers = [p for p in papers if p.props.get("full_text_xml")]
 
-        logger.warning(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
+        logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 
         # Categorize the papers.
         await asyncio.gather(*[self._add_paper_categorization(paper) for paper in papers])

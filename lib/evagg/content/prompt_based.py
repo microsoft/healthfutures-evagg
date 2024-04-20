@@ -28,17 +28,16 @@ class PromptBasedContentExtractor(IExtractFields):
     }
     # These are expensive prompt fields
     _CACHE_FIELDS = ["variant_type", "functional_study"]
-    _SYSTEM_PROMPT = """
-You are an intelligent assistant to a genetic analyst. Their task is to identify the genetic variant or variants that
-are causing a patient's disease. One approach they use to solve this problem is to seek out evidence from the academic
-literature that supports (or refutes) the potential causal role that a given variant is playing in a patient's disease.
+    # Read the system prompt from file
+    _SYSTEM_PROMPT = open(os.path.dirname(__file__) + "/prompts/system.txt").read()
 
-As part of that process, you will assist the analyst in collecting specific details about genetic variants that have
-been observed in the literature.
-
-All of your responses should be provided in the form of a JSON object. These responses should never include long,
-uninterrupted sequences of whitespace characters.
-"""
+    _DEFAULT_PROMPT_SETTINGS = {
+        "max_tokens": 2048,
+        "prompt_tag": "observation",
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "response_format": {"type": "json_object"},
+    }
 
     def __init__(
         self,
@@ -46,6 +45,7 @@ uninterrupted sequences of whitespace characters.
         llm_client: IPromptClient,
         observation_finder: IFindObservations,
         phenotype_searcher: ISearchHPO,
+        prompt_settings: Dict[str, Any] | None = None,
     ) -> None:
         # Pre-check the list of fields being requested.
         supported_fields = self._STATIC_FIELDS + self._PAPER_FIELDS + list(self._PROMPT_FIELDS)
@@ -56,6 +56,9 @@ uninterrupted sequences of whitespace characters.
         self._llm_client = llm_client
         self._observation_finder = observation_finder
         self._phenotype_searcher = phenotype_searcher
+        self._instance_prompt_settings = (
+            {**self._DEFAULT_PROMPT_SETTINGS, **prompt_settings} if prompt_settings else self._DEFAULT_PROMPT_SETTINGS
+        )
 
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
@@ -86,14 +89,8 @@ uninterrupted sequences of whitespace characters.
     async def _run_json_prompt(
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
-        default_settings = {
-            "max_tokens": 2048,
-            "prompt_tag": "observation",
-            "temperature": 0.7,
-            "top_p": 0.95,
-            "response_format": {"type": "json_object"},
-        }
-        prompt_settings = {**default_settings, **prompt_settings}
+
+        prompt_settings = {**self._instance_prompt_settings, **prompt_settings}
 
         response = await self._llm_client.prompt_file(
             user_prompt_file=prompt_filepath,
