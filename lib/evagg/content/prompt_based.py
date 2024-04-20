@@ -3,49 +3,22 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Mapping, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import ISearchHPO
 from lib.evagg.types import HGVSVariant, Paper
 
 from ..interfaces import IExtractFields
-from .interfaces import IFindObservations
+from .interfaces import IFindObservations, Observation
 
 logger = logging.getLogger(__name__)
 
 
 class PromptBasedContentExtractor(IExtractFields):
-    _SUPPORTED_FIELDS = {
-        "gene",
-        "paper_id",
-        "hgvs_c",
-        "hgvs_p",
-        "transcript",
-        "individual_id",
-        "phenotype",
-        "zygosity",
-        "variant_inheritance",
-        "valid",
-        "variant_type",
-        "functional_study",
-        "gnomad_frequency",
-        "study_type",
-        "citation",
-    }
-    _PAPER_FIELDS = {"paper_id", "study_type", "citation"}
-    _VARIANT_FIELDS = {
-        "hgvs_c",
-        "hgvs_p",
-        "transcript",
-        "valid",
-        "variant_type",
-        "functional_study",
-        "gnomad_frequency",
-        "gene",
-    }
-
-    _PROMPTS = {
+    _PAPER_FIELDS = ["paper_id", "study_type", "citation"]
+    _STATIC_FIELDS = ["gene", "hgvs_c", "hgvs_p", "transcript", "gnomad_frequency", "valid", "individual_id"]
+    _PROMPT_FIELDS = {
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
         "phenotype": os.path.dirname(__file__) + "/prompts/phenotype.txt",
@@ -53,6 +26,8 @@ class PromptBasedContentExtractor(IExtractFields):
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
         "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
+    # These are expensive prompt fields
+    _CACHE_FIELDS = ["variant_type", "functional_study"]
     _SYSTEM_PROMPT = """
 You are an intelligent assistant to a genetic analyst. Their task is to identify the genetic variant or variants that
 are causing a patient's disease. One approach they use to solve this problem is to seek out evidence from the academic
@@ -73,7 +48,8 @@ uninterrupted sequences of whitespace characters.
         phenotype_searcher: ISearchHPO,
     ) -> None:
         # Pre-check the list of fields being requested.
-        if any(f not in self._SUPPORTED_FIELDS for f in fields):
+        supported_fields = self._STATIC_FIELDS + self._PAPER_FIELDS + list(self._PROMPT_FIELDS)
+        if any(f not in supported_fields for f in fields):
             raise ValueError()
 
         self._fields = fields
@@ -107,7 +83,7 @@ uninterrupted sequences of whitespace characters.
                 raise ValueError(f"Unsupported paper field: {field}")
         return result
 
-    def _run_json_prompt(
+    async def _run_json_prompt(
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
         default_settings = {
@@ -119,7 +95,7 @@ uninterrupted sequences of whitespace characters.
         }
         prompt_settings = {**default_settings, **prompt_settings}
 
-        response = self._llm_client.prompt_file(
+        response = await self._llm_client.prompt_file(
             user_prompt_file=prompt_filepath,
             system_prompt=self._SYSTEM_PROMPT,
             params=params,
@@ -134,12 +110,15 @@ uninterrupted sequences of whitespace characters.
 
         return result
 
-    def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
+    async def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
         if not isinstance(phenotype, list):
             return ["unknown"]
 
-        params = {"phenotypes": ", ".join(phenotype)}
-        response = self._run_json_prompt(self._PROMPTS["phenotype_to_hpo"], params, {"prompt_tag": "phenotype_to_hpo"})
+        response = await self._run_json_prompt(
+            self._PROMPT_FIELDS["phenotype_to_hpo"],
+            {"phenotypes": ", ".join(phenotype)},
+            {"prompt_tag": "phenotype_to_hpo"},
+        )
 
         # For the matched terms, validate that they're in the HPO, else drop the HPO identifier and move them to
         # unmatched.
@@ -171,48 +150,70 @@ uninterrupted sequences of whitespace characters.
 
         return matched
 
-    def _get_observation_field(
-        self, gene_symbol: str, observation: Tuple[HGVSVariant, str], observation_info: Mapping[str, Any], field: str
-    ) -> str:
-        variant, individual = observation
-        paper_excerpts = "\n\n".join(observation_info["texts"])
-
-        if field == "gene":
-            result = gene_symbol
-        elif field == "individual_id":
-            result = individual
-        elif field == "hgvs_c":
-            result = variant.hgvs_desc if not variant.hgvs_desc.startswith("p.") else "NA"
-        elif field == "hgvs_p":
-            if variant.protein_consequence:
-                result = variant.protein_consequence.hgvs_desc
-            else:
-                result = variant.hgvs_desc if variant.hgvs_desc.startswith("p.") else "NA"
-        elif field == "transcript":
-            result = variant.refseq if variant.refseq else "unknown"
-        elif field == "valid":
-            result = str(variant.valid)
-        elif field == "gnomad_frequency":
-            result = "unknown"
-        else:
-            variant_desc = ", ".join(observation_info["variant_descriptions"])
-            patient_desc = ", ".join(observation_info["patient_descriptions"])
-            params = {
-                "passage": paper_excerpts,
-                "variant_descriptions": variant_desc,
-                "patient_descriptions": patient_desc,
-                "gene": gene_symbol,
-            }
-            response = self._run_json_prompt(self._PROMPTS[field], params, {"prompt_tag": field})
-            # result can be a string or a json object.
-            result = response.get(field, "failed")
-            if field == "phenotype":
-                result = self._convert_phenotype_to_hpo(result)  # type: ignore
-            # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
-            if not isinstance(result, str):
-                result = json.dumps(result)
-
+    async def _get_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+        params = {
+            "passage": "\n\n".join(observation.texts),
+            "variant_descriptions": ", ".join(observation.variant_descriptions),
+            "patient_descriptions": ", ".join(observation.patient_descriptions),
+            "gene": gene_symbol,
+        }
+        response = await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
+        # result can be a string or a json object.
+        result = response.get(field, "failed")
+        if field == "phenotype":
+            result = await self._convert_phenotype_to_hpo(result)  # type: ignore
+        # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
+        if not isinstance(result, str):
+            result = json.dumps(result)
         return result
+
+    async def _get_fields(
+        self, gene_symbol: str, ob: Observation, fields: Dict[str, str], cache: dict[Tuple[HGVSVariant, str], str]
+    ) -> Dict[str, str]:
+        # Run through each requested field not already in the fields.
+        async def _add_field(field: str) -> None:
+            # Use a cached result for variant fields if available.
+            if (ob.variant, field) in cache:
+                fields[field] = cache[(ob.variant, field)]
+            # Run a prompt to get the prompt fields.
+            elif field in self._PROMPT_FIELDS:
+                fields[field] = await self._get_prompt_field(gene_symbol, ob, field)
+                # See if we should cache it for next time.
+                if field in self._CACHE_FIELDS:
+                    cache[(ob.variant, field)] = fields[field]
+            elif field == "gene":
+                fields[field] = gene_symbol
+            elif field == "individual_id":
+                fields[field] = ob.individual
+            elif field == "hgvs_c":
+                fields[field] = ob.variant.hgvs_desc if not ob.variant.hgvs_desc.startswith("p.") else "NA"
+            elif field == "hgvs_p":
+                if ob.variant.protein_consequence:
+                    fields[field] = ob.variant.protein_consequence.hgvs_desc
+                else:
+                    fields[field] = ob.variant.hgvs_desc if ob.variant.hgvs_desc.startswith("p.") else "NA"
+            elif field == "transcript":
+                fields[field] = ob.variant.refseq if ob.variant.refseq else "unknown"
+            elif field == "valid":
+                fields[field] = str(ob.variant.valid)
+            elif field == "gnomad_frequency":
+                fields[field] = "unknown"
+            else:
+                raise ValueError(f"Unsupported field: {field}")
+
+        await asyncio.gather(*[_add_field(field) for field in self._fields if field not in fields])
+        return fields
+
+    async def _extract_fields(self, paper: Paper, gene_symbol: str, obs: Sequence[Observation]) -> List[Dict[str, str]]:
+        # TODO - because the returned observations include the text associated with each observation, it's not trivial
+        # to pre-cache the variant level fields. We don't have any easy way to collect all the unique texts associated
+        # with all observations of the same variant (but different individuals). As a temporary solution, we'll cache
+        # the first finding of a variant-level result and use that only. This will not be robust to scenarios where the
+        # texts associated with multiple observations of the same variant differ.
+        cache: dict[Tuple[HGVSVariant, str], str] = {}
+        # Precompute paper-level fields to include in each set of observation fields.
+        fields = self._get_all_paper_fields(paper, [f for f in self._fields if f in self._PAPER_FIELDS])
+        return await asyncio.gather(*[self._get_fields(gene_symbol, ob, fields.copy(), cache) for ob in obs])
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         if not self._can_process_paper(paper):
@@ -221,46 +222,10 @@ uninterrupted sequences of whitespace characters.
 
         # Find all the observations in the paper relating to the query.
         observations = asyncio.run(self._observation_finder.find_observations(gene_symbol, paper))
-
-        logger.info(f"Found {len(observations)} observations in {paper.id}")
-
         if not observations:
             logger.warning(f"No observations found in {paper.id}")
             return []
 
-        # Determine paper-level fields.
-        paper_fields = self._get_all_paper_fields(paper, [f for f in self._fields if f in self._PAPER_FIELDS])
-        non_paper_fields = [f for f in self._fields if f not in self._PAPER_FIELDS]
-
-        # TODO - because the returned observations include the text associated with each observation, it's not trivial
-        # to pre-cache the variant level fields. We don't have any easy way to collect all the unique texts associated
-        # with all observations of the same variant (but different individuals). As a temporary solution, we'll cache
-        # the first finding of a variant-level result and use that only. This will not be robust to scenarios where the
-        # texts associated with multiple observations of the same variant differ.
-        variant_field_cache: dict[Tuple[HGVSVariant, str], str] = {}
-
-        # For each observation, extract the appropriate content.
-        results: List[Dict[str, str]] = []
-
-        for observation, observation_info in observations.items():
-            # We've pre-computed the paper fields.
-            observation_results: Dict[str, str] = paper_fields.copy()
-
-            logger.info(f"Extracting fields for {observation} in {paper.id}")
-
-            if not observation_info or not observation_info.get("texts", None):
-                logger.warning(f"No observations found for {observation} in {paper.id}")
-                continue
-
-            for field in non_paper_fields:
-                if (observation[0], field) in variant_field_cache:
-                    # Use the cached result for variant fields if available.
-                    result = variant_field_cache[(observation[0], field)]
-                else:
-                    result = self._get_observation_field(gene_symbol, observation, observation_info, field)
-                    # Cache the result for variant fields.
-                    if field in self._VARIANT_FIELDS:
-                        variant_field_cache[(observation[0], field)] = result
-                observation_results[field] = result
-            results.append(observation_results)
-        return results
+        # Extract all the requested fields from the observations.
+        logger.info(f"Found {len(observations)} observations in {paper.id}")
+        return asyncio.run(self._extract_fields(paper, gene_symbol, observations))

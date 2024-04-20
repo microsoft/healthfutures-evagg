@@ -4,13 +4,13 @@ import logging
 import os
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Mapping, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
-from .interfaces import ICompareVariants, IFindObservations
+from .interfaces import ICompareVariants, IFindObservations, Observation
 
 PatientVariant = Tuple[HGVSVariant, str]
 
@@ -48,45 +48,44 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
     def __init__(self) -> None:
         pass
 
-    async def find_observations(
-        self, gene_symbol: str, paper: Paper
-    ) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
+    async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
         in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
 
-        Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
-        keyed by tuples of variants and string representations of the individual in which that variant was observed. The
-        values in this dictionary are dictionaries relevant to this observation throughout the paper. Keys in this
-        dictionary include, "variant_descriptions", "patient_descriptions", "texts".
+        The returned observation objects are logically "clinical" observations of a variant in a human. Each object
+        describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        observations: Dict[Tuple[HGVSVariant, str], Mapping[str, Any]] = {}
-
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
 
         if not full_text:
             logger.info(f"Skipping {paper.id} because full text could not be retrieved")
-            return observations
+            return []
 
-        for ob in paper.evidence.keys():
+        observations: List[Observation] = []
+        for (variant, individual), evidence in paper.evidence.items():
 
-            if ob[0].gene_symbol != gene_symbol:
-                logger.info(f"Unexpected gene symbol found for {paper}: {ob[0].gene_symbol}")
+            if variant.gene_symbol != gene_symbol:
+                logger.error(f"Unexpected gene symbol found for {paper}: {variant.gene_symbol}")
                 continue
 
-            variant_descriptions = [ob[0].hgvs_desc]
-            if paper.evidence[ob].get("paper_variant"):
-                variant_descriptions.append(paper.evidence[ob]["paper_variant"])
-            if ob[0].protein_consequence:
-                variant_descriptions.append(ob[0].protein_consequence.hgvs_desc)
+            variant_descriptions = [variant.hgvs_desc]
+            if evidence.get("paper_variant"):
+                variant_descriptions.append(evidence["paper_variant"])
+            if variant.protein_consequence:
+                variant_descriptions.append(variant.protein_consequence.hgvs_desc)
 
-            observations[ob] = {
-                "variant_descriptions": list(set(variant_descriptions)),
-                "patient_descriptions": [ob[1]],
-                "texts": [full_text],
-            }
+            observations.append(
+                Observation(
+                    variant=variant,
+                    individual=individual,
+                    variant_descriptions=list(set(variant_descriptions)),
+                    patient_descriptions=[individual],
+                    texts=[full_text],
+                )
+            )
 
         return observations
 
@@ -382,19 +381,14 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    async def find_observations(
-        self, gene_symbol: str, paper: Paper
-    ) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
+    async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
         in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
 
-        Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
-        keyed by tuples of variants and string representations of the individual in which that variant was observed. The
-        values in this dictionary are dictionaries relevant to this observation throughout the paper. Keys in this
-        dictionary include, "variant_descriptions", "patient_descriptions", "texts".
-
+        The returned observation objects are logically "clinical" observations of a variant in a human. Each object
+        describes an individual in which a variant was observed along with the relevant text from the paper.
         """
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
@@ -402,7 +396,7 @@ uninterrupted sequences of whitespace characters.
 
         if not full_text:
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
-            return {}
+            return []
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
@@ -418,88 +412,72 @@ uninterrupted sequences of whitespace characters.
         else:
             genome_build = None
 
-        # Variant objects, keyed by variant description, those that fail to parse are discarded.
-        variants = {
-            desc: self._create_variant_from_text(desc, gene_symbol, genome_build) for desc in variant_descriptions
+        # Variant objects, keyed by variant description; those that fail to parse are discarded.
+        variants_by_description = {
+            description: variant
+            for description in variant_descriptions
+            if (variant := self._create_variant_from_text(description, gene_symbol, genome_build)) is not None
         }
-        # Note we're keeping invalid variants here.
-        variants = {desc: variant for desc, variant in variants.items() if variant is not None}
 
-        if not variants:
-            observations = {}
-        else:
+        variants_by_patient = {}
+        # If there are both variants and patients, build a mapping between the two,
+        # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
+        # if there are no variants (regardless of patients), then there are no observations to report.
+        if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
             patients = await self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
             logger.info(f"Found the following patients in {paper}: {patients}")
+            descriptions = list(variants_by_description.keys())
 
             # TODO, consider consolidating variants here, before linking with patients.
-
-            # If there are both variants and patients, build a mapping between the two,
-            # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
-            # if there are no variants (regardless of patients), then there are no observations to report.
             if patients:
-                observations = await self._link_entities(full_text, patients, list(variants.keys()), gene_symbol)
+                variants_by_patient = await self._link_entities(full_text, patients, descriptions, gene_symbol)
             else:
-                observations = {"unknown": list(variants.keys())}
+                variants_by_patient = {"unknown": descriptions}
 
         # TODO, if we've split variant descriptions above, then we run the risk of the observations returning the
         # unsplit variant entity, which will not match the keys in variant objects. Either try to convince the LLM to
         # only use the specific variants we provide, or find a way to be robust to the split during variant object
         # lookup below.
 
-        result: Dict[Tuple[HGVSVariant, str], Dict[str, Any]] = {}
-        for individual, variant_strs in observations.items():
+        observations: List[Observation] = []
+        for individual, variant_descriptions in variants_by_patient.items():
+            # LLM should not have returned any patient-linked variants that were not in the input.
+            if missing_variants := [d for d in variant_descriptions if d not in variants_by_description]:
+                logger.error(f"Variants '{", ".join(missing_variants)}' not found in paper variants.")
+            variants = [(variants_by_description[d], d) for d in variant_descriptions if d in variants_by_description]
+
             # Consolidate variants within each observation so we only get one variant object per observation.
-            variants_to_consolidate: Dict[HGVSVariant, str] = {}
-            for variant_str in variant_strs:
-                variant = variants.get(variant_str)
-                if variant is None:
-                    logger.warning(f"Variant {variant_str} not found in variant_objects")
-                    continue
-                variants_to_consolidate[variant] = variant_str
-
-            if not variants_to_consolidate:
-                continue
-
-            consolidation_map = self._variant_comparator.consolidate(
-                list(variants_to_consolidate.keys()), disregard_refseq=True
-            )
-
-            # Reverse the consolidation map so every key is one of the consolidated variants, and the corresponding
-            # value is the variant to which it has been consolidated.
-            reverse_consolidation_map = {
-                source: target for target, sources in consolidation_map.items() for source in sources
-            }
-
-            # Now for all the variants to consolidate, collect their corresponding variant descriptions into a list of
-            # strings, keyed by the consolidated variant.
+            consolidation_map = self._variant_comparator.consolidate([v for v, _ in variants], disregard_refseq=True)
+            # Build a reverse map from each consolidated variants to the variant to which it was consolidated.
+            reverse_consolidation_map = {value: key for key, values in consolidation_map.items() for value in values}
+            # For all the variants to consolidate, collect their corresponding variant
+            # descriptions into a list of strings, keyed by the consolidated variant.
             consolidated_variants: Dict[HGVSVariant, List[str]] = {}
-            for variant, variant_desc in variants_to_consolidate.items():
+            for variant, description in variants:
                 consolidated_variant = reverse_consolidation_map.get(variant, variant)
                 if consolidated_variant not in consolidated_variants:
                     consolidated_variants[consolidated_variant] = []
-                consolidated_variants[consolidated_variant].append(variant_desc)
+                consolidated_variants[consolidated_variant].append(description)
                 consolidated_variants[consolidated_variant].append(variant.hgvs_desc)  # TODO, reconsider?
 
-            for variant, variant_descs in consolidated_variants.items():
-                payload = {
-                    "variant_descriptions": variant_descs,
-                    "patient_descriptions": [individual],
-                    "texts": [
-                        full_text
-                    ],  # TODO, consider adding focus_texts here, or find variant/patient specific texts.
-                }
-                if (variant, individual) in result:
+            for variant, descriptions in consolidated_variants.items():
+                if any(o.variant == variant and o.individual == individual for o in observations):
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
-                # Only keep variants associated with the "unmatched_variants" individual if they're not already
-                # associated with a "real" individual.
-                if individual == "unmatched_variants":
-                    if any(x[0] == variant for x in result):
-                        continue
-                    else:
-                        result[(variant, "unknown")] = payload
-                else:
-                    result[(variant, individual)] = payload
+                # Only keep variants associated with the "unmatched_variants"
+                # individual if they're not already associated with a "real" individual.
+                if individual == "unmatched_variants" and any(o.variant == variant for o in observations):
+                    continue
+                observations.append(
+                    Observation(
+                        variant=variant,
+                        individual="unknown" if individual == "unmatched_variants" else individual,
+                        variant_descriptions=descriptions,
+                        patient_descriptions=[individual],
+                        # TODO, consider adding focus_texts here, or find variant/patient specific texts.
+                        texts=[full_text],
+                    )
+                )
 
-        return result
+        return observations
