@@ -141,7 +141,7 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, j
     assert result[0] == rare_disease_paper
 
 
-def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
     # TODO test tie-breaking
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
     non_rare_disease_paper = Paper(**json_load("non_rare_disease_paper.json"))
@@ -152,7 +152,7 @@ def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: An
         json.dumps({"paper_category": "non-rare disease"}),
     )
     query = {"gene_symbol": "gene"}
-    result = RareDiseaseFileLibrary(paper_client, llm_client)._get_all_papers(query)
+    result = await RareDiseaseFileLibrary(paper_client, llm_client)._get_all_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == ("34512170", {"include_fulltext": True})
     assert paper_client.call_count() == 3
