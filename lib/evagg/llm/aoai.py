@@ -94,7 +94,7 @@ class OpenAIClient(IPromptClient):
             "max_tokens": 1024,
             "frequency_penalty": 0,
             "presence_penalty": 0,
-            "temperature": 0.25,
+            "temperature": 0.7,
             "model": self._config.deployment,
             **(prompt_settings or {}),
         }

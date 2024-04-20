@@ -333,7 +333,7 @@ def main(args):
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
 
-    # Initialize the dictionary
+    # Initialize benchmarking results dictionary
     benchmarking_results = {}
 
     # Average precision and recall for all genes
@@ -344,11 +344,10 @@ def main(args):
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
     os.makedirs(args.outdir, exist_ok=True)
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
-        for gene_symbol, gene_df in pipeline_df.groupby("gene"):
+        for term, gene_df in pipeline_df.groupby("gene"):
             # Get the gene name from the query
-            term = gene_symbol
             f.write(f"\nGENE: {term}\n")
-            print("Analyzing found papers for: ", gene_symbol, "...")
+            print("Analyzing found papers for: ", term, "...")
 
             # Initialize the list for this gene
             benchmarking_results[term] = [0] * 10
@@ -395,7 +394,7 @@ def main(args):
                 f.write(f"* {i + 1}-counts * {conflicting_counts[i]}\n")
 
             # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to MGT data papers (PMIDs)
-            print("Comparing Evidence Aggregator results to manual ground truth data for:", gene_symbol, "...")
+            print("Comparing Evidence Aggregator results to manual ground truth data for:", term, "...")
             if rare_disease_ids:
                 correct_pmids, missed_pmids, irrelevant_pmids = compare_pmid_lists(rare_disease_ids, mgt_ids)
 
@@ -441,7 +440,7 @@ def main(args):
                 f.write("E.A. # Irrelevant Papers: 0\n")
 
             # Compare PubMed papers to  MGT data papers
-            print("Comparing PubMed results to manual ground truth data for: ", gene_symbol, "...")
+            print("Comparing PubMed results to manual ground truth data for: ", term, "...")
             p_corr, p_miss, p_irr = compare_pmid_lists(paper_ids, mgt_ids)
             f.write("\nOf PubMed papers...\n")
             f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
