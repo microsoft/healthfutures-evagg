@@ -5,7 +5,6 @@ from functools import lru_cache, reduce
 from typing import Any, Dict, List, Optional, Tuple
 
 import openai
-import retry
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 from openai.types import CreateEmbeddingResponse
 from openai.types.chat import (
@@ -56,13 +55,19 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    @retry.retry(openai.RateLimitError, tries=5, delay=5, backoff=2)
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         start_ts = time.time()
         prompt_tag = settings.pop("prompt_tag", "prompt")
-        completion = await self._client.chat.completions.create(messages=messages, **settings)
-        response = completion.choices[0].message.content or ""
-        elapsed = time.time() - start_ts
+
+        while True:
+            try:
+                completion = await self._client.chat.completions.create(messages=messages, **settings)
+                response = completion.choices[0].message.content or ""
+                elapsed = time.time() - start_ts
+                break
+            except (openai.RateLimitError, openai.InternalServerError) as e:
+                logger.warning(f"Rate limit error on {prompt_tag}: {e}")
+                await asyncio.sleep(10)
 
         prompt_log = {
             "prompt_tag": prompt_tag,
@@ -130,7 +135,6 @@ class OpenAIClient(IPromptClient):
         return embeddings
 
 
-@retry.retry(openai.RateLimitError, tries=3, delay=5, backoff=2)
 async def _run_single_embedding(
     openai_client: AsyncOpenAI,
     input: str,
