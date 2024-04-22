@@ -23,7 +23,6 @@ dependencies:
   - pydantic==1.10.*
   - defusedxml
   - ratelimit
-  - retry
   - python-dotenv
   - urllib3
   - azure-cosmos
