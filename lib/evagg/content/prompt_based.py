@@ -22,7 +22,6 @@ class PromptBasedContentExtractor(IExtractFields):
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
         "phenotype": os.path.dirname(__file__) + "/prompts/phenotype.txt",
-        "phenotype_to_hpo": os.path.dirname(__file__) + "/prompts/phenotype_to_hpo.txt",
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
         "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
@@ -112,7 +111,7 @@ class PromptBasedContentExtractor(IExtractFields):
             return ["unknown"]
 
         response = await self._run_json_prompt(
-            self._PROMPT_FIELDS["phenotype_to_hpo"],
+            os.path.dirname(__file__) + "/prompts/phenotype_to_hpo.txt",
             {"phenotypes": ", ".join(phenotype)},
             {"prompt_tag": "phenotype_to_hpo"},
         )
