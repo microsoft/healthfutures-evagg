@@ -55,6 +55,26 @@ class NcbiClientBase(ABC):
         return self._web_client.get(f"{self.EUTILS_HOST}{url}", content_type=retmode, url_extra=key_string)
 
 
+PAPER_BASE_PROPS = {
+    "id",
+    "pmid",
+    "title",
+    "abstract",
+    "journal",
+    "first_author",
+    "pub_year",
+    "doi",
+    "pmcid",
+    "citation",
+    "is_pmc_oa",
+    "license",
+}
+PAPER_FULL_TEXT_PROPS = {
+    "full_text_xml",
+    "full_text_sections",
+}
+
+
 class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IVariantLookupClient, IAnnotateEntities):
     """A client for querying the various services in the NCBI API."""
 
@@ -70,6 +90,25 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         super().__init__(web_client, settings)
+
+    def _get_xml_props(self, article: Any) -> Dict[str, Any]:
+        """Extracts paper properties from an XML root element."""
+        extractions = {
+            "title": "./MedlineCitation/Article/ArticleTitle",
+            "abstract": "./MedlineCitation/Article/Abstract/AbstractText",
+            "journal": "./MedlineCitation/Article/Journal/ISOAbbreviation",
+            "first_author": "./MedlineCitation/Article/AuthorList/Author[1]/LastName",
+            "pub_year": "./MedlineCitation/Article/Journal/JournalIssue/PubDate/Year",
+            "doi": "./PubmedData/ArticleIdList/ArticleId[@IdType='doi']",
+            "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
+        }
+
+        def _get_xml_string(node: Any) -> Optional[str]:
+            return "".join(node.itertext()) if node is not None else None
+
+        props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
+        props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
+        return props
 
     def _get_oa_props(self, pmcid: str) -> Dict[str, Any]:
         """Get the OA status for a paper from the PMC OA API."""
@@ -100,29 +139,25 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
         return props
 
-    def _get_full_text_xml(self, pmcid: str | None, is_pmc_oa: bool, license: str) -> Optional[str]:
+    def _get_full_text_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
         """Get the full text of a paper from PMC."""
-        if not pmcid or not is_pmc_oa or license.find("nd") >= 0:
+        text_props = {"full_text_xml": None, "full_text_sections": []}
+        if not (pmcid := props["pmcid"]) or not props["is_pmc_oa"] or props["license"].find("nd") >= 0:
             logger.debug(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
-            return None
+            return text_props
 
         try:
-            response_root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
+            root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
         except Exception as e:
             logger.warning(f"Unexpected error fetching BioC entry for {pmcid}: {e}")
-            return None
+            return text_props
 
         # Find and return the specific document.
-        for document in response_root.findall("./document"):
-            id = document.find("id")
-            if id is not None and id.text == pmcid.upper().lstrip("PMC"):
-                return document
-        logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
-        return None
-
-    def _full_text_sections_from_xml(self, root: Any) -> Sequence[str]:
-        """Extract the full text from a BioC XML response."""
-        return [p.text for p in root.findall("./passage/text")]
+        text_props["full_text_xml"] = doc = root.find(f"./document[id='{pmcid.upper().lstrip('PMC')}']")
+        text_props["full_text_sections"] = [p.text for p in doc.findall("./passage/text")] if doc is not None else []
+        if doc is None:
+            logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
+        return text_props
 
     # IPaperLookupClient
     def search(self, query: str, **extra_params: Dict[str, Any]) -> Sequence[str]:
@@ -137,19 +172,14 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         if (article := root.find(f"PubmedArticle/MedlineCitation/PMID[.='{paper_id}']/../..")) is None:
             return None
 
-        props = _extract_paper_props_from_xml(article)
+        props = {"id": "pmid:" + paper_id, "pmid": paper_id}
+        props.update(self._get_xml_props(article))
         props.update(self._get_oa_props(props["pmcid"]))
-        props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
-        props["pmid"] = paper_id
+        assert PAPER_BASE_PROPS == set(props.keys()), f"Missing properties: {PAPER_BASE_PROPS ^ set(props.keys())}"
         if include_fulltext:
-            props["full_text_xml"] = self._get_full_text_xml(
-                pmcid=props["pmcid"], is_pmc_oa=props["is_pmc_oa"], license=props["license"]
-            )
-            props["full_text_sections"] = (
-                self._full_text_sections_from_xml(props["full_text_xml"]) if props["full_text_xml"] is not None else []
-            )
-
-        return Paper(id="pmid:" + paper_id, **props)
+            props.update(self._get_full_text_props(props))
+            assert set(props.keys()) - PAPER_BASE_PROPS == PAPER_FULL_TEXT_PROPS
+        return Paper(**props)
 
     # IGeneLookupClient
     def gene_id_for_symbol(self, *symbols: str, allow_synonyms: bool = False) -> Dict[str, int]:
@@ -211,21 +241,3 @@ def _extract_gene_symbols(reports: List[Dict], symbols: Sequence[str], allow_syn
                 matches[missing_symbol] = int(synonym["gene_id"])
 
     return matches
-
-
-def _extract_paper_props_from_xml(article: Any) -> Dict[str, Any]:
-    """Extracts paper properties from an XML root element."""
-    extractions = {
-        "title": "./MedlineCitation/Article/ArticleTitle",
-        "abstract": "./MedlineCitation/Article/Abstract/AbstractText",
-        "journal": "./MedlineCitation/Article/Journal/ISOAbbreviation",
-        "first_author": "./MedlineCitation/Article/AuthorList/Author[1]/LastName",
-        "pub_year": "./MedlineCitation/Article/Journal/JournalIssue/PubDate/Year",
-        "doi": "./PubmedData/ArticleIdList/ArticleId[@IdType='doi']",
-        "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
-    }
-
-    props = {
-        k: ("".join(v.itertext()) if (v := article.find(path)) is not None else None) for k, path in extractions.items()
-    }
-    return props
