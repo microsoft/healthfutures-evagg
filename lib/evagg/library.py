@@ -51,10 +51,10 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "is_pmc_oa", "license"]
-TRUTHSET_PAPER_KEYS_MAPPING = {"paper_title": "title"}
-# These are the columns in the truthset that are specific to the variant.
-TRUTHSET_VARIANT_KEYS = [
+TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "license"]
+TRUTHSET_PAPER_KEYS_MAPPING = {"paper_id": "id", "paper_title": "title"}
+# These are the columns in the truthset that are specific to the evidence.
+TRUTHSET_EVIDENCE_KEYS = [
     "gene",
     "transcript",
     "paper_variant",
@@ -82,6 +82,30 @@ class TruthsetFileLibrary(IGetPapers):
         self._variant_factory = variant_factory
         self._paper_client = paper_client
 
+    def _process_paper(self, paper_id: str, rows: List[Dict[str, str]]) -> Paper:
+        """Process a paper from the truthset file and return a Paper object with associated evidence."""
+        logger.info(f"Processing {len(rows)} variants/patients for {paper_id}.")
+
+        # Fetch a Paper object with the extracted fields based on the PMID.
+        assert paper_id.startswith("pmid:"), f"Paper ID {paper_id} does not start with 'pmid:'."
+        if not (paper := self._paper_client.fetch(paper_id[len("pmid:") :], include_fulltext=True)):
+            raise ValueError(f"Failed to fetch paper with ID {paper_id}.")
+
+        # Doublecheck every truthset row has the same values as the Paper for the paper-specific keys.
+        for row_key in TRUTHSET_PAPER_KEYS:
+            key = TRUTHSET_PAPER_KEYS_MAPPING.get(row_key, row_key)
+            if not all(paper.props[key] == row[row_key] for row in rows):
+                raise ValueError(f"Value mismatch with truthset for {paper.id} ({key}:{paper.props[key]}))")
+
+        # Return the parsed variant from HGVS c or p and the individual ID.
+        def _get_key(row: Dict[str, str]) -> Tuple[HGVSVariant, str]:
+            text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
+            return (self._variant_factory.parse(text_desc, row["gene"], row["transcript"]), row["individual_id"])
+
+        # For each paper, extract the (variant, subject)-specific key/value pairs into an evidence dictionary.
+        paper.evidence = {_get_key(row): {key: row.get(key, "") for key in TRUTHSET_EVIDENCE_KEYS} for row in rows}
+        return paper
+
     @cache
     def _load_truthset(self) -> Set[Paper]:
         # Group the rows by paper ID.
@@ -94,87 +118,8 @@ class TruthsetFileLibrary(IGetPapers):
                 paper_id = fields.get("paper_id")
                 paper_groups[paper_id].append(fields)
 
-        papers: Set[Paper] = set()
-        for paper_id, rows in paper_groups.items():
-            if paper_id == "MISSING_ID":
-                logger.warning(f"Skipped {len(rows)} rows with no paper ID.")
-                continue
-
-            for row in rows:
-                if "is_pmc_oa" in row:
-                    row["is_pmc_oa"] = row["is_pmc_oa"].lower() == "true"  # type: ignore
-
-            # For each paper, extract the paper-specific key/value pairs into a new dict.
-            # These are repeated on every paper/variant row, so we can just take the first row.
-            paper_data = {k: v for k, v in rows[0].items() if k in TRUTHSET_PAPER_KEYS}
-
-            # Integrity checks.
-            for row in rows:
-                # Doublecheck if every row has the same values for the paper-specific keys.
-                for key in TRUTHSET_PAPER_KEYS:
-                    if paper_data[key] != row[key]:
-                        logger.warning(f"Multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
-                # Make sure the gene/variant columns are not empty.
-                if not row["gene"] or (not row["hgvs_p"] and not row["hgvs_c"]):
-                    logger.warning(f"Missing gene or hgvs_p for {paper_id}.")
-
-            # Return the parsed variant from HGVS c or p and the individual ID.
-            def _get_variant_key(row: Dict[str, str]) -> Tuple[HGVSVariant | None, str]:
-                text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
-                transcript = row["transcript"] if "transcript" in row else None
-
-                # This can fail, instead of raising an exception, we'll return a placeholder value that can be dropped
-                # from the set of variants later.
-                try:
-                    return (
-                        self._variant_factory.parse(text_desc=text_desc, gene_symbol=row["gene"], refseq=transcript),
-                        row["individual_id"],
-                    )
-                except ValueError as e:
-                    logger.warning(f"Variant parsing failed: {e}")
-                    return None, ""
-
-            # For each paper, extract the (variant, subject)-specific key/value pairs into a new dict of dicts.
-            variants = {_get_variant_key(row): {key: row.get(key, "") for key in TRUTHSET_VARIANT_KEYS} for row in rows}
-            if (None, "") in variants:
-                logger.warning("Dropping placeholder variants.")
-                variants.pop((None, ""))
-
-            if not variants:
-                logger.warning(f"No valid variants for {paper_id}.")
-                continue
-
-            # Create a Paper object with the extracted fields.
-            if paper_id is not None and paper_id.startswith("pmid:"):
-                pmid = paper_id[5:]
-                paper = self._paper_client.fetch(pmid, include_fulltext=True)
-                if paper:
-                    # Compare and potentially add in truthset data that we don't get from the paper client.
-                    for key in TRUTHSET_PAPER_KEYS:
-                        if key == "paper_id":
-                            continue
-                        mapped_key = TRUTHSET_PAPER_KEYS_MAPPING.get(key, key)
-                        if mapped_key in paper.props:
-                            if paper.props[mapped_key] != paper_data[key]:
-                                logger.warning(
-                                    f"Paper field mismatch: {key}/{mapped_key} ({paper_data[key]} vs"
-                                    f" {paper.props[mapped_key]})."
-                                )
-                        else:
-                            logger.error(f"Adding {mapped_key}:{paper_data[key]} to paper props.")
-                            paper.props[mapped_key] = paper_data[key]
-                if not paper:
-                    logger.warning(f"Failed to fetch paper with PMID {pmid}.")
-                    paper = Paper(id=paper_id, evidence=variants, **paper_data)
-                else:
-                    # Add in evidence.
-                    paper.evidence = variants
-            else:
-                logger.warning("Paper ID does not appear to be a pmid, cannot fetch paper content.")
-                paper = Paper(id=paper_id, evidence=variants, **paper_data)
-
-            papers.add(paper)
-
+        # Process each paper row group into a Paper object with truthset evidence filled in.
+        papers = {self._process_paper(paper_id, rows) for paper_id, rows in paper_groups.items()}
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
