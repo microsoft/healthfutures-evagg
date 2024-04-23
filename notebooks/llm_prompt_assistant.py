@@ -14,6 +14,7 @@ from functools import cache
 from lib.di import DiContainer
 from lib.evagg.llm import OpenAIClient
 from lib.evagg.ref import IPaperLookupClient
+from lib.evagg.svc import get_dotenv_settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -49,16 +50,10 @@ def update_prompt(prompt_loc, misclass_papers) -> str:
     with open(prompt_loc, "r") as f:
         prompt = f.read()
 
-    # Get the values of the environment variables
-    deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-
     # Create an OpenAI client
-    client = OpenAIClient(
-        {"deployment": deployment, "endpoint": endpoint, "api_key": api_key, "api_version": api_version}
-    )
+    settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")
+    print(settings)
+    client = OpenAIClient(settings)
 
     # Prompt the user to update the prompt
     response = client.prompt_file(
@@ -69,9 +64,9 @@ def update_prompt(prompt_loc, misclass_papers) -> str:
 
 
 def create_misclassified_dict(filepath) -> dict[str, dict[str, list[str]]]:
-    """Create a dictionary of misclassified papers from the benchmarking results.
+    """Create a dictionary of misclassified papers from the benchmarking results."""
 
-    TODO: Update to include missed papers and not just irrelevant ones."""
+    # TODO: Update to include missed papers and not just irrelevant ones."""
     # Initialize the irrelevant papers dictionary
     irrelevant_papers = defaultdict(dict)
 
