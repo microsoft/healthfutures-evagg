@@ -280,6 +280,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     def _get_llm_category(self, paper: Paper) -> str:
         """Categorize papers based on LLM prompts."""
+        default_settings = {"temperature": 0.8}
         response = self._llm_client.prompt_file(
             user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding.txt"),
             system_prompt="Extract field",
@@ -287,7 +288,7 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "abstract": paper.props.get("abstract") or "no abstract",
                 "title": paper.props.get("title") or "no title",
             },
-            prompt_settings={"prompt_tag": "paper_category"},
+            prompt_settings={"prompt_tag": "paper_category", **default_settings},
         )
 
         try:
