@@ -19,6 +19,7 @@ import argparse
 import json
 import logging
 import os
+import shutil
 from datetime import datetime
 from functools import cache
 from typing import Dict, Set
@@ -343,6 +344,11 @@ def main(args):
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
     os.makedirs(args.outdir, exist_ok=True)
+
+    # Save library output table (Evidence Aggregator table) to the same output directory
+    shutil.copy(args.pipeline_output, args.outdir)
+
+    # Compile and save the benchmarking results to a file
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
         for term, gene_df in pipeline_df.groupby("gene"):
             # Get the gene name from the query
