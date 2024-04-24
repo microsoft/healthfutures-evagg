@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 from datetime import datetime
 from functools import cache
 from typing import Dict, Set
@@ -34,6 +35,10 @@ from lib.evagg.ref import IPaperLookupClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def get_git_commit_hash():
+    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
 
 
 def read_mgt_split_tsv(mgt_split_tsv):
@@ -524,7 +529,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--outdir",
-        default=f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}",
+        default=f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}",
         type=str,
         help=(
             "Results output directory. Default is "
