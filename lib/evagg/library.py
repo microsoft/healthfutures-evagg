@@ -233,7 +233,7 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "abstract": paper.props.get("abstract") or "no abstract",
                 "title": paper.props.get("title") or "no title",
             },
-            prompt_settings={"prompt_tag": "paper_category"},
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
 
         try:
