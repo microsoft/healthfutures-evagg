@@ -23,6 +23,7 @@ from lib.di import DiContainer
 from lib.evagg.library import RareDiseaseFileLibrary
 from lib.evagg.llm import OpenAIClient
 from lib.evagg.ref import IPaperLookupClient
+from lib.evagg.svc import get_dotenv_settings
 from lib.evagg.types import Paper
 
 logging.basicConfig(level=logging.INFO)
@@ -59,19 +60,10 @@ def update_prompt(prompt_loc, misclass_papers):
     with open(prompt_loc, "r") as f:
         prompt = f.read()
 
-    # Load environment variables from .env file
-    load_dotenv()
+    settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")
+    print(settings)
+    client = OpenAIClient(settings)
 
-    # Get the values of the environment variables
-    deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-    print("deployment", deployment, "endpoint", endpoint, "api_key", api_key, "api_version", api_version)
-
-    client = OpenAIClient(
-        {"deployment": deployment, "endpoint": endpoint, "api_key": api_key, "api_version": api_version}
-    )
     response = client.prompt_file(
         user_prompt_file=("lib/evagg/content/prompts/update_paper_finding_prompt.txt"),
         params={"prompt": prompt, "dict_gene_titles_abstracts": misclass_papers},
@@ -83,19 +75,10 @@ def get_llm_category(pmid, title, abstract) -> str:
     """Categorize papers based on LLM prompts."""
     categories = ["rare disease", "non-rare disease", "other"]
 
-    # Load environment variables from .env file
-    load_dotenv()
+    settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")
+    print(settings)
+    client = OpenAIClient(settings)
 
-    # Get the values of the environment variables
-    deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-    print("deployment", deployment, "endpoint", endpoint, "api_key", api_key, "api_version", api_version)
-
-    client = OpenAIClient(
-        {"deployment": deployment, "endpoint": endpoint, "api_key": api_key, "api_version": api_version}
-    )
     response = client.prompt_file(
         user_prompt_file=("lib/evagg/content/prompts/paper_finding.txt"),
         system_prompt="Extract field",
