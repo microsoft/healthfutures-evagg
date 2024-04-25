@@ -111,7 +111,9 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
             "title": "Evidence for 28 genetic disorders discovered by combining healthcare and research data",
         }
     }
-    assert llm_client.last_call("prompt_file")[3] == {"prompt_settings": {"prompt_tag": "paper_category"}}
+    assert llm_client.last_call("prompt_file")[3] == {
+        "prompt_settings": {"prompt_tag": "paper_category", "temperature": 0.8},
+    }
 
     assert llm_client.call_count() == 1
     assert len(result) == 1
