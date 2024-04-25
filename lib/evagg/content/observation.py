@@ -467,12 +467,14 @@ uninterrupted sequences of whitespace characters.
                     continue
                 # Only keep variants associated with the "unmatched_variants"
                 # individual if they're not already associated with a "real" individual.
-                if individual == "unmatched_variants" and any(o.variant == variant for o in observations):
-                    continue
+                if individual == "unmatched_variants":
+                    if any(o.variant == variant for o in observations):
+                        continue
+                    individual = "unknown"
                 observations.append(
                     Observation(
                         variant=variant,
-                        individual="unknown" if individual == "unmatched_variants" else individual,
+                        individual=individual,
                         variant_descriptions=descriptions,
                         patient_descriptions=[individual],
                         # TODO, consider adding focus_texts here, or find variant/patient specific texts.
