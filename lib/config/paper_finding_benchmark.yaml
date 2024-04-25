@@ -30,17 +30,21 @@ refseq_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  - "gene_symbol": "ACAT2" # no known gene-disease relationship
-    "min_date": "2021/01/01"
-    "retmax": 87
-
-  - "gene_symbol": "LRRC10" # no known gene-disease relationship
-    "min_date": "2015/01/01"
-    "retmax": 24
-
-  - "gene_symbol": "TOPBP1" # no known gene-disease relationship
+  - "gene_symbol": "GRXCR2" # Moderate
     "min_date": "2014/01/01"
-    "retmax": 260
+    "retmax": 19
+
+  - "gene_symbol": "SLFN14" # Moderate
+    "min_date": "2015/01/01"
+    "retmax": 28
+
+  - "gene_symbol": "OTUD7A" # Limited
+    "min_date": "2020/01/01"
+    "retmax": 26
+
+  - "gene_symbol": "EXOC2" # Limited
+    "min_date": "2020/01/01"
+    "retmax": 22
 
   - "gene_symbol": "TNNC2" # no known gene-disease relationship
     "min_date": "2023/01/01"
@@ -49,22 +53,6 @@ queries:
   - "gene_symbol": "PEX11A" # no known gene-disease relationship
     "min_date": "2020/01/01"
     "retmax": 18
-
-  - "gene_symbol": "KMO" # no known gene-disease relationship
-    "min_date": "2023/01/01"
-    "retmax": 170
-
-  - "gene_symbol": "CPT1B" # no known gene-disease relationship
-    "min_date": "2021/01/01"
-    "retmax": 152
-
-  - "gene_symbol": "NPPA" # no known gene-disease relationship
-    "min_date": "2020/01/01"
-    "retmax": 233
-
-  - "gene_symbol": "SLC38A9" # no known gene-disease relationship
-    "min_date": "2022/01/01"
-    "retmax": 29
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
