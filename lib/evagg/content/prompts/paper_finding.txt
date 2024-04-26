@@ -16,4 +16,4 @@ Provide your response in the following format:
   "paper_category": "rare disease" | "other"
 }
 
-The goal is to ensure high precision and recall for identifying rare disease papers in general.
+When considering the provided criteria, remember to focus on the content of the title and abstract without overfitting to specific paper titles or abstracts. The goal is to ensure high precision and recall for identifying rare disease papers in general.
