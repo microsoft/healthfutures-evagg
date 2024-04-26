@@ -68,6 +68,7 @@ PAPER_BASE_PROPS = {
     "citation",
     "is_pmc_oa",
     "license",
+    "link",
 }
 PAPER_FULL_TEXT_PROPS = {
     "full_text_xml",
@@ -110,7 +111,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         return props
 
-    def _get_oa_props(self, pmcid: str) -> Dict[str, Any]:
+    def _get_license_props(self, pmcid: str) -> Dict[str, Any]:
         """Get the OA status for a paper from the PMC OA API."""
         props = {"is_pmc_oa": False, "license": "unknown"}
         if not pmcid:
@@ -138,6 +139,13 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
                 props["is_pmc_oa"] = False
 
         return props
+
+    def _get_derived_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
+        """Get the derived properties of a paper."""
+        derived_props = {}
+        derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
+        derived_props["link"] = f"https://pubmed.ncbi.nlm.nih.gov/{props['pmid']}/"
+        return derived_props
 
     def _get_full_text_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
         """Get the full text of a paper from PMC."""
@@ -172,9 +180,10 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         if (article := root.find(f"PubmedArticle/MedlineCitation/PMID[.='{paper_id}']/../..")) is None:
             return None
 
-        props = {"id": "pmid:" + paper_id, "pmid": paper_id}
+        props = {"id": f"pmid:{paper_id}", "pmid": paper_id}
         props.update(self._get_xml_props(article))
-        props.update(self._get_oa_props(props["pmcid"]))
+        props.update(self._get_license_props(props["pmcid"]))
+        props.update(self._get_derived_props(props))
         assert PAPER_BASE_PROPS == set(props.keys()), f"Missing properties: {PAPER_BASE_PROPS ^ set(props.keys())}"
         if include_fulltext:
             props.update(self._get_full_text_props(props))
