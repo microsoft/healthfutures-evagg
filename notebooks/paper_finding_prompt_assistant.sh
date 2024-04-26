@@ -28,6 +28,10 @@ prev_recall=0
 # Initialize counter
 counter=0
 
+# Add the date and git hash to the results directory
+git_hash=$(git rev-parse HEAD)
+dir_name="paper_finding_results_$(date +%Y-%m-%d)_${git_hash}"
+
 # Run the pipeline
 echo -e "\n--> Running paper finding pipeline ..."
 run_query_sync lib/config/paper_finding_benchmark.yaml
@@ -37,16 +41,21 @@ echo -e "\n--> Running benchmarks ..."
 python notebooks/paper_finding_benchmarks.py -l lib/config/paper_finding_benchmark.yaml
 
 # Save the pipeline table output to the results directory
-cp .out/library_benchmark.tsv .out/paper_finding_results_$(date +%Y-%m-%d)
+cp .out/library_benchmark.tsv .out/$dir_name
 
 # Save the beginning/original/initial paper finding prompt to the results directory
-cp lib/evagg/content/prompts/paper_finding.txt .out/paper_finding_results_$(date +%Y-%m-%d)
+cp lib/evagg/content/prompts/paper_finding.txt .out/$dir_name
 
 # Extract precision and recall values
-precision=$(tail -n 2 .out/paper_finding_results_$(date +%Y-%m-%d)/benchmarking_paper_finding_results_train.txt | awk 'NR==1{print $3}')
-recall=$(tail -n 2 .out/paper_finding_results_$(date +%Y-%m-%d)/benchmarking_paper_finding_results_train.txt | awk 'NR==2{print $3}')
-echo -e "\n--> Precision: $precision"
-echo -e "--> Recall: $recall"
+last_line=$(tail -n 1 .out/$dir_name/benchmarking_paper_finding_results_train.txt)
+if [[ $last_line == "No true positives. Precision and recall are undefined." ]]; then
+    echo "--> 0No true positives. Precision and recall are undefined."
+else
+    precision=$(tail -n 2 .out/$dir_name/benchmarking_paper_finding_results_train.txt | awk 'NR==1{print $3}')
+    recall=$(tail -n 2 .out/$dir_name/benchmarking_paper_finding_results_train.txt | awk 'NR==2{print $3}')
+    echo -e "\n--> Precision: $precision"
+    echo -e "--> Recall: $recall"
+fi
 
 # Repeat until conditions are met $max_iterations times
 while true; do
@@ -57,6 +66,7 @@ while true; do
     if (( $(echo "$precision - $prev_precision > $epsilon" | bc -l) )) && (( $(echo "$recall - $prev_recall > $epsilon" | bc -l) )); then
       # Increment counter
       ((counter++))
+      echo "here"
 
       # Check if counter has reached max_iterations
       if ((counter == max_iterations)); then
@@ -84,11 +94,22 @@ while true; do
       exit 0
     fi
   else
-    echo -e "\n-->Precision and recall are both 1.0. Exiting..."
+    last_line=$(tail -n 1 .out/$dir_name/benchmarking_paper_finding_results_train.txt)
+    if [[ $last_line == "No true positives. Precision and recall are undefined." ]]; then
+      echo "--> 1No true positives. Precision and recall are undefined."
+    else
+      echo -e "\n-->Precision and recall are both 1.0. Exiting..."
+    fi
     exit 0
   fi
-
-  # Update previous precision and recall
-  prev_precision=$precision
-  prev_recall=$recall
+  
+  # Extract precision and recall values
+  last_line=$(tail -n 1 .out/$dir_name/benchmarking_paper_finding_results_train.txt)
+  if [[ $last_line == "No true positives. Precision and recall are undefined." ]]; then
+    echo "--> 2No true positives. Precision and recall are undefined."
+  else
+    # Update previous precision and recall
+    prev_precision=$precision
+    prev_recall=$recall
+  fi 
 done
