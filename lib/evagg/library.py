@@ -51,7 +51,7 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "license"]
+TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "license", "link"]
 TRUTHSET_PAPER_KEYS_MAPPING = {"paper_id": "id", "paper_title": "title"}
 # These are the columns in the truthset that are specific to the evidence.
 TRUTHSET_EVIDENCE_KEYS = [
@@ -91,23 +91,28 @@ class TruthsetFileLibrary(IGetPapers):
         if not (paper := self._paper_client.fetch(paper_id[len("pmid:") :], include_fulltext=True)):
             raise ValueError(f"Failed to fetch paper with ID {paper_id}.")
 
-        # Doublecheck every truthset row has the same values as the Paper for the paper-specific keys.
-        for row_key in TRUTHSET_PAPER_KEYS:
-            key = TRUTHSET_PAPER_KEYS_MAPPING.get(row_key, row_key)
-            if not all(paper.props[key] == row[row_key] for row in rows):
-                raise ValueError(f"Value mismatch with truthset for {paper.id} ({key}:{paper.props[key]}))")
+        for row in rows:
+            # Doublecheck the truthset row has the same values as the Paper for all paper-specific keys.
+            for row_key in TRUTHSET_PAPER_KEYS:
+                key = TRUTHSET_PAPER_KEYS_MAPPING.get(row_key, row_key)
+                if paper.props[key] != row[row_key]:
+                    raise ValueError(f"Truthset mismatch for {paper.id} {key}: {paper.props[key]} vs {row[row_key]}.")
 
-        # Return the parsed variant from HGVS c or p and the individual ID.
-        def _get_key(row: Dict[str, str]) -> Tuple[HGVSVariant, str]:
+            # Parse the variant from the HGVS c. or p. description.
             text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
-            return (self._variant_factory.parse(text_desc, row["gene"], row["transcript"]), row["individual_id"])
+            variant = self._variant_factory.parse(text_desc, row["gene"], row["transcript"])
 
-        # For each paper, extract the (variant, subject)-specific key/value pairs into an evidence dictionary.
-        paper.evidence = {_get_key(row): {key: row.get(key, "") for key in TRUTHSET_EVIDENCE_KEYS} for row in rows}
+            # Create an evidence dictionary from the variant/patient-specific columns.
+            evidence = {key: row.get(key, "") for key in TRUTHSET_EVIDENCE_KEYS}
+            # Add a unique identifier for this combination of paper, variant, and individual ID.
+            evidence["pub_ev_id"] = f"{paper.id}:{text_desc}:{row['individual_id']}"
+            paper.evidence[(variant, row["individual_id"])] = evidence
+
         return paper
 
     @cache
     def _load_truthset(self) -> Set[Paper]:
+        row_count = 0
         # Group the rows by paper ID.
         paper_groups = defaultdict(list)
         with open(self._file_path) as tsvfile:
@@ -117,9 +122,13 @@ class TruthsetFileLibrary(IGetPapers):
                 fields = dict(zip(header, [field.strip() for field in line]))
                 paper_id = fields.get("paper_id")
                 paper_groups[paper_id].append(fields)
+                row_count += 1
 
+        logger.info(f"Loaded {row_count} rows with {len(paper_groups)} papers from {self._file_path}.")
         # Process each paper row group into a Paper object with truthset evidence filled in.
         papers = {self._process_paper(paper_id, rows) for paper_id, rows in paper_groups.items()}
+        # Make sure that each evidence truthset row is unique across the truthset.
+        assert len({ev["pub_ev_id"] for p in papers for ev in p.evidence.values()}) == row_count
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
