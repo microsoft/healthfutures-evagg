@@ -45,6 +45,7 @@ library:
 extractor:
   di_factory: lib.evagg.TruthsetContentExtractor
   field_map:
+    - pub_ev_id: pub_ev_id
     - gene: gene_symbol
     - id: paper_id
     - hgvs_c: hgvs_c
@@ -57,6 +58,7 @@ extractor:
     - functional_study: functional_study
     - variant_type: variant_type
     - title: paper_title
+    - link: link
 writer:
   di_factory: lib.evagg.TableOutputWriter
 
