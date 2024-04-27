@@ -7,11 +7,11 @@ import re
 from collections import defaultdict
 from datetime import date
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set, Tuple
+from typing import Any, Dict, List, Sequence, Set
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
+from lib.evagg.types import ICreateVariants, Paper
 
 from .disease_keywords import EXCLUSION_KEYWORDS, INCLUSION_KEYWORDS
 from .interfaces import IGetPapers
@@ -120,8 +120,7 @@ class TruthsetFileLibrary(IGetPapers):
             reader = csv.reader(tsvfile, delimiter="\t")
             for line in reader:
                 fields = dict(zip(header, [field.strip() for field in line]))
-                paper_id = fields.get("paper_id")
-                paper_groups[paper_id].append(fields)
+                paper_groups[fields["paper_id"]].append(fields)
                 row_count += 1
 
         logger.info(f"Loaded {row_count} rows with {len(paper_groups)} papers from {self._file_path}.")
