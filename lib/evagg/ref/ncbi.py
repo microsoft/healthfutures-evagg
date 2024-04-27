@@ -142,14 +142,14 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
     def _get_derived_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
         """Get the derived properties of a paper."""
-        derived_props = {}
+        derived_props: Dict[str, Any] = {}
         derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         derived_props["link"] = f"https://pubmed.ncbi.nlm.nih.gov/{props['pmid']}/"
         return derived_props
 
     def _get_full_text_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
         """Get the full text of a paper from PMC."""
-        text_props = {"full_text_xml": None, "full_text_sections": []}
+        text_props: Dict[str, Any] = {"full_text_xml": None, "full_text_sections": []}
         if not (pmcid := props["pmcid"]) or not props["is_pmc_oa"] or props["license"].find("nd") >= 0:
             logger.debug(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
             return text_props
