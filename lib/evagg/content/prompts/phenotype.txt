@@ -10,6 +10,12 @@ The patient of interest may be referred to by any of the following identifiers: 
 The genetic variant possessed by this patient for which I want you to describe the phenotype may be described in any of
 the following ways: {{$variant_descriptions}}.
 
+Any phenotypes described in the text below that can be attributed back to the patient, either by patient identifiers,
+the genetic variants they possess, or other linkages, should be returned. No phenotypes that cannot be attributed to the 
+patient should be returned.
+
+--- Text phenotype descriptions ---
+
 In the following text, the patient and their corresponding phenotype might be linked to one of the patient identifiers
 above, e.g.,
 
@@ -24,9 +30,25 @@ Phenotypes may even be linked back to patients in a complex fashion, e.g., by th
 "Patient 123 is one of the affected individuals in Family XYZ. All affected members of Family XYZ exhibit mild cognitive
 delay."
 
-Any phenotypes described in the text below that can be attributed back to the patient, either by patient identifiers,
-or the genetic variants they possess, should be returned. No phenotypes that cannot be attributed to the patient should
-be returned.
+Lastly, all patients or large groups of patients discussed in a paper may possess the same phenotype, e.g.,
+
+"We assembled a cohort of patients with symptomps of global developmental delay."
+
+--- Tabular phenotype descriptions ---
+
+Phenotypes are often encoded in tabular text within a paper. These phenotypes can be encoded in a variety of ways, 
+either expressly stating the observed phenotypes within the table, e.g.,
+
+Patient identifier / variant / phenotypes
+Patient 1 / c.123A>G / epilepsy, mild developmental delay
+Patient 2 / c.321G>A / severe developmental delay, intellectual disability
+
+Or alternatively phenotypes will be encoded as present/absent/mild/severe/etc referencing back to column or row headings
+for the specific phenotypic terms.
+
+Patient identifier / variant / epilepsy / developmental delay / intellectual disability
+Patient 1 / c.123A>G / + / mild / -
+Patient 2 / c.321G>A / - / severe / +
 
 -- Output format --
 
