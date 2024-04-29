@@ -136,24 +136,16 @@ class OpenAIClient(IPromptClient):
     ) -> Dict[str, List[float]]:
         settings = {"model": "text-embedding-ada-002", **(embedding_settings or {})}
 
+        embeddings = {}
+
+        async def _run_single_embedding(input: str) -> int:
+            result: CreateEmbeddingResponse = await self._client.embeddings.create(input=[input], **settings)
+            embeddings[input] = result.data[0].embedding
+            return result.usage.prompt_tokens
+
         start_overall = time.time()
-        results = await asyncio.gather(*[_run_single_embedding(self._client, input, settings) for input in inputs])
+        tokens = await asyncio.gather(*[_run_single_embedding(input) for input in inputs])
         elapsed = time.time() - start_overall
 
-        embeddings = {}
-        tokens_used = 0
-        for input, embedding, token_count in results:
-            embeddings[input] = embedding
-            tokens_used += token_count
-
-        logger.info(f"Total of {len(inputs)} embeddings produced in {elapsed:.2f} seconds using {tokens_used} tokens.")
+        logger.info(f"{len(inputs)} embeddings produced in {elapsed:.2f} seconds using {sum(tokens)} tokens.")
         return embeddings
-
-
-async def _run_single_embedding(
-    openai_client: AsyncOpenAI,
-    input: str,
-    settings: Any,
-) -> Tuple[str, List[float], int]:
-    result: CreateEmbeddingResponse = await openai_client.embeddings.create(input=[input], **settings)
-    return (input, result.data[0].embedding, result.usage.prompt_tokens)
