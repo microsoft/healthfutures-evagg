@@ -105,7 +105,7 @@ class TruthsetFileLibrary(IGetPapers):
             # Create an evidence dictionary from the variant/patient-specific columns.
             evidence = {key: row.get(key, "") for key in TRUTHSET_EVIDENCE_KEYS}
             # Add a unique identifier for this combination of paper, variant, and individual ID.
-            evidence["pub_ev_id"] = f"{paper.id}:{text_desc}:{row['individual_id']}"
+            evidence["pub_ev_id"] = f"{paper.id}:{variant.hgvs_desc}:{row['individual_id']}".replace(" ", "")
             paper.evidence[(variant, row["individual_id"])] = evidence
 
         return paper
