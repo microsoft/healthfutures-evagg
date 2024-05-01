@@ -38,8 +38,12 @@ class HPOReference(ICompareHPO, ISearchHPO):
         for sub in subject_objs:
             comparisons = [(sub, obj) for obj in object_objs]
             batch_result = helper.batch_similarity(comparisons, kind="omim", method=method)
-            argmax = np.argmax(batch_result)
-            result[sub.id] = (batch_result[argmax], objects[argmax])  # type: ignore
+            if batch_result:
+                argmax = np.argmax(batch_result)
+                result[sub.id] = (batch_result[argmax], objects[argmax])  # type: ignore
+            else:
+                # No similarity scores returned, most likely because objects is empty.
+                result[sub.id] = (-1, "")
 
         return result
 
