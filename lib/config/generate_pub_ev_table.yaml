@@ -50,15 +50,18 @@ extractor:
     - id: paper_id
     - hgvs_c: hgvs_c
     - hgvs_p: hgvs_p
+    - transcript: transcript
     - individual_id: individual_id
     - phenotype: phenotype
     - zygosity: zygosity
     - variant_inheritance: variant_inheritance
-    - study_type: study_type
-    - functional_study: functional_study
     - variant_type: variant_type
-    - title: paper_title
+    - functional_study: functional_study
+    # - gnomad_frequency: gnomad_frequency
+    - study_type: study_type
+    - citation: citation
     - link: link
+    - title: paper_title
 writer:
   di_factory: lib.evagg.TableOutputWriter
 

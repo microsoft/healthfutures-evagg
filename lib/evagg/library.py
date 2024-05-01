@@ -56,17 +56,18 @@ TRUTHSET_PAPER_KEYS_MAPPING = {"paper_id": "id", "paper_title": "title"}
 # These are the columns in the truthset that are specific to the evidence.
 TRUTHSET_EVIDENCE_KEYS = [
     "gene",
-    "transcript",
     "paper_variant",
     "hgvs_c",
     "hgvs_p",
+    "transcript",
     "individual_id",
     "phenotype",
     "zygosity",
     "variant_inheritance",
-    "study_type",
-    "functional_study",
     "variant_type",
+    "functional_study",
+    # "gnomad_frequency",
+    "study_type",
     "notes",
 ]
 
