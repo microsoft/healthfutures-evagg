@@ -166,38 +166,40 @@ class PromptBasedContentExtractor(IExtractFields):
     async def _get_fields(
         self, gene_symbol: str, ob: Observation, fields: Dict[str, str], cache: dict[Tuple[HGVSVariant, str], str]
     ) -> Dict[str, str]:
-        # Run through each requested field not already in the fields.
-        async def _add_field(field: str) -> None:
+
+        async def _get_field(field: str) -> Tuple[str, str]:
             # Use a cached result for variant fields if available.
             if (ob.variant, field) in cache:
-                fields[field] = cache[(ob.variant, field)]
+                value = cache[(ob.variant, field)]
             # Run a prompt to get the prompt fields.
-            elif field in self._PROMPT_FIELDS:
-                fields[field] = await self._get_prompt_field(gene_symbol, ob, field)
+            if field in self._PROMPT_FIELDS:
+                value = await self._get_prompt_field(gene_symbol, ob, field)
                 # See if we should cache it for next time.
                 if field in self._CACHE_FIELDS:
-                    cache[(ob.variant, field)] = fields[field]
+                    cache[(ob.variant, field)] = value
             elif field == "gene":
-                fields[field] = gene_symbol
+                value = gene_symbol
             elif field == "individual_id":
-                fields[field] = ob.individual
+                value = ob.individual
             elif field == "hgvs_c":
-                fields[field] = ob.variant.hgvs_desc if not ob.variant.hgvs_desc.startswith("p.") else "NA"
+                value = ob.variant.hgvs_desc if not ob.variant.hgvs_desc.startswith("p.") else "NA"
             elif field == "hgvs_p":
                 if ob.variant.protein_consequence:
-                    fields[field] = ob.variant.protein_consequence.hgvs_desc
+                    value = ob.variant.protein_consequence.hgvs_desc
                 else:
-                    fields[field] = ob.variant.hgvs_desc if ob.variant.hgvs_desc.startswith("p.") else "NA"
+                    value = ob.variant.hgvs_desc if ob.variant.hgvs_desc.startswith("p.") else "NA"
             elif field == "transcript":
-                fields[field] = ob.variant.refseq if ob.variant.refseq else "unknown"
+                value = ob.variant.refseq if ob.variant.refseq else "unknown"
             elif field == "valid":
-                fields[field] = str(ob.variant.valid)
+                value = str(ob.variant.valid)
             elif field == "gnomad_frequency":
-                fields[field] = "unknown"
+                value = "unknown"
             else:
                 raise ValueError(f"Unsupported field: {field}")
+            return field, value
 
-        await asyncio.gather(*[_add_field(field) for field in self._fields if field not in fields])
+        # Collect the remaining field values and add them to the existing fields dictionary.
+        fields.update(await asyncio.gather(*[_get_field(f) for f in self._fields if f not in fields]))
         return fields
 
     async def _extract_fields(self, paper: Paper, gene_symbol: str, obs: Sequence[Observation]) -> List[Dict[str, str]]:
