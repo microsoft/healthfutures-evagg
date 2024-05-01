@@ -35,8 +35,16 @@ class FileOutputWriter(IWriteOutput):
 
 
 class TableOutputWriter(IWriteOutput):
-    def __init__(self, output_path: Optional[str] = None) -> None:
+    def __init__(self, output_path: Optional[str] = None, append_timestamp: bool = False) -> None:
+        self._generated = datetime.now().astimezone()
         self._path = output_path
+        if self._path:
+            if append_timestamp:
+                # Append timestamp to the output path.
+                base, ext = os.path.splitext(self._path)
+                self._path = f"{base}_{self._generated.strftime('%Y%m%d_%H%M%S')}{ext}"
+            if os.path.exists(self._path):
+                logger.warning(f"Overwriting existing output file: {self._path}")
 
     def write(self, fields: Mapping[str, Sequence[Mapping[str, str]]]) -> None:
         logger.info(f"Writing output to: {self._path or 'stdout'}")
@@ -53,7 +61,7 @@ class TableOutputWriter(IWriteOutput):
 
         output_stream = open(self._path, "w") if self._path else sys.stdout
         writer = csv.writer(output_stream, delimiter="\t", lineterminator="\n")
-        writer.writerow([f"# Created {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}"])
+        writer.writerow([f"# Generated {self._generated.strftime('%Y-%m-%d %H:%M:%S %Z')}"])
         writer.writerow(table_lines[0].keys())
         for line in table_lines:
             writer.writerow(line.values())
