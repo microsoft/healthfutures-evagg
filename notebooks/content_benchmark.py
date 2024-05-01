@@ -28,7 +28,8 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_ben
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
+# CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
+CONTENT_COLUMNS = {"phenotype"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
@@ -379,28 +380,34 @@ else:
 # %% Assess content extraction.
 
 hpo = HPOReference()
+from typing import Tuple
 
 
-def _fuzzy_match_hpo_sets(hpo_set1: str, hpo_set2: str) -> bool:
+def _fuzzy_match_hpo_sets(left_set: str, right_set: str) -> Tuple[list[str], list[str], list[str]]:
     # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
     def _is_unknown(hpo_set: str) -> bool:
         return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
 
-    if _is_unknown(hpo_set1) and _is_unknown(hpo_set2):
-        return True
+    left_terms = re.findall(r"HP:\d+", left_set) if isinstance(left_set, str) and not _is_unknown(left_set) else []
+    right_terms = re.findall(r"HP:\d+", right_set) if isinstance(right_set, str) and not _is_unknown(right_set) else []
 
-    hpo_terms1 = re.findall(r"HP:\d+", hpo_set1) if isinstance(hpo_set1, str) else []
-    hpo_terms2 = re.findall(r"HP:\d+", hpo_set2) if isinstance(hpo_set2, str) else []
+    left_result = hpo.compare_set(left_terms, right_terms)
+    right_result = hpo.compare_set(right_terms, left_terms)
 
-    if not hpo_terms1 or not hpo_terms2:
-        return False
+    matched = [f"<-{k}" for k, v in left_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD] + [
+        f"->{k}" for k, v in right_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD
+    ]
+    matched = list(set(matched))
 
-    result = hpo.compare_set(hpo_terms1, hpo_terms2)
-    return all(v[0] > HPO_SIMILARITY_THRESHOLD for v in result.values())
+    left_missed = [k for k, v in left_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
+    right_missed = [k for k, v in right_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
+
+    # Return the shared terms, the terms in left not present in right, the terms in right not present in left
+    return (matched, left_missed, right_missed)
 
 
 if CONTENT_COLUMNS:
-    shared_df = merged_df[merged_df.in_truth & merged_df.in_output]
+    shared_df = merged_df_no_supplement[merged_df_no_supplement.in_truth & merged_df_no_supplement.in_output]
 
     print("---- Content extraction performance ----")
 
@@ -409,34 +416,22 @@ if CONTENT_COLUMNS:
             # Phenotype matching can't be a direct string compare.
             # We'll fuzzy match the HPO terms, note that we're ignoring anything in here that couldn't be matched via
             # HPO. The non HPO terms are still provided by pipeline output, but
-            match = shared_df.apply(
+            pheno_stats = shared_df.apply(
                 lambda row: _fuzzy_match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
             )
+            match = pheno_stats.apply(lambda x: len(x[1]) == 0 and len(x[2]) == 0)
             print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
         else:
             # Currently other content columns are just string compares.
             match = shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_output"].str.lower()
             print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
 
-            # truth = shared_df[f"{column}_truth"].str.lower()
-            # output = shared_df[f"{column}_output"].str.lower()
-
-            # cats = sorted(set(truth.unique()) | set(output.unique()))
-
-            # truth_ordered = pd.Categorical(truth, categories=cats)
-            # output_ordered = pd.Categorical(output, categories=cats)
-
-            # df_conf = pd.crosstab(truth_ordered, output_ordered)
-            # import seaborn as sns
-            # import matplotlib.pyplot as plt
-            # plt.figure()
-            # sns.heatmap(df_conf, annot=True, fmt="d", cmap="Blues", cbar=False)
-            # plt.xlabel("Output")
-            # plt.ylabel("Truth")
-            # plt.title(f"Confusion matrix for {column}")
-
-        for idx, row in shared_df[~match].iterrows():
-            print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
+        for idx, row in shared_df.iterrows():
+            if match[idx]:  # type: ignore
+                print(f"  Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
+            else:
+                # print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
+                print(f"##Mismatch ({idx}): {pheno_stats[idx]}")
         print()
 
 # %%
