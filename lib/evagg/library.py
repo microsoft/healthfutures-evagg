@@ -1,3 +1,4 @@
+import asyncio
 import csv
 import json
 import logging
@@ -278,21 +279,20 @@ class RareDiseaseFileLibrary(IGetPapers):
         # If the paper doesn't fit in the other categories, add it to the other category.
         return "other"
 
-    def _get_llm_category(self, paper: Paper) -> str:
+    async def _get_llm_category(self, paper: Paper) -> str:
         """Categorize papers based on LLM prompts."""
-        default_settings = {"temperature": 0.8}
-        response = self._llm_client.prompt_file(
+        response = await self._llm_client.prompt_file(
             user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding.txt"),
             system_prompt="Extract field",
             params={
                 "abstract": paper.props.get("abstract") or "no abstract",
                 "title": paper.props.get("title") or "no title",
             },
-            prompt_settings={"prompt_tag": "paper_category", **default_settings},
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
 
         try:
-            result = json.loads(response)["paper_category"]
+            result: str = json.loads(response)["paper_category"]
         except Exception:
             result = response
 
@@ -302,24 +302,35 @@ class RareDiseaseFileLibrary(IGetPapers):
         logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
         return "other"
 
-    def _get_paper_categorizations(self, paper: Paper) -> Dict[str, int]:
-        """Categorize papers with multiple strategies and return the counts of each category."""
-        # Categorize the paper by both keyword and LLM prompt.
+    async def _add_paper_categorization(self, paper: Paper) -> str:
+        """Categorize a paper with multiple strategies and tag the paper object with the best categorization."""
+        # First categorize the paper by both keyword and LLM prompt.
         keyword_cat = self._get_keyword_category(paper)
-        llm_cat = self._get_llm_category(paper)
+        llm_cat = await self._get_llm_category(paper)
 
-        # If the keyword and LLM categories agree, just return that category.
+        # If the keyword and LLM categories agree, just report that category.
         if keyword_cat == llm_cat:
-            return {keyword_cat: 2}
+            paper.props["disease_category"] = keyword_cat
+            return keyword_cat
 
         counts: Dict[str, int] = {}
-        # Otherwise run the LLM prompt two more times and accumulate all the results.
-        for category in [keyword_cat, llm_cat, self._get_llm_category(paper), self._get_llm_category(paper)]:
+        # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
+        llm_tiebreakers = await asyncio.gather(self._get_llm_category(paper), self._get_llm_category(paper))
+        for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
             counts[category] = counts.get(category, 0) + 1
-        assert sum(counts.values()) == 4
-        return counts
+        assert len(counts) > 1 and sum(counts.values()) == 4
 
-    def _get_all_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
+        best_category = max(counts, key=lambda k: counts[k])
+        assert best_category in self.CATEGORIES and counts[best_category] < 4
+        # Mark as conflicting if the best category has a low count.
+        if counts[best_category] < 3:
+            best_category = "conflicting"
+
+        paper.props["disease_categorizations"] = counts
+        paper.props["disease_category"] = best_category
+        return best_category
+
+    async def _get_all_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
         """Search for papers based on the given query.
 
         Args:
@@ -358,24 +369,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         if self._require_full_text:
             papers = [p for p in papers if p.props.get("full_text_xml")]
 
-        logger.warning(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
+        logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 
         # Categorize the papers.
-        for paper in papers:
-            categories = self._get_paper_categorizations(paper)
-            best_category = max(categories, key=lambda k: categories[k])
-            assert best_category in self.CATEGORIES and categories[best_category] < 4
-
-            # If there are multiple categories and the best one has a low count, mark it conflicting.
-            if len(categories) > 1:
-                # Always keep categorizations if there's more than one category.
-                paper.props["disease_categorizations"] = categories
-                # Mark as conflicting if the best category has a low count.
-                if categories[best_category] < 3:
-                    best_category = "conflicting"
-
-            paper.props["disease_category"] = best_category
-
+        await asyncio.gather(*[self._add_paper_categorization(paper) for paper in papers])
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
@@ -387,6 +384,5 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             Sequence[Paper]: The set of rare disease papers that match the query.
         """
-        return list(
-            filter(lambda p: p.props["disease_category"] in self._allowed_categories, self._get_all_papers(query))
-        )
+        all_papers = asyncio.run(self._get_all_papers(query))
+        return list(filter(lambda p: p.props["disease_category"] in self._allowed_categories, all_papers))
