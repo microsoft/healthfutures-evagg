@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 import pytest
 
 from lib.evagg import PromptBasedContentExtractor, SimpleContentExtractor
-from lib.evagg.content import IFindObservations
+from lib.evagg.content import IFindObservations, Observation
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import ISearchHPO
 from lib.evagg.types import HGVSVariant, Paper
@@ -61,13 +61,14 @@ def test_prompt_based_content_extractor_valid_fields(
         "variant_inheritance": "test",
     }
 
-    observation = {
-        (HGVSVariant(fields["hgvs_c"], fields["gene"], "transcript", True, True, None), "unknown"): {
-            "texts": ["Here is the observation text."],
-            "variant_descriptions": ["c.1234A>G"],
-            "patient_descriptions": ["unknown"],
-        }
-    }
+    observation = Observation(
+        variant=HGVSVariant(fields["hgvs_c"], fields["gene"], "transcript", True, True, None),
+        individual="unknown",
+        texts=["Here is the observation text."],
+        variant_descriptions=["c.1234A>G"],
+        patient_descriptions=["unknown"],
+    )
+
     prompts = mock_prompt(
         json.dumps({"phenotype": ["test"]}),
         json.dumps({"matched": ["test (HP:0123)"], "unmatched": []}),
@@ -75,7 +76,9 @@ def test_prompt_based_content_extractor_valid_fields(
         json.dumps({"variant_inheritance": fields["variant_inheritance"]}),
     )
     pheno = mock_phenotype(True)
-    content_extractor = PromptBasedContentExtractor(list(fields.keys()), prompts, mock_observation(observation), pheno)
+    content_extractor = PromptBasedContentExtractor(
+        list(fields.keys()), prompts, mock_observation([observation]), pheno
+    )
     content = content_extractor.extract(paper, fields["gene"])
 
     assert prompts.call_count("prompt_file") == 4
