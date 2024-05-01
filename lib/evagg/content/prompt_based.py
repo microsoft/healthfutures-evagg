@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Coroutine, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import ISearchHPO
@@ -26,7 +26,9 @@ class PromptBasedContentExtractor(IExtractFields):
         "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
     # These are expensive prompt fields
-    _CACHE_FIELDS = ["variant_type", "functional_study"]
+    _VARIANT_CACHE_FIELDS = ["variant_type", "functional_study"]
+    _INDIVIDUAL_CACHE_FIELDS = ["phenotype"]
+
     # Read the system prompt from file
     _SYSTEM_PROMPT = open(os.path.dirname(__file__) + "/prompts/system.txt").read()
 
@@ -164,19 +166,32 @@ class PromptBasedContentExtractor(IExtractFields):
         return result
 
     async def _get_fields(
-        self, gene_symbol: str, ob: Observation, fields: Dict[str, str], cache: dict[Tuple[HGVSVariant, str], str]
+        self,
+        gene_symbol: str,
+        ob: Observation,
+        fields: Dict[str, str],
+        cache: dict[Tuple[HGVSVariant | str, str], Coroutine],
     ) -> Dict[str, str]:
 
         async def _get_field(field: str) -> Tuple[str, str]:
-            # Use a cached result for variant fields if available.
-            if (ob.variant, field) in cache:
-                value = cache[(ob.variant, field)]
             # Run a prompt to get the prompt fields.
             if field in self._PROMPT_FIELDS:
-                value = await self._get_prompt_field(gene_symbol, ob, field)
-                # See if we should cache it for next time.
-                if field in self._CACHE_FIELDS:
-                    cache[(ob.variant, field)] = value
+                # Use a cached result for variant fields if available.
+                if (ob.variant, field) in cache:
+                    coro = cache[(ob.variant, field)]
+                elif (ob.individual, field) in cache:
+                    coro = cache[(ob.individual, field)]
+                else:
+                    coro = self._get_prompt_field(gene_symbol, ob, field)
+                    # See if we should cache it for next time.
+                    if field in self._VARIANT_CACHE_FIELDS:
+                        cache[(ob.variant, field)] = coro
+                    # Note that we're caching individual level fields based on a single variant only, this means that
+                    # these values will not be derived with knowledge of all observations pertaining to that individual.
+                    elif field in self._INDIVIDUAL_CACHE_FIELDS:
+                        cache[(ob.individual, field)] = coro
+
+                value = await coro
             elif field == "gene":
                 value = gene_symbol
             elif field == "individual_id":
@@ -208,7 +223,8 @@ class PromptBasedContentExtractor(IExtractFields):
         # with all observations of the same variant (but different individuals). As a temporary solution, we'll cache
         # the first finding of a variant-level result and use that only. This will not be robust to scenarios where the
         # texts associated with multiple observations of the same variant differ.
-        cache: dict[Tuple[HGVSVariant, str], str] = {}
+        cache: dict[Tuple[HGVSVariant | str, str], Coroutine] = {}
+
         # Precompute paper-level fields to include in each set of observation fields.
         fields = self._get_all_paper_fields(paper, [f for f in self._fields if f in self._PAPER_FIELDS])
         return await asyncio.gather(*[self._get_fields(gene_symbol, ob, fields.copy(), cache) for ob in obs])
