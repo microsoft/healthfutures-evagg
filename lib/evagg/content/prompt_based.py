@@ -25,8 +25,10 @@ class PromptBasedContentExtractor(IExtractFields):
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
         "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
-    # These are expensive prompt fields
-    _CACHE_FIELDS = ["variant_type", "functional_study"]
+    # These are the expensive prompt fields we should cache per paper.
+    _CACHE_VARIANT_FIELDS = ["variant_type", "functional_study"]
+    _CACHE_INDIVIDUAL_FIELDS = ["phenotype"]
+
     # Read the system prompt from file
     _SYSTEM_PROMPT = open(os.path.dirname(__file__) + "/prompts/system.txt").read()
 
@@ -108,6 +110,7 @@ class PromptBasedContentExtractor(IExtractFields):
 
     async def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
         if not isinstance(phenotype, list):
+            print(phenotype)
             return ["unknown"]
 
         response = await self._run_json_prompt(
@@ -146,7 +149,7 @@ class PromptBasedContentExtractor(IExtractFields):
 
         return matched
 
-    async def _get_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+    async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
         params = {
             "passage": "\n\n".join(observation.texts),
             "variant_descriptions": ", ".join(observation.variant_descriptions),
@@ -163,43 +166,60 @@ class PromptBasedContentExtractor(IExtractFields):
             result = json.dumps(result)
         return result
 
+    def _get_fixed_field(self, gene_symbol: str, ob: Observation, field: str) -> Tuple[str, str]:
+        if field == "gene":
+            value = gene_symbol
+        elif field == "individual_id":
+            value = ob.individual
+        elif field == "hgvs_c":
+            value = ob.variant.hgvs_desc if not ob.variant.hgvs_desc.startswith("p.") else "NA"
+        elif field == "hgvs_p":
+            if ob.variant.protein_consequence:
+                value = ob.variant.protein_consequence.hgvs_desc
+            else:
+                value = ob.variant.hgvs_desc if ob.variant.hgvs_desc.startswith("p.") else "NA"
+        elif field == "transcript":
+            value = ob.variant.refseq if ob.variant.refseq else "unknown"
+        elif field == "valid":
+            value = str(ob.variant.valid)
+        elif field == "gnomad_frequency":
+            value = "unknown"
+        else:
+            raise ValueError(f"Unsupported field: {field}")
+        return field, value
+
     async def _get_fields(
-        self, gene_symbol: str, ob: Observation, fields: Dict[str, str], cache: dict[Tuple[HGVSVariant, str], str]
+        self,
+        gene_symbol: str,
+        ob: Observation,
+        fields: Dict[str, str],
+        cache: Dict[Tuple[HGVSVariant | str, str], asyncio.Task],
     ) -> Dict[str, str]:
 
-        async def _get_field(field: str) -> Tuple[str, str]:
-            # Use a cached result for variant fields if available.
+        async def _get_prompt_field(field: str) -> Tuple[str, str]:
+            # Use a cached task for variant fields if available.
             if (ob.variant, field) in cache:
-                value = cache[(ob.variant, field)]
-            # Run a prompt to get the prompt fields.
-            if field in self._PROMPT_FIELDS:
-                value = await self._get_prompt_field(gene_symbol, ob, field)
-                # See if we should cache it for next time.
-                if field in self._CACHE_FIELDS:
-                    cache[(ob.variant, field)] = value
-            elif field == "gene":
-                value = gene_symbol
-            elif field == "individual_id":
-                value = ob.individual
-            elif field == "hgvs_c":
-                value = ob.variant.hgvs_desc if not ob.variant.hgvs_desc.startswith("p.") else "NA"
-            elif field == "hgvs_p":
-                if ob.variant.protein_consequence:
-                    value = ob.variant.protein_consequence.hgvs_desc
-                else:
-                    value = ob.variant.hgvs_desc if ob.variant.hgvs_desc.startswith("p.") else "NA"
-            elif field == "transcript":
-                value = ob.variant.refseq if ob.variant.refseq else "unknown"
-            elif field == "valid":
-                value = str(ob.variant.valid)
-            elif field == "gnomad_frequency":
-                value = "unknown"
+                prompt_task = cache[(ob.variant, field)]
+                logger.info(f"Using cached task for {ob.variant} {field}")
+            elif (ob.individual, field) in cache:
+                prompt_task = cache[(ob.individual, field)]
+                logger.info(f"Using cached task for {ob.individual} {field}")
             else:
-                raise ValueError(f"Unsupported field: {field}")
+                # Create and schedule a prompt task to get the prompt field.
+                prompt_task = asyncio.create_task(self._generate_prompt_field(gene_symbol, ob, field))
+            # See if we should cache it for next time.
+            if field in self._CACHE_VARIANT_FIELDS:
+                cache[(ob.variant, field)] = prompt_task
+            elif field in self._CACHE_INDIVIDUAL_FIELDS:
+                cache[(ob.individual, field)] = prompt_task
+            # Get the value from the completed task.
+            value = await prompt_task
             return field, value
 
+        # Collect any prompt-based fields and add them to the existing fields dictionary.
+        fields.update(await asyncio.gather(*[_get_prompt_field(f) for f in self._PROMPT_FIELDS if f in self._fields]))
         # Collect the remaining field values and add them to the existing fields dictionary.
-        fields.update(await asyncio.gather(*[_get_field(f) for f in self._fields if f not in fields]))
+        fields.update(self._get_fixed_field(gene_symbol, ob, f) for f in self._fields if f not in fields)
         return fields
 
     async def _extract_fields(self, paper: Paper, gene_symbol: str, obs: Sequence[Observation]) -> List[Dict[str, str]]:
@@ -208,7 +228,7 @@ class PromptBasedContentExtractor(IExtractFields):
         # with all observations of the same variant (but different individuals). As a temporary solution, we'll cache
         # the first finding of a variant-level result and use that only. This will not be robust to scenarios where the
         # texts associated with multiple observations of the same variant differ.
-        cache: dict[Tuple[HGVSVariant, str], str] = {}
+        cache: Dict[Tuple[HGVSVariant | str, str], asyncio.Task] = {}
         # Precompute paper-level fields to include in each set of observation fields.
         fields = self._get_all_paper_fields(paper, [f for f in self._fields if f in self._PAPER_FIELDS])
         return await asyncio.gather(*[self._get_fields(gene_symbol, ob, fields.copy(), cache) for ob in obs])
