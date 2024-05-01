@@ -1,15 +1,18 @@
+import asyncio
 import json
 import logging
 import os
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Mapping, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
-from .interfaces import ICompareVariants, IFindObservations
+from .interfaces import ICompareVariants, IFindObservations, Observation
+
+PatientVariant = Tuple[HGVSVariant, str]
 
 logger = logging.getLogger(__name__)
 
@@ -45,43 +48,44 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
     def __init__(self) -> None:
         pass
 
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
+    async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
         in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
 
-        Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
-        keyed by tuples of variants and string representations of the individual in which that variant was observed. The
-        values in this dictionary are dictionaries relevant to this observation throughout the paper. Keys in this
-        dictionary include, "variant_descriptions", "patient_descriptions", "texts".
+        The returned observation objects are logically "clinical" observations of a variant in a human. Each object
+        describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        observations: Dict[Tuple[HGVSVariant, str], Mapping[str, Any]] = {}
-
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
 
         if not full_text:
             logger.info(f"Skipping {paper.id} because full text could not be retrieved")
-            return observations
+            return []
 
-        for ob in paper.evidence.keys():
+        observations: List[Observation] = []
+        for (variant, individual), evidence in paper.evidence.items():
 
-            if ob[0].gene_symbol != gene_symbol:
-                logger.info(f"Unexpected gene symbol found for {paper}: {ob[0].gene_symbol}")
+            if variant.gene_symbol != gene_symbol:
+                logger.error(f"Unexpected gene symbol found for {paper}: {variant.gene_symbol}")
                 continue
 
-            variant_descriptions = [ob[0].hgvs_desc]
-            if paper.evidence[ob].get("paper_variant"):
-                variant_descriptions.append(paper.evidence[ob]["paper_variant"])
-            if ob[0].protein_consequence:
-                variant_descriptions.append(ob[0].protein_consequence.hgvs_desc)
+            variant_descriptions = [variant.hgvs_desc]
+            if evidence.get("paper_variant"):
+                variant_descriptions.append(evidence["paper_variant"])
+            if variant.protein_consequence:
+                variant_descriptions.append(variant.protein_consequence.hgvs_desc)
 
-            observations[ob] = {
-                "variant_descriptions": list(set(variant_descriptions)),
-                "patient_descriptions": [ob[1]],
-                "texts": [full_text],
-            }
+            observations.append(
+                Observation(
+                    variant=variant,
+                    individual=individual,
+                    variant_descriptions=list(set(variant_descriptions)),
+                    patient_descriptions=[individual],
+                    texts=[full_text],
+                )
+            )
 
         return observations
 
@@ -122,7 +126,7 @@ uninterrupted sequences of whitespace characters.
         self._variant_comparator = variant_comparator
         self._normalizer = normalizer
 
-    def _run_json_prompt(
+    async def _run_json_prompt(
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
         default_settings = {
@@ -134,7 +138,7 @@ uninterrupted sequences of whitespace characters.
         }
         prompt_settings = {**default_settings, **prompt_settings}
 
-        response = self._llm_client.prompt_file(
+        response = await self._llm_client.prompt_file(
             user_prompt_file=prompt_filepath,
             system_prompt=self._SYSTEM_PROMPT,
             params=params,
@@ -144,17 +148,17 @@ uninterrupted sequences of whitespace characters.
         try:
             result = json.loads(response)
         except Exception:
-            logger.warning(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
+            logger.error(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
             return {}
 
         return result
 
-    def _check_patients(self, patient_candidates: Sequence[str], texts_to_check: Sequence[str]) -> List[str]:
+    async def _check_patients(self, patient_candidates: Sequence[str], texts_to_check: Sequence[str]) -> List[str]:
         checked_patients: List[str] = []
 
-        for patient in patient_candidates:
+        async def check_patient(patient: str) -> None:
             for text in texts_to_check:
-                validation_response = self._run_json_prompt(
+                validation_response = await self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["check_patients"],
                     params={"text": text, "patient": patient},
                     prompt_settings={"prompt_tag": "observation__check_patients"},
@@ -165,11 +169,12 @@ uninterrupted sequences of whitespace characters.
             if patient not in checked_patients:
                 logger.debug(f"Removing {patient} from list of patients as it didn't pass final checks.")
 
+        await asyncio.gather(*[check_patient(patient) for patient in patient_candidates])
         return checked_patients
 
-    def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
+    async def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
-        full_text_response = self._run_json_prompt(
+        full_text_response = await self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_patients"],
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_patients"},
@@ -180,14 +185,16 @@ uninterrupted sequences of whitespace characters.
         # TODO, logically deduplicate patients here, e.g., if a patient is referred to as both "proband" and "IV-1",
         # we should ask the LLM to determine if these are the same individual.
 
+        async def check_focus_text(focus_text: str) -> None:
+            focus_response = await self._run_json_prompt(
+                prompt_filepath=self._PROMPTS["find_patients"],
+                params={"text": focus_text},
+                prompt_settings={"prompt_tag": "observation__find_patients"},
+            )
+            unique_patients.update(focus_response.get("patients", []))
+
         if focus_texts:
-            for focus_text in focus_texts:
-                focus_response = self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["find_patients"],
-                    params={"text": focus_text},
-                    prompt_settings={"prompt_tag": "observation__find_patients"},
-                )
-                unique_patients.update(focus_response.get("patients", []))
+            await asyncio.gather(*[check_focus_text(focus_text) for focus_text in focus_texts])
 
         patient_candidates = list(unique_patients)
         if "unknown" in patient_candidates:
@@ -196,9 +203,9 @@ uninterrupted sequences of whitespace characters.
         # Occassionally, multiple patients are referred to in a single string, e.g. "patients 9 and 10" split these out.
         patients_after_splitting: List[str] = []
 
-        for patient in patient_candidates:
+        async def split_patient(patient: str) -> None:
             if any(term in patient for term in [" and ", " or "]):
-                split_response = self._run_json_prompt(
+                split_response = await self._run_json_prompt(
                     prompt_filepath=self._PROMPTS["split_patients"],
                     params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
                     prompt_settings={"prompt_tag": "observation__split_patients"},
@@ -207,22 +214,24 @@ uninterrupted sequences of whitespace characters.
             else:
                 patients_after_splitting.append(patient)
 
+        await asyncio.gather(*[split_patient(patient) for patient in patient_candidates])
+
         # If more than 5 (TODO parameterize?) patients are identified, risk of false positives is increased.
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
         if len(patients_after_splitting) >= 5:
             texts_to_check = focus_texts if focus_texts else [full_text]
-            checked_patients = self._check_patients(patients_after_splitting, texts_to_check)
+            checked_patients = await self._check_patients(patients_after_splitting, texts_to_check)
 
             if not checked_patients and texts_to_check == focus_texts:
                 # All patients failed checking in focus texts, try the full text.
-                checked_patients = self._check_patients(patients_after_splitting, [full_text])
+                checked_patients = await self._check_patients(patients_after_splitting, [full_text])
         else:
             checked_patients = patients_after_splitting
 
         return checked_patients
 
-    def _find_variant_descriptions(
+    async def _find_variant_descriptions(
         self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str
     ) -> Sequence[str]:
         """Identify the genetic variants relevant to the gene_symbol described in the full text of the paper.
@@ -230,22 +239,17 @@ uninterrupted sequences of whitespace characters.
         Returned variants will be _as described_ in the source text. Downstream manipulations to make them
         HGVS-compliant may be required.
         """
-        full_text_response = self._run_json_prompt(
-            prompt_filepath=self._PROMPTS["find_variants"],
-            params={"text": full_text, "gene_symbol": gene_symbol},
-            prompt_settings={"prompt_tag": "observation__find_variants"},
-        )
-
-        unique_variants = set(full_text_response.get("variants", []))
-
-        if focus_texts:
-            for focus_text in focus_texts:
-                focus_response = self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["find_variants"],
-                    params={"text": focus_text, "gene_symbol": gene_symbol},
-                    prompt_settings={"prompt_tag": "observation__find_variants"},
-                )
-                unique_variants.update(focus_response.get("variants", []))
+        # Create prompts to find all the unique variants mentioned in the full text and focus texts.
+        prompt_runs = [
+            self._run_json_prompt(
+                prompt_filepath=self._PROMPTS["find_variants"],
+                params={"text": text, "gene_symbol": gene_symbol},
+                prompt_settings={"prompt_tag": "observation__find_variants"},
+            )
+            for text in [full_text] + list(focus_texts or [])
+        ]
+        # Run prompts in parallel.
+        responses = await asyncio.gather(*prompt_runs)
 
         # Often, the gene-symbol is provided as a prefix to the variant, remove it.
         # Note: we do additional similar checks later, but it's useful to do it now to reduce redundancy.
@@ -255,34 +259,31 @@ uninterrupted sequences of whitespace characters.
                 return x[len(gene_symbol) :].lstrip(":")
             return x
 
-        candidates = list({_strip_gene_symbol(x) for x in list(unique_variants)})
-
         # TODO: evaluate tasking the LLM to return an empty list instead of "unknown" when no variants are found.
-        if "unknown" in candidates:
-            candidates.remove("unknown")
-        if not candidates:
-            return candidates
+        candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
-        # Often, the variant is reported with both coding and protein-level descriptions, separate these out to
-        # two distinct candidates.
-        expanded_candidates: List[str] = []
-
-        for candidate in candidates:
-            if candidate.find("p.") >= 0 and candidate.find("c.") >= 0:
-                split_response = self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["split_variants"],
-                    params={"variant_list": f'"{candidate}"'},  # Encase in double-quotes in prep for bulk calling.
-                    prompt_settings={"prompt_tag": "observation__split_variants"},
+        split_prompt_runs = []
+        # If the variant is reported with both coding and protein-level
+        # descriptions, split these into two with another prompt.
+        for i in reversed(range(len(candidates))):
+            if "p." in candidates[i] and "c." in candidates[i]:
+                split_prompt_runs.append(
+                    self._run_json_prompt(
+                        prompt_filepath=self._PROMPTS["split_variants"],
+                        params={"variant_list": f'"{candidates[i]}"'},  # Encase in double-quotes for bulk calling.
+                        prompt_settings={"prompt_tag": "observation__split_variants"},
+                    )
                 )
-                expanded_candidates.extend(split_response.get("variants", []))
-            else:
-                expanded_candidates.append(candidate)
+                del candidates[i]
+        # Run split prompts in parallel.
+        split_responses = await asyncio.gather(*split_prompt_runs)
+        # Add the split variants back in to the candidates list.
+        candidates.extend(v for r in split_responses for v in r.get("variants", []))
+        return candidates
 
-        return expanded_candidates
-
-    def _find_genome_build(self, full_text: str) -> str | None:
+    async def _find_genome_build(self, full_text: str) -> str | None:
         """Identify the genome build used in the paper."""
-        response = self._run_json_prompt(
+        response = await self._run_json_prompt(
             prompt_filepath=self._PROMPTS["find_genome_build"],
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_genome_build"},
@@ -290,7 +291,7 @@ uninterrupted sequences of whitespace characters.
 
         return response.get("genome_build", "unknown")
 
-    def _link_entities(
+    async def _link_entities(
         self, full_text: str, patients: Sequence[str], variants: Sequence[str], gene_symbol: str
     ) -> Dict[str, List[str]]:
         params = {
@@ -299,7 +300,7 @@ uninterrupted sequences of whitespace characters.
             "variants": ", ".join(variants),
             "gene_symbol": gene_symbol,
         }
-        response = self._run_json_prompt(
+        response = await self._run_json_prompt(
             prompt_filepath=self._PROMPTS["link_entities"],
             params=params,
             prompt_settings={"prompt_tag": "observation__link_entities"},
@@ -380,17 +381,14 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    def find_observations(self, gene_symbol: str, paper: Paper) -> Mapping[Tuple[HGVSVariant, str], Mapping[str, Any]]:
+    async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
         in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
 
-        Observations are logically "clinical" observations of a variant in a human, thus this function returns a dict
-        keyed by tuples of variants and string representations of the individual in which that variant was observed. The
-        values in this dictionary are dictionaries relevant to this observation throughout the paper. Keys in this
-        dictionary include, "variant_descriptions", "patient_descriptions", "texts".
-
+        The returned observation objects are logically "clinical" observations of a variant in a human. Each object
+        describes an individual in which a variant was observed along with the relevant text from the paper.
         """
         texts = self._get_paper_texts(paper)
         full_text = texts.get("full_text", None)
@@ -398,104 +396,90 @@ uninterrupted sequences of whitespace characters.
 
         if not full_text:
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
-            return {}
+            return []
 
         # Determine the candidate genetic variants matching `gene_symbol`
-        variant_descriptions = self._find_variant_descriptions(
+        variant_descriptions = await self._find_variant_descriptions(
             full_text=full_text, focus_texts=list(table_texts.values()), gene_symbol=gene_symbol
         )
         logger.info(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
         # If necessary, determine the genome build most likely used for those variants.
         # TODO: consider doing this on a per-variant bases.
-        if any(v.find("chr") >= 0 or v.find("g.") >= 0 for v in variant_descriptions):
-            genome_build = self._find_genome_build(full_text=full_text)
+        if any("chr" in v or "g." in v for v in variant_descriptions):
+            genome_build = await self._find_genome_build(full_text=full_text)
             logger.info(f"Found the following genome build in {paper}: {genome_build}")
         else:
             genome_build = None
 
-        # Variant objects, keyed by variant description, those that fail to parse are discarded.
-        variants = {
-            desc: self._create_variant_from_text(desc, gene_symbol, genome_build) for desc in variant_descriptions
+        # Variant objects, keyed by variant description; those that fail to parse are discarded.
+        variants_by_description = {
+            description: variant
+            for description in variant_descriptions
+            if (variant := self._create_variant_from_text(description, gene_symbol, genome_build)) is not None
         }
-        # Note we're keeping invalid variants here.
-        variants = {desc: variant for desc, variant in variants.items() if variant is not None}
 
-        if not variants:
-            observations = {}
-        else:
+        variants_by_patient = {}
+        # If there are both variants and patients, build a mapping between the two,
+        # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
+        # if there are no variants (regardless of patients), then there are no observations to report.
+        if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
-            patients = self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
+            patients = await self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
             logger.info(f"Found the following patients in {paper}: {patients}")
+            descriptions = list(variants_by_description.keys())
 
             # TODO, consider consolidating variants here, before linking with patients.
-
-            # If there are both variants and patients, build a mapping between the two,
-            # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
-            # if there are no variants (regardless of patients), then there are no observations to report.
             if patients:
-                observations = self._link_entities(full_text, patients, list(variants.keys()), gene_symbol)
+                variants_by_patient = await self._link_entities(full_text, patients, descriptions, gene_symbol)
             else:
-                observations = {"unknown": list(variants.keys())}
+                variants_by_patient = {"unknown": descriptions}
 
         # TODO, if we've split variant descriptions above, then we run the risk of the observations returning the
         # unsplit variant entity, which will not match the keys in variant objects. Either try to convince the LLM to
         # only use the specific variants we provide, or find a way to be robust to the split during variant object
         # lookup below.
 
-        result: Dict[Tuple[HGVSVariant, str], Dict[str, Any]] = {}
-        for individual, variant_strs in observations.items():
+        observations: List[Observation] = []
+        for individual, variant_descriptions in variants_by_patient.items():
+            # LLM should not have returned any patient-linked variants that were not in the input.
+            if missing_variants := [d for d in variant_descriptions if d not in variants_by_description]:
+                logger.error(f"Variants '{", ".join(missing_variants)}' not found in paper variants.")
+            variants = [(variants_by_description[d], d) for d in variant_descriptions if d in variants_by_description]
+
             # Consolidate variants within each observation so we only get one variant object per observation.
-            variants_to_consolidate: Dict[HGVSVariant, str] = {}
-            for variant_str in variant_strs:
-                variant = variants.get(variant_str)
-                if variant is None:
-                    logger.warning(f"Variant {variant_str} not found in variant_objects")
-                    continue
-                variants_to_consolidate[variant] = variant_str
-
-            if not variants_to_consolidate:
-                continue
-
-            consolidation_map = self._variant_comparator.consolidate(
-                list(variants_to_consolidate.keys()), disregard_refseq=True
-            )
-
-            # Reverse the consolidation map so every key is one of the consolidated variants, and the corresponding
-            # value is the variant to which it has been consolidated.
-            reverse_consolidation_map = {
-                source: target for target, sources in consolidation_map.items() for source in sources
-            }
-
-            # Now for all the variants to consolidate, collect their corresponding variant descriptions into a list of
-            # strings, keyed by the consolidated variant.
+            consolidation_map = self._variant_comparator.consolidate([v for v, _ in variants], disregard_refseq=True)
+            # Build a reverse map from each consolidated variants to the variant to which it was consolidated.
+            reverse_consolidation_map = {value: key for key, values in consolidation_map.items() for value in values}
+            # For all the variants to consolidate, collect their corresponding variant
+            # descriptions into a list of strings, keyed by the consolidated variant.
             consolidated_variants: Dict[HGVSVariant, List[str]] = {}
-            for variant, variant_desc in variants_to_consolidate.items():
+            for variant, description in variants:
                 consolidated_variant = reverse_consolidation_map.get(variant, variant)
                 if consolidated_variant not in consolidated_variants:
                     consolidated_variants[consolidated_variant] = []
-                consolidated_variants[consolidated_variant].append(variant_desc)
+                consolidated_variants[consolidated_variant].append(description)
                 consolidated_variants[consolidated_variant].append(variant.hgvs_desc)  # TODO, reconsider?
 
-            for variant, variant_descs in consolidated_variants.items():
-                payload = {
-                    "variant_descriptions": variant_descs,
-                    "patient_descriptions": [individual],
-                    "texts": [
-                        full_text
-                    ],  # TODO, consider adding focus_texts here, or find variant/patient specific texts.
-                }
-                if (variant, individual) in result:
+            for variant, descriptions in consolidated_variants.items():
+                if any(o.variant == variant and o.individual == individual for o in observations):
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
-                # Only keep variants associated with the "unmatched_variants" individual if they're not already
-                # associated with a "real" individual.
+                # Only keep variants associated with the "unmatched_variants"
+                # individual if they're not already associated with a "real" individual.
                 if individual == "unmatched_variants":
-                    if any(x[0] == variant for x in result):
+                    if any(o.variant == variant for o in observations):
                         continue
-                    else:
-                        result[(variant, "unknown")] = payload
-                else:
-                    result[(variant, individual)] = payload
+                    individual = "unknown"
+                observations.append(
+                    Observation(
+                        variant=variant,
+                        individual=individual,
+                        variant_descriptions=descriptions,
+                        patient_descriptions=[individual],
+                        # TODO, consider adding focus_texts here, or find variant/patient specific texts.
+                        texts=[full_text],
+                    )
+                )
 
-        return result
+        return observations
