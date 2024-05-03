@@ -33,7 +33,7 @@ di_factory: lib.evagg.SynchronousLocalApp
 queries:
   - "gene_symbol": "GRXCR2" # Moderate
     "min_date": "2014/01/01"
-    "retmax": 19
+    "retmax": 3 #19
 
   # - "gene_symbol": "SLFN14" # Moderate
   #   "min_date": "2015/01/01"
