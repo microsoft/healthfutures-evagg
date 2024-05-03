@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -19,6 +20,10 @@ from lib.evagg.svc import get_dotenv_settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=DeprecationWarning)  # want to suppress pandas warning
+
+
+def get_git_commit_hash():
+    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
 
 
 @cache
@@ -65,7 +70,6 @@ def update_prompt(prompt_loc, misclass_papers) -> str:
 
 def create_misclassified_dict(filepath) -> dict[str, dict[str, list[str]]]:
     """Create a dictionary of misclassified papers from the benchmarking results."""
-
     # TODO: Update to include missed papers and not just irrelevant ones."""
     # Initialize the irrelevant papers dictionary
     irrelevant_papers = defaultdict(dict)
@@ -108,7 +112,8 @@ def create_misclassified_dict(filepath) -> dict[str, dict[str, list[str]]]:
 # MAIN
 # Run LLM prompt assistant to improve paper finding
 main_prompt_file = "lib/evagg/content/prompts/paper_finding.txt"
-directory = f".out/paper_finding_results_{datetime.today().strftime('%Y-%m-%d')}/"
+
+directory = f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/"
 updated_prompt_file = f"{directory}paper_finding_prompt_{datetime.today().strftime('%H:%M:%S')}.txt"
 os.makedirs(directory, exist_ok=True)
 

@@ -278,27 +278,49 @@ class RareDiseaseFileLibrary(IGetPapers):
         # If the paper doesn't fit in the other categories, add it to the other category.
         return "other"
 
+    def _get_paper_texts(self, paper: Paper) -> Dict[str, Any]:
+        texts: Dict[str, Any] = {}
+        texts["full_text"] = "\n".join(paper.props.get("full_text_sections", []))
+        texts["tables"] = "\n".join(self._get_tables_from_paper(paper).values())
+        return texts
+
+    def _get_tables_from_paper(self, paper: Paper) -> Dict[str, str]:
+        tables = {}
+        root = paper.props.get("full_text_xml")
+        if root is not None:
+            for passage in root.findall("./passage"):
+                if bool(passage.findall("infon[@key='section_type'][.='TABLE']")):
+                    id = passage.find("infon[@key='id']").text
+                    if not id:
+                        logger.error("No id for table, using None as key")
+                    tables[id] = tables.get(id, "") + "\n" + passage.find("text").text
+        return tables
+
     def _get_llm_category(self, paper: Paper) -> str:
-        """Categorize papers based on LLM prompts."""
-        default_settings = {"temperature": 0.8}
-        response = self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding.txt"),
-            system_prompt="Extract field",
-            params={
+        paper_finding_txt = (
+            "paper_finding.txt" if paper.props.get("full_text_xml") is None else "paper_finding_full_text.txt"
+        )
+        parameters = (
+            self._get_paper_texts(paper)
+            if paper_finding_txt == "paper_finding_full_text.txt"
+            else {
                 "abstract": paper.props.get("abstract") or "no abstract",
                 "title": paper.props.get("title") or "no title",
-            },
-            prompt_settings={"prompt_tag": "paper_category", **default_settings},
+            }
         )
-
+        response = self._llm_client.prompt_file(
+            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
+            system_prompt="Extract field",
+            params=parameters,
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+        )
         try:
-            result = json.loads(response)["paper_category"]
-        except Exception:
-            result = response
-
+            result = json.loads(response).get("paper_category", response)
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON response from LLM: {response}")
+            return "other"
         if result in self.CATEGORIES:
             return result
-
         logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
         return "other"
 
