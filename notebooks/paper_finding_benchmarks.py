@@ -348,6 +348,8 @@ def main(args):
 
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
+    if os.path.isfile(args.outdir):
+        os.remove(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
 
     # Save library output table (Evidence Aggregator table) to the same output directory
@@ -533,7 +535,7 @@ if __name__ == "__main__":
         type=str,
         help=(
             "Results output directory. Default is "
-            f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}/"
+            f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/"
         ),
     )
     args = parser.parse_args()
