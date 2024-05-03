@@ -297,6 +297,15 @@ class RareDiseaseFileLibrary(IGetPapers):
                     tables[id] = tables.get(id, "") + "\n" + passage.find("text").text
         return tables
 
+    def _filter_json(self, json_string):
+        # Load the JSON data
+        data = json.loads(json_string)
+
+        # Convert the data back to a string
+        filtered_json = json.dumps(data)
+
+        return filtered_json
+
     async def _get_llm_category(self, paper: Paper) -> str:
         paper_finding_txt = (
             "paper_finding.txt" if paper.props.get("full_text_xml") is None else "paper_finding_full_text.txt"
@@ -316,12 +325,20 @@ class RareDiseaseFileLibrary(IGetPapers):
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
         try:
-            result: str = json.loads(response).get("paper_category", response)
+            # Try to parse the response as JSON
+            result: str = json.loads(response)["paper_category"]
         except json.JSONDecodeError:
-            logger.error(f"Invalid JSON response from LLM: {response}")
+            # If parsing fails, the response is not a valid JSON object
+            print("Response is not a valid JSON object.")
+            result = response
+        except KeyError:
+            # If parsing succeeds but the key "paper_category" is not found, handle the exception
+            print("Key 'paper_category' not found in response.")
+            result = response
 
         if result in self.CATEGORIES:
             return result
+
         logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
         return "other"
 

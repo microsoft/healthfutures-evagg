@@ -31,29 +31,133 @@ refseq_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  # - "gene_symbol": "GRXCR2" # Moderate
-  #   "min_date": "2014/01/01"
-  #   "retmax": 19
+  - "gene_symbol": "ADCY1" # Limited
+    "min_date": "2014/01/01"
+    "retmax": 99
 
-  # - "gene_symbol": "SLFN14" # Moderate
-  #   "min_date": "2015/01/01"
-  #   "retmax": 28
+  - "gene_symbol": "RHOH" # Limited
+    "min_date": "2012/01/01"
+    "retmax": 90
+    
+  - "gene_symbol": "FBN2" # Limited
+    "min_date": "1998/01/01"
+    "retmax": 313
+
+  - "gene_symbol": "ACAT2" # no known gene-disease relationship
+    "min_date": "2021/01/01"
+    "retmax": 87
+
+  - "gene_symbol": "TAPBP" # Moderate
+    "min_date": "2002/01/01"
+    "retmax": 65
+
+  - "gene_symbol": "LRRC10" # no known gene-disease relationship
+    "min_date": "2015/01/01"
+    "retmax": 24
+
+  - "gene_symbol": "EXOC2" # Limited
+    "min_date": "2020/01/01"
+    "retmax": 22
+
+  - "gene_symbol": "CTF1" # Limited
+    "min_date": "2000/01/01"
+    "retmax": 115
+
+  - "gene_symbol": "TOPBP1" # no known gene-disease relationship
+    "min_date": "2014/01/01"
+    "retmax": 260
+
+  - "gene_symbol": "TNNC2" # no known gene-disease relationship
+    "min_date": "2023/01/01"
+    "retmax": 19
+
+  - "gene_symbol": "PEX11A" # no known gene-disease relationship
+    "min_date": "2020/01/01"
+    "retmax": 18
+
+  - "gene_symbol": "KMO" # no known gene-disease relationship
+    "min_date": "2023/01/01"
+    "retmax": 170
+
+  - "gene_symbol": "GRXCR2" # Moderate
+    "min_date": "2014/01/01"
+    "retmax": 19
+
+  - "gene_symbol": "CPT1B" # no known gene-disease relationship
+    "min_date": "2021/01/01"
+    "retmax": 152
+
+  - "gene_symbol": "COG4" # Moderate
+    "min_date": "2009/01/01"
+    "retmax": 63
+
+  - "gene_symbol": "MLH3" # Moderate
+    "min_date": "2001/01/01"
+    "retmax": 273
+
+  - "gene_symbol": "HYAL1" # Moderate
+    "min_date": "1999/01/01"
+    "retmax": 316
+
+  - "gene_symbol": "EMC1" # Moderate
+    "min_date": "2016/01/01"
+    "retmax": 37
+
+  - "gene_symbol": "TOP2B" # Moderate
+    "min_date": "2019/01/01"
+    "retmax": 102
 
   - "gene_symbol": "OTUD7A" # Limited
     "min_date": "2020/01/01"
     "retmax": 26
 
-  # - "gene_symbol": "EXOC2" # Limited
-  #   "min_date": "2020/01/01"
-  #   "retmax": 22
+  - "gene_symbol": "DNAJC7" # Limited
+    "min_date": "2019/01/01"
+    "retmax": 34
 
-  # - "gene_symbol": "TNNC2" # no known gene-disease relationship
-  #   "min_date": "2023/01/01"
-  #   "retmax": 19
+  - "gene_symbol": "SARS1" # Limited
+    "min_date": "2017/01/01"
+    "retmax": 46
 
-  # - "gene_symbol": "PEX11A" # no known gene-disease relationship
-  #   "min_date": "2020/01/01"
-  #   "retmax": 18
+  - "gene_symbol": "NPPA" # no known gene-disease relationship
+    "min_date": "2020/01/01"
+    "retmax": 233
+
+  - "gene_symbol": "RNASEH1" # Limited
+    "min_date": "2019/01/01"
+    "retmax": 62
+
+  - "gene_symbol": "IGKC" # Limited
+    "min_date": "1976/01/01"
+    "retmax": 122
+
+  - "gene_symbol": "RGS9" # Moderate
+    "min_date": "2004/01/01"
+    "retmax": 185
+
+  - "gene_symbol": "SLFN14" # Moderate
+    "min_date": "2015/01/01"
+    "retmax": 28
+
+  - "gene_symbol": "SLC38A9" # no known gene-disease relationship
+    "min_date": "2022/01/01"
+    "retmax": 29
+
+  - "gene_symbol": "B4GAT1" # Moderate
+    "min_date": "2013/01/01"
+    "retmax": 29
+
+  - "gene_symbol": "ZNF423" # Limited
+    "min_date": "2012/01/01"
+    "retmax": 80
+
+  - "gene_symbol": "BAZ2B" # Limited
+    "min_date": "2020/01/01"
+    "retmax": 32
+
+  - "gene_symbol": "JPH2" # Moderate
+    "min_date": "2007/01/01"
+    "retmax": 117
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary

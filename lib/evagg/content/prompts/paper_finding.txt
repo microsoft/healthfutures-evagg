@@ -1,30 +1,19 @@
-Given a paper's title and abstract below, your task is to categorize the paper into "rare disease" or "other". To determine if a paper is related to rare diseases, consider if it meets any of the following criteria:
+Given a paper's title and abstract below, your task is to categorize the paper into "rare disease" or "other". Please follow the definitions below for how to categorize based on the provided criteria.
 
-1. The paper investigates diseases with a low incidence or prevalence, typically affecting a small percentage of the population, as defined by global health organizations or rare disease registries.
-2. It explores genetic disorders or syndromes, including but not limited to unique chromosomal abnormalities, gene mutations, copy number variations (CNVs), and genomic rearrangements that are not common in the general population.
-3. Research encompasses case studies or cohorts that focus on rare clinical presentations, or it analyzes small, specialized patient groups afflicted by rare conditions.
-4. The study involves the identification, analysis, or management of genetic mutations, variants, or dysregulations that are known to be associated with rare diseases or contribute to our understanding of these disorders.
-5. The paper includes diseases listed in, or recognized by, authoritative rare disease registries, databases, or organizations, such as Orphanet, the National Organization for Rare Disorders (NORD), or the Genetic and Rare Diseases Information Center (GARD).
-6. It addresses the pathophysiology, diagnosis, treatment, or healthcare management specifically related to rare diseases, including the development of therapies classified as orphan drugs.
-7. The research contributes to our knowledge of the epidemiology, clinical progression, or treatment outcomes of rare diseases, offering novel insights into these less common conditions.
-8. It covers a broad range of research areas related to rare diseases, such as molecular, cellular, or clinical studies, and may include interdisciplinary or innovative research methods.
-9. The paper discusses genetic syndromes that involve atypical intellectual, developmental, or neurological characteristics that are not widely observed in the general population.
-10. It investigates the impact of genetic variations, including CNVs, that significantly affect the clinical manifestations or prognosis of rare diseases.
-11. The research includes genetic analysis within recognized rare disease loci, functional gene studies pertinent to rare diseases, or genomic profiling that elucidates the genetic landscape of rare conditions.
-12. It delves into the genetic underpinnings or mechanistic pathways in rare disorders or distinctive subsets of more common diseases that exhibit rare features.
+"Rare disease" criteria: Determine if the paper discusses a rare disease, which may involve a patient, cohort, or context of a rare condition. Look for indications such as "rare disease", "mendelian", "monogenic", "monoallelic", "inherited", "germline mutations", "variants of unknown or uncertain significance", "pathogenic", "benign", "de novo", "autosomal dominant", "autosomal recessive", "compound heterozygous", or "zygosity". The disease might be described as having a rare occurrence or being a rarity. References to the ACMG guidelines or known rare diseases should also be noted. If the paper fits any of these criteria, it should be categorized as "rare disease".
 
-Classify the paper as "other" for anything else. Examples include, if it primarily concerns common diseases, broad medical or scientific research not specific to rare diseases, non-disease-specific public health issues, or if rare diseases are not the central focus of the publication.
+"Other" criteria: If the paper does not fit into "rare disease", it should be labeled as "other".
 
-To categorize the paper accurately, thoroughly assess both the title and the abstract, looking for connections to rare diseases. Employ a broad and inclusive approach to identify indications of rare disease research, avoiding overly restrictive criteria that might exclude pertinent studies. Your judgment should reflect the research's relevance and its potential impact on the rare disease community.
-
-Your output response should only be "rare disease" or "other". 
-
-Your response should be in the following format:
-{
-  "paper_category": "rare disease" | "other"
-}
+Use both the title and abstract to make your determination of the category (rare disease other).
 
 Below are the title and abstract:
 
 Title: {{$title}}
 Abstract: {{$abstract}}
+
+Provide your response in the following format:
+{
+  "paper_category": "rare disease" | "other"
+}
+ 
+When considering the provided criteria, remember to focus on the content of the title and abstract without overfitting to specific examples. The goal is to ensure high precision and recall for identifying rare disease papers in general.
