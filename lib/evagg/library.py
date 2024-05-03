@@ -405,18 +405,20 @@ class RareDiseaseFileLibrary(IGetPapers):
         similar_papers = [papers[i] for i in top_indices]
         return similar_papers
 
-    def _get_paper_categorizations(self, paper: Paper, query) -> Dict[str, int]:
-        """Categorize papers with multiple strategies and return the counts of each category."""
-        # Categorize the paper by both keyword and LLM prompt.
-        keyword_cat = self._get_keyword_category(paper)
-
+    def _call_approach_comparisons(self, paper: Paper, query) -> str:
         # TODO: comparing approaches
         # Call the function to compute the cosine similarity
         all_papers = self._get_all_papers(query)
         print("all_papers", all_papers)
-        similar_papers = self._few_shot_examples(paper, all_papers)
-        print("similar_papers", similar_papers)
+        # similar_papers = self._few_shot_examples(paper, all_papers)
+        # print("similar_papers", similar_papers)
         exit()
+
+    def _get_paper_categorizations(self, paper: Paper) -> Dict[str, int]:
+        """Categorize papers with multiple strategies and return the counts of each category."""
+        # Categorize the paper by both keyword and LLM prompt.
+        keyword_cat = self._get_keyword_category(paper)
+
         llm_cat = self._get_llm_category(paper)
 
         # If the keyword and LLM categories agree, just return that category.
