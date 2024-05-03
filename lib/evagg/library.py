@@ -324,45 +324,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
         return "other"
 
-    def _apply_chain_of_thought(self, paper: Paper) -> str:
-        """Categorize papers based on LLM prompts."""
-        response1 = self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(
-                os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"
-            ),
-            system_prompt="Extract field",
-            params={
-                "abstract": paper.props.get("abstract") or "no abstract",
-                "title": paper.props.get("title") or "no title",
-            },
-            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
-        )
-        print("response1", response1)
-        # # Write the output of the variable to a file
-        # with open(os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_process.txt"), "w") as f:
-        #     f.write(str(response1))
-
-        response2 = self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_process.txt"),
-            system_prompt="Extract field",
-            params={
-                "abstract": paper.props.get("abstract") or "no abstract",
-                "title": paper.props.get("title") or "no title",
-            },
-            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
-        )
-
-        try:
-            result: str = json.loads(response)["paper_category"]
-        except Exception:
-            result = response
-
-        if result in self.CATEGORIES:
-            return result
-
-        logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
-        return "other"
-
     def _get_paper_categorizations(self, paper: Paper) -> Dict[str, int]:
         """Categorize papers with multiple strategies and return the counts of each category."""
         # Categorize the paper by both keyword and LLM prompt.
