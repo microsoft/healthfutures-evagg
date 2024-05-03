@@ -8,6 +8,9 @@ from datetime import date
 from functools import cache
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
@@ -296,38 +299,124 @@ class RareDiseaseFileLibrary(IGetPapers):
                     tables[id] = tables.get(id, "") + "\n" + passage.find("text").text
         return tables
 
-    def _get_llm_category(self, paper: Paper) -> str:
-        paper_finding_txt = (
-            "paper_finding.txt" if paper.props.get("full_text_xml") is None else "paper_finding_full_text.txt"
-        )
-        parameters = (
-            self._get_paper_texts(paper)
-            if paper_finding_txt == "paper_finding_full_text.txt"
-            else {
-                "abstract": paper.props.get("abstract") or "no abstract",
-                "title": paper.props.get("title") or "no title",
-            }
-        )
-        response = self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
-            system_prompt="Extract field",
-            params=parameters,
-            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
-        )
-        try:
-            result = json.loads(response).get("paper_category", response)
-        except json.JSONDecodeError:
-            logger.error(f"Invalid JSON response from LLM: {response}")
-            return "other"
-        if result in self.CATEGORIES:
-            return result
-        logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
-        return "other"
+    # def _get_llm_category(self, paper: Paper) -> str:
+    #     paper_finding_txt = (
+    #         "paper_finding.txt" if paper.props.get("full_text_xml") is None else "paper_finding_full_text.txt"
+    #     )
+    #     parameters = (
+    #         self._get_paper_texts(paper)
+    #         if paper_finding_txt == "paper_finding_full_text.txt"
+    #         else {
+    #             "abstract": paper.props.get("abstract") or "no abstract",
+    #             "title": paper.props.get("title") or "no title",
+    #         }
+    #     )
+    #     response = self._llm_client.prompt_file(
+    #         user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
+    #         system_prompt="Extract field",
+    #         params=parameters,
+    #         prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+    #     )
+    #     try:
+    #         # Try to parse the response as JSON
+    #         result: str = json.loads(response)["paper_category"]
+    #     except json.JSONDecodeError:
+    #         # If parsing fails, the response is not a valid JSON object
+    #         print("Response is not a valid JSON object.")
+    #         result = response
+    #     except KeyError:
+    #         # If parsing succeeds but the key "paper_category" is not found, handle the exception
+    #         print("Key 'paper_category' not found in response.")
+    #         result = response
 
-    def _get_paper_categorizations(self, paper: Paper) -> Dict[str, int]:
+    #     if result in self.CATEGORIES:
+    #         return result
+
+    #     logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
+    #     return "other"
+
+    # def _apply_chain_of_thought(self, paper: Paper) -> str:
+    #     """Categorize papers based on LLM prompts."""
+    #     response1 = self._llm_client.prompt_file(
+    #         user_prompt_file=os.path.join(
+    #             os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"
+    #         ),
+    #         system_prompt="Extract field",
+    #         params={
+    #             "abstract": paper.props.get("abstract") or "no abstract",
+    #             "title": paper.props.get("title") or "no title",
+    #         },
+    #         prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+    #     )
+    #     print("response1", response1)
+
+    #     # Write the output of the variable to a file
+    #     with open(os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_process.txt"), "w") as f:
+    #         f.write(str(response1))
+
+    #     response2 = self._llm_client.prompt_file(
+    #         user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_process.txt"),
+    #         system_prompt="Extract field",
+    #         params={
+    #             "abstract": paper.props.get("abstract") or "no abstract",
+    #             "title": paper.props.get("title") or "no title",
+    #         },
+    #         prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+    #     )
+
+    #     try:
+    #         result: str = json.loads(response2)["paper_category"]
+    #     except Exception:
+    #         result = response2
+
+    #     if result in self.CATEGORIES:
+    #         return result
+
+    #     logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
+    #     return "other"
+
+    def _few_shot_examples(self, paper: Paper, papers: Sequence[Paper]) -> Sequence[Paper]:
+        """Given the paper (title and abstract in question), compute the cosine similarity between that paper and the
+
+        other papers in the dataset. Return the top 2 most similar papers."""
+        # Extract the title and abstract of the paper in question
+        title = paper.props.get("title") or ""
+        abstract = paper.props.get("abstract") or ""
+
+        # Extract the titles and abstracts of all the papers in the dataset
+        dataset_titles = [p.props.get("title") or "" for p in papers]
+        dataset_abstracts = [p.props.get("abstract") or "" for p in papers]
+
+        # Combine the titles and abstracts into a single list of documents
+        documents = [title] + [abstract] + dataset_titles + dataset_abstracts
+
+        # Create a TF-IDF vectorizer and transform the documents into TF-IDF vectors
+        vectorizer = TfidfVectorizer()
+        tfidf_matrix = vectorizer.fit_transform(documents)
+
+        # Compute the cosine similarity matrix between the TF-IDF vectors
+        similarity_matrix = cosine_similarity(tfidf_matrix)
+
+        # Get the indices of the top 2 most similar papers (excluding the paper in question)
+        paper_index = 0
+        top_indices = similarity_matrix[paper_index].argsort()[-3:-1][::-1]
+
+        # Return the top 2 most similar papers
+        similar_papers = [papers[i] for i in top_indices]
+        return similar_papers
+
+    def _get_paper_categorizations(self, paper: Paper, query) -> Dict[str, int]:
         """Categorize papers with multiple strategies and return the counts of each category."""
         # Categorize the paper by both keyword and LLM prompt.
         keyword_cat = self._get_keyword_category(paper)
+
+        # TODO: comparing approaches
+        # Call the function to compute the cosine similarity
+        all_papers = self._get_all_papers(query)
+        print("all_papers", all_papers)
+        similar_papers = self._few_shot_examples(paper, all_papers)
+        print("similar_papers", similar_papers)
+        exit()
         llm_cat = self._get_llm_category(paper)
 
         # If the keyword and LLM categories agree, just return that category.
@@ -384,7 +473,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Categorize the papers.
         for paper in papers:
-            categories = self._get_paper_categorizations(paper)
+            categories = self._get_paper_categorizations(paper, query)
             best_category = max(categories, key=lambda k: categories[k])
             assert best_category in self.CATEGORIES and categories[best_category] < 4
 
