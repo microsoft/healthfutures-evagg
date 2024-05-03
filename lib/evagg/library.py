@@ -297,7 +297,7 @@ class RareDiseaseFileLibrary(IGetPapers):
                     tables[id] = tables.get(id, "") + "\n" + passage.find("text").text
         return tables
 
-    def _get_llm_category(self, paper: Paper) -> str:
+    async def _get_llm_category(self, paper: Paper) -> str:
         paper_finding_txt = (
             "paper_finding.txt" if paper.props.get("full_text_xml") is None else "paper_finding_full_text.txt"
         )
@@ -309,7 +309,7 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "title": paper.props.get("title") or "no title",
             }
         )
-        response = self._llm_client.prompt_file(
+        response = await self._llm_client.prompt_file(
             user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
             system_prompt="Extract field",
             params=parameters,
@@ -319,7 +319,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             result: str = json.loads(response).get("paper_category", response)
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON response from LLM: {response}")
-            return "other"
+
         if result in self.CATEGORIES:
             return result
         logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
