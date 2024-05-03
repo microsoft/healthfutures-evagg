@@ -308,14 +308,12 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "title": paper.props.get("title") or "no title",
             }
         )
-        print("HERE")
         response = self._llm_client.prompt_file(
             user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
             system_prompt="Extract field",
             params=parameters,
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
-        print("RESPONSE", response)
         try:
             result = json.loads(response).get("paper_category", response)
         except json.JSONDecodeError:
