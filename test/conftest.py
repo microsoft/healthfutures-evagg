@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from typing import Optional
@@ -66,16 +67,16 @@ def mock_client(arg_loader):
 
                 # Get all the method names from the interfaces.
                 methods = [
-                    name
+                    (name, asyncio.iscoroutinefunction(fn))
                     for interface in interfaces
                     for name, fn in vars(interface).items()
                     if callable(fn) and not name.startswith("_")
                 ]
 
                 # For each method name, create a method that returns the next response.
-                for method_name in methods:
+                for method_name, is_coroutine in methods:
 
-                    def create_method(name):
+                    def create_method(name, is_coroutine):
                         def method(*args, **kwargs):
                             arg_list = list(map(str, args)) + ["=".join(map(str, item)) for item in kwargs.items()]
                             call_string = f"{name}(\n\t{',\n\t'.join(arg_list)}\n)"
@@ -83,10 +84,13 @@ def mock_client(arg_loader):
 
                             self._calls.append((name, *args, *[{k: v} for k, v in kwargs.items()]))
                             return next(self._responses)
+    
+                        async def async_method(*args, **kwargs):
+                            return method(*args, **kwargs)
 
-                        return method
+                        return async_method if is_coroutine else method
 
-                    setattr(self, method_name, create_method(method_name))
+                    setattr(self, method_name, create_method(method_name, is_coroutine))
 
             def last_call(self, method_name: Optional[str] = None):
                 return (
