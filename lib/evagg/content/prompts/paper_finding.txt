@@ -19,7 +19,8 @@ To appropriately categorize the paper, thoroughly assess both the title and the 
 
 Provide your response as a valid JSON object, using the format below. The only valid values in your output response should only be "rare disease" or "other". 
 
-Your response should be in the following format:
+Your response should be in the following output format:
+
 {
   "paper_category": "rare disease" | "other"
 }
