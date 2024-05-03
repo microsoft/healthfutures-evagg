@@ -1,4 +1,4 @@
-Given a paper's title and abstract below, your task is to categorize the paper into "rare disease" or "other". To determine if a paper is related to rare diseases, consider if it meets any of the following criteria:
+Given the full paper (title and abstract followed by the full paper and figure captions) below, your task is to categorize the paper into "rare disease" or "other". To determine if a paper is related to rare diseases, consider if it meets any of the following criteria:
 
 1. The paper investigates diseases with a low incidence or prevalence, typically affecting a small percentage of the population, as defined by global health organizations or rare disease registries.
 2. It explores genetic disorders or syndromes, including but not limited to unique chromosomal abnormalities, gene mutations, copy number variations (CNVs), and genomic rearrangements that are not common in the general population.
@@ -15,7 +15,7 @@ Given a paper's title and abstract below, your task is to categorize the paper i
 
 Classify the paper as "other" for anything else. Examples include, if it primarily concerns common diseases, broad medical or scientific research not specific to rare diseases, non-disease-specific public health issues, or if rare diseases are not the central focus of the publication.
 
-To categorize the paper accurately, thoroughly assess both the title and the abstract, looking for connections to rare diseases. Employ a broad and inclusive approach to identify indications of rare disease research, avoiding overly restrictive criteria that might exclude pertinent studies. Your judgment should reflect the research's relevance and its potential impact on the rare disease community.
+To categorize the paper accurately, thoroughly assess the full text, looking for connections to rare diseases. Employ a broad and inclusive approach to identify indications of rare disease research, avoiding overly restrictive criteria that might exclude pertinent studies. Your judgment should reflect the research's relevance and its potential impact on the rare disease community.
 
 Your output response should only be "rare disease" or "other". 
 
@@ -24,7 +24,4 @@ Your response should be in the following format:
   "paper_category": "rare disease" | "other"
 }
 
-Below are the title and abstract:
-
-Title: {{$title}}
-Abstract: {{$abstract}}
+Below is the full text, which has the title and abstract followed by the full paper and figure captions: {{$full_text}}
