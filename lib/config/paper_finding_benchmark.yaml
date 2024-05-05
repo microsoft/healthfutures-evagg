@@ -31,7 +31,7 @@ refseq_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: /home/azureuser/ev-agg-exp/lib/config/benchmark_queries.yaml
+  #di_factory: /home/azureuser/ev-agg-exp/lib/config/benchmark_queries.yaml
   - "gene_symbol": "GRXCR2" # Moderate
     "min_date": "2014/01/01"
     "retmax": 19
