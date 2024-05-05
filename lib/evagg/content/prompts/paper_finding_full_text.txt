@@ -17,11 +17,8 @@ Classify the paper as "other" for anything else. Examples include, if it primari
 
 To appropriately categorize the paper, thoroughly assess the full text, seeking connections to rare diseases. Use a broad and inclusive strategy to identify signs of rare disease research, avoiding overly restrictive criteria that may exclude relevant studies. Your judgment should reflect the research's intent and its potential significance to the rare disease community.
 
-Provide your response as a valid JSON object, using the format below. The only valid values in your output response should only be "rare disease" or "other". 
+Provide your response as a single string: "rare disease" or "other" based on your classification. The only valid values in your output response should be "rare disease" or "other". 
 
-Your response should be in the following output format:
-{
-  "paper_category": "rare disease" | "other"
-}
+Below is the full text, which has the title and abstract followed by the full paper and captions: 
 
-Below is the full text, which has the title and abstract followed by the full paper and captions: {{$full_text}}
+Full text: {{$full_text}}

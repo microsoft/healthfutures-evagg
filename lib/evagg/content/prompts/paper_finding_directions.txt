@@ -1,6 +1,6 @@
 Given a paper's title and abstract below, your task is to categorize the paper into "rare disease" or "other". Please explain the process that you would go through to correctly classify papers into "rare disease" or "other".
 
-You can use both the title and abstract to explain how you would go  your determination of the category (rare disease or other).
+You can use both the title and abstract to explain how you would go about determinating the category ("rare disease" or "other").
 
 When considering the provided criteria, remember to focus on the content of the title and abstract without overfitting to specific examples. The goal is to ensure high precision and recall for identifying rare disease papers in general.
 
@@ -9,4 +9,4 @@ Below are the title and abstract:
 Title: {{$title}}
 Abstract: {{$abstract}}
 
-Provide your response in sentence and paragraph format.
+Provide your process response clearly and precisely, in sentence and/or paragraph format.
