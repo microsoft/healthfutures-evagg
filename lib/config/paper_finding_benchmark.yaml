@@ -32,9 +32,9 @@ refseq_client:
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   di_factory: /home/azureuser/ev-agg-exp/lib/config/benchmark_queries.yaml
-  # - "gene_symbol": "GRXCR2" # Moderate
-  #   "min_date": "2014/01/01"
-  #   "retmax": 3 #19
+  - "gene_symbol": "GRXCR2" # Moderate
+    "min_date": "2014/01/01"
+    "retmax": 19
 
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
