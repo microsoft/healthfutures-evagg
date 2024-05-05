@@ -328,54 +328,54 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return "other"
 
-    # def _apply_chain_of_thought(self, paper: Paper) -> str:
-    #     """Categorize papers based on LLM prompts."""
+    def _apply_chain_of_thought(self, paper: Paper) -> str:
+        """Categorize papers based on LLM prompts."""
 
-    #     # flexible
-    #     response1 = self._llm_client.prompt_file(
-    #         user_prompt_file=os.path.join(
-    #             os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"
-    #         ),
-    #         system_prompt="Extract field",
-    #         params={
-    #             "abstract": paper.props.get("abstract") or "no abstract",
-    #             "title": paper.props.get("title") or "no title",
-    #         },
-    #         prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
-    #     )
-    #     # print("response1", response1)
+        # flexible
+        response1 = self._llm_client.prompt_file(
+            user_prompt_file=os.path.join(
+                os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"
+            ),
+            system_prompt="Extract field",
+            params={
+                "abstract": paper.props.get("abstract") or "no abstract",
+                "title": paper.props.get("title") or "no title",
+            },
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+        )
+        print("response1", response1)
 
-    #     # Write the output of the variable to a file
-    #     with open(
-    #         os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_process_{paper.id}.txt"), "w"
-    #     ) as f:
-    #         f.write(
-    #             str(response1)
-    #         )  # TODO: Saving the paper findind process per paper is useful for benchmarking, not necessary for the
-    #         # final product. Should this instead be overwritten w/ each new paper (e.g. save paper_finding_process.txt)?
+        # Write the output of the variable to a file
+        with open(
+            os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_process_{paper.id}.txt"), "w"
+        ) as f:
+            f.write(
+                str(response1)
+            )  # TODO: Saving the paper findind process per paper is useful for benchmarking, not necessary for the
+            # final product. Should this instead be overwritten w/ each new paper (e.g. save paper_finding_process.txt)?
 
-    #     # flexible
-    #     response2 = self._llm_client.prompt_file(
-    #         user_prompt_file=os.path.join(
-    #             os.path.dirname(__file__), "content", "prompts", "paper_finding_{paper.id}.txt"
-    #         ),
-    #         system_prompt="Extract field",
-    #         params={
-    #             "abstract": paper.props.get("abstract") or "no abstract",
-    #             "title": paper.props.get("title") or "no title",
-    #         },
-    #         prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
-    #     )
+        # flexible
+        response2 = self._llm_client.prompt_file(
+            user_prompt_file=os.path.join(
+                os.path.dirname(__file__), "content", "prompts", "paper_finding_{paper.id}.txt"
+            ),
+            system_prompt="Extract field",
+            params={
+                "abstract": paper.props.get("abstract") or "no abstract",
+                "title": paper.props.get("title") or "no title",
+            },
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+        )
 
-    #     if isinstance(response2, str):
-    #         result = response2
-    #     else:
-    #         logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response2}")
+        if isinstance(response2, str):
+            result = response2
+        else:
+            logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response2}")
 
-    #     if result in self.CATEGORIES:
-    #         return result
+        if result in self.CATEGORIES:
+            return result
 
-    #     return "other"
+        return "other"
 
     # def _few_shot_examples(self, paper: Paper, papers: Sequence[Paper]) -> Sequence[Paper]:
     #     """Given the paper (title and abstract in question), compute the cosine similarity between that paper and the
@@ -425,10 +425,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         keyword_cat = self._get_keyword_category(paper)
         # print("keyword_cat", keyword_cat)
         # TODO: uncomment the line below to use the chain of thought approach
-        llm_cat = self._get_llm_category(paper)
-        # response = self._apply_chain_of_thought(paper)
-        # print("response", response)
-        # exit()
+        # llm_cat = self._get_llm_category(paper)
+        response = self._apply_chain_of_thought(paper)
+        print("response", response)
+        exit()
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
             return {keyword_cat: 2}
