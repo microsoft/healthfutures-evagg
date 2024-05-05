@@ -343,7 +343,18 @@ class RareDiseaseFileLibrary(IGetPapers):
             },
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
-        print("response1", response1)
+
+        # Append output requirements to response1 (process) before saving
+        phrases = f"""
+                Provide your response as a single string: "rare disease" or "other" based on your classification. The only valid values in your output response should be "rare disease" or "other". 
+
+                Below are the title and abstract:
+
+                Title: {paper.props.get('title') or 'no title'}
+                Abstract: {paper.props.get('abstract') or 'no abstract'}
+                """
+
+        response1 = str(response1) + phrases
 
         # Write the output of the variable to a file
         with open(
