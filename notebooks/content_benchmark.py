@@ -34,7 +34,7 @@ INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
 # TODO, just get the gene list from the yaml?
-RESTRICT_TRUTH_GENES_TO_OUTPUT = False  # if True, only compare the genes in the output set to the truth set.
+RESTRICT_TRUTH_GENES_TO_OUTPUT = True  # if True, only compare the genes in the output set to the truth set.
 
 HPO_SIMILARITY_THRESHOLD = (
     0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
@@ -394,10 +394,7 @@ def _fuzzy_match_hpo_sets(left_set: str, right_set: str) -> Tuple[list[str], lis
     left_result = hpo.compare_set(left_terms, right_terms)
     right_result = hpo.compare_set(right_terms, left_terms)
 
-    matched = [f"<-{k}" for k, v in left_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD] + [
-        f"->{k}" for k, v in right_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD
-    ]
-    matched = list(set(matched))
+    matched = [f"{k}<>{v[1]}" for k, v in left_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
 
     left_missed = [k for k, v in left_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
     right_missed = [k for k, v in right_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
@@ -428,10 +425,14 @@ if CONTENT_COLUMNS:
 
         for idx, row in shared_df.iterrows():
             if match[idx]:  # type: ignore
-                print(f"  Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
+                print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
+                pass
             else:
                 # print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
                 print(f"##Mismatch ({idx}): {pheno_stats[idx]}")
+                print(f"  Truth: {row[f'{column}_truth']}")
+                print(f"  Output: {row[f'{column}_output']}")
+                pass
         print()
 
 # %%
