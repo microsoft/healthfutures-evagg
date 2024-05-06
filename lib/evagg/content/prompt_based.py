@@ -130,9 +130,22 @@ class PromptBasedContentExtractor(IExtractFields):
                 if len(ids) > 1:
                     logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
                 id = ids[0]
-                if not self._phenotype_searcher.exists(id.strip("()")):
-                    logger.info(f"Unable to match {m} as an HPO term, searching for alternatives.")
-                    unmatched.append(m.replace(id, "").strip())
+                move = False
+                # Obtain the HPO term based on the HPO id.
+                if not bool(id_result := self._phenotype_searcher.search(id.strip("()"))):
+                    logger.info(f"Term {m} contains invalid HPO id.")
+                    move = True
+                # Obtain the HPO term based on the string description.
+                if not bool(desc_result := self._phenotype_searcher.search(m.split("(")[0].strip())):
+                    logger.info(f"Term {m} contains invalid HPO description.")
+                    move = True
+                # Only keep this term if both exist and they match.
+                if not id_result or not desc_result or id_result != desc_result:
+                    logger.info(f"Term {m} has mismatched HPO description {desc_result} and HPO id {id_result}.")
+                    move = True
+                if move:
+                    # Strip the HPO identifier and move it to unmatched.
+                    unmatched.append(m.split("(")[0].strip())
                     matched.remove(m)
 
         # Try to use a query-based search for the unmatched terms.
@@ -141,7 +154,6 @@ class PromptBasedContentExtractor(IExtractFields):
             if result:
                 matched.append(f"{result['name']} ({result['id']})")
             else:
-                # If we can't find a match, just use the original term.
                 matched.append(u)
 
         return matched

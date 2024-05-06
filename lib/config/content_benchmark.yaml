@@ -46,24 +46,24 @@ llm_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  - "gene_symbol": "CTF1"
+  # - "gene_symbol": "CTF1"
   - "gene_symbol": "FBN2"
   - "gene_symbol": "EXOC2"
-  - "gene_symbol": "RNASEH1"
-  - "gene_symbol": "DNAJC7"
-  - "gene_symbol": "ZNF423"
+  # - "gene_symbol": "RNASEH1"
+  # - "gene_symbol": "DNAJC7"
+  # - "gene_symbol": "ZNF423"
   - "gene_symbol": "SARS1"
-  - "gene_symbol": "BAZ2B"
-  - "gene_symbol": "B4GAT1"
-  - "gene_symbol": "TOP2B"
+  # - "gene_symbol": "BAZ2B"
+  # - "gene_symbol": "B4GAT1"
+  # - "gene_symbol": "TOP2B"
   - "gene_symbol": "SLFN14"
-  - "gene_symbol": "MLH3"
-  - "gene_symbol": "COG4"
-  - "gene_symbol": "JPH2"
-  - "gene_symbol": "GRXCR2"
-  - "gene_symbol": "EMC1"
-  - "gene_symbol": "LRRC10"
-  - "gene_symbol": "TOPBP1"
+  # - "gene_symbol": "MLH3"
+  # - "gene_symbol": "COG4"
+  # - "gene_symbol": "JPH2"
+  # - "gene_symbol": "GRXCR2"
+  # - "gene_symbol": "EMC1"
+  # - "gene_symbol": "LRRC10"
+  # - "gene_symbol": "TOPBP1"
 library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
@@ -79,13 +79,13 @@ extractor:
     - transcript
     - individual_id
     - phenotype
-    - zygosity
-    - variant_inheritance
-    - variant_type
-    - functional_study
-    - gnomad_frequency
-    - study_type
-    - citation    
+    # - zygosity
+    # - variant_inheritance
+    # - variant_type
+    # - functional_study
+    # - gnomad_frequency
+    # - study_type
+    # - citation    
   llm_client: "{{llm_client}}"
   phenotype_searcher:
     di_factory: lib.evagg.ref.HPOReference
