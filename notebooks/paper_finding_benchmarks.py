@@ -16,6 +16,7 @@ other categories
 import argparse
 
 # Libraries
+import glob
 import json
 import logging
 import os
@@ -354,6 +355,11 @@ def main(args):
 
     # Save library output table (Evidence Aggregator table) to the same output directory
     shutil.copy(args.pipeline_output, args.outdir)
+
+    # Move the paper finding process prompts into the benchmarking directory
+    files = glob.glob("lib/evagg/content/prompts/paper_finding_process_*.txt")
+    for file in files:
+        shutil.move(file, args.outdir)
 
     # Compile and save the benchmarking results to a file
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
