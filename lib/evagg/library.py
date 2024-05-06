@@ -330,45 +330,63 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     def _apply_chain_of_thought(self, paper: Paper) -> str:
         """Categorize papers based on LLM prompts."""
-
+        # Check if the paper is full text or not
+        if paper.props.get("full_text_xml") is not None:
+            parameters = self._get_paper_texts(paper)
+        else:
+            parameters = {
+                "abstract": paper.props.get("abstract") or "no abstract",
+                "title": paper.props.get("title") or "no title",
+            }
+        #print("parameters", parameters)
+        
         # flexible
-        response1 = self._llm_client.prompt_file(
+        process_response = self._llm_client.prompt_file(
             user_prompt_file=os.path.join(
                 os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"
             ),
             system_prompt="Extract field",
-            params={
-                "abstract": paper.props.get("abstract") or "no abstract",
-                "title": paper.props.get("title") or "no title",
-            },
+            params=parameters,
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
+        
+        # Append output requirements to process_response before saving
+        if paper.props.get("full_text_xml") is not None:
+            phrases = (
+                "\n It is essential that you provide your response as a single string: "
+                "\"rare disease\" or \"other\" based on your classification. "
+                "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
+                f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
+                f"Full text: {parameters['full_text']}\n"
+            )
+        else:
+            phrases = (
+                "\n It is essential that you provide your response as a single string: "
+                "\"rare disease\" or \"other\" based on your classification. "
+                "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
+                f"Below are the title and abstract:\n\n"
+                f"Title: {paper.props.get('title') or 'no title'}\n"
+                f"Abstract: {paper.props.get('abstract') or 'no abstract'}"
+            )
 
-        # Append output requirements to response1 (process) before saving
-        phrases = f"""
-                Provide your response as a single string: "rare disease" or "other" based on your classification. The only valid values in your output response should be "rare disease" or "other". 
-
-                Below are the title and abstract:
-
-                Title: {paper.props.get('title') or 'no title'}
-                Abstract: {paper.props.get('abstract') or 'no abstract'}
-                """
-
-        response1 = str(response1) + phrases
+        process_response = str(process_response) + phrases
 
         # Write the output of the variable to a file
         with open(
-            os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_process_{paper.id}.txt"), "w"
+            os.path.join(
+                os.path.dirname(__file__), "content", "prompts",
+                f"paper_finding_process_{paper.id.replace('pmid:', '')}.txt"
+            ),
+            "w"
         ) as f:
-            f.write(
-                str(response1)
-            )  # TODO: Saving the paper findind process per paper is useful for benchmarking, not necessary for the
-            # final product. Should this instead be overwritten w/ each new paper (e.g. save paper_finding_process.txt)?
+            f.write(str(process_response))
+            # TODO: Saving the paper finding process per paper is useful for benchmarking, not necessary for the
+            # final product. Should I not save this to .out and instead just override w/ each new paper?
 
         # flexible
-        response2 = self._llm_client.prompt_file(
+        classification_response = self._llm_client.prompt_file(
             user_prompt_file=os.path.join(
-                os.path.dirname(__file__), "content", "prompts", "paper_finding_{paper.id}.txt"
+                os.path.dirname(__file__), "content", "prompts", f"paper_finding_process_{paper.id.replace("pmid:", "")}.txt"
             ),
             system_prompt="Extract field",
             params={
@@ -377,11 +395,13 @@ class RareDiseaseFileLibrary(IGetPapers):
             },
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
-
-        if isinstance(response2, str):
-            result = response2
+        #print("classification_response", classification_response)
+        if isinstance(classification_response, str):
+            result = classification_response
         else:
-            logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response2}")
+            logger.warning(
+                f"LLM failed to return a valid categorization response for {paper.id}: {classification_response}"
+            )
 
         if result in self.CATEGORIES:
             return result
@@ -437,9 +457,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         # print("keyword_cat", keyword_cat)
         # TODO: uncomment the line below to use the chain of thought approach
         # llm_cat = self._get_llm_category(paper)
-        response = self._apply_chain_of_thought(paper)
-        print("response", response)
-        exit()
+        llm_cat = self._apply_chain_of_thought(paper)
+        
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
             return {keyword_cat: 2}
