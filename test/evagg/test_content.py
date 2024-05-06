@@ -70,10 +70,10 @@ def test_prompt_based_content_extractor_valid_fields(
     )
 
     prompts = mock_prompt(
-        json.dumps({"phenotype": ["test"]}),
-        json.dumps({"matched": ["test (HP:0123)"], "unmatched": []}),
         json.dumps({"zygosity": fields["zygosity"]}),
         json.dumps({"variant_inheritance": fields["variant_inheritance"]}),
+        json.dumps({"phenotype": ["test"]}),
+        json.dumps({"matched": ["test (HP:0123)"], "unmatched": []}),
     )
     pheno = mock_phenotype(True)
     content_extractor = PromptBasedContentExtractor(
