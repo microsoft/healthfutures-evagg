@@ -30,9 +30,7 @@ refseq_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  - "gene_symbol": "EXOC2"
-    "min_date": "2020/01/01"
-    "retmax": 22
+  di_factory: lib/config/benchmark_queries.yaml
   
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
