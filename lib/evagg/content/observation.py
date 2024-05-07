@@ -9,6 +9,7 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
+from .fulltext import get_section_text
 from .interfaces import ICompareVariants, IFindObservations, Observation
 
 PatientVariant = Tuple[HGVSVariant, str]
@@ -29,7 +30,7 @@ class TruthsetObservationFinder(IFindObservations):
         The returned observation objects are logically "clinical" observations of a variant in a human. Each object
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        if not (full_text := "\n".join(paper.props.get("full_text_sections", []))):
+        if not (full_text := get_section_text(paper.props.get("fulltext_xml"))):
             logger.info(f"Skipping {paper.id} because full text could not be retrieved")
             return []
 
@@ -350,21 +351,6 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    def _get_table_text(self, doc: Any) -> List[str]:
-        """Extract the text from table elements in the XML full-text document."""
-        if not doc:
-            return []
-        tables: Dict[str, Any] = {}
-        # Find all "passage" elements that have a child "infon" element with key="section_type" and value="TABLE"
-        for passage in doc.findall("./passage/infon[@key='section_type'][.='TABLE']/.."):
-            id = id_node.text if (id_node := passage.find("infon[@key='id']")) else "unknown"
-            table_text = passage.find("text").text
-            if id in tables:
-                tables[id] += "\n" + table_text
-            else:
-                tables[id] = table_text
-        return list(tables.values())
-
     async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
@@ -374,14 +360,16 @@ uninterrupted sequences of whitespace characters.
         The returned observation objects are logically "clinical" observations of a variant in a human. Each object
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        if not (full_text := "\n".join(paper.props.get("full_text_sections", []))):
+        if not paper.props.get("fulltext_xml"):
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
             return []
 
-        table_texts = self._get_table_text(paper.props.get("full_text_xml"))
+        full_text = get_section_text(paper.props["fulltext_xml"])
+        table_text = get_section_text(paper.props["fulltext_xml"], include=["TABLE"])
+
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
-            full_text=full_text, focus_texts=table_texts, gene_symbol=gene_symbol
+            full_text=full_text, focus_texts=table_text, gene_symbol=gene_symbol
         )
         logger.info(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
@@ -406,7 +394,7 @@ uninterrupted sequences of whitespace characters.
         # if there are no variants (regardless of patients), then there are no observations to report.
         if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
-            patients = await self._find_patients(full_text=full_text, focus_texts=table_texts)
+            patients = await self._find_patients(full_text=full_text, focus_texts=table_text)
             logger.info(f"Found the following patients in {paper}: {patients}")
             descriptions = list(variants_by_description.keys())
 

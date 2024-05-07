@@ -424,7 +424,7 @@ def get_pmcid(pmid: str) -> str | None:
 
 def has_full_text(pmid: str) -> bool:
     if paper := get_paper(pmid):
-        return paper.props.get("full_text_xml", None) is not None
+        return paper.props.get("fulltext_xml", None) is not None
     return False
 
 
