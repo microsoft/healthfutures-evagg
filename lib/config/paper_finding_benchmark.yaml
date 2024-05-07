@@ -32,24 +32,10 @@ refseq_client:
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   #di_factory: lib/config/benchmark_queries.yaml
-  - "gene_symbol": "GRXCR2" # Moderate
+  - "gene_symbol": "ADCY1" # Limited
     "min_date": "2014/01/01"
-    "retmax": 19
-  - "gene_symbol": "SLFN14" # Moderate
-    "min_date": "2015/01/01"
-    "retmax": 28
-  - "gene_symbol": "OTUD7A" # Limited
-    "min_date": "2020/01/01"
-    "retmax": 26
-  - "gene_symbol": "EXOC2" # Limited
-    "min_date": "2020/01/01"
-    "retmax": 22
-  - "gene_symbol": "TNNC2" # no known gene-disease relationship
-    "min_date": "2023/01/01"
-    "retmax": 19
-  - "gene_symbol": "PEX11A" # no known gene-disease relationship
-    "min_date": "2020/01/01"
-    "retmax": 18
+    "retmax": 3 #99
+
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
