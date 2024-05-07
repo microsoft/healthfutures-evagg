@@ -71,8 +71,7 @@ PAPER_BASE_PROPS = {
     "link",
 }
 PAPER_FULL_TEXT_PROPS = {
-    "full_text_xml",
-    "full_text_sections",
+    "fulltext_xml",
 }
 
 
@@ -147,25 +146,22 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         derived_props["link"] = f"https://pubmed.ncbi.nlm.nih.gov/{props['pmid']}/"
         return derived_props
 
-    def _get_full_text_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_full_text(self, props: Dict[str, Any]) -> Any:
         """Get the full text of a paper from PMC."""
-        text_props: Dict[str, Any] = {"full_text_xml": None, "full_text_sections": []}
         if not (pmcid := props["pmcid"]) or not props["is_pmc_oa"] or props["license"].find("nd") >= 0:
             logger.debug(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
-            return text_props
+            return None
 
         try:
             root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
         except Exception as e:
             logger.warning(f"Unexpected error fetching BioC entry for {pmcid}: {e}")
-            return text_props
+            return None
 
         # Find and return the specific document.
-        text_props["full_text_xml"] = doc = root.find(f"./document[id='{pmcid.upper().lstrip('PMC')}']")
-        text_props["full_text_sections"] = [p.text for p in doc.findall("./passage/text")] if doc is not None else []
-        if doc is None:
+        if (doc := root.find(f"./document[id='{pmcid.upper().lstrip('PMC')}']")) is None:
             logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
-        return text_props
+        return doc
 
     # IPaperLookupClient
     def search(self, query: str, **extra_params: Dict[str, Any]) -> Sequence[str]:
@@ -186,8 +182,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         props.update(self._get_derived_props(props))
         assert PAPER_BASE_PROPS == set(props.keys()), f"Missing properties: {PAPER_BASE_PROPS ^ set(props.keys())}"
         if include_fulltext:
-            props.update(self._get_full_text_props(props))
-            assert set(props.keys()) - PAPER_BASE_PROPS == PAPER_FULL_TEXT_PROPS
+            props["fulltext_xml"] = self._get_full_text(props)
         return Paper(**props)
 
     # IGeneLookupClient

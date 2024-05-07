@@ -321,7 +321,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         ]
 
         if self._require_full_text:
-            papers = [p for p in papers if p.props.get("full_text_xml")]
+            papers = [p for p in papers if p.props.get("fulltext_xml")]
 
         logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 
