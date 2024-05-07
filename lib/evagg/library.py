@@ -182,7 +182,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         paper_client: IPaperLookupClient,
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
-        require_full_text: bool = False,
     ) -> None:
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
@@ -190,14 +189,12 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
-            require_full_text (bool, optional): Whether to require full text for the paper. Defaults to False.
         """
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
         self._allowed_categories = allowed_categories if allowed_categories is not None else ["rare disease"]
-        self._require_full_text = require_full_text
 
     def _get_keyword_category(self, paper: Paper) -> str:
         """Categorize papers based on keywords in the title and abstract."""
@@ -318,10 +315,8 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper
             for paper_id in paper_ids
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
+            and paper.props["fulltext_xml"] is not None
         ]
-
-        if self._require_full_text:
-            papers = [p for p in papers if p.props.get("fulltext_xml")]
 
         logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 

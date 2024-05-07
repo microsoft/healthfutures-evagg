@@ -184,7 +184,6 @@ library:
       filter_prefix: "AZURE_OPENAI_"
   allowed_categories:
     - "rare disease"
-  require_full_text: true
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
