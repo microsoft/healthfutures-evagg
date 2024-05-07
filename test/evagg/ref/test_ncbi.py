@@ -104,7 +104,7 @@ def test_pubmed_fetch(mock_web_client, json_load):
 def test_pubmed_pmc_oa_fetch(mock_web_client):
     web_client = mock_web_client("efetch_pubmed_paper_31427284.xml", "ncbi_pmc_is_oa_PMC6824399.xml")
     result = NcbiLookupClient(web_client).fetch("31427284")
-    assert result and result.props["is_pmc_oa"] is False
+    assert result and result.props["can_access"] is False
 
 
 def test_pubmed_pmc_full_text(mock_web_client):
@@ -112,7 +112,7 @@ def test_pubmed_pmc_full_text(mock_web_client):
         "efetch_pubmed_paper_33688625.xml", "ncbi_pmc_is_oa_PMC7933980.xml", "ncbi_bioc_full_text_PMC7933980.xml"
     )
     result = NcbiLookupClient(web_client).fetch("33688625", include_fulltext=True)
-    assert result and result.props["is_pmc_oa"] is True
+    assert result and result.props["can_access"] is True
     assert (
         get_section_text(result.props["fulltext_xml"], include=["TITLE"])
         == "Saul-Wilson Syndrome Missense Allele Does Not Show Obvious Golgi Defects in a C. elegans Model"
@@ -130,7 +130,7 @@ def test_pubmed_fetch_missing(mock_web_client, xml_parse):
 
 def test_annotation(mock_web_client):
     web_client = mock_web_client({"foo": "bar"})
-    paper = Paper(id="123", pmcid="PMC1234567", is_pmc_oa=True)
+    paper = Paper(id="123", pmcid="PMC1234567", can_access=True)
     annotations = NcbiLookupClient(web_client).annotate(paper)
     assert isinstance(annotations, dict)
     assert annotations.get("foo") == "bar"
@@ -152,7 +152,7 @@ def test_no_annotation(mock_web_client):
     annotations = NcbiLookupClient(web_client).annotate(paper_no_pmcid)
     assert annotations == {}
 
-    paper_no_oa = Paper(id="123", pmcid="PMC1234567", is_pmc_oa=False)
+    paper_no_oa = Paper(id="123", pmcid="PMC1234567", can_access=False)
     annotations = NcbiLookupClient(web_client).annotate(paper_no_oa)
     assert annotations == {}
 

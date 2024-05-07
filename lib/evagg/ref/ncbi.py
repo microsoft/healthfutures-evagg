@@ -66,7 +66,7 @@ PAPER_BASE_PROPS = {
     "doi",
     "pmcid",
     "citation",
-    "is_pmc_oa",
+    "can_access",
     "license",
     "link",
 }
@@ -111,8 +111,8 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         return props
 
     def _get_license_props(self, pmcid: str) -> Dict[str, Any]:
-        """Get the OA status for a paper from the PMC OA API."""
-        props = {"is_pmc_oa": False, "license": "unknown"}
+        """Get the access status for a paper from the PMC OA API."""
+        props = {"can_access": False, "license": "unknown"}
         if not pmcid:
             return props
 
@@ -129,13 +129,12 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             elif err_code:
                 logger.warning(f"Unexpected PMC OA error code: {err_code}")
         else:
-            props["is_pmc_oa"] = True
+            props["can_access"] = True
             props["license"] = license = record.attrib.get("license", "unknown")
-            logger.debug(f"PMC OA record found for {pmcid}")
             if "-ND" in license:
                 # TODO if it has a "no derivatives" license, then we don't consider it open access.
                 logger.debug(f"PMC OA record found for {pmcid} but has a no-derivatives license: {license}")
-                props["is_pmc_oa"] = False
+                props["can_access"] = False
 
         return props
 
@@ -148,10 +147,10 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
     def _get_full_text(self, props: Dict[str, Any]) -> Any:
         """Get the full text of a paper from PMC."""
-        if not (pmcid := props["pmcid"]) or not props["is_pmc_oa"] or props["license"].find("nd") >= 0:
+        pmcid = props["pmcid"]
+        if not props["can_access"]:
             logger.debug(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
             return None
-
         try:
             root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
         except Exception as e:
@@ -210,8 +209,8 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
     # IAnnotateEntities
     def annotate(self, paper: Paper) -> Dict[str, Any]:
         """Annotate the paper with entities from PubTator."""
-        if not paper.props.get("pmcid") or not paper.props.get("is_pmc_oa"):
-            logger.warning(f"Cannot annotate, paper '{paper}' is not in PMC-OA.")
+        if not paper.props.get("can_access", False):
+            logger.warning(f"Cannot annotate, paper '{paper}' is not licensed for access.")
             return {}
 
         url = self.PUBTATOR_GET_URL.format(fmt="json", id=paper.props["pmcid"])
