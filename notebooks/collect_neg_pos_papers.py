@@ -99,7 +99,7 @@ def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters):
     texts = [preprocess_text((title or "") + " " + (abstract or "")) for _, _, title, abstract in papers]
     vectorizer = TfidfVectorizer()
     X = vectorizer.fit_transform(texts)
-    kmeans = KMeans(n_clusters=k_means_clusters)  # Adjust the number of clusters as needed
+    kmeans = KMeans(n_clusters=k_means_clusters, random_state=args.seed)  # Adjust the number of clusters as needed
     kmeans.fit(X)
     clusters = {i: [] for i in range(kmeans.n_clusters)}
     for i, label in enumerate(kmeans.labels_):
@@ -150,17 +150,19 @@ def main(args):
 
         with open(args.json_file_name, "w") as f:
             json.dump(gene_pmid_title_abstract_dict, f)
-        shutil.copy(args.json_file_name, args.outdir)
 
         with open(args.pickle_file_name, "wb") as f:
             pickle.dump(gene_pmid_title_abstract_dict, f)
-        shutil.copy(args.pickle_file_name, args.outdir)
 
     else:
         logger.info("Reading the truth data pickle file: ", args.pickle_file_name)
 
         with open(args.pickle_file_name, "rb") as f:
             gene_pmid_title_abstract_dict = pickle.load(f)
+
+    # Ensure that you pair the .json and .pkl files with the few shot results
+    shutil.copy(args.json_file_name, args.outdir)
+    shutil.copy(args.pickle_file_name, args.outdir)
 
     # Cluster the papers
     clusters = cluster_papers(gene_pmid_title_abstract_dict, args.k_means_clusters)
