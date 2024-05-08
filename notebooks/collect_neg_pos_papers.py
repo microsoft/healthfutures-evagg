@@ -33,8 +33,8 @@ from lib.di import DiContainer
 from lib.evagg.ref import IPaperLookupClient
 
 logger = logging.getLogger(__name__)
-nltk.download("stopwords")
-nltk.download("punkt")
+nltk.download("stopwords", quiet=True)
+nltk.download("punkt", quiet=True)
 
 
 def get_git_commit_hash():
@@ -136,7 +136,7 @@ def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters):
 
 def main(args):
 
-    # Ensure that output directory is created (and overwritten if it already exists)
+    # Ensure that the output directory is created (and overwritten if it already exists)
     if os.path.isfile(args.outdir):
         os.remove(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
@@ -150,9 +150,12 @@ def main(args):
 
         with open(args.json_file_name, "w") as f:
             json.dump(gene_pmid_title_abstract_dict, f)
+        shutil.copy(args.json_file_name, args.outdir)
 
         with open(args.pickle_file_name, "wb") as f:
             pickle.dump(gene_pmid_title_abstract_dict, f)
+        shutil.copy(args.pickle_file_name, args.outdir)
+
     else:
         logger.info("Reading the truth data pickle file: ", args.pickle_file_name)
 
@@ -172,7 +175,7 @@ def main(args):
 
     # Randomly choose 1 paper from each cluster and ensure that gene has not been sampled, then save the pmid, title, and abstract to a file
     random.seed(args.seed)
-    with open(os.path.join(args.outdir, "few_shot_examples.txt"), "w") as f:
+    with open(os.path.join(args.outdir, "few_shot_pos_examples.txt"), "w") as f:
         sampled_genes = set()  # keep track of genes that have been sampled
         clustered_papers = list(clusters.items())  # convert dict to list for indexing
         i = 0  # start from the first cluster
@@ -181,6 +184,7 @@ def main(args):
             if iterations > len(clustered_papers):  # if the number of iterations exceeds the number of clusters
                 break  # break the loop
             cluster, papers = clustered_papers[i]
+
             random.shuffle(papers)  # shuffle the papers
             for j, (gene, pmid) in enumerate(papers):
                 title = gene_pmid_title_abstract_dict[gene][pmid]["title"]
@@ -239,9 +243,9 @@ if __name__ == "__main__":
         "-k",
         "--k-means-clusters",
         nargs="?",
-        default=5,
+        default=4,
         type=int,
-        help="Default is 5. This value must be an integer.",
+        help="Default is 4. This value must be an integer.",
     )
     parser.add_argument(
         "-s",
