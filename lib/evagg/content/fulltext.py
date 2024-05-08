@@ -31,8 +31,10 @@ def get_fulltext_sections(doc: Optional[Element]) -> Generator[TextSection, None
         yield TextSection(section_type, text_type, int(offset), text)
 
 
-def get_section_text(doc: Optional[Element], include: SectionFilter = None, exclude: SectionFilter = None) -> str:
-    """Extract and join the text with newlines from the given elements in the XML full-text document."""
+def get_section_texts(
+    doc: Optional[Element], include: SectionFilter = None, exclude: SectionFilter = None
+) -> Generator[str, None, None]:
+    """Filter to the given sections in the XML full-text document and return the texts."""
 
     def _include_section(section: TextSection) -> bool:
         if include and section.section_type not in include:
@@ -41,5 +43,11 @@ def get_section_text(doc: Optional[Element], include: SectionFilter = None, excl
             return False
         return True
 
-    texts = [section.text for section in get_fulltext_sections(doc) if _include_section(section)]
-    return "\n".join(texts)
+    for section in get_fulltext_sections(doc):
+        if _include_section(section):
+            yield section.text
+
+
+def get_fulltext(doc: Optional[Element], include: SectionFilter = None, exclude: SectionFilter = None) -> str:
+    """Extract and join the text with newlines from the given sections in the XML full-text document."""
+    return "\n".join(get_section_texts(doc, include, exclude))

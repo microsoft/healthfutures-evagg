@@ -1,6 +1,6 @@
 import pytest
 
-from lib.evagg.content.fulltext import get_section_text
+from lib.evagg.content.fulltext import get_fulltext
 from lib.evagg.ref import NcbiLookupClient
 from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
@@ -114,7 +114,7 @@ def test_pubmed_pmc_full_text(mock_web_client):
     result = NcbiLookupClient(web_client).fetch("33688625", include_fulltext=True)
     assert result and result.props["can_access"] is True
     assert (
-        get_section_text(result.props["fulltext_xml"], include=["TITLE"])
+        get_fulltext(result.props["fulltext_xml"], include=["TITLE"])
         == "Saul-Wilson Syndrome Missense Allele Does Not Show Obvious Golgi Defects in a C. elegans Model"
     )
 
