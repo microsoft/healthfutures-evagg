@@ -1,0 +1,4 @@
+Reading the truth data pickle file:  data/v1/train_set_genes_pmids_titles_abstracts.pkl
+[38;20mINFO:evagg.svc.logging:Level:INFO[0m
+[38;5;11mWARNING:evagg.ref.ncbi:Unexpected PMC OA error code: idDoesNotExist[0m
+[38;5;11mWARNING:evagg.ref.ncbi:Unexpected PMC OA error code: idDoesNotExist[0m

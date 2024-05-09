@@ -47,22 +47,37 @@ def get_lookup_client() -> IPaperLookupClient:
     return ncbi_lookup
 
 
-def get_paper_titles(genes: Dict[str, Set[str]]) -> Dict[str, Dict[str, Dict[str, str]]]:
+def get_paper_titles_abstracts(genes: Dict[str, Set[str]]) -> Dict[str, Dict[str, Dict[str, str]]]:
     client = get_lookup_client()
-    result = {}
+    gene_pmid_title_abstract = {}
 
     for gene, pmids in genes.items():
-        result[gene] = {}
+        gene_pmid_title_abstract[gene] = {}
         for pmid in pmids:
             try:
                 paper = client.fetch(pmid)
                 title = paper.props.get("title", "Unknown") if paper else "Unknown"
                 abstract = paper.props.get("abstract", "Unknown") if paper else "Unknown"
-                result[gene][pmid] = {"title": title, "abstract": abstract}
+                gene_pmid_title_abstract[gene][pmid] = {"title": title, "abstract": abstract}
             except Exception as e:
                 print(f"Error getting title for paper {pmid}: {e}")
-                result[gene][pmid] = {"title": "Unknown", "abstract": "Unknown"}
-    return result
+                gene_pmid_title_abstract[gene][pmid] = {"title": "Unknown", "abstract": "Unknown"}
+    return gene_pmid_title_abstract
+
+
+def add_abstract(gene_pmid_title: Dict[str, Dict[str, Dict[str, str]]]) -> Dict[str, Dict[str, Dict[str, str]]]:
+    client = get_lookup_client()
+
+    for gene, pmids in gene_pmid_title.items():
+        for pmid in pmids:
+            try:
+                paper = client.fetch(pmid)
+                abstract = paper.props.get("abstract", "Unknown") if paper else "Unknown"
+                gene_pmid_title[gene][pmid]["abstract"] = abstract
+            except Exception as e:
+                print(f"Error getting abstract for paper {pmid}: {e}")
+                gene_pmid_title[gene][pmid]["abstract"] = "Unknown"
+    return gene_pmid_title
 
 
 def parse_tsv(file):
@@ -90,7 +105,7 @@ def preprocess_text(text):
     return " ".join(tokens)
 
 
-def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters):
+def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or_neg):
     papers = [
         (gene, pmid, data["title"], data["abstract"])
         for gene, pmids in gene_pmid_title_abstract_dict.items()
@@ -128,56 +143,27 @@ def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters):
     )
 
     # Save the figure to an HTML file
-    output_file_path = os.path.join(args.outdir, "paper_clusters.html")
+    output_file_path = os.path.join(args.outdir, f"paper_clusters_{pos_or_neg}.html")
     py.write_html(fig, output_file_path)
 
     return clusters
 
 
-def main(args):
-
-    # Ensure that the output directory is created (and overwritten if it already exists)
-    if os.path.isfile(args.outdir):
-        os.remove(args.outdir)
-    os.makedirs(args.outdir, exist_ok=True)
-
-    if args.fetch_paper_titles_abstracts:
-        # Get ground truth data (gene and associated pmids into a dictionary) from
-        gene_pmid_dict = parse_tsv(args.truth_file)
-
-        # Cache the titles for these pmids.
-        gene_pmid_title_abstract_dict = get_paper_titles(gene_pmid_dict)
-
-        with open(args.json_file_name, "w") as f:
-            json.dump(gene_pmid_title_abstract_dict, f)
-
-        with open(args.pickle_file_name, "wb") as f:
-            pickle.dump(gene_pmid_title_abstract_dict, f)
-
-    else:
-        logger.info("Reading the truth data pickle file: ", args.pickle_file_name)
-
-        with open(args.pickle_file_name, "rb") as f:
-            gene_pmid_title_abstract_dict = pickle.load(f)
-
-    # Ensure that you pair the .json and .pkl files with the few shot results
-    shutil.copy(args.json_file_name, args.outdir)
-    shutil.copy(args.pickle_file_name, args.outdir)
-
-    # Cluster the papers
-    clusters = cluster_papers(gene_pmid_title_abstract_dict, args.k_means_clusters)
-
-    # Save the clusters in a tsv of gene, pmid, cluster
-    with open(os.path.join(args.outdir, "paper_clusters.tsv"), "w") as f:
+def save_clusters(outdir, clusters, pos_or_neg):
+    """Save the clusters in a tsv of gene, pmid, cluster."""
+    with open(os.path.join(outdir, f"paper_clusters_{pos_or_neg}.tsv"), "w") as f:
         writer = csv.writer(f, delimiter="\t")
         writer.writerow(["gene", "pmid", "cluster"])
         for cluster, papers in clusters.items():
             for gene, pmid in papers:
                 writer.writerow([gene, pmid, cluster])
 
-    # Randomly choose 1 paper from each cluster and ensure that gene has not been sampled, then save the pmid, title, and abstract to a file
-    random.seed(args.seed)
-    with open(os.path.join(args.outdir, "few_shot_pos_examples.txt"), "w") as f:
+
+def sample_save_examples(seed, outdir, clusters, gene_pmid_title_abstract_dict, out_name):
+    """Randomly choose 1 paper from each cluster and ensure that gene has not been sampled,
+    then save the pmid, title, and abstract to a file."""
+    random.seed(seed)
+    with open(os.path.join(outdir, out_name), "w") as f:
         sampled_genes = set()  # keep track of genes that have been sampled
         clustered_papers = list(clusters.items())  # convert dict to list for indexing
         i = 0  # start from the first cluster
@@ -205,6 +191,121 @@ def main(args):
                 continue  # skip the increment of i
             i += 1  # move on to the next cluster
             iterations += 1  # increment the number of iterations
+
+
+# Point to an output run, and gather the gene and pmids from the irrelevant papers
+def collect_neg_papers(benchmark_file) -> Dict[str, Dict[str, Dict[str, str]]]:
+    """Collect the negative example papers from the benchmarking results."""
+    # Initialize an empty dictionary to hold the data
+    irrelevant_gene_pmid_title = {}
+
+    # Open the file and read its contents
+    with open(benchmark_file, "r") as file:
+        lines = file.readlines()
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if line.startswith("GENE:"):
+                gene = line.split(":")[1].strip()
+                irrelevant_gene_pmid_title[gene] = {}
+                i += 1
+                while i < len(lines) and not lines[i].strip().startswith("GENE:"):
+                    if lines[i].strip().startswith("Found E.A.") and "irrelevant" in lines[i]:
+                        i += 1
+                        while i < len(lines) and lines[i].strip().startswith("*"):
+                            parts = lines[i].strip().split("*")
+                            pmid = parts[2].strip()
+                            title = parts[3].strip()
+                            irrelevant_gene_pmid_title[gene][pmid] = {"title": title}
+                            i += 1
+                    else:
+                        i += 1
+            else:
+                i += 1
+
+    return irrelevant_gene_pmid_title
+    # # Go through all genes in the data and gather their paper information, and create a separate dict of Dict(gene:Dict(pmid:title, abstract))
+    # for gene, gene_data in data.items():
+    #     print(f"Gene: {gene}")
+    #     print(f"Gene data: {gene_data}")
+    #     # for pmid, pmid_data in gene_data.items():
+    #     #     if "title" in pmid_data:
+    #     #         print(f"Gene: {gene}, PMID: {pmid}, Title: {pmid_data['title']}")
+    # exit()
+    # paper_ids = list(data["ACAT2"].keys())
+    # papers = [
+    #     paper
+    #     for paper_id in paper_ids
+    #     if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
+    # ]
+    # print("papers", papers)
+    # if self._require_full_text:
+    #     papers = [p for p in papers if p.props.get("full_text_xml")]
+
+    # logger.warning(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
+
+
+def main(args):
+
+    # Ensure that the output directory is created (and overwritten if it already exists)
+    if os.path.isfile(args.outdir):
+        os.remove(args.outdir)
+    os.makedirs(args.outdir, exist_ok=True)
+
+    if args.fetch_paper_titles_abstracts:
+        # Get ground truth data (gene and associated pmids into a dictionary) from
+        gene_pmid_dict = parse_tsv(args.truth_file)
+
+        # Get and then save the titles for these pmids.
+        pos_gene_pmid_title_abstract = get_paper_titles_abstracts(gene_pmid_dict)
+
+        with open(args.json_file_name, "w") as f:
+            json.dump(pos_gene_pmid_title_abstract, f)
+
+        with open(args.pickle_file_name, "wb") as f:
+            pickle.dump(pos_gene_pmid_title_abstract, f)
+
+    else:
+        print("\nReading the truth data pickle file: ", args.pickle_file_name)
+
+        with open(args.pickle_file_name, "rb") as f:
+            pos_gene_pmid_title_abstract = pickle.load(f)
+
+    # Ensure that you pair the .json and .pkl files with the few shot results
+    shutil.copy(args.json_file_name, args.outdir)
+    shutil.copy(args.pickle_file_name, args.outdir)
+
+    print(f"\nProcessing truth data file to extract {args.k_means_clusters} positive examples...")
+
+    # Cluster (based on k) the positive example papers
+    clusters = cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
+
+    # Save the clusters in a tsv of gene, pmid, cluster
+    save_clusters(args.outdir, clusters, "pos")
+
+    # Sample and save positive few shot examples
+    sample_save_examples(args.seed, args.outdir, clusters, pos_gene_pmid_title_abstract, "few_shot_pos_examples.txt")
+
+    # If a benchmark file is provided - we can process negative examples
+    if args.benchmark_file:
+        print(f"\nProcessing benchmark file to extract {args.k_means_clusters} negative examples...")
+
+        # Collect negative (irrelevant) examples based on a pipeline run
+        neg_dict = collect_neg_papers(args.benchmark_file)
+
+        # Add the abstracts to those negative examples
+        neg_dict = add_abstract(neg_dict)
+
+        # Cluster (based on k) the negative example papers
+        clusters = cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "neg")
+
+        # Save the clusters in a tsv of gene, pmid, cluster
+        save_clusters(args.outdir, clusters, "neg")
+
+        # Sample and save positive few shot examples
+        sample_save_examples(
+            args.seed, args.outdir, clusters, pos_gene_pmid_title_abstract, "few_shot_neg_examples.txt"
+        )
 
 
 if __name__ == "__main__":
@@ -258,6 +359,19 @@ if __name__ == "__main__":
         help="Default is 0. This value must be an integer.",
     )
     parser.add_argument(
+        "-n",
+        "--just-find-negatives",
+        default=False,
+        type=bool,
+        help="Default is False. If True, only negative examples will be identified based on a benchmark file.",
+    )
+    parser.add_argument(
+        "-b",
+        "--benchmark-file",
+        type=str,
+        help=("Benchmark output file (benchmark_paper_finding_results... .txt). No default."),
+    )  # e.g. /home/azureuser/ev-agg-exp/.out/binary_classes_paper_finding_results_2024-04-24/benchmarking_paper_finding_results_train.txt
+    parser.add_argument(
         "-o",
         "--outdir",
         default=f"data/v1/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/",
@@ -269,7 +383,15 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    if args.just_find_negatives and not args.benchmark_file:
+        parser.error("-b/--benchmark-file is required when -n/--just-find-negatives is provided.")
+
+    print("Evidence Aggregator Few Shot Example Generator is running with the following parameters:")
+    for arg, value in vars(args).items():
+        print(f"- {arg}: {value}")
+
     main(args)
+
 
 ############################################################################################################
 # def get_llm_category_w_few_shot(self, paper: Paper) -> str:
@@ -317,62 +439,6 @@ if __name__ == "__main__":
 # # print("papers_dict['pmid:31839819'].props.get('title') == paper1_title", papers_dict['pmid:31839819'].props.get("title") == paper1_title)
 # # print("papers_dict['pmid:31839819'].props.get('abstract') == paper1_abstract", papers_dict['pmid:31839819'].props.get("abstract") == paper1_abstract)
 # # print("papers_dict['pmid:31839819'] == paper1", papers_dict['pmid:31839819'] == paper1)
-
-
-# def collect_neg_pos_papers(self, paper1, papers) -> None:
-#     """Collect the negative example papers from the benchmarking results, and positive example papers from the truth set."""
-#     # Define the path to the file
-#     irrelevant_paper_file_path = "/home/azureuser/ev-agg-exp/.out/binary_classes_paper_finding_results_2024-04-24/benchmarking_paper_finding_results_train.txt"
-#     truth_set_file_path = "/home/azureuser/ev-agg-exp/data/v1/papers_train_v1.tsv"
-
-#     # Initialize an empty dictionary to hold the data
-#     data = {}
-
-#     # Open the file and read its contents
-#     with open(irrelevant_paper_file_path, "r") as file:
-#         lines = file.readlines()
-#         i = 0
-#         while i < len(lines):
-#             line = lines[i].strip()
-#             if line.startswith("GENE:"):
-#                 gene = line.split(":")[1].strip()
-#                 data[gene] = {}
-#                 i += 1
-#                 while i < len(lines) and not lines[i].strip().startswith("GENE:"):
-#                     if lines[i].strip().startswith("Found E.A.") and "irrelevant" in lines[i]:
-#                         i += 1
-#                         while i < len(lines) and lines[i].strip().startswith("*"):
-#                             parts = lines[i].strip().split("*")
-#                             pmid = parts[2].strip()
-#                             title = parts[3].strip()
-#                             data[gene][pmid] = {"title": title}
-#                             i += 1
-#                     else:
-#                         i += 1
-#             else:
-#                 i += 1
-
-#     # Print the data
-#     # Go through all genes in the data and gather their paper information, and create a separate dict of Dict(gene:Dict(pmid:title, abstract))
-#     for gene, gene_data in data.items():
-#         print(f"Gene: {gene}")
-#         print(f"Gene data: {gene_data}")
-#         # for pmid, pmid_data in gene_data.items():
-#         #     if "title" in pmid_data:
-#         #         print(f"Gene: {gene}, PMID: {pmid}, Title: {pmid_data['title']}")
-#     exit()
-#     paper_ids = list(data["ACAT2"].keys())
-#     papers = [
-#         paper
-#         for paper_id in paper_ids
-#         if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
-#     ]
-#     print("papers", papers)
-#     if self._require_full_text:
-#         papers = [p for p in papers if p.props.get("full_text_xml")]
-
-#     logger.warning(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
-#     exit()
 
 
 # def get_example_type_and_gene(self, pmid) -> Tuple[str, str]:
