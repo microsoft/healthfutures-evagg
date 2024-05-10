@@ -38,3 +38,6 @@ omit = [
     "test/*",
     "lib/scripts/*",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
