@@ -1,0 +1,1242 @@
+<collection>
+    <source>BioC-API</source>
+    <date>20240507</date>
+    <key>collection.key</key>
+    <document>
+    <id>3564958</id>
+    <infon key="license">NO-CC CODE</infon>
+    <passage>
+    <infon key="article-id_doi">10.1038/nature11234</infon>
+    <infon key="article-id_manuscript">NIHMS378076</infon>
+    <infon key="article-id_pmc">3564958</infon>
+    <infon key="article-id_pmid">22699609</infon>
+    <infon key="fpage">207</infon>
+    <infon key="issue">7402</infon>
+    <infon key="license">Users may view, print, copy, download and text and data- mine the content in such documents, for the purposes of academic research, subject always to the full Conditions of use: \n</infon>
+    <infon key="lpage">214</infon>
+    <infon key="section_type">TITLE</infon>
+    <infon key="type">front</infon>
+    <infon key="volume">486</infon>
+    <infon key="year">2013</infon>
+    <offset>0</offset>
+    <text>Structure, Function and Diversity of the Healthy Human Microbiome</text>
+    </passage>
+    <passage>
+    <infon key="section_type">ABSTRACT</infon>
+    <infon key="type">abstract</infon>
+    <offset>66</offset>
+    <text>Studies of the human microbiome have revealed that even healthy individuals differ remarkably in the microbes that occupy habitats such as the gut, skin, and vagina. Much of this diversity remains unexplained, although diet, environment, host genetics, and early microbial exposure have all been implicated. Accordingly, to characterize the ecology of human-associated microbial communities, the Human Microbiome Project has analyzed the largest cohort and set of distinct, clinically relevant body habitats to date. We found the diversity and abundance of each habitat\'s signature microbes to vary widely even among healthy subjects, with strong niche specialization both within and among individuals. The project encountered an estimated 81-99% of the genera, enzyme families, and community configurations occupied by the healthy Western microbiome. Metagenomic carriage of metabolic pathways was stable among individuals despite variation in community structure, and ethnic/racial background proved to be one of the strongest associations of both pathways and microbes with clinical metadata. These results thus delineate the range of structural and functional configurations normal in the microbial communities of a healthy population, enabling future characterization of the epidemiology, ecology, and translational applications of the human microbiome.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>1429</offset>
+    <text>A total of 4,788 specimens from 242 screened and phenotyped adults (129 males, 113 females) were available for this study, representing the majority of the target HMP cohort of 300 individuals. Adult subjects lacking evidence of disease were recruited based on a lengthy list of exclusion criteria; we will refer to them here as "healthy," as defined by the consortium clinical sampling criteria. Women were sampled at 18 body habitats, men at 15 (excluding three vaginal sites), distributed among five major body areas. Nine specimens were collected from the oral cavity and oropharynx: saliva; buccal mucosa (cheek), keratinized gingiva (gums), palate, tonsils, throat, and tongue soft tissues; and supra- and subgingival dental plaque (tooth biofilm above and below the gum). Four skin specimens were collected from the two retroauricular creases (behind each ear) and the two antecubital fossae (inner elbows), and one specimen for the anterior nares (nostrils). A self-collected stool specimen represented the microbiota of the lower gastrointestinal tract, and three vaginal specimens were collected from the vaginal introitus, midpoint, and posterior fornix. In order to evaluate within-subject stability of the microbiome, 131 individuals in these data were sampled at an additional time point (mean 219 sd. 69 days after first sampling, range 35-404 days). After quality control, these specimens were used for 16S rRNA gene analysis via 454 pyrosequencing (abbreviated henceforth as 16S profiling, mean 5,408 sd. 4,605 filtered sequences/sample); to assess function, 681 samples were sequenced using paired-end Illumina shotgun metagenomic reads (mean 2.9Gb sd. 2.1 per sample). More details on data generation are provided in related HMP publications and in Supplemental Methods.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">title_1</infon>
+    <offset>3225</offset>
+    <text>Microbial diversity of healthy humans</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>3263</offset>
+    <text>The diversity of microbes within a given body habitat can be defined as the number and abundance distribution of distinct types of organisms, which has been linked to several human diseases: low diversity in the gut to obesity and inflammatory bowel disease, for example, and high diversity in the vagina to bacterial vaginosis. For this large study involving microbiome samples collected from healthy volunteers at two distinct geographic locations in the United States, we have defined the microbial communities at each body habitat, encountering 81-99% of predicted genera and saturating the range of overall community configurations (Fig. 1, Supp. Fig. 1, Supp. Table 1, see also Fig. 4). Oral and stool communities were especially diverse in terms of community membership, expanding prior observations, and vaginal sites harbored particularly simple communities (Fig. 1A). This study established that these patterns of alpha diversity (within samples) differed markedly from comparisons between samples from the same habitat among subjects (beta diversity, Fig. 1B). For example, the saliva had among the highest median alpha diversities of Operational Taxonomic Units (OTUs, roughly species level classification, see http://hmpdacc.org/HMQCP), but one of the lowest beta diversities - so although each individual\'s saliva was ecologically rich, members of the population shared similar organisms. Conversely, the antecubital fossae (skin) had the highest beta diversity but were intermediate in alpha diversity. The vagina had the lowest alpha diversity, with quite low beta diversity at the genus level but very high among OTUs due to the presence of distinct Lactobacillus spp. (Fig. 1B). The primary patterns of variation in community structure followed the major body habitat groups (oral, skin, gut, and vaginal), defining as a result the complete range of population-wide between-subject variation in human microbiome habitats (Fig. 1C). Within-subject variation over time was consistently lower than between-subject variation, both in organismal composition and in metabolic function (Fig. 1D). The uniqueness of each individual\'s microbial community thus appear to be stable over time (relative to the population as a whole), which may be another feature of the human microbiome specifically associated with health.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>5599</offset>
+    <text>No taxa were observed to be universally present among all body habitats and individuals at the sequencing depth employed here, unlike several pathways (Fig. 2 and Supp. Fig. 2, see below), although several clades demonstrated broad prevalence and relatively abundant carriage patterns. Instead, as suggested by individually focused studies, each body habitat in almost every subject was characterized by one or a few signature taxa making up the plurality of the community (Fig. 3). Signature clades at the genus level formed on average anywhere from 17% to 84% of their respective body habitats, completely absent in some communities (0% at this level of detection) and representing the entire population (100%) in others. Strikingly, less dominant taxa were also highly personalized, both among individuals and body habitats; in the oral cavity, for example, most habitats are dominated by Streptococcus, but these are followed in abundance by Haemophilus in the buccal mucosa, Actinomyces in the supragingival plaque, and Prevotella in the immediately adjacent (but low oxygen) subgingival plaque.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>6700</offset>
+    <text>Additional taxonomic detail of the human microbiome was provided by identifying unique marker sequences in metagenomic data (Fig. 3A) to complement 16S profiling (Fig. 3B). These two profiles were typically in close agreement (Supp. Fig. 3), with the former in some cases offering more specific information on members of signature genera differentially present within habitats (e.g. vaginal Prevotella amnii and gut P. copri) or among individuals (e.g. vaginal Lactobacillus spp.) One application of this specificity was to confirm the absence of NIAID class A-C pathogens above 0.1% abundance (aside from S. aureus and E. coli) from the healthy microbiome, but the near-ubiquity and broad distribution of opportunistic "pathogens" as defined by PATRIC. Canonical pathogens including Vibrio cholerae, Mycobacterium avium, Campylobacter jejuni, and Salmonella enterica were not detected at this level of sensitivity. Helicobacter pylori was found in only two gut samples, both at &lt;0.01%, and E. coli was present at &gt;0.1% abundance in 15% of stool microbiomes (&gt;0% abundance in 61%). Similar species level observations were obtained for a small subset of stool samples with 454 pyrosequencing metagenomics data using PhylOTU. In total 56 of 327 PATRIC "pathogens" were detected in the healthy microbiome (at >1% prevalence of >0.1% abundance, Supp. Table 2), all opportunistic and, strikingly, typically prevalent both among hosts and habitats. The latter is in contrast to many of the most abundant signature taxa, which were usually more habitat-specific and variable among hosts (Fig. 3A-B). This overall absence of particularly detrimental microbes supports the hypothesis that even given this cohort\'s high diversity, the microbiota tend to occupy a range of configurations in health distinct from many of the disease perturbations studied to date.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">title_1</infon>
+    <offset>8566</offset>
+    <text>Carriage of specific microbes</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>8596</offset>
+    <text>Inter-individual variation in the microbiome proved to be specific, functionally relevant, and personalized. One example of this is illustrated by the Streptococcus spp. of the oral cavity. The genus dominates the oropharynx, with different species abundant within each sampled body habitat (see http://hmpdacc.org/HMSMCP) and, even at the species level, striking differences in carriage within each habitat among individuals (Fig. 4A). As the ratio of pan- to core-genomes is high in many human-associated microbes, this variation in abundance could be due to selective pressures acting on pathways differentially present among Streptococcus species or strains (Fig. 4B). Indeed, we observed extensive strain-level genomic variation within microbial species in this population, enriched for host-specific structural variants around genomic islands (Fig. 4C). Even with respect to the single Streptococcus mitis strain B6, gene losses associated with these events were common, for example differentially eliminating S. mitis carriage of the V-type ATPase or choline binding proteins cbp6 and cbp12 among subsets of the host population (Fig. 4D). These losses were easily observable by comparison to reference isolate genomes, and these initial findings suggest that microbial strain- and host-specific gene gains and polymorphisms may be similarly ubiquitous.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>9956</offset>
+    <text>Other examples of functionally relevant inter-individual variation at the species and strain levels occurred throughout the microbiome. In the gut, Bacteroides fragilis has been shown to prime T cell responses in animal models via the capsular polysaccharides PSA, and in the HMP stool samples this taxon was carried at a level of at least 0.1% in 16% of samples (over 1% abundance in 3%). B. thetaiotaomicron has been studied for its effect on host gastrointestinal metabolism and was likewise common at 46% prevalence. On the skin, Staphylococcus aureus, of particular interest as the cause of methicillin-resistant S. aureus (MRSA) infections, had 29% nasal and 4% skin carriage rates, roughly as expected. Close phylogenetic relatives such as S. epidermidis (itself considered commensal) were, in contrast, universal on the skin and present in 93% of nares samples, and at the opposite extreme Pseudomonas aeruginosa (a representative gram negative skin pathogen) was completely absent from both body habitats (0% at this level of detection). These and the data above suggest that the carriage pattern of some species in the human microbiome may be analogous to genetic traits, where recessive alleles of modest risk are maintained in a population. In the case of the human microbiome, high-risk pathogens remain absent, while species that pose a modest degree of risk also appear to be stably maintained in this ecological niche.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>11391</offset>
+    <text>Finally, microorganisms within and among body habitats exhibited relationships suggestive of driving physical factors such as oxygen, moisture and pH, host immunological factors, and microbial interactions such as mutualism or competition (Supp. Fig. 4). Both overall community similarity and microbial co-occurrence and co-exclusion across the human microbiome grouped the 18 body habitats together into four clusters corresponding to the five target body areas (Supp. Fig. 4A-B). There was little distinction among different vaginal sites, with Lactobacillus spp. dominating all three and correlating in abundance. However, Lactobacillus varied inversely with the Actinobacteria and Bacteroidetes (see Supp. Fig. 4C and Fig. 2-3), as also observed in the cohort of Ravel et al. Gut microbiota relationships primarily comprised inverse associations with the Bacteroides, which ranged from dominant in some subjects to a minority in others who carried a greater diversity of Firmicutes. A similar progression was evident in the skin communities, dominated by one of Staphylococcus (phylum Firmicutes), Propionibacterium, or Corynebacterium (both phylum Actinobacteria), with a continuum of oral organisms (e.g. Streptococcus) appearing in nares communities (Supp. Fig. 4C). These observations suggest that microbial community structure in these individuals may sometimes occupy discrete configurations and under other circumstances vary continuously, a topic addressed in more detail by several HMP investigations. An individual\'s location within such configurations is indicative of current microbial carriage (including pathogens) and of the community\'s ability to resist future pathogen acquisition or dysbiosis; it may thus prove to be associated with disease susceptibility or other phenotypic characteristics.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">title_1</infon>
+    <offset>13215</offset>
+    <text>Microbiome metabolism and function</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>13250</offset>
+    <text>As the first study to include both marker gene and metagenomic data across body habitats from a large human population, we additionally assessed the ecology of microbial metabolic and functional pathways in these communities. We reconstructed the relative abundances of pathways in community metagenomes, which were much more constant and evenly diverse than were organismal abundances (Fig. 2B, see also Fig. 1), confirming this as an ecological property of the entire human microbiome. We were likewise able to determine for the first time that taxonomic and functional alpha diversity across microbial communities significantly correlate (Spearman of inverse Simpson\'s r=0.60, p=3.6e-67, n=661), the latter within a more proscribed range of community configurations (Supp. Fig. 5).</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>14037</offset>
+    <text>Unlike microbial taxa, several pathways were ubiquitous among individuals and body habitats. The most abundant of these "core" pathways include the ribosome and translational machinery, nucleotide charging and ATP synthesis, and glycolysis, and reflect the basics of host-associated microbial life. Also in contrast to taxa, few pathways were highly variable among subjects within any body habitat; exceptions included the Sec (orally, sd. 0.0052, mean oral sd. 0.0011 sd. 0.0016) and Tat (globally, sd 0.0055, mean global sd. 0.0023 sd. 0.0033) secretion systems, indicating a high degree of host-microbe and microbe-microbe interactions in the healthy human microbiota. This high variability was particularly present in the oral cavity, for phosphate, mono- and di-saccharide, and amino acid transport in the mucosa, as well as LPS biosynthesis and spermidine/putrescine synthesis and transport on the plaque and tongue (http://hmpdacc.org/HMMRC). The stability and high metagenomic abundance of this housekeeping "core" contrasts with the greater variability and lower abundance of niche-specific functionality in rare but consistently present pathways, e.g. spermidine biosynthesis, methionine degradation, and hydrogen sulfide production, all examples highly prevalent in gastrointestinal body sites (nonzero in &gt;92% of samples) but at very low abundance (median rel. abd. &lt;0.0052). This "long tail" of low-abundance genes and pathways also likely encodes much of the uncharacterized biomolecular function and metabolism of these metagenomes, the expression levels of which remain to be explored in future metatranscriptomic studies.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>15688</offset>
+    <text>Protein families showed diversity and prevalence trends similar to those of full pathways, ranging from maxima of only ~16,000 unique families per community in the vagina to almost 400,000 in the oral cavity (Fig. 1A-B, http://hmpdacc.org/HMGI). A striking fraction of these families were indeed functionally uncharacterized, including those detected by read mapping, with a minimum in the oral cavity (mean 58% sd. 6.8%) and maximum in the nares (mean 77% sd. 11%). Likewise, many genes annotated from assemblies could not be assigned a metabolic function, with a minimum in the vagina (mean 78% sd. 3.4%) and maximum in the gut (mean 86% sd. 0.9%). The latter range did not differ substantially by body habitat and is in close agreement with previous comprehensive gene catalogs of the gut metagenome. Taken together with the microbial variation observed above throughout the human microbiome, functional variation among individuals might indicate pathways of particular importance in maintaining community structure in the face of personalized immune, environmental, or dietary exposures among these subjects. Determining the functions of uncharacterized core and variable protein families will be especially essential in understanding the microbiota\'s role in health and disease.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">title_1</infon>
+    <offset>16976</offset>
+    <text>Correlations with host phenotype</text>
+    </passage>
+    <passage>
+    <infon key="section_type">INTRO</infon>
+    <infon key="type">paragraph</infon>
+    <offset>17009</offset>
+    <text>We finally examined relationships associating both clades and metabolism in the microbiota with host properties such as age, gender, BMI, and other available clinical metadata (Fig. 5; Supp. Table 3). Using a sparse multivariate model, 960 microbial, enzymatic, or pathway abundances were significantly associated with one or more of 15 subject phenotype and sample metadata features. A wide variety of taxa, gene families, and metabolic pathways were differentially distributed with subject ethnicity at every body habitat (Fig. 5A), representing the phenotype with the greatest number 266 at FDR q&lt;0.2) of total associations with the microbiome. Vaginal pH has also been observed to correlate with microbiome composition, and we detected in this population both the expected reduction in Lactobacillus at high pH and a corresponding increase in metabolic diversity (Fig. 5B). Intriguingly, and not previously observed, subject age was most associated with a collection of highly differential metagenomically encoded pathways on the skin (Fig. 5C), as well as shifts in skin clades including retroauricular Firmicutes (p=1.0e-4, q=0.033). The examples of associations with ethnicity and vaginal pH are among the strongest associations with the microbiome, however, and most correlates (e.g. with subject BMI, Fig. 5D) are more representatively modest. This lower degree of correlation held for most available biometrics (gender, temperature, blood pressure, etc.), with even the most significant associations possessing generally low effect sizes and considerable unexplained variance. We conclude that most variation in the human microbiome is not well-explained by these phenotypic metadata, and other potentially important factors such as short- and long-term diet, daily cycles, founder effects such as mode of delivery, and host genetics should be considered in future analyses.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">CONCL</infon>
+    <infon key="type">title_1</infon>
+    <offset>18894</offset>
+    <text>Conclusions</text>
+    </passage>
+    <passage>
+    <infon key="section_type">CONCL</infon>
+    <infon key="type">paragraph</infon>
+    <offset>18906</offset>
+    <text>This extensive sampling of the human microbiome across many subjects and body habitats provides an initial characterization of the normal microbiota of healthy adults in a Western population. The large sample size and consistent sampling of many sites from the same individuals allows for the first time an understanding of the relationships among microbes, and between the microbiome and clinical parameters, that underpin the basis for individual variation -- variation that may ultimately be critical for understanding microbiome-based disorders. Clinical studies of the microbiome will be able to leverage the resulting extensive catalogs of taxa, pathways, and genes, although they must also still include carefully matched internal controls. The uniqueness of each individual\'s microbiome even in this reference population argues for future studies to consider prospective within-subjects designs where possible. The HMP\'s unique combination of organismal and functional data across body habitats, encompassing both 16S and metagenomic profiling, together with detailed characterization of each subject, has allowed us and subsequent studies to move beyond the observation of variability in the human microbiome to ask how and why these microbial communities vary so extensively.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">CONCL</infon>
+    <infon key="type">paragraph</infon>
+    <offset>20196</offset>
+    <text>Many details remain for further work to fill in, building on this reference study. How do early colonization and life-long change vary among body habitats? Do epidemiological patterns of transmission of beneficial or harmless microbes mirror patterns of transmission of pathogens? Which co-occurrences among microbes reflect shared response to the environment, as opposed to competitive or mutualistic interactions? How large a role does host immunity or genetics play in shaping patterns of diversity, and how do the patterns observed in this North American population compare to those around the world? Future studies building on the gene and organism catalogs established by the Human Microbiome Project, including increasingly detailed investigations of metatranscriptomes and metaproteomes, will help to unravel these open questions and allow us to more fully understand the links between the human microbiome, health, and disease.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">METHODS</infon>
+    <infon key="type">title_1</infon>
+    <offset>21133</offset>
+    <text>Methods Summary</text>
+    </passage>
+    <passage>
+    <infon key="section_type">METHODS</infon>
+    <infon key="type">paragraph</infon>
+    <offset>21149</offset>
+    <text>Microbiome samples were collected from up to 18 body sites at one or two time points from 242 individuals clinically screened for absence of disease. Samples were subjected to 16S rRNA gene pyrosequencing (454 Life Sciences), and a subset were shotgun sequenced for metagenomics using the Illumina GAIIx platform. 16S data processing and diversity estimates were performed using QIIME, and metagenomic data were taxonomically profiled using MetaPhlAn, metabolically profiled by HUMAnN, and assembled for gene annotation and clustering into a unique catalog. Potential pathogens were identified using the PATRIC database, isolate reference genome annotations drawn from KEGG, and reference genome mapping performed by BWA to a reduced set of genomes to which short reads could be matched. Microbial associations were assessed by similarity measures accounting for compositionality, and phenotypic association testing was performed in R. All data and additional protocol details are available at http://hmpdacc.org. Full methods accompany this paper.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">title_1</infon>
+    <offset>22198</offset>
+    <text>Supplementary Material</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22221</offset>
+    <text>Equal contribution</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22240</offset>
+    <text>Biostatistics, Harvard School of Public Health, Boston MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22298</offset>
+    <text>The Broad Institute of MIT and Harvard, Cambridge MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22351</offset>
+    <text>Department of Chemistry and Biochemistry, University of Colorado, Boulder CO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22428</offset>
+    <text>Howard Hughes Medical Institute, Boulder CO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22472</offset>
+    <text>The Genome Institute, Washington University School of Medicine, St. Louis MO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22549</offset>
+    <text>J. Craig Venter Institute, Rockville MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22589</offset>
+    <text>Institute for Genome Sciences, University of Maryland School of Medicine, Baltimore MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22676</offset>
+    <text>Human Genome Sequencing Center, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22747</offset>
+    <text>Department of Pathology &amp; Immunology, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22824</offset>
+    <text>Department of Pathology, Texas Children\'s Hospital, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>22889</offset>
+    <text>Department of Obstetrics &amp; Gynecology, Division of Maternal-Fetal Medicine, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23004</offset>
+    <text>Molecular and Cellular Biology, University of Guelph, Guleph, Canada</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23073</offset>
+    <text>Department of Civil &amp; Environmental Engineering, Massachusetts Institute of Technology, Cambridge MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23174</offset>
+    <text>Center for Environmental Biotechnology, Lawrence Berkeley National Laboratory, Berkeley CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23265</offset>
+    <text>School of Dentistry, University of California, San Francisco, San Francisco CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23344</offset>
+    <text>Molecular Virology and Microbiology, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23420</offset>
+    <text>National Institute of Arthritis and Musculoskeletal and Skin, National Institutes of Health, Bethesda MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23525</offset>
+    <text>Office of Research on Women\'s Health, National Institutes of Health, Bethesda MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23608</offset>
+    <text>National Institute of Allergy and Infectious Diseases, National Institutes of Health, Bethesda MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23706</offset>
+    <text>Department of Medicine, New York University Langone Medical Center, New York NY</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23786</offset>
+    <text>National Human Genome Research Institute, National Institutes of Health, Bethesda MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23871</offset>
+    <text>Department of Statistical Sciences and Operations Research, Virginia Commonwealth University, Richmond VA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>23977</offset>
+    <text>Center for the Study of Biological Complexity, Virginia Commonwealth University, Richmond VA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24070</offset>
+    <text>Department of Biology, Virginia Commonwealth University, Richmond VA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24139</offset>
+    <text>Technology Integration Group, National Energy Research Scientific Computing Center, Lawrence Berkeley National Laboratory, Berkeley CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24274</offset>
+    <text>Genome Science Group, Bioscience Division, Los Alamos National Laboratory, Los Alamos NM</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24363</offset>
+    <text>Joint Genome Institute, Walnut Creek CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24403</offset>
+    <text>Biological Data Management and Technology Center, Computational Research Division, Lawrence Berkeley National Laboratory, Berkeley CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24537</offset>
+    <text>National Institute of Dental and Craniofacial Research (NIDCR), National Institutes of Health, Bethesda MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24644</offset>
+    <text>FemCare Product Safety and Regulatory Affairs, The Procter &amp; Gamble Company, Cincinnati OH</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24735</offset>
+    <text>Bioinformatics Department, Second Genome, Inc., San Bruno CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24796</offset>
+    <text>Department of Molecular Genetics, Forsyth Institute, Cambridge MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24862</offset>
+    <text>Department of Oral Medicine, Infection and Immunity, Harvard School of Dental Medicine, Boston MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>24960</offset>
+    <text>Department of Medicine, Division of General Medical Science, Washington University School of Medicine, St. Louis MO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25076</offset>
+    <text>Department of Pathology &amp; Immunology, Washington University School of Medicine, St. Louis MO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25169</offset>
+    <text>bioMerieux, Inc., Durham NC</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25197</offset>
+    <text>drive5.com, Tiburon CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25220</offset>
+    <text>Center for Ethics, Humanities and Spiritual Care, Cleveland Clinic, Cleveland OH</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25301</offset>
+    <text>Department of Structural Biology, VIB, Belgium, Brussels, Belgium</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25367</offset>
+    <text>Department of Applied Biological Sciences (DBIT), Vrije Universiteit Brussel, Brussels, Belgium</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25463</offset>
+    <text>Department of Bioinformatics and Genomics, University of North Carolina - Charlotte, Charlotte NC</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25561</offset>
+    <text>Department of Biological Sciences, University of Idaho, Moscow ID</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25627</offset>
+    <text>Computational and Systems Biology, Massachusetts Institute of Technology, Cambridge MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25714</offset>
+    <text>Center for Advanced Dental Education, Saint Louis University, St. Louis MO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25789</offset>
+    <text>Department of Computer Science, University of Colorado, Boulder CO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25856</offset>
+    <text>Division of Associated Clinical Specialties and Dental Research Institute, UCLA School of Dentistry, Los Angeles CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>25972</offset>
+    <text>University of Maryland Francis King Carey School of Law, Baltimore MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26042</offset>
+    <text>Josephine Bay Paul Center, Marine Biological Laboratory, Woods Hole MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26113</offset>
+    <text>Ecology Department, Earth Sciences Division, Lawrence Berkeley National Laboratory, Berkeley CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26209</offset>
+    <text>Department of Periodontics, University of Texas Health Science Center School of Dentistry, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26311</offset>
+    <text>Department of Biology, San Diego State University, San Diego CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26375</offset>
+    <text>Faculty of Medicine, McGill University, Montreal, Canada</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26432</offset>
+    <text>Dermatology Branch, CCR, National Cancer Institute, Bethesda MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26496</offset>
+    <text>Department of Microbiology, Cornell University, Ithaca NY</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26554</offset>
+    <text>Center for Bioinformatics and Computational Biology, University of Maryland, College Park MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26647</offset>
+    <text>Division of Infectious Diseases, Children\'s Hospital Boston, Harvard Medical School, Boston MA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26744</offset>
+    <text>Department of Anthropology, University of Oklahoma, Norman OK</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26806</offset>
+    <text>Department of Obstetrics and Gynecology, Washington University School of Medicine, Saint Louis MO</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>26904</offset>
+    <text>Division of Gastroenterology and Hepatology, University of Alabama at Birmingham, Birmingham AL</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27000</offset>
+    <text>Center for Medical Ethics and Health Policy, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27084</offset>
+    <text>Medicine-Infectious Disease, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27152</offset>
+    <text>Biosciences Division, Oak Ridge National Laboratory, Oak Ridge TN</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27218</offset>
+    <text>Gladstone Institutes, University of California, San Francisco, San Francisco CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27298</offset>
+    <text>Institute for Human Genetics, University of California, San Francisco, San Francisco CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27386</offset>
+    <text>Division of Biostatistics, University of California, San Francisco, San Francisco CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27471</offset>
+    <text>Department of Computer Science, University of Maryland, College Park MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27543</offset>
+    <text>School of Informatics and Computing, Indiana University, Bloomington IN</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27615</offset>
+    <text>Mount Sinai School of Medicine, New York NY</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27659</offset>
+    <text>Molecular &amp; Human Genetics, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27726</offset>
+    <text>Center for Bioethics and Department of Medical Ethics, University of Pennsylvania, Philadelphia PA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27825</offset>
+    <text>Department of Microbiology &amp; Immunology, University of Michigan, Ann Arbor MI</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27903</offset>
+    <text>Department of Microbiology and Molecular Genetics, Michigan State University, East Lansing MI</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>27997</offset>
+    <text>The EMMES Corporation, Rockville MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28033</offset>
+    <text>Harper University Hospital, Wayne State University School of Medicine, Detroit MI, Detroit MI</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28127</offset>
+    <text>McKusick-Nathans Institute of Genetic Medicine, Johns Hopkins University School of Medicine, Baltimore MD</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28233</offset>
+    <text>J. Craig Venter Institute, San Diego CA</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28273</offset>
+    <text>Feinberg School of Medicine, Northwestern University, Chicago IL</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28338</offset>
+    <text>Alkek Center for Metagenomics and Microbiome Research, Baylor College of Medicine, Houston TX</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28432</offset>
+    <text>Supplementary Information is linked to the online version of the paper at www.nature.com/nature.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28529</offset>
+    <text>Author Contributions</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28550</offset>
+    <text>Principal investigators: BWB, RAG, SKH, BAM, KEN, JFP, GMW, OW, RKW Manuscript preparation: DG, CH, RK, OW</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28657</offset>
+    <text>Funding agency management: CCB, TB, VB, JLC, SC, CD, VDF, CG, MYG, RDL, JM, PM, JP, LMP, JAS, LW, CW, KAW</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28763</offset>
+    <text>Project leadership: SA, JHB, BWB, ATC, HHC, AME, MGF, RSF, DG, MGG, KH, SKH, CH, EAL, RM, VM, JCM, BAM, MM, DMM, KEN, JFP, EJS, JV, GMW, OW, AMW, KCW, JRW, SKY, QZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>28927</offset>
+    <text>Analysis preparation for manuscript: JCC, KF, DG, AG, KHH, CH, RK, DK, HHK, OK, KPL, REL, JR, JFS, PDS, NS</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>29034</offset>
+    <text>Data release: LA, TB, IAC, KC, HHC, NJD, DJD, AME, VMF, LF, JMG, SG, SKH, MEH, CJ, VJ, CK, AAM, VMM, TM, MM, DMM, JO, KP, JFP, CP, XQ, RKS, NS, IS, EJS, DVW, OW, KW, KCW, CY, BPY, QZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>29217</offset>
+    <text>Methods and research development: SA, HMA, MB, DMC, AME, RLE, MF, SF, MGF, DCF, DG, GG, BJH, SKH, MEH, WAK, NL, KL, VM, ERM, BAM, MM, DMM, CN, JFP, MEP, XQ, MCR, CR, EJS, SMS, DGT, DVW, GMW, YW, KMW, SY, BPY, SKY, QZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>29434</offset>
+    <text>DNA sequence production: SA, EA, TA, TB, CJB, DAB, KDD, SPD, AME, RLE, CNF, SF, CCF, LLF, RSF, BH, SKH, MEH, VJ, CLK, SLL, NL, LL, DMM, IN, CN, MO, JFP, XQ, JGR, YR, MCR, DVW, YW, BPY, YZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>29622</offset>
+    <text>Clinical sample collection: KMA, MAC, WMD, LLF, NG, HAH, ELH, JAK, WAK, TM, ALM, PM, SMP, JFP, GAS, JV, MAW, GMW</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>29735</offset>
+    <text>Body site experts: KMA, EAV, GA, LB, MJB, CCD, FED, LF, JI, JAK, SKH, HHK, KPL, PJM, JR, TMS, JAS, JDS, JV</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>29842</offset>
+    <text>Ethical, legal and social implications: RMF, DEH, WAK, NBK, CML, ALM, RR, PS, RRS, PS, LZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>29932</offset>
+    <text>Strain management: EAV, JHB, IAC, KC, SWC, HHC, TZD, ASD, AME, MGF, MGG, SKH, VJ, NCK, SLL, LL, KL, EAL, VMM, BAM, DMM, KEN, IN, IP, LS, EJS, CMT, MT, DVW, GMW, AMW, YW, KMW, BPY, LZ, YZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>30119</offset>
+    <text>16S data analysis: KMA, EJA, GLA, CAA, MB, BWB, JPB, GAB, SRC, SC, JC, TZD, FED, ED, AME, RCE, MF, AAF, JF, HG, DG, BJH, TAH, SMH, CH, JI, JKJ, STK, SKH, RK, HHK, OK, PSLR, REL, KL, CAL, DM, BAM, KAM, MM, MP, JFP, MP, KSP, XQ, KPR, MCR, BR, PDS, TMS, NS, JAS, WDS, TJS, CSS, EJS, RMT, JV, TAV, ZW, DVW, GMW, JRW, KMW, YY, SY, YZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>30448</offset>
+    <text>Shotgun data processing and alignments: CJB, JCC, ED, DG, AG, MEH, HJ, DK, KCK, CLK, YL, JCM, BAM, MM, DMM, JO, JFP, XQ, JGR, RKS, NUS, IS, EJS, GGS, SMS, JW, ZW, GMW, OW, KCW, TW, SKY, LZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>30637</offset>
+    <text>Assembly: HMA, CJB, PSC, LC, YD, SPD, MGF, MEH, HJ, SK, BL, YL, CL, JCM, JMM, JRM, PJM, MM, JFP, MP, MEP, XQ, MR, RKS, MS, DDS, GGS, SMS, CMT, TJT, WW, GMW, KCW, LY, YY, SKY, LZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>30815</offset>
+    <text>Annotation: OOA, VB, CJB, IAC, ATC, KC, HHC, ASD, MGG, JMG, JG, AG, SG, BJH, KH, SKH, CH, HJ, NCK, RM, VMM, KM, TM, MM, JO, KP, MP, XQ, NS, EJS, GGS, SMS, MT, GMW, KCW, JRW, CY, SKY, QZ, LZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>31005</offset>
+    <text>WGS Metabolic Reconstruction: SA, BLC, JG, CH, JI, BAM, MM, BR, AMS, NS, MT, GMW, SY, QZ, JDZ</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>31099</offset>
+    <text>Author Information</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>31118</offset>
+    <text>All data used in this study is available from the Human Microbiome Project Data Analysis and Coordination Center. Reprints and permissions information is available at www.nature.com/reprints.</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">footnote</infon>
+    <offset>31310</offset>
+    <text>The authors declare no competing financial interests.</text>
+    </passage>
+    <passage>
+    <infon key="comment">(in review)</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">A framework for human microbiome research</infon>
+    <infon key="type">ref</infon>
+    <offset>31364</offset>
+    </passage>
+    <passage>
+    <infon key="comment">(in review)</infon>
+    <infon key="name_0">surname:Aagaard;given-names:K</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">A Comprehensive Strategy for Sampling the Human Microbiome</infon>
+    <infon key="type">ref</infon>
+    <offset>31365</offset>
+    </passage>
+    <passage>
+    <infon key="comment">nature07540 [pii]</infon>
+    <infon key="fpage">480</infon>
+    <infon key="lpage">484</infon>
+    <infon key="name_0">surname:Turnbaugh;given-names:PJ</infon>
+    <infon key="pub-id_doi">10.1038/nature07540</infon>
+    <infon key="pub-id_pmid">19043404</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Nature</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">457</infon>
+    <infon key="year">2009</infon>
+    <offset>31366</offset>
+    <text>A core gut microbiome in obese and lean twins</text>
+    </passage>
+    <passage>
+    <infon key="comment">nature08821 [pii]</infon>
+    <infon key="fpage">59</infon>
+    <infon key="lpage">65</infon>
+    <infon key="name_0">surname:Qin;given-names:J</infon>
+    <infon key="pub-id_doi">10.1038/nature08821</infon>
+    <infon key="pub-id_pmid">20203603</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Nature</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">464</infon>
+    <infon key="year">2010</infon>
+    <offset>31412</offset>
+    <text>A human gut microbial gene catalogue established by metagenomic sequencing</text>
+    </passage>
+    <passage>
+    <infon key="fpage">1899</infon>
+    <infon key="lpage">1911</infon>
+    <infon key="name_0">surname:Fredricks;given-names:DN</infon>
+    <infon key="name_1">surname:Fiedler;given-names:TL</infon>
+    <infon key="name_2">surname:Marrazzo;given-names:JM</infon>
+    <infon key="pub-id_doi">10.1056/NEJMoa043802</infon>
+    <infon key="pub-id_pmid">16267321</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">The New England journal of medicine</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">353</infon>
+    <infon key="year">2005</infon>
+    <offset>31487</offset>
+    <text>Molecular identification of bacteria associated with bacterial vaginosis</text>
+    </passage>
+    <passage>
+    <infon key="fpage">1694</infon>
+    <infon key="lpage">1697</infon>
+    <infon key="name_0">surname:Costello;given-names:EK</infon>
+    <infon key="pub-id_doi">10.1126/science.1177486</infon>
+    <infon key="pub-id_pmid">19892944</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Science</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">326</infon>
+    <infon key="year">2009</infon>
+    <offset>31560</offset>
+    <text>Bacterial community variation in human body habitats across space and time</text>
+    </passage>
+    <passage>
+    <infon key="comment">(in press)</infon>
+    <infon key="name_0">surname:Huse;given-names:S</infon>
+    <infon key="name_1">surname:Ye;given-names:Y</infon>
+    <infon key="name_2">surname:Zhou;given-names:Y</infon>
+    <infon key="name_3">surname:Fodor;given-names:A</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">A Core Human Microbiome as Viewed Through 16S rRNA Sequences Clusters</infon>
+    <infon key="type">ref</infon>
+    <offset>31635</offset>
+    </passage>
+    <passage>
+    <infon key="comment">(in preparation)</infon>
+    <infon key="name_0">surname:Zhou;given-names:Y</infon>
+    <infon key="name_1">surname:Gao;given-names:H</infon>
+    <infon key="name_2">surname:Mihindukulasuriya;given-names:K</infon>
+    <infon key="name_3">surname:Sodergen;given-names:E</infon>
+    <infon key="name_4">surname:Weinstock;given-names:GM</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Defining Core Microbiomes in Healthy Humans</infon>
+    <infon key="type">ref</infon>
+    <offset>31636</offset>
+    </passage>
+    <passage>
+    <infon key="comment">(in press)</infon>
+    <infon key="name_0">surname:Li;given-names:K</infon>
+    <infon key="name_1">surname:Bihan;given-names:M</infon>
+    <infon key="name_2">surname:Yooseph;given-names:S</infon>
+    <infon key="name_3">surname:Methe;given-names:BA</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Analyses of the Microbial Diversity across the Human Microbiome</infon>
+    <infon key="type">ref</infon>
+    <offset>31637</offset>
+    </passage>
+    <passage>
+    <infon key="comment">324/5931/1190 [pii]</infon>
+    <infon key="fpage">1190</infon>
+    <infon key="lpage">1192</infon>
+    <infon key="name_0">surname:Grice;given-names:EA</infon>
+    <infon key="pub-id_doi">10.1126/science.1171700</infon>
+    <infon key="pub-id_pmid">19478181</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Science</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">324</infon>
+    <infon key="year">2009</infon>
+    <offset>31638</offset>
+    <text>Topographical and temporal diversity of the human skin microbiome</text>
+    </passage>
+    <passage>
+    <infon key="comment">1002611107 [pii]</infon>
+    <infon key="fpage">4680</infon>
+    <infon key="issue">Suppl 1</infon>
+    <infon key="lpage">4687</infon>
+    <infon key="name_0">surname:Ravel;given-names:J</infon>
+    <infon key="pub-id_doi">10.1073/pnas.1002611107</infon>
+    <infon key="pub-id_pmid">20534435</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Proc Natl Acad Sci U S A</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">108</infon>
+    <infon key="year">2011</infon>
+    <offset>31704</offset>
+    <text>Vaginal microbiome of reproductive-age women</text>
+    </passage>
+    <passage>
+    <infon key="comment">(in review)</infon>
+    <infon key="name_0">surname:Segata;given-names:N</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Composition of the Adult Digestive Tract Microbiome Based on Seven Mouth Surfaces, Tonsils, Throat and Stool Samples</infon>
+    <infon key="type">ref</infon>
+    <offset>31749</offset>
+    </passage>
+    <passage>
+    <infon key="comment">(in press)</infon>
+    <infon key="name_0">surname:Segata;given-names:N</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Efficient metagenomic microbial community profiling using unique clade-specific marker genes</infon>
+    <infon key="type">ref</infon>
+    <offset>31750</offset>
+    </passage>
+    <passage>
+    <infon key="name_0">surname:Gillespie;given-names:JJ</infon>
+    <infon key="pub-id_doi">10.1128/IAI.00207-11</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Infection and immunity</infon>
+    <infon key="type">ref</infon>
+    <infon key="year">2011</infon>
+    <offset>31751</offset>
+    <text>PATRIC: The Comprehensive Bacterial Bioinformatics Resource with a Focus on Human Pathogenic Species</text>
+    </passage>
+    <passage>
+    <infon key="fpage">e1001061</infon>
+    <infon key="name_0">surname:Sharpton;given-names:TJ</infon>
+    <infon key="pub-id_doi">10.1371/journal.pcbi.1001061</infon>
+    <infon key="pub-id_pmid">21283775</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">PLoS Comput Biol</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">7</infon>
+    <infon key="year">2011</infon>
+    <offset>31852</offset>
+    <text>PhylOTU: a high-throughput procedure quantifies microbial community diversity and resolves novel taxa from metagenomic data</text>
+    </passage>
+    <passage>
+    <infon key="comment">(in press)</infon>
+    <infon key="name_0">surname:Wylie;given-names:KM</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">PLoS ONE</infon>
+    <infon key="type">ref</infon>
+    <offset>31976</offset>
+    <text>Novel Bacterial Taxa in the Human Microbiome</text>
+    </passage>
+    <passage>
+    <infon key="comment">0804812105 [pii]</infon>
+    <infon key="fpage">16731</infon>
+    <infon key="lpage">16736</infon>
+    <infon key="name_0">surname:Sokol;given-names:H</infon>
+    <infon key="pub-id_doi">10.1073/pnas.0804812105</infon>
+    <infon key="pub-id_pmid">18936492</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Proc Natl Acad Sci U S A</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">105</infon>
+    <infon key="year">2008</infon>
+    <offset>32021</offset>
+    <text>Faecalibacterium prausnitzii is an anti-inflammatory commensal bacterium identified by gut microbiota analysis of Crohn disease patients</text>
+    </passage>
+    <passage>
+    <infon key="comment">43/11/5721 [pii]</infon>
+    <infon key="fpage">5721</infon>
+    <infon key="lpage">5732</infon>
+    <infon key="name_0">surname:Aas;given-names:JA</infon>
+    <infon key="name_1">surname:Paster;given-names:BJ</infon>
+    <infon key="name_2">surname:Stokes;given-names:LN</infon>
+    <infon key="name_3">surname:Olsen;given-names:I</infon>
+    <infon key="name_4">surname:Dewhirst;given-names:FE</infon>
+    <infon key="pub-id_doi">10.1128/JCM.43.11.5721-5732.2005</infon>
+    <infon key="pub-id_pmid">16272510</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">J Clin Microbiol</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">43</infon>
+    <infon key="year">2005</infon>
+    <offset>32158</offset>
+    <text>Defining the normal bacterial flora of the oral cavity</text>
+    </passage>
+    <passage>
+    <infon key="comment">nrmicro1901 [pii]</infon>
+    <infon key="fpage">419</infon>
+    <infon key="lpage">430</infon>
+    <infon key="name_0">surname:Medini;given-names:D</infon>
+    <infon key="pub-id_doi">10.1038/nrmicro1901</infon>
+    <infon key="pub-id_pmid">18475305</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Nat Rev Microbiol</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">6</infon>
+    <infon key="year">2008</infon>
+    <offset>32213</offset>
+    <text>Microbiology in the post-genomic era</text>
+    </passage>
+    <passage>
+    <infon key="comment">nature07008 [pii]</infon>
+    <infon key="fpage">620</infon>
+    <infon key="lpage">625</infon>
+    <infon key="name_0">surname:Mazmanian;given-names:SK</infon>
+    <infon key="name_1">surname:Round;given-names:JL</infon>
+    <infon key="name_2">surname:Kasper;given-names:DL</infon>
+    <infon key="pub-id_doi">10.1038/nature07008</infon>
+    <infon key="pub-id_pmid">18509436</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Nature</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">453</infon>
+    <infon key="year">2008</infon>
+    <offset>32250</offset>
+    <text>A microbial symbiosis factor prevents intestinal inflammatory disease</text>
+    </passage>
+    <passage>
+    <infon key="fpage">279</infon>
+    <infon key="lpage">289</infon>
+    <infon key="name_0">surname:Goodman;given-names:AL</infon>
+    <infon key="pub-id_doi">10.1016/j.chom.2009.08.003</infon>
+    <infon key="pub-id_pmid">19748469</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Cell host &amp; microbe</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">6</infon>
+    <infon key="year">2009</infon>
+    <offset>32320</offset>
+    <text>Identifying genetic determinants needed to establish a human gut symbiont in its habitat</text>
+    </passage>
+    <passage>
+    <infon key="comment">JID35385 [pii]</infon>
+    <infon key="fpage">172</infon>
+    <infon key="lpage">179</infon>
+    <infon key="name_0">surname:Kuehnert;given-names:MJ</infon>
+    <infon key="pub-id_doi">10.1086/499632</infon>
+    <infon key="pub-id_pmid">16362880</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">J Infect Dis</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">193</infon>
+    <infon key="year">2006</infon>
+    <offset>32409</offset>
+    <text>Prevalence of Staphylococcus aureus nasal colonization in the United States, 2001-2002</text>
+    </passage>
+    <passage>
+    <infon key="comment">(in review)</infon>
+    <infon key="name_0">surname:Faust;given-names:K</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Microbial co-occurrence relationships in the human microbiome</infon>
+    <infon key="type">ref</infon>
+    <offset>32498</offset>
+    </passage>
+    <passage>
+    <infon key="comment">(in review)</infon>
+    <infon key="name_0">surname:Koren;given-names:O</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Enterotypes Lost in Gradients: A Meta-Analysis of Human Microbiome Project and Community 16S rRNA Data</infon>
+    <infon key="type">ref</infon>
+    <offset>32499</offset>
+    </passage>
+    <passage>
+    <infon key="comment">(in preparation)</infon>
+    <infon key="name_0">surname:Zhou;given-names:Y</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Community states and variability of the human microbiome</infon>
+    <infon key="type">ref</infon>
+    <offset>32500</offset>
+    </passage>
+    <passage>
+    <infon key="comment">(in press)</infon>
+    <infon key="name_0">surname:Abubucker;given-names:S</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Metabolic reconstruction for metagenomic data and its application to the human microbiome</infon>
+    <infon key="type">ref</infon>
+    <offset>32501</offset>
+    </passage>
+    <passage>
+    <infon key="comment">nmeth.f.303 [pii]</infon>
+    <infon key="fpage">335</infon>
+    <infon key="lpage">336</infon>
+    <infon key="name_0">surname:Caporaso;given-names:JG</infon>
+    <infon key="pub-id_doi">10.1038/nmeth.f.303</infon>
+    <infon key="pub-id_pmid">20383131</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Nat Methods</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">7</infon>
+    <infon key="year">2010</infon>
+    <offset>32502</offset>
+    <text>QIIME allows analysis of high-throughput community sequencing data</text>
+    </passage>
+    <passage>
+    <infon key="comment">gkp896 [pii]</infon>
+    <infon key="fpage">D355</infon>
+    <infon key="lpage">360</infon>
+    <infon key="name_0">surname:Kanehisa;given-names:M</infon>
+    <infon key="name_1">surname:Goto;given-names:S</infon>
+    <infon key="name_2">surname:Furumichi;given-names:M</infon>
+    <infon key="name_3">surname:Tanabe;given-names:M</infon>
+    <infon key="name_4">surname:Hirakawa;given-names:M</infon>
+    <infon key="pub-id_doi">10.1093/nar/gkp896</infon>
+    <infon key="pub-id_pmid">19880382</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Nucleic Acids Res</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">38</infon>
+    <infon key="year">2010</infon>
+    <offset>32569</offset>
+    <text>KEGG for representation and analysis of molecular networks involving diseases and drugs</text>
+    </passage>
+    <passage>
+    <infon key="comment">btp698 [pii]</infon>
+    <infon key="fpage">589</infon>
+    <infon key="lpage">595</infon>
+    <infon key="name_0">surname:Li;given-names:H</infon>
+    <infon key="name_1">surname:Durbin;given-names:R</infon>
+    <infon key="pub-id_doi">10.1093/bioinformatics/btp698</infon>
+    <infon key="pub-id_pmid">20080505</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Bioinformatics</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">26</infon>
+    <infon key="year">2010</infon>
+    <offset>32657</offset>
+    <text>Fast and accurate long-read alignment with Burrows-Wheeler transform</text>
+    </passage>
+    <passage>
+    <infon key="fpage">R23</infon>
+    <infon key="name_0">surname:Giannoukos;given-names:G</infon>
+    <infon key="pub-id_doi">10.1186/gb-2012-13-3-r23</infon>
+    <infon key="pub-id_pmid">22455878</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Genome biology</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">13</infon>
+    <infon key="year">2012</infon>
+    <offset>32726</offset>
+    <text>Efficient and robust RNA-seq process for cultured bacteria and complex community transcriptomes</text>
+    </passage>
+    <passage>
+    <infon key="fpage">664</infon>
+    <infon key="lpage">665</infon>
+    <infon key="name_0">surname:Langille;given-names:MG</infon>
+    <infon key="name_1">surname:Brinkman;given-names:FS</infon>
+    <infon key="pub-id_doi">10.1093/bioinformatics/btp030</infon>
+    <infon key="pub-id_pmid">19151094</infon>
+    <infon key="section_type">REF</infon>
+    <infon key="source">Bioinformatics</infon>
+    <infon key="type">ref</infon>
+    <infon key="volume">25</infon>
+    <infon key="year">2009</infon>
+    <offset>32822</offset>
+    <text>IslandViewer: an integrated interface for computational identification and visualization of genomic islands</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">title</infon>
+    <offset>32930</offset>
+    <text>The Human Microbiome Project Consortium</text>
+    </passage>
+    <passage>
+    <infon key="section_type">SUPPL</infon>
+    <infon key="type">paragraph</infon>
+    <offset>32970</offset>
+    <text>Curtis Huttenhower1,2,*, Dirk Gevers2,*, Rob Knight3,4, Sahar Abubucker5, Jonathan H Badger6, Asif T Chinwalla5, Heather H Creasy7, Ashlee M Earl2, Michael G FitzGerald2, Robert S Fulton5, Michelle G Giglio7, Kymberlie Hallsworth-Pepin5, Elizabeth A Lobos5, Ramana Madupu6, Vincent Magrini5, John C Martin5, Makedonka Mitreva5, Donna M Muzny8, Erica J Sodergren5, James Versalovic9,10, Aye M Wollam5, Kim C Worley8, Jennifer R Wortman2, Sarah K Young2, Qiandong Zeng2, Kjersti M Aagaard11, Olukemi O Abolude7, Emma Allen-Vercoe12, Eric J Alm13,2, Lucia Alvarado2, Gary L Andersen14, Scott Anderson2, Elizabeth Appelbaum5, Harindra M Arachchi2, Gary Armitage15, Cesar A Arze7, Tulin Ayvaz16, Carl C Baker17, Lisa Begg18, Tsegahiwot Belachew19, Veena Bhonagiri5, Monika Bihan6, Martin J Blaser20, Toby Bloom2, Vivien Bonazzi21, J Paul Brooks22,23, Gregory A Buck23,24, Christian J Buhay8, Dana A Busam6, Joseph L Campbell21,19, Shane R Canon25, Brandi L Cantarel7, Patrick S G Chain26,27, I-Min A Chen28, Lei Chen5, Shaila Chhibba21, Ken Chu28, Dawn M Ciulla2, Jose C Clemente3, Sandra W Clifton5, Sean Conlan21, Jonathan Crabtree7, Mary A Cutting29, Noam J Davidovics7, Catherine C Davis30, Todd Z DeSantis31, Carolyn Deal19, Kimberley D Delehaunty5, Floyd E Dewhirst32,33, Elena Deych34, Yan Ding8, David J Dooling5, Shannon P Dugan8, Wm Michael Dunne35,36, A Scott Durkin6, Robert C Edgar37, Rachel L Erlich2, Candace N Farmer5, Ruth M Farrell38, Karoline Faust39,40, Michael Feldgarden2, Victor M Felix7, Sheila Fisher2, Anthony A Fodor41, Larry J Forney42, Leslie Foster6, Valentina Di Francesco19, Jonathan Friedman43, Dennis C Friedrich2, Catrina C Fronick5, Lucinda L Fulton5, Hongyu Gao5, Nathalia Garcia44, Georgia Giannoukos2, Christina Giblin19, Maria Y Giovanni19, Jonathan M Goldberg2, Johannes Goll6, Antonio Gonzalez45, Allison Griggs2, Sharvari Gujja2, Susan Kinder Haake46, Brian J Haas2, Holli A Hamilton29, Emily L Harris29, Theresa A Hepburn2, Brandi Herter5, Diane E Hoffmann47, Michael E Holder8, Clinton Howarth2, Katherine H Huang2, Susan M Huse48, Jacques Izard32,33, Janet K Jansson49, Huaiyang Jiang8, Catherine Jordan7, Vandita Joshi8, James A Katancik50, Wendy A Keitel16, Scott T Kelley51, Cristyn Kells2, Nicholas B King52, Dan Knights45, Heidi H Kong53, Omry Koren54, Sergey Koren55, Karthik C Kota5, Christie L Kovar8, Nikos C Kyrpides27, Patricio S La Rosa34, Sandra L Lee8, Katherine P Lemon32,56, Niall Lennon2, Cecil M Lewis57, Lora Lewis8, Ruth E Ley54, Kelvin Li6, Konstantinos Liolios27, Bo Liu55, Yue Liu8, Chien-Chi Lo26, Catherine A Lozupone3, R Dwayne Lunsford29, Tessa Madden58, Anup A Mahurkar7, Peter J Mannon59, Elaine R Mardis5, Victor M Markowitz27,28, Konstantinos Mavromatis27, Jamison M McCorrison6, Daniel McDonald3, Jean McEwen21, Amy L McGuire60, Pamela McInnes29, Teena Mehta2, Kathie A Mihindukulasuriya5, Jason R Miller6, Patrick J Minx5, Irene Newsham8, Chad Nusbaum2, Michelle O\'Laughlin5, Joshua Orvis7, Ioanna Pagani27, Krishna Palaniappan28, Shital M Patel61, Matthew Pearson2, Jane Peterson21, Mircea Podar62, Craig Pohl5, Katherine S Pollard63,64,65, Mihai Pop55,66, Margaret E Priest2, Lita M Proctor21, Xiang Qin8, Jeroen Raes39,40, Jacques Ravel7, Jeffrey G Reid8, Mina Rho67, Rosamond Rhodes68, Kevin P Riehle69, Maria C Rivera23,24, Beltran Rodriguez-Mueller51, Yu-Hui Rogers6, Matthew C Ross16, Carsten Russ2, Ravi K Sanka6, Pamela Sankar70, J Fah Sathirapongsasuti1, Jeffery A Schloss21, Patrick D Schloss71, Thomas M Schmidt72, Matthew Scholz26, Lynn Schriml7, Alyxandria M Schubert71, Nicola Segata1, Julia A Segre21, William D Shannon34, Richard R Sharp38, Thomas J Sharpton63, Narmada Shenoy2, Nihar U Sheth23, Gina A Simone 73, Indresh Singh6, Christopher S Smillie43, Jack D Sobel74, Daniel D Sommer55, Paul Spicer57, Granger G Sutton6, Sean M Sykes2, Diana G Tabbaa2, Mathangi Thiagarajan6, Chad M Tomlinson5, Manolito Torralba6, Todd J Treangen75, Rebecca M Truty63, Tatiana A Vishnivetskaya62, Jason Walker5, Lu Wang21, Zhengyuan Wang5, Doyle V Ward2, Wesley Warren5, Mark A Watson35, Christopher Wellington21, Kris A Wetterstrand21, James R White7, Katarzyna Wilczek-Boney8, YuanQing Wu8, Kristine M Wylie5, Todd Wylie5, Chandri Yandava2, Liang Ye5, Yuzhen Ye67, Shibu Yooseph76, Bonnie P Youmans16, Lan Zhang8, Yanjiao Zhou5, Yiming Zhu8, Laurie Zoloth77, Jeremy D Zucker2, Bruce W Birren2, Richard A Gibbs8, Sarah K Highlander8,16, Barbara A Methe 6, Karen E Nelson6, Joseph F Petrosino8,78,16, George M Weinstock5, Richard K Wilson5, Owen White7</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f1.jpg</infon>
+    <infon key="id">F1</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_title_caption</infon>
+    <offset>37504</offset>
+    <text>Diversity of the human microbiome is concordant among measures, unique to each individual, and strongly determined by microbial habitat</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f1.jpg</infon>
+    <infon key="id">F1</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_caption</infon>
+    <offset>37640</offset>
+    <text>A) Alpha diversity within subjects by body habitat, as measured using the relative inverse Simpson index of 16S rRNA gene OTUs (red), genus-level phylotypes (blue), shotgun metagenomic reads matched to reference genomes (green), functional modules (yellow), and enzyme families (white). The mouth generally shows high within-subject diversity and the vagina low diversity, with other habitats intermediate; variation among individuals often exceeds variation among body habitats. B) Bray-Curtis beta diversity among subjects by body habitat, colors as for A. Skin differs most between subjects, with oral habitats and vaginal genera more stable. Although alpha- and beta-diversity are not directly comparable, changes in structure among communities (A) occupy a wider dynamic range than do changes within communities among individuals (B). C) Principal coordinates plot showing variation among samples demonstrates that primary clustering is by body area, with the oral, gastrointestinal, skin, and urogenital habitats separate; the nares bridge oral and skin habitats. D) Repeated samples from the same subject (red) are more similar than microbiomes from different subjects (yellow). Technical replicates (green) are in turn more similar; these patterns are consistent for all body habitats and for both phylogenetic and metabolic community composition. See previously described sample counts for all comparisons.</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f2.jpg</infon>
+    <infon key="id">F2</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_title_caption</infon>
+    <offset>39056</offset>
+    <text>Carriage of microbial taxa varies while metabolic pathways remain stable within a healthy population</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f2.jpg</infon>
+    <infon key="id">F2</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_caption</infon>
+    <offset>39157</offset>
+    <text>Vertical bars represent microbiome samples by body habitat in the seven locations with both shotgun and 16S data; bars indicate relative abundances colored by A) microbial phyla from binned OTUs and B) metabolic modules. Legend indicates most abundant phyla/pathways by average within one or more body habitats; RC = retroauricular crease. A plurality of most communities\' memberships consists of a single dominant phylum (and often genus; see Supp. Fig. 2), but this is universal neither to all body habitats nor to all individuals. Conversely, most metabolic pathways are evenly distributed and prevalent across both individuals and body habitats.</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f3.jpg</infon>
+    <infon key="id">F3</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_title_caption</infon>
+    <offset>39809</offset>
+    <text>Abundant taxa in the human microbiome, which has been metagenomically and taxonomically well-defined in the HMP population</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f3.jpg</infon>
+    <infon key="id">F3</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_caption</infon>
+    <offset>39932</offset>
+    <text>A-C) Prevalence (intensity, color denoting phylum/class) and abundance when present (size) of clades in the healthy microbiome. The most abundant A) metagenomically-identified species, B) 16S-identified genera, and C) PATRIC "pathogens" (metagenomic). The population size and sequencing depths of the HMP have well-defined the microbiome at all assayed body sites, as assessed by saturation of added community D) metabolic configurations (rarefaction of minimum Bray-Curtis beta-diversity of metagenomic EC abundances to nearest neighbor, inter-quartile range over 100 samples) and E) phylogenetic configurations (min. 16S OTU weighted UniFrac distance to nearest neighbor).</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f4.jpg</infon>
+    <infon key="id">F4</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_title_caption</infon>
+    <offset>40611</offset>
+    <text>Microbial carriage varies between subjects down to the species and strain level</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f4.jpg</infon>
+    <infon key="id">F4</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_caption</infon>
+    <offset>40691</offset>
+    <text>Metagenomic reads from 127 tongue samples spanning 90 subjects were processed with MetaPhlAn to determine relative abundances for each species. A) Relative abundances of 11 distinct Streptococcus spp. In addition to variation in broader clades (see Fig. 2), individual species within a single habitat demonstrate a wide range of compositional variation. Inset illustrates average tongue sample composition. B) Metabolic modules present/absent (grey/white) in KEGG reference genomes of tongue streptococci denote selected areas of strain-specific functional differentiation. C) Comparative genomic coverage for the single Streptococcus mitis B6 strain. Grey dots are median Reads Per Kilobase per Million reads (RPKM) for 1kb windows, gray bars are the 25th to 75th percentiles across all samples, red line the lowess smoothed average. Red bars at the bottom highlight predicted genomic islands. Large, discrete, and highly variable islands are commonly under-represented. D) Two islands highlighted, V = V-type H+ ATPase subunits I,K,E,C,F,A &amp; B, and CH = Choline binding proteins cbp6 and cbp12, indicating functional cohesion of strain-specific gene loss within individual human hosts.</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f5.jpg</infon>
+    <infon key="id">F5</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_title_caption</infon>
+    <offset>41879</offset>
+    <text>Microbial community membership and function correlates with host phenotype and sample metadata</text>
+    </passage>
+    <passage>
+    <infon key="file">nihms378076f5.jpg</infon>
+    <infon key="id">F5</infon>
+    <infon key="section_type">FIG</infon>
+    <infon key="type">fig_caption</infon>
+    <offset>41974</offset>
+    <text>The pathway and clade abundances most significantly associated (all FDR q&lt;0.2) using a multivariate linear model with A) subject race or ethnicity, B) vaginal posterior fornix pH, C) subject age, and D) BMI. Samples\' scatter plots are shown with lines indicating best simple linear fit. Race/ethnicity and vaginal pH are particularly strong associations; age and BMI are more representative of typically modest phenotypic associations (Sup. Table 3), suggesting that variation in the healthy microbiota may correspond to other host or environmental factors.</text>
+    </passage>
+    </document>
+    </collection>

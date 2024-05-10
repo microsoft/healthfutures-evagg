@@ -32,7 +32,7 @@ def paper() -> Paper:
         citation="Doe, J. et al. Test Journal 2021",
         abstract="This is a test paper.",
         pmcid="PMC123",
-        is_pmc_oa=True,
+        can_access=True,
     )
 
 

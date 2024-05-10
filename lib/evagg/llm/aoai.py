@@ -70,6 +70,7 @@ class OpenAIClient(IPromptClient):
 
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         prompt_tag = settings.pop("prompt_tag", "prompt")
+        connection_errors = 0
 
         while True:
             try:
@@ -79,10 +80,14 @@ class OpenAIClient(IPromptClient):
             except (openai.RateLimitError, openai.InternalServerError) as e:
                 logger.warning(f"Rate limit error on {prompt_tag}: {e}")
                 await asyncio.sleep(1)
-            except openai.APIConnectionError:
-                if self._config.endpoint.startswith("http://localhost"):
-                    logger.error("Local Azure OpenAI API not running - have you started the proxy?")
-                raise
+            except (openai.APIConnectionError, openai.APITimeoutError):
+                if connection_errors > 2:
+                    if self._config.endpoint.startswith("http://localhost"):
+                        logger.error("Azure OpenAI API unreachable - have you started the proxy?")
+                    raise
+                logger.warning(f"Connectivity error on {prompt_tag}, retrying...")
+                connection_errors += 1
+                await asyncio.sleep(1)
 
         prompt_log = {
             "prompt_tag": prompt_tag,
