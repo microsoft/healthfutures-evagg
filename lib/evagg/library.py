@@ -332,13 +332,13 @@ class RareDiseaseFileLibrary(IGetPapers):
     def _apply_chain_of_thought(self, paper: Paper) -> str:
         """Categorize papers based on LLM prompts."""
         # Check if the paper is full text or not
-        if paper.props.get("full_text_xml") is not None:
-            parameters = self._get_paper_texts(paper)
-        else:
-            parameters = {
-                "abstract": paper.props.get("abstract") or "no abstract",
-                "title": paper.props.get("title") or "no title",
-            }
+        # if paper.props.get("full_text_xml") is not None:
+        #     parameters = self._get_paper_texts(paper)
+        # else:
+        parameters = {
+            "abstract": paper.props.get("abstract") or "no abstract",
+            "title": paper.props.get("title") or "no title",
+        }
         
         # flexible
         process_response = self._llm_client.prompt_file(
@@ -351,23 +351,23 @@ class RareDiseaseFileLibrary(IGetPapers):
         )
         
         # Append output requirements to process_response before saving
-        if paper.props.get("full_text_xml") is not None:
-            phrases = (
-                "\n It is essential that you provide your response as a single string: "
-                "\"rare disease\" or \"other\" based on your classification. "
-                "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
-                f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
-                f"Full text: {parameters['full_text']}\n"
-            )
-        else:
-            phrases = (
-                "\n It is essential that you provide your response as a single string: "
-                "\"rare disease\" or \"other\" based on your classification. "
-                "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
-                f"Below are the title and abstract:\n\n"
-                f"Title: {paper.props.get('title') or 'no title'}\n"
-                f"Abstract: {paper.props.get('abstract') or 'no abstract'}"
-            )
+        # if paper.props.get("full_text_xml") is not None:
+        #     phrases = (
+        #         "\n It is essential that you provide your response as a single string: "
+        #         "\"rare disease\" or \"other\" based on your classification. "
+        #         "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
+        #         f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
+        #         f"Full text: {parameters['full_text']}\n"
+        #     )
+        # else:
+        phrases = (
+            "\n It is essential that you provide your response as a single string: "
+            "\"rare disease\" or \"other\" based on your classification. "
+            "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
+            f"Below are the title and abstract:\n\n"
+            f"Title: {paper.props.get('title') or 'no title'}\n"
+            f"Abstract: {paper.props.get('abstract') or 'no abstract'}"
+        )
 
         process_response = str(process_response) + phrases
 
@@ -445,8 +445,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         keyword_cat = self._get_keyword_category(paper)
         # print("keyword_cat", keyword_cat)
         # TODO: uncomment the line below to use the chain of thought approach
-        llm_cat = self._get_llm_category(paper)
-        # llm_cat = self._apply_chain_of_thought(paper)
+        # llm_cat = self._get_llm_category(paper)
+        llm_cat = self._apply_chain_of_thought(paper)
         # llm_cat = self._collect_neg_pos_papers(paper, all_papers)
         # llm_cat = self._few_shot_examples(gene, paper, all_papers)
         
