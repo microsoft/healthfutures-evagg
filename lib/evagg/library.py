@@ -407,6 +407,35 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return "other"
 
+    def get_llm_category_w_few_shot(self, paper: Paper) -> str:
+        paper_finding_txt = (
+            "paper_finding.txt" if paper.props.get("full_text_xml") is None else "paper_finding_full_text.txt"
+        )
+        parameters = (
+            self._get_paper_texts(paper)
+            if paper_finding_txt == "paper_finding_full_text.txt"
+            else {
+                "abstract": paper.props.get("abstract") or "no abstract",
+                "title": paper.props.get("title") or "no title",
+            }
+        )
+        response = self._llm_client.prompt_file(
+            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
+            system_prompt="Extract field",
+            params=parameters,
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+        )
+
+        if isinstance(response, str):
+            result = response
+        else:
+            logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
+
+        if result in self.CATEGORIES:
+            return result
+
+        return "other"
+
     def _get_paper_categorizations(self, gene, paper: Paper, all_papers) -> Dict[str, int]:
         """Categorize papers with multiple strategies and return the counts of each category."""
         # Print the PMID of the paper being categorized
