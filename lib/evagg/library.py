@@ -7,11 +7,11 @@ import re
 from collections import defaultdict
 from datetime import date
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set, Tuple
+from typing import Any, Dict, List, Sequence, Set
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
+from lib.evagg.types import ICreateVariants, Paper
 
 from .disease_keywords import EXCLUSION_KEYWORDS, INCLUSION_KEYWORDS
 from .interfaces import IGetPapers
@@ -51,22 +51,23 @@ class SimpleFileLibrary(IGetPapers):
 
 
 # These are the columns in the truthset that are specific to the paper.
-TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "is_pmc_oa", "license"]
-TRUTHSET_PAPER_KEYS_MAPPING = {"paper_title": "title"}
-# These are the columns in the truthset that are specific to the variant.
-TRUTHSET_VARIANT_KEYS = [
+TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "license", "link"]
+TRUTHSET_PAPER_KEYS_MAPPING = {"paper_id": "id", "paper_title": "title"}
+# These are the columns in the truthset that are specific to the evidence.
+TRUTHSET_EVIDENCE_KEYS = [
     "gene",
-    "transcript",
     "paper_variant",
     "hgvs_c",
     "hgvs_p",
+    "transcript",
     "individual_id",
     "phenotype",
     "zygosity",
     "variant_inheritance",
-    "study_type",
-    "functional_study",
     "variant_type",
+    "functional_study",
+    # "gnomad_frequency",
+    "study_type",
     "notes",
 ]
 
@@ -82,8 +83,37 @@ class TruthsetFileLibrary(IGetPapers):
         self._variant_factory = variant_factory
         self._paper_client = paper_client
 
+    def _process_paper(self, paper_id: str, rows: List[Dict[str, str]]) -> Paper:
+        """Process a paper from the truthset file and return a Paper object with associated evidence."""
+        logger.info(f"Processing {len(rows)} variants/patients for {paper_id}.")
+
+        # Fetch a Paper object with the extracted fields based on the PMID.
+        assert paper_id.startswith("pmid:"), f"Paper ID {paper_id} does not start with 'pmid:'."
+        if not (paper := self._paper_client.fetch(paper_id[len("pmid:") :], include_fulltext=True)):
+            raise ValueError(f"Failed to fetch paper with ID {paper_id}.")
+
+        for row in rows:
+            # Doublecheck the truthset row has the same values as the Paper for all paper-specific keys.
+            for row_key in TRUTHSET_PAPER_KEYS:
+                key = TRUTHSET_PAPER_KEYS_MAPPING.get(row_key, row_key)
+                if paper.props[key] != row[row_key]:
+                    raise ValueError(f"Truthset mismatch for {paper.id} {key}: {paper.props[key]} vs {row[row_key]}.")
+
+            # Parse the variant from the HGVS c. or p. description.
+            text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
+            variant = self._variant_factory.parse(text_desc, row["gene"], row["transcript"])
+
+            # Create an evidence dictionary from the variant/patient-specific columns.
+            evidence = {key: row.get(key, "") for key in TRUTHSET_EVIDENCE_KEYS}
+            # Add a unique identifier for this combination of paper, variant, and individual ID.
+            evidence["pub_ev_id"] = f"{paper.id}:{variant.hgvs_desc}:{row['individual_id']}".replace(" ", "")
+            paper.evidence[(variant, row["individual_id"])] = evidence
+
+        return paper
+
     @cache
     def _load_truthset(self) -> Set[Paper]:
+        row_count = 0
         # Group the rows by paper ID.
         paper_groups = defaultdict(list)
         with open(self._file_path) as tsvfile:
@@ -91,90 +121,14 @@ class TruthsetFileLibrary(IGetPapers):
             reader = csv.reader(tsvfile, delimiter="\t")
             for line in reader:
                 fields = dict(zip(header, [field.strip() for field in line]))
-                paper_id = fields.get("paper_id")
-                paper_groups[paper_id].append(fields)
+                paper_groups[fields["paper_id"]].append(fields)
+                row_count += 1
 
-        papers: Set[Paper] = set()
-        for paper_id, rows in paper_groups.items():
-            if paper_id == "MISSING_ID":
-                logger.warning(f"Skipped {len(rows)} rows with no paper ID.")
-                continue
-
-            for row in rows:
-                if "is_pmc_oa" in row:
-                    row["is_pmc_oa"] = row["is_pmc_oa"].lower() == "true"  # type: ignore
-
-            # For each paper, extract the paper-specific key/value pairs into a new dict.
-            # These are repeated on every paper/variant row, so we can just take the first row.
-            paper_data = {k: v for k, v in rows[0].items() if k in TRUTHSET_PAPER_KEYS}
-
-            # Integrity checks.
-            for row in rows:
-                # Doublecheck if every row has the same values for the paper-specific keys.
-                for key in TRUTHSET_PAPER_KEYS:
-                    if paper_data[key] != row[key]:
-                        logger.warning(f"Multiple values ({paper_data[key]} vs {row[key]}) for {key} ({paper_id}).")
-                # Make sure the gene/variant columns are not empty.
-                if not row["gene"] or (not row["hgvs_p"] and not row["hgvs_c"]):
-                    logger.warning(f"Missing gene or hgvs_p for {paper_id}.")
-
-            # Return the parsed variant from HGVS c or p and the individual ID.
-            def _get_variant_key(row: Dict[str, str]) -> Tuple[HGVSVariant | None, str]:
-                text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
-                transcript = row["transcript"] if "transcript" in row else None
-
-                # This can fail, instead of raising an exception, we'll return a placeholder value that can be dropped
-                # from the set of variants later.
-                try:
-                    return (
-                        self._variant_factory.parse(text_desc=text_desc, gene_symbol=row["gene"], refseq=transcript),
-                        row["individual_id"],
-                    )
-                except ValueError as e:
-                    logger.warning(f"Variant parsing failed: {e}")
-                    return None, ""
-
-            # For each paper, extract the (variant, subject)-specific key/value pairs into a new dict of dicts.
-            variants = {_get_variant_key(row): {key: row.get(key, "") for key in TRUTHSET_VARIANT_KEYS} for row in rows}
-            if (None, "") in variants:
-                logger.warning("Dropping placeholder variants.")
-                variants.pop((None, ""))
-
-            if not variants:
-                logger.warning(f"No valid variants for {paper_id}.")
-                continue
-
-            # Create a Paper object with the extracted fields.
-            if paper_id is not None and paper_id.startswith("pmid:"):
-                pmid = paper_id[5:]
-                paper = self._paper_client.fetch(pmid, include_fulltext=True)
-                if paper:
-                    # Compare and potentially add in truthset data that we don't get from the paper client.
-                    for key in TRUTHSET_PAPER_KEYS:
-                        if key == "paper_id":
-                            continue
-                        mapped_key = TRUTHSET_PAPER_KEYS_MAPPING.get(key, key)
-                        if mapped_key in paper.props:
-                            if paper.props[mapped_key] != paper_data[key]:
-                                logger.warning(
-                                    f"Paper field mismatch: {key}/{mapped_key} ({paper_data[key]} vs"
-                                    f" {paper.props[mapped_key]})."
-                                )
-                        else:
-                            logger.error(f"Adding {mapped_key}:{paper_data[key]} to paper props.")
-                            paper.props[mapped_key] = paper_data[key]
-                if not paper:
-                    logger.warning(f"Failed to fetch paper with PMID {pmid}.")
-                    paper = Paper(id=paper_id, evidence=variants, **paper_data)
-                else:
-                    # Add in evidence.
-                    paper.evidence = variants
-            else:
-                logger.warning("Paper ID does not appear to be a pmid, cannot fetch paper content.")
-                paper = Paper(id=paper_id, evidence=variants, **paper_data)
-
-            papers.add(paper)
-
+        logger.info(f"Loaded {row_count} rows with {len(paper_groups)} papers from {self._file_path}.")
+        # Process each paper row group into a Paper object with truthset evidence filled in.
+        papers = {self._process_paper(paper_id, rows) for paper_id, rows in paper_groups.items()}
+        # Make sure that each evidence truthset row is unique across the truthset.
+        assert len({ev["pub_ev_id"] for p in papers for ev in p.evidence.values()}) == row_count
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
@@ -228,7 +182,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         paper_client: IPaperLookupClient,
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
-        require_full_text: bool = False,
     ) -> None:
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
@@ -236,14 +189,12 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
-            require_full_text (bool, optional): Whether to require full text for the paper. Defaults to False.
         """
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
         self._allowed_categories = allowed_categories if allowed_categories is not None else ["rare disease"]
-        self._require_full_text = require_full_text
 
     def _get_keyword_category(self, paper: Paper) -> str:
         """Categorize papers based on keywords in the title and abstract."""
@@ -364,10 +315,8 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper
             for paper_id in paper_ids
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
+            and paper.props["fulltext_xml"] is not None
         ]
-
-        if self._require_full_text:
-            papers = [p for p in papers if p.props.get("full_text_xml")]
 
         logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 
