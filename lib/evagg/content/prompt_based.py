@@ -64,16 +64,6 @@ class PromptBasedContentExtractor(IExtractFields):
     def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
         return "\n\n".join([m["text"] for m in mentions])
 
-    def _can_process_paper(self, paper: Paper) -> bool:
-        if (
-            "pmcid" not in paper.props
-            or paper.props["pmcid"] == ""
-            or "is_pmc_oa" not in paper.props
-            or paper.props["is_pmc_oa"] is False
-        ):
-            return False
-        return True
-
     def _get_all_paper_fields(self, paper: Paper, fields: Sequence[str]) -> Dict[str, str]:
         result = {}
         for field in fields:
@@ -246,8 +236,8 @@ class PromptBasedContentExtractor(IExtractFields):
         return await asyncio.gather(*[self._get_fields(gene_symbol, ob, fields.copy(), cache) for ob in obs])
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
-        if not self._can_process_paper(paper):
-            logger.warning(f"Skipping {paper.id} because it is not in PMC-OA")
+        if not paper.props.get("can_access", False):
+            logger.warning(f"Skipping {paper.id} because it is not licensed for access")
             return []
 
         # Find all the observations in the paper relating to the query.
