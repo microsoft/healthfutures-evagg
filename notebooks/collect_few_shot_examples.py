@@ -112,7 +112,9 @@ def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or_neg):
         for pmid, data in pmids.items()
     ]
     texts = [preprocess_text((title or "") + " " + (abstract or "")) for _, _, title, abstract in papers]
-    vectorizer = TfidfVectorizer()
+    vectorizer = (
+        TfidfVectorizer()
+    )  # TODO: ada02 embedding # https://github.com/jeremiahwander/ev-agg-exp/blob/780d6cba036d6dc8a46afd2acbdcb607db51dbbd/lib/evagg/llm/aoai.py#L134
     X = vectorizer.fit_transform(texts)
     kmeans = KMeans(n_clusters=k_means_clusters, random_state=args.seed)  # Adjust the number of clusters as needed
     kmeans.fit(X)
@@ -180,7 +182,7 @@ def sample_save_examples(seed, outdir, clusters, gene_pmid_title_abstract_dict, 
                 if (
                     gene not in sampled_genes and title is not None and abstract is not None
                 ):  # if the gene has not been sampled and the paper has a title and abstract
-                    f.write(f"Cluster: {cluster}, Gene: {gene}, PMID: {pmid}\n")
+                    f.write(f"Gene: {gene}, PMID: {pmid}\n")
                     f.write(f"Title: {title}\n")
                     f.write(f"Abstract: {abstract}\n\n")
                     sampled_genes.add(gene)  # mark the gene as sampled
@@ -297,15 +299,13 @@ def main(args):
         neg_dict = add_abstract(neg_dict)
 
         # Cluster (based on k) the negative example papers
-        clusters = cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "neg")
+        clusters = cluster_papers(neg_dict, args.k_means_clusters, "neg")
 
         # Save the clusters in a tsv of gene, pmid, cluster
         save_clusters(args.outdir, clusters, "neg")
 
         # Sample and save positive few shot examples
-        sample_save_examples(
-            args.seed, args.outdir, clusters, pos_gene_pmid_title_abstract, "few_shot_neg_examples.txt"
-        )
+        sample_save_examples(args.seed, args.outdir, clusters, neg_dict, "few_shot_neg_examples.txt")
 
 
 if __name__ == "__main__":
@@ -374,11 +374,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o",
         "--outdir",
-        default=f"data/v1/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/",
+        default=f".out/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/",
         type=str,
         help=(
             "Results output directory. Default is "
-            f"data/v1/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/"
+            f".out/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/"
         ),
     )
     args = parser.parse_args()
@@ -394,52 +394,6 @@ if __name__ == "__main__":
 
 
 ############################################################################################################
-# def get_llm_category_w_few_shot(self, paper: Paper) -> str:
-#     paper_finding_txt = (
-#         "paper_finding.txt" if paper.props.get("full_text_xml") is None else "paper_finding_full_text.txt"
-#     )
-#     parameters = (
-#         self._get_paper_texts(paper)
-#         if paper_finding_txt == "paper_finding_full_text.txt"
-#         else {
-#             "abstract": paper.props.get("abstract") or "no abstract",
-#             "title": paper.props.get("title") or "no title",
-#         }
-#     )
-#     response = self._llm_client.prompt_file(
-#         user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
-#         system_prompt="Extract field",
-#         params=parameters,
-#         prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
-#     )
-
-#     if isinstance(response, str):
-#         result = response
-#     else:
-#         logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
-
-#     if result in self.CATEGORIES:
-#         return result
-
-#     return "other"
-
-
-# # papers_dict = {paper.id: paper for paper in papers}
-# # print("papers_dict", papers_dict['pmid:31839819'])
-
-# # # Check if papers_dict['pmid:31839819'] is the same as paper1
-# # paper1_title = paper1.props.get("title")
-# # paper1_abstract = paper1.props.get("abstract")
-# # print("paper1_title", paper1_title)
-# # print("paper1_abstract", paper1_abstract)
-# # print("paper1", paper1)
-# # print("papers_dict['pmid:31839819']", papers_dict['pmid:31839819'])
-# # print("papers_dict['pmid:31839819'].props.get('title')", papers_dict['pmid:31839819'].props.get("title"))
-# # print("papers_dict['pmid:31839819'].props.get('abstract')", papers_dict['pmid:31839819'].props.get("abstract"))
-# # print("papers_dict['pmid:31839819'].props.get('title') == paper1_title", papers_dict['pmid:31839819'].props.get("title") == paper1_title)
-# # print("papers_dict['pmid:31839819'].props.get('abstract') == paper1_abstract", papers_dict['pmid:31839819'].props.get("abstract") == paper1_abstract)
-# # print("papers_dict['pmid:31839819'] == paper1", papers_dict['pmid:31839819'] == paper1)
-
 
 # def get_example_type_and_gene(self, pmid) -> Tuple[str, str]:
 #     # Read the data from the TSV file into a pandas DataFrame
