@@ -105,6 +105,30 @@ def preprocess_text(text):
     return " ".join(tokens)
 
 
+def k_set_automatically(X):
+    distortions = []
+    K = range(1, 10)
+    for k in K:
+        kmeanModel = KMeans(n_clusters=k).fit(X)
+        distortions.append(sum(np.min(cdist(X, kmeanModel.cluster_centers_, "euclidean"), axis=1)) / X.shape[0])
+
+    # Calculate the distance of each distortion point from the line formed by the first and last points
+    x1, y1 = 1, distortions[0]
+    x2, y2 = 9, distortions[-1]
+    distances = []
+    for i in range(len(distortions)):
+        x0 = i + 1
+        y0 = distortions[i]
+        numerator = abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1)
+        denominator = ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
+        distances.append(numerator / denominator)
+
+    # The optimal number of clusters is the one that corresponds to the point of maximum distance
+    optimal_k = distances.index(max(distances)) + 1
+
+    return optimal_k
+
+
 def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or_neg):
     papers = [
         (gene, pmid, data["title"], data["abstract"])
@@ -279,6 +303,9 @@ def main(args):
 
     print(f"\nProcessing truth data file to extract {args.k_means_clusters} positive examples...")
 
+    # Determine the number of clusters
+    # num_clusters = k_set_automatically()
+
     # Cluster (based on k) the positive example papers
     clusters = cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
 
@@ -391,171 +418,3 @@ if __name__ == "__main__":
         print(f"- {arg}: {value}")
 
     main(args)
-
-
-############################################################################################################
-
-# def get_example_type_and_gene(self, pmid) -> Tuple[str, str]:
-#     # Read the data from the TSV file into a pandas DataFrame
-#     df = pd.read_csv("/home/azureuser/ev-agg-exp/data/v1/papers_train_v1.tsv", sep="\t")
-
-#     # Get the row for the given PMID
-#     row = df[df["pmid"] == pmid]
-#     print("row", row)
-
-#     # If the row is empty, the example is negative and the gene is None
-#     if row.empty:
-#         return "negative", "NA"
-
-#     # Otherwise, the example is positive and the gene is the value in the "gene" column
-#     return "positive", row["gene"].values[0]
-
-
-# def few_shot_examples(self, gene, paper: Paper, papers: Sequence[Paper]) -> Sequence[Paper]:
-#     """Given the paper (title and abstract in question), compute the cosine similarity between that paper and the
-#     other papers in the dataset. Return the top 2 most similar papers in the positive category, and 2 most similar papers in the negative category.
-#     """
-#     # Extract the title and abstract of the paper in question
-#     title = paper.props.get("title") or ""
-#     abstract = paper.props.get("abstract") or ""
-
-#     # Extract the titles and abstracts of all the papers in the dataset TODO: do not need to get all of them
-#     dataset_example_signs_and_genes = [self._get_example_type_and_gene(p.id) for p in papers]
-#     print(dataset_example_signs_and_genes)
-
-#     # Separate the positive and negative papers, excluding papers with the same gene as the paper in question
-#     positive_papers = [
-#         p for p, (sign, g) in zip(papers, dataset_example_signs_and_genes) if sign == "positive" and g != gene
-#     ]
-#     negative_papers = [
-#         p for p, (sign, g) in zip(papers, dataset_example_signs_and_genes) if sign == "negative" and g != gene
-#     ]
-
-#     # Combine the titles and abstracts into separate lists of documents for positive and negative papers
-#     positive_documents = (
-#         [title]
-#         + [abstract]
-#         + [p.props.get("title") or "" for p in positive_papers]
-#         + [p.props.get("abstract") or "" for p in positive_papers]
-#     )
-#     negative_documents = (
-#         [title]
-#         + [abstract]
-#         + [p.props.get("title") or "" for p in negative_papers]
-#         + [p.props.get("abstract") or "" for p in negative_papers]
-#     )
-
-#     # Create a TF-IDF vectorizer and transform the documents into TF-IDF vectors
-#     vectorizer = TfidfVectorizer()
-#     positive_tfidf_matrix = vectorizer.fit_transform(positive_documents)
-#     negative_tfidf_matrix = vectorizer.fit_transform(negative_documents)
-
-#     # Compute the cosine similarity matrix between the TF-IDF vectors
-#     positive_similarity_matrix = cosine_similarity(positive_tfidf_matrix)
-#     negative_similarity_matrix = cosine_similarity(negative_tfidf_matrix)
-
-#     # Get the indices of the top 2 most similar papers (excluding the paper in question) for both positive and negative papers
-#     paper_index = 0
-#     positive_top_indices = positive_similarity_matrix[paper_index].argsort()[-3:-1][::-1]
-#     negative_top_indices = negative_similarity_matrix[paper_index].argsort()[-3:-1][::-1]
-
-#     # Return the top 2 most similar papers for both positive and negative papers
-#     positive_similar_papers = [positive_papers[i] for i in positive_top_indices]
-#     negative_similar_papers = [negative_papers[i] for i in negative_top_indices]
-
-#     # Save the top 4 similar (neg and pos categories) to a file, labeled with the anchor paper's PMID and gene name
-#     with open(f"lib/evagg/content/prompts/similar_papers_{paper.id.replace('pmid:', '')}_{gene}.txt", "w") as f:
-#         f.write(
-#             "Two example papers from the 'rare disease' category that are similar to the current paper we are trying to classify:\n"
-#         )
-#         for p in positive_similar_papers:
-#             f.write(f"Title: {p.props.get('title')}\n")
-#             f.write(f"Abstract: {p.props.get('abstract')}\n\n")
-#         f.write(
-#             "Two example papers from the 'other' category that are similar to the current paper we are trying to classify:\n"
-#         )
-#         for p in negative_similar_papers:
-#             f.write(f"Title: {p.props.get('title')}\n")
-#             f.write(f"Abstract: {p.props.get('abstract')}\n\n")
-
-#     return positive_similar_papers, negative_similar_papers
-
-
-# # Define the path to the file
-# file_path = "/home/azureuser/ev-agg-exp/.out/binary_classes_paper_finding_results_2024-04-24/benchmarking_paper_finding_results_train.txt"
-
-# # Initialize an empty dictionary to hold the data
-# data = {}
-
-# # Open the file and read its contents
-# with open(file_path, "r") as file:
-#     lines = file.readlines()
-#     i = 0
-#     while i < len(lines):
-#         line = lines[i].strip()
-#         if line.startswith("GENE:"):
-#             gene = line.split(":")[1].strip()
-#             data[gene] = {}
-#             i += 1
-#             while i < len(lines) and not lines[i].strip().startswith("GENE:"):
-#                 if lines[i].strip().startswith("Found E.A.") and "irrelevant" in lines[i]:
-#                     i += 1
-#                     while i < len(lines) and lines[i].strip().startswith("*"):
-#                         parts = lines[i].strip().split("*")
-#                         pmid = parts[2].strip()
-#                         title = parts[3].strip()
-#                         data[gene][pmid] = {"title": title}
-#                         i += 1
-#                 else:
-#                     i += 1
-#         else:
-#             i += 1
-
-# # Print the data
-# print(data["ACAT2"])
-
-# # main
-# queries = [
-#     {"gene_symbol": "ADCY1", "min_date": "2014/01/01", "retmax": 3},  # 99
-#     # {"gene_symbol": "RHOH", "min_date": "2012/01/01", "retmax": 90},
-#     # {"gene_symbol": "FBN2", "min_date": "1998/01/01", "retmax": 313},
-#     # {"gene_symbol": "ACAT2", "min_date": "2021/01/01", "retmax": 87},
-#     # {"gene_symbol": "TAPBP", "min_date": "2002/01/01", "retmax": 65},
-#     # {"gene_symbol": "LRRC10", "min_date": "2015/01/01", "retmax": 24},
-#     # {"gene_symbol": "EXOC2", "min_date": "2020/01/01", "retmax": 22},
-#     # {"gene_symbol": "CTF1", "min_date": "2000/01/01", "retmax": 115},
-#     # {"gene_symbol": "TOPBP1", "min_date": "2014/01/01", "retmax": 260},
-#     # {"gene_symbol": "TNNC2", "min_date": "2023/01/01", "retmax": 19},
-#     # {"gene_symbol": "PEX11A", "min_date": "2020/01/01", "retmax": 18},
-#     # {"gene_symbol": "KMO", "min_date": "2023/01/01", "retmax": 170},
-#     # {"gene_symbol": "GRXCR2", "min_date": "2014/01/01", "retmax": 19},
-#     # {"gene_symbol": "CPT1B", "min_date": "2021/01/01", "retmax": 152},
-#     # {"gene_symbol": "COG4", "min_date": "2009/01/01", "retmax": 63},
-#     # {"gene_symbol": "MLH3", "min_date": "2001/01/01", "retmax": 273},
-#     # {"gene_symbol": "HYAL1", "min_date": "1999/01/01", "retmax": 316},
-#     # {"gene_symbol": "EMC1", "min_date": "2016/01/01", "retmax": 37},
-#     # {"gene_symbol": "TOP2B", "min_date": "2019/01/01", "retmax": 102},
-#     # {"gene_symbol": "OTUD7A", "min_date": "2020/01/01", "retmax": 26},
-#     # {"gene_symbol": "DNAJC7", "min_date": "2019/01/01", "retmax": 34},
-#     # {"gene_symbol": "SARS1", "min_date": "2017/01/01", "retmax": 46},
-#     # {"gene_symbol": "NPPA", "min_date": "2020/01/01", "retmax": 233},
-#     # {"gene_symbol": "RNASEH1", "min_date": "2019/01/01", "retmax": 62},
-#     # {"gene_symbol": "IGKC", "min_date": "1976/01/01", "retmax": 122},
-#     # {"gene_symbol": "RGS9", "min_date": "2004/01/01", "retmax": 185},
-#     # {"gene_symbol": "SLFN14", "min_date": "2015/01/01", "retmax": 28},
-#     # {"gene_symbol": "SLC38A9", "min_date": "2022/01/01", "retmax": 29},
-#     # {"gene_symbol": "B4GAT1", "min_date": "2013/01/01", "retmax": 29},
-#     # {"gene_symbol": "ZNF423", "min_date": "2012/01/01", "retmax": 80},
-#     # {"gene_symbol": "BAZ2B", "min_date": "2020/01/01", "retmax": 32},
-#     # {"gene_symbol": "JPH2", "min_date": "2007/01/01", "retmax": 117},
-# ]
-
-
-# def _call_approach_comparisons(self, paper: Paper, query) -> str:
-#     # TODO: comparing approaches
-#     # Call the function to compute the cosine similarity
-#     all_papers = self._get_all_papers(query)
-#     print("all_papers", all_papers)
-#     # similar_papers = self._few_shot_examples(paper, all_papers)
-#     # print("similar_papers", similar_papers)
-#     exit()
