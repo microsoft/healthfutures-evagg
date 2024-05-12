@@ -3,13 +3,13 @@ import json
 import logging
 import os
 import re
-from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
+from .fulltext import get_fulltext, get_section_texts
 from .interfaces import ICompareVariants, IFindObservations, Observation
 
 PatientVariant = Tuple[HGVSVariant, str]
@@ -17,34 +17,7 @@ PatientVariant = Tuple[HGVSVariant, str]
 logger = logging.getLogger(__name__)
 
 
-class ObservationFinderBase(ABC):
-    @abstractmethod
-    def __init__(self) -> None:
-        pass
-
-    def _get_paper_texts(self, paper: Paper) -> Dict[str, Any]:
-        texts: Dict[str, Any] = {}
-
-        texts["full_text"] = "\n".join(paper.props.get("full_text_sections", []))
-
-        tables = {}
-        root = paper.props.get("full_text_xml")
-        if root is not None:
-            for passage in root.findall("./passage"):
-                if bool(passage.findall("infon[@key='section_type'][.='TABLE']")):
-                    id = passage.find("infon[@key='id']").text
-                    if not id:
-                        logger.error("No id for table, using None as key")
-                    if id not in tables:
-                        tables[id] = passage.find("text").text
-                    else:
-                        tables[id] += "\n" + passage.find("text").text
-
-        texts["tables"] = tables
-        return texts
-
-
-class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
+class TruthsetObservationFinder(IFindObservations):
     def __init__(self) -> None:
         pass
 
@@ -57,10 +30,7 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
         The returned observation objects are logically "clinical" observations of a variant in a human. Each object
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        texts = self._get_paper_texts(paper)
-        full_text = texts.get("full_text", None)
-
-        if not full_text:
+        if not (full_text := get_fulltext(paper.props.get("fulltext_xml"))):
             logger.info(f"Skipping {paper.id} because full text could not be retrieved")
             return []
 
@@ -90,7 +60,7 @@ class TruthsetObservationFinder(ObservationFinderBase, IFindObservations):
         return observations
 
 
-class ObservationFinder(ObservationFinderBase, IFindObservations):
+class ObservationFinder(IFindObservations):
     _PROMPTS = {
         "check_patients": os.path.dirname(__file__) + "/prompts/observation/check_patients.txt",
         "find_genome_build": os.path.dirname(__file__) + "/prompts/observation/find_genome_build.txt",
@@ -390,17 +360,16 @@ uninterrupted sequences of whitespace characters.
         The returned observation objects are logically "clinical" observations of a variant in a human. Each object
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        texts = self._get_paper_texts(paper)
-        full_text = texts.get("full_text", None)
-        table_texts = texts.get("tables", {})
-
-        if not full_text:
+        if not paper.props.get("fulltext_xml"):
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
             return []
 
+        full_text = get_fulltext(paper.props["fulltext_xml"])
+        table_texts = list(get_section_texts(paper.props["fulltext_xml"], include=["TABLE"]))
+
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
-            full_text=full_text, focus_texts=list(table_texts.values()), gene_symbol=gene_symbol
+            full_text=full_text, focus_texts=table_texts, gene_symbol=gene_symbol
         )
         logger.info(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
@@ -425,7 +394,7 @@ uninterrupted sequences of whitespace characters.
         # if there are no variants (regardless of patients), then there are no observations to report.
         if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
-            patients = await self._find_patients(full_text=full_text, focus_texts=list(table_texts.values()))
+            patients = await self._find_patients(full_text=full_text, focus_texts=table_texts)
             logger.info(f"Found the following patients in {paper}: {patients}")
             descriptions = list(variants_by_description.keys())
 

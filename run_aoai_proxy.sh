@@ -66,4 +66,4 @@ if [ ! -f "$FILE_PATH" ]; then
 fi
 
 # Run the proxy with the default HF pool configuration.
-"$FILE_PATH" -config-url="https://hflabgeneral.blob.core.windows.net/aoaiproxy/health-futures-default/services.yaml"
+"$FILE_PATH" -config-url="https://evaggsa.blob.core.windows.net/aoai-proxy/services-evagg.yaml"
