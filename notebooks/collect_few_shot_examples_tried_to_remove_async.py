@@ -1,5 +1,4 @@
 import argparse
-import asyncio
 import csv
 
 # Libraries
@@ -12,9 +11,10 @@ import random
 import shutil
 import string
 import subprocess
+import time
 from datetime import datetime
 from functools import cache
-from typing import Dict, Set
+from typing import Any, Dict, List, Optional, Set
 
 import matplotlib.pyplot as plt
 import nltk
@@ -26,14 +26,16 @@ import yaml
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
+from openai import AsyncAzureOpenAI, AsyncOpenAI
+from openai.types import CreateEmbeddingResponse
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from lib.config import PydanticYamlModel
 from lib.di import DiContainer
-from lib.evagg.llm import OpenAIClient
+from lib.evagg.llm import aoai
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.svc import get_dotenv_settings
 
 logger = logging.getLogger(__name__)
 nltk.download("stopwords", quiet=True)
@@ -132,7 +134,33 @@ def k_set_automatically(X):
     return optimal_k
 
 
-async def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or_neg):
+class OpenAIConfig(PydanticYamlModel):
+    deployment: str
+    endpoint: str
+    api_key: str
+    api_version: str
+    max_parallel_requests: int = 0
+
+
+def embeddings(inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None) -> Dict[str, List[float]]:
+    settings = {"model": "text-embedding-ada-002", **(embedding_settings or {})}
+
+    actual_embeddings = {}
+
+    def run_single_embedding(input: str) -> int:
+        result: CreateEmbeddingResponse = embeddings.create(input=[input], **settings)
+        actual_embeddings[input] = result.data[0].embedding
+        return result.usage.prompt_tokens
+
+    start_overall = time.time()
+    tokens = [run_single_embedding(input) for input in inputs]
+    elapsed = time.time() - start_overall
+
+    logger.info(f"{len(inputs)} embeddings produced in {elapsed:.2f} seconds using {sum(tokens)} tokens.")
+    return actual_embeddings
+
+
+def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or_neg):
     papers = [
         (gene, pmid, data["title"], data["abstract"])
         for gene, pmids in gene_pmid_title_abstract_dict.items()
@@ -141,13 +169,9 @@ async def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or
     texts = [preprocess_text((title or "") + " " + (abstract or "")) for _, _, title, abstract in papers]
 
     # Leverage aoai embedding method to vectorize and embed papers
-    settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")
-    print(settings)
-    client = OpenAIClient(settings)  # replace Aoai with the actual class name
-    # embedding = aoai_instance.embeddings(texts)
-    embedding = await client.embeddings(texts)
-    print("embedding", embedding)
-    # X = np.array(embedding)
+    vectorized = embeddings(texts)
+    print("VECTORIZED", vectorized)
+
     vectorizer = (
         TfidfVectorizer()
     )  # TODO: ada02 embedding # https://github.com/jeremiahwander/ev-agg-exp/blob/780d6cba036d6dc8a46afd2acbdcb607db51dbbd/lib/evagg/llm/aoai.py#L134
@@ -283,7 +307,7 @@ def collect_neg_papers(benchmark_file) -> Dict[str, Dict[str, Dict[str, str]]]:
     # logger.warning(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 
 
-async def main(args):
+def main(args):
 
     # Ensure that the output directory is created (and overwritten if it already exists)
     if os.path.isfile(args.outdir):
@@ -319,7 +343,7 @@ async def main(args):
     # num_clusters = k_set_automatically()
 
     # Cluster (based on k) the positive example papers
-    clusters = await cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
+    clusters = cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
 
     # Save the clusters in a tsv of gene, pmid, cluster
     save_clusters(args.outdir, clusters, "pos")
@@ -338,7 +362,7 @@ async def main(args):
         neg_dict = add_abstract(neg_dict)
 
         # Cluster (based on k) the negative example papers
-        clusters = await cluster_papers(neg_dict, args.k_means_clusters, "neg")
+        clusters = cluster_papers(neg_dict, args.k_means_clusters, "neg")
 
         # Save the clusters in a tsv of gene, pmid, cluster
         save_clusters(args.outdir, clusters, "neg")
@@ -429,4 +453,4 @@ if __name__ == "__main__":
     for arg, value in vars(args).items():
         print(f"- {arg}: {value}")
 
-    asyncio.run(main(args))
+    main(args)
