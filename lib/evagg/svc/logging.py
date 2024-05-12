@@ -156,7 +156,7 @@ class LogProvider:
 
         # Set up the console handler logging arguments.
         LOGGING_CONFIG["handlers"]["console_handler"]["prompts_enabled"] = prompts_to_console or False
-        LOGGING_CONFIG["handlers"]["console_handler"]["prompt_msgs_enabled"] = level_number >= logging.INFO
+        LOGGING_CONFIG["handlers"]["console_handler"]["prompt_msgs_enabled"] = level_number <= logging.INFO
 
         # Set up the module filter.
         exclusions = set(DEFAULT_EXCLUSIONS if exclude_defaults else [])
