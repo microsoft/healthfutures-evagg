@@ -31,10 +31,7 @@ refseq_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  #di_factory: lib/config/benchmark_queries.yaml
-  - "gene_symbol": "ADCY1" # Limited
-    "min_date": "2014/01/01"
-    "retmax": 3 #99
+  di_factory: lib/config/benchmark_queries.yaml
 
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
