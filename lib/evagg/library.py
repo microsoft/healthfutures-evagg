@@ -330,7 +330,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return "other"
 
-    def _apply_chain_of_thought(self, paper: Paper) -> str:
+    async def _apply_chain_of_thought(self, paper: Paper) -> str:
         """Categorize papers based on LLM prompts."""
         # Check if the paper is full text or not
         # if paper.props.get("full_text_xml") is not None:
@@ -385,7 +385,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             # final product. Should I not save this to .out and instead just override w/ each new paper?
 
         # flexible
-        classification_response = self._llm_client.prompt_file(
+        classification_response = await self._llm_client.prompt_file(
             user_prompt_file=os.path.join(
                 os.path.dirname(__file__), "content", "prompts", f"paper_finding_process_{paper.id.replace("pmid:", "")}.txt"
             ),
@@ -447,7 +447,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # print("keyword_cat", keyword_cat)
         # TODO: uncomment the line below to use the chain of thought approach
         # llm_cat = self._get_llm_category(paper)
-        llm_cat = self._apply_chain_of_thought(paper)
+        llm_cat = await self._apply_chain_of_thought(paper)
         # llm_cat = self._collect_neg_pos_papers(paper, all_papers)
         # llm_cat = self._few_shot_examples(gene, paper, all_papers)
         
