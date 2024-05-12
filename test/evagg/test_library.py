@@ -45,7 +45,7 @@ def test_remote_single_paper(mock_paper_client: Any) -> None:
         abstract="We report on five individuals who presented with intellectual disability and other...",
         pmid="27392077",
         pmcid="PMC5005447",
-        is_pmc_oa=True,
+        can_access=True,
     )
     paper_client = mock_paper_client(["27392077"], paper)
     query = {"gene_symbol": "gene", "retmax": 1}
