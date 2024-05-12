@@ -31,8 +31,7 @@ refseq_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib/config/benchmark_queries.yaml
-
+  di_factory: lib/config/queries_mgttrain_subset.yaml
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
