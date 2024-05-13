@@ -1,0 +1,21 @@
+You are trying to determine the HPO or OMIM entry that corresponds to the following description of a disease or disease
+phenotype:
+
+{{$term}}
+
+Select zero or one entries from the following list of candidates:
+
+{{$candidates}}
+
+Your response should be a valid json-formatted object of the form:
+
+{
+    "match": "selected_term"
+}
+
+or
+
+{
+}
+
+if no match was found in the list of candidates.
