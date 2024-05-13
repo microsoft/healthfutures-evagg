@@ -3,7 +3,6 @@ import asyncio
 import csv
 
 # Libraries
-import glob
 import json
 import logging
 import os
@@ -23,12 +22,16 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as py
 import yaml
+from gap_statistic import OptimalK
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import silhouette_score
+from sklearn.mixture import GaussianMixture
 
 from lib.di import DiContainer
 from lib.evagg.llm import OpenAIClient
@@ -142,28 +145,94 @@ async def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or
 
     # Leverage aoai embedding method to vectorize and embed papers
     settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")
-    print(settings)
     client = OpenAIClient(settings)  # replace Aoai with the actual class name
-    # embedding = aoai_instance.embeddings(texts)
-    embedding = await client.embeddings(texts)
-    print("embedding", embedding)
-    # X = np.array(embedding)
-    vectorizer = (
-        TfidfVectorizer()
-    )  # TODO: ada02 embedding # https://github.com/jeremiahwander/ev-agg-exp/blob/780d6cba036d6dc8a46afd2acbdcb607db51dbbd/lib/evagg/llm/aoai.py#L134
-    X = vectorizer.fit_transform(texts)
+    embeddings = await client.embeddings(texts)
+
+    # Splitting text from the embeddings
+    texts = list(embeddings.keys())
+    embedding_values = list(embeddings.values())
+
+    ####### Determine the appropriate number of clusters with elbow method
+    ssd = []  # sum of squared distances
+    large_k = range(1, 15)  # different numbers of clusters
+    for k in large_k:
+        kmeans_k = KMeans(n_clusters=k)
+        kmeans_k = kmeans_k.fit(embedding_values)
+        ssd.append(kmeans_k.inertia_)
+
+    # Calculate the second derivative of the sum of squared distances
+    second_derivative = [0] + [ssd[i + 1] + ssd[i - 1] - 2 * ssd[i] for i in range(1, len(ssd) - 1)] + [0]
+
+    # Find the elbow point
+    optimal_k = second_derivative.index(max(second_derivative))
+
+    # Plot the sum of squared distances
+    plt.plot(large_k, ssd, "bx-")
+    plt.xlabel("k")
+    plt.ylabel("Sum_of_squared_distances")
+    plt.title("Elbow Method For Optimal k")
+    plt.plot(
+        optimal_k,
+        ssd[optimal_k],
+        marker="o",
+        markersize=12,
+        markeredgewidth=2,
+        markeredgecolor="r",
+        markerfacecolor="None",
+    )
+    plt.savefig(os.path.join(args.outdir, f"elbow_method_{pos_or_neg}.png"))
+    plt.clf()
+    print(f"The optimal number of clusters for elbow is {optimal_k}. Also see graph in elbow_method.png")
+
+    ####### Determine the correct number of clusters using the silhouette score
+
+    # Convert embedding_values to a NumPy array
+    embedding_values_array = np.array(embedding_values)
+
+    sil_scores = []  # silhouette scores
+    large_k = range(
+        2, 15
+    )  # different numbers of clusters, start from 2 because silhouette_score needs at least 2 clusters
+    for k in large_k:
+        kmeans_k = KMeans(n_clusters=k)
+        kmeans_k = kmeans_k.fit(embedding_values_array)
+        score = silhouette_score(embedding_values_array, kmeans_k.labels_)
+        sil_scores.append(score)
+
+    # Find the number of clusters that gives the maximum silhouette score
+    optimal_k = large_k[sil_scores.index(max(sil_scores))]
+
+    print(f"The optimal number of clusters for silhouette is {optimal_k}")
+
+    ####### Determine the correct number of clusters using the Bayesian Information Criterion
+    bic = []  # Bayesian Information Criterion
+    large_k = range(1, 15)  # different numbers of clusters
+    for k in large_k:
+        gmm = GaussianMixture(n_components=k, random_state=0)
+        gmm.fit(embedding_values_array)
+        bic.append(gmm.bic(embedding_values_array))
+
+    # Find the number of clusters that gives the minimum BIC
+    optimal_k = large_k[bic.index(min(bic))]
+
+    print(f"The optimal number of clusters for BIC is {optimal_k}")
+
+    # Ask the user to decide on the optimal K now
+    k_means_clusters = int(input("Please enter the number of clusters: "))
+
+    ##### Save cluster to a dictionary: Dict[cluster_num_1: Dict[(gene_1, pmid_1), (gene_2, pmid_2), ...]]
     kmeans = KMeans(n_clusters=k_means_clusters, random_state=args.seed)  # Adjust the number of clusters as needed
-    kmeans.fit(X)
-    clusters = {i: [] for i in range(kmeans.n_clusters)}
+    kmeans.fit(np.array(embedding_values))
+    clusters = {i: [] for i in range(k_means_clusters)}
     for i, label in enumerate(kmeans.labels_):
         clusters[label].append(papers[i][:2])  # (gene, pmid)
 
-    # Visualize the clusters
+    ##### Visualize the clusters
     pca = PCA(n_components=3)
-    X_3d = pca.fit_transform(X.toarray())
+    x_3d = pca.fit_transform(np.array(embedding_values))
     fig = go.Figure()
-    for i in range(kmeans.n_clusters):
-        points = X_3d[kmeans.labels_ == i]
+    for i in range(k_means_clusters):
+        points = x_3d[kmeans.labels_ == i]
         fig.add_trace(
             go.Scatter3d(
                 x=points[:, 0],
@@ -181,8 +250,8 @@ async def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or
     )
 
     # Save the figure to an HTML file
-    output_file_path = os.path.join(args.outdir, f"paper_clusters_{pos_or_neg}.html")
-    py.write_html(fig, output_file_path)
+    html_file_path = os.path.join(args.outdir, f"paper_clusters_{pos_or_neg}.html")
+    py.write_html(fig, html_file_path)
 
     return clusters
 
