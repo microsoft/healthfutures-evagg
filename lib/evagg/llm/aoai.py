@@ -1,8 +1,9 @@
 import asyncio
+import json
 import logging
 import time
 from functools import lru_cache, reduce
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import openai
 from openai import AsyncAzureOpenAI, AsyncOpenAI
@@ -18,8 +19,24 @@ from lib.evagg.svc.logging import PROMPT
 
 from .interfaces import IPromptClient
 
-ChatMessages = List[ChatCompletionMessageParam]
 logger = logging.getLogger(__name__)
+
+
+class ChatMessages:
+    _messages: List[ChatCompletionMessageParam]
+
+    def __init__(self, messages: Iterable[ChatCompletionMessageParam]) -> None:
+        self._messages = list(messages)
+
+    def __hash__(self) -> int:
+        content = "".join([json.dumps(message) for message in self._messages])
+        return hash(content)
+
+    def insert(self, index: int, message: ChatCompletionMessageParam) -> None:
+        self._messages.insert(index, message)
+
+    def to_list(self) -> List[ChatCompletionMessageParam]:
+        return self._messages.copy()
 
 
 class OpenAIConfig(PydanticYamlModel):
@@ -56,9 +73,11 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
+    def _create_completion_task(self, messages: ChatMessages, settings_str: str) -> asyncio.Task:
         """Schedule a completion task to the event loop and return the awaitable."""
-        chat_completion = self._client.chat.completions.create(messages=messages, **settings)
+        chat_completion = self._client.chat.completions.create(
+            messages=messages.to_list(), **(json.loads(settings_str))
+        )
         return asyncio.create_task(chat_completion, name="chat")
 
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
@@ -73,7 +92,11 @@ class OpenAIClient(IPromptClient):
                         await asyncio.sleep(1)
 
                 start_ts = time.time()
-                completion = await self._create_completion_task(messages, settings)
+                if settings.get("prompt_tag", "") == "phenotypes_all":
+                    print(f"messages: {hash(messages)}")
+                    print(f"settings: {hash(json.dumps(settings))}")
+
+                completion = await self._create_completion_task(messages, json.dumps(settings))
                 response = completion.choices[0].message.content or ""
                 elapsed = time.time() - start_ts
                 break
@@ -93,7 +116,7 @@ class OpenAIClient(IPromptClient):
             "prompt_tag": prompt_tag,
             "prompt_model": f"{settings.get('model')} {self._config.api_version}",
             "prompt_settings": settings,
-            "prompt_text": "\n".join([str(m.get("content")) for m in messages]),
+            "prompt_text": "\n".join([str(m.get("content")) for m in messages.to_list()]),
             "prompt_response": response,
         }
 
@@ -111,7 +134,7 @@ class OpenAIClient(IPromptClient):
         # Replace any '{{${key}}}' instances with values from the params dictionary.
         user_prompt = reduce(lambda x, kv: x.replace(f"{{{{${kv[0]}}}}}", kv[1]), (params or {}).items(), user_prompt)
 
-        messages: ChatMessages = [ChatCompletionUserMessageParam(role="user", content=user_prompt)]
+        messages: ChatMessages = ChatMessages([ChatCompletionUserMessageParam(role="user", content=user_prompt)])
         if system_prompt:
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=system_prompt))
 
@@ -158,6 +181,6 @@ class OpenAIClient(IPromptClient):
 
 class OpenAICacheClient(OpenAIClient):
     @lru_cache
-    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:  # type: ignore
+    def _create_completion_task(self, messages: ChatMessages, settings_str: str) -> asyncio.Task:  # type: ignore
         """Schedule a completion task to the event loop and return the awaitable."""
-        return super()._create_completion_task(messages, settings)
+        return super()._create_completion_task(messages, settings_str)
