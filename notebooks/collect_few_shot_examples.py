@@ -150,6 +150,14 @@ async def get_papers_and_embeddings(gene_pmid_title_abstract_dict):
 
     texts = list(embeddings.keys())
     embedding_values = list(embeddings.values())
+    # print the embedding_values where the texts is "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
+    # print(
+    #     embedding_values[
+    #         texts.index(
+    #             "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
+    #         )
+    #     ]
+    # )
 
     return papers, texts, embedding_values
 
