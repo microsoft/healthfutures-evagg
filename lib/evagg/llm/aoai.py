@@ -136,29 +136,10 @@ class OpenAIClient(IPromptClient):
         user_prompt = self._load_prompt_file(user_prompt_file)
         return await self.prompt(user_prompt, system_prompt, params, prompt_settings)
 
-    # async def embeddings(
-    #     self, inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None
-    # ) -> Dict[str, List[float]]:
-    #     settings = {"model": "text-embedding-ada-002", **(embedding_settings or {})}
-
-    #     embeddings = {}
-
-    #     async def _run_single_embedding(input: str) -> int:
-    #         result: CreateEmbeddingResponse = await self._client.embeddings.create(input=[input], **settings)
-    #         embeddings[input] = result.data[0].embedding
-    #         return result.usage.prompt_tokens
-
-    #     start_overall = time.time()
-    #     tokens = await asyncio.gather(*[_run_single_embedding(input) for input in inputs])
-    #     elapsed = time.time() - start_overall
-
-    #     logger.info(f"{len(inputs)} embeddings produced in {elapsed:.2f} seconds using {sum(tokens)} tokens.")
-    #     return embeddings
-
     async def embeddings(
         self, inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None
     ) -> Dict[str, List[float]]:
-        settings = {"model": "text-embedding-ada-002", **(embedding_settings or {})}
+        settings = {"model": "text-embedding-ada-002-v2", **(embedding_settings or {})}
 
         embeddings = {}
 
