@@ -1,10 +1,11 @@
 """Package for interacting with reference resources."""
 
-from .hpo import HPOReference
+from .hpo import PyHPOClient, WebHPOClient
 from .interfaces import (
     IAnnotateEntities,
     IBackTranslateVariants,
     ICompareHPO,
+    IFetchHPO,
     IGeneLookupClient,
     INormalizeVariants,
     IPaperLookupClient,
@@ -31,6 +32,7 @@ __all__ = [
     "IBackTranslateVariants",
     "IValidateVariants",
     "ICompareHPO",
+    "IFetchHPO",
     "ISearchHPO",
     # NCBI.
     "NcbiLookupClient",
@@ -38,5 +40,6 @@ __all__ = [
     # Mutalyzer.
     "MutalyzerClient",
     # HPO.
-    "HPOReference",
+    "PyHPOClient",
+    "WebHPOClient",
 ]
