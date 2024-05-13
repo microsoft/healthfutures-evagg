@@ -56,7 +56,8 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    def _run_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
+    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
+        """Schedule a completion task to the event loop and return the awaitable."""
         chat_completion = self._client.chat.completions.create(messages=messages, **settings)
         return asyncio.create_task(chat_completion, name="chat")
 
@@ -72,7 +73,7 @@ class OpenAIClient(IPromptClient):
                         await asyncio.sleep(1)
 
                 start_ts = time.time()
-                completion = await self._run_completion(messages, settings)
+                completion = await self._create_completion_task(messages, settings)
                 response = completion.choices[0].message.content or ""
                 elapsed = time.time() - start_ts
                 break
@@ -153,3 +154,10 @@ class OpenAIClient(IPromptClient):
 
         logger.info(f"{len(inputs)} embeddings produced in {elapsed:.2f} seconds using {sum(tokens)} tokens.")
         return embeddings
+
+
+class OpenAICacheClient(OpenAIClient):
+    @lru_cache
+    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:  # type: ignore
+        """Schedule a completion task to the event loop and return the awaitable."""
+        return super()._create_completion_task(messages, settings)
