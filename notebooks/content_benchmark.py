@@ -18,7 +18,7 @@ from typing import Any, List
 import pandas as pd
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import HPOReference, MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient, PyHPOClient
 from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
@@ -379,29 +379,77 @@ else:
 
 # %% Assess content extraction.
 
-hpo = HPOReference()
-from typing import Tuple
+hpo = PyHPOClient()
+from typing import Set, Tuple
+
+# def _fuzzy_match_hpo_sets(left_set: str, right_set: str) -> Tuple[list[str], list[str], list[str], list[str]]:
+#     # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
+#     def _is_unknown(hpo_set: str) -> bool:
+#         return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
+
+#     left_terms = re.findall(r"HP:\d+", left_set) if isinstance(left_set, str) and not _is_unknown(left_set) else []
+#     right_terms = re.findall(r"HP:\d+", right_set) if isinstance(right_set, str) and not _is_unknown(right_set) else []
+
+#     left_result = hpo.compare_set(left_terms, right_terms)
+#     right_result = hpo.compare_set(right_terms, left_terms)
+
+#     left_matched = [f"{k}<>{v[1]}" for k, v in left_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
+#     right_matched = [f"{k}<>{v[1]}" for k, v in right_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
+
+#     left_missed = [k for k, v in left_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
+#     right_missed = [k for k, v in right_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
+
+#     # Return the shared terms, the terms in left not present in right, the terms in right not present in left
+#     return (left_matched, right_matched, left_missed, right_missed)
 
 
-def _fuzzy_match_hpo_sets(left_set: str, right_set: str) -> Tuple[list[str], list[str], list[str]]:
-    # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
-    def _is_unknown(hpo_set: str) -> bool:
-        return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
+def _hpo_str_to_set(hpo_compound_string: str) -> Set[str]:
+    """Takes a string of the form "Foo (HP:1234), Bar (HP:4321) and provides a set of strings that correspond to the
+    HPO IDs embedded in the string.
+    """
+    return set(re.findall(r"HP:\d+", hpo_compound_string)) if pd.isna(hpo_compound_string) is False else set()
 
-    left_terms = re.findall(r"HP:\d+", left_set) if isinstance(left_set, str) and not _is_unknown(left_set) else []
-    right_terms = re.findall(r"HP:\d+", right_set) if isinstance(right_set, str) and not _is_unknown(right_set) else []
 
-    left_result = hpo.compare_set(left_terms, right_terms)
-    right_result = hpo.compare_set(right_terms, left_terms)
+from pyhpo import Ontology
 
-    matched = [f"{k}<>{v[1]}" for k, v in left_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
+Ontology()
+ROOT = Ontology.get_hpo_object("HP:0000001")
 
-    left_missed = [k for k, v in left_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
-    right_missed = [k for k, v in right_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
 
-    # Return the shared terms, the terms in left not present in right, the terms in right not present in left
-    return (matched, left_missed, right_missed)
+def _generalize_hpo_term(hpo_term: str, depth: int = 3) -> str:
+    """Take an HPO term ID and return the generalized version of that term at `depth`.
 
+    `depth` determines the degree to which hpo_term gets generalized, setting depth=1 will always return HP:0000001.
+
+    If the provided term is more generalized than depth (e.g., "HP:0000118"), then that term itself will be returned.
+    If the provided term doesn't exist in the ontology, then an error will be raised.
+    """
+    try:
+        path_len, path, _, _ = ROOT.path_to_other(Ontology.get_hpo_object(hpo_term))
+    except RuntimeError:
+        # No root found, occurs for obsolete terms.
+        return hpo_term
+    if path_len < depth:
+        return hpo_term
+    return path[depth - 1].__str__()
+
+
+def _match_hpo_sets(hpo_left, hpo_right) -> Tuple[list[str], list[str], list[str], list[str]]:
+    #     # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
+    #     def _is_unknown(hpo_set: str) -> bool:
+    #         return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
+
+    left_terms = _hpo_str_to_set(hpo_left)
+    right_terms = _hpo_str_to_set(hpo_right)
+
+    left_gen = {_generalize_hpo_term(t) for t in left_terms}
+    right_gen = {_generalize_hpo_term(t) for t in right_terms}
+
+    matches = list(left_gen.intersection(right_gen))
+    return matches, matches, list(left_gen - right_gen), list(right_gen - left_gen)
+
+
+# %%
 
 if CONTENT_COLUMNS:
     shared_df = merged_df_no_supplement[merged_df_no_supplement.in_truth & merged_df_no_supplement.in_output]
@@ -414,9 +462,9 @@ if CONTENT_COLUMNS:
             # We'll fuzzy match the HPO terms, note that we're ignoring anything in here that couldn't be matched via
             # HPO. The non HPO terms are still provided by pipeline output, but
             pheno_stats = shared_df.apply(
-                lambda row: _fuzzy_match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
+                lambda row: _match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
             )
-            match = pheno_stats.apply(lambda x: len(x[1]) == 0 and len(x[2]) == 0)
+            match = pheno_stats.apply(lambda x: len(x[2]) == 0 and len(x[3]) == 0)
             print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
         else:
             # Currently other content columns are just string compares.
