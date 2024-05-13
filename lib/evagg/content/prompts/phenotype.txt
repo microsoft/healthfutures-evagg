@@ -3,7 +3,7 @@ Here is some text from a paper describing genetic variants in the gene {{$gene}}
 I would like you to determine the phenotype for the patient and variant described below. Multiple patients
 in the paper might possess this variant, but I want you to determine the phenotype for this patient specifically.
 Multiple different phenotypes may be discussed throughout the paper, but I want you only to report the phenotypes that
-are exhibited by with the patient of interest.
+are exhibited by with the patient of interest. Multiple patients might possess the same phenotype, which is fine.
 
 The patient of interest may be referred to by any of the following identifiers: {{$patient_descriptions}}. 
 
@@ -67,6 +67,11 @@ If you cannot determine the phenotype from the text provided please respond:
     "unknown"
   ]
 }
+
+As a reminder, you're looking for phenotypes that can be specifically associated with the patient referred to as: 
+{{$patient_descriptions}}
+
+This patient possesses genetic variants that are described in the text as: {{$variant_descriptions}}
 
 -- Begin paper text --
 

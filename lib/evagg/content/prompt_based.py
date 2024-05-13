@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
-from lib.evagg.ref import ISearchHPO
+from lib.evagg.ref import IFetchHPO, ISearchHPO
 from lib.evagg.types import HGVSVariant, Paper
 
 from ..interfaces import IExtractFields
@@ -46,6 +46,7 @@ class PromptBasedContentExtractor(IExtractFields):
         llm_client: IPromptClient,
         observation_finder: IFindObservations,
         phenotype_searcher: ISearchHPO,
+        phenotype_fetcher: IFetchHPO,
         prompt_settings: Dict[str, Any] | None = None,
     ) -> None:
         # Pre-check the list of fields being requested.
@@ -57,6 +58,7 @@ class PromptBasedContentExtractor(IExtractFields):
         self._llm_client = llm_client
         self._observation_finder = observation_finder
         self._phenotype_searcher = phenotype_searcher
+        self._phenotype_fetcher = phenotype_fetcher
         self._instance_prompt_settings = (
             {**self._DEFAULT_PROMPT_SETTINGS, **prompt_settings} if prompt_settings else self._DEFAULT_PROMPT_SETTINGS
         )
@@ -99,18 +101,17 @@ class PromptBasedContentExtractor(IExtractFields):
         return result
 
     async def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
-        if not isinstance(phenotype, list):
-            print(phenotype)
+        if not isinstance(phenotype, list) or phenotype == ["unknown"] or phenotype == ["Unknown"]:
             return ["unknown"]
 
+        # Give AOAI a chance to come up with the phenotype terms on its own.
         response = await self._run_json_prompt(
             os.path.dirname(__file__) + "/prompts/phenotype_to_hpo.txt",
             {"phenotypes": ", ".join(phenotype)},
             {"prompt_tag": "phenotype_to_hpo"},
         )
 
-        # For the matched terms, validate that they're in the HPO, else drop the HPO identifier and move them to
-        # unmatched.
+        # Validate AOAI's responses.
         matched = response.get("matched", [])
         unmatched = response.get("unmatched", [])
         for m in matched.copy():
@@ -125,11 +126,11 @@ class PromptBasedContentExtractor(IExtractFields):
                 id = ids[0]
                 move = False
                 # Obtain the HPO term based on the HPO id.
-                if not bool(id_result := self._phenotype_searcher.search(id.strip("()"))):
+                if not bool(id_result := self._phenotype_fetcher.fetch(id.strip("()"))):
                     logger.info(f"Term {m} contains invalid HPO id.")
                     move = True
                 # Obtain the HPO term based on the string description.
-                if not bool(desc_result := self._phenotype_searcher.search(m.split("(")[0].strip())):
+                if not bool(desc_result := self._phenotype_fetcher.fetch(m.split("(")[0].strip())):
                     logger.info(f"Term {m} contains invalid HPO description.")
                     move = True
                 # Only keep this term if both exist and they match.
@@ -141,14 +142,26 @@ class PromptBasedContentExtractor(IExtractFields):
                     unmatched.append(m.split("(")[0].strip())
                     matched.remove(m)
 
+        # For anything that remains unmatched, use an HPO search client to try to find the closest match.
+        # TODO: alternatively, take a broader approach here where we search on each word within the unmatched term,
+        # gather the results, and then ask AOAI (via another prompt) to select from all those terms which seems best.
         # Try to use a query-based search for the unmatched terms.
         for u in unmatched:
-            result = self._phenotype_searcher.search(u)
+            if u.lower() == "unknown":
+                logger.warning("Unknown value made it into phenotype list.")
+                continue
+            result = self._phenotype_searcher.search(query=u, retmax=1)
             if result:
-                matched.append(f"{result['name']} ({result['id']})")
+                logger.info(f"Rescued term {u} with HPO term {result[0]['name']} ({result[0]['id']}).")
+                matched.append(f"{result[0]['name']} ({result[0]['id']})")
             else:
+                logger.info(f"Failed to rescue term {u}.")
                 matched.append(u)
 
+        if any("ialeptic" in m for m in matched):
+            import pdb
+            pdb.set_trace()
+            
         return matched
 
     async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
