@@ -2,7 +2,7 @@ import asyncio
 import logging
 import time
 from functools import lru_cache, reduce
-from typing import Any, Coroutine, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import openai
 from openai import AsyncAzureOpenAI, AsyncOpenAI
@@ -56,17 +56,9 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    async def _run_timed_completion(self, chat_completion: Coroutine[Any, Any, Any]) -> Tuple[str, float]:
-        # Pause 1 second if the number of pending chat completions is at the limit.
-        if self._config.max_parallel_requests > 0:
-            while sum(1 for t in asyncio.all_tasks() if t.get_name() == "chat") > self._config.max_parallel_requests:
-                await asyncio.sleep(1)
-
-        start_ts = time.time()
-        completion = await asyncio.create_task(chat_completion, name="chat")
-        elapsed = time.time() - start_ts
-
-        return completion.choices[0].message.content or "", elapsed
+    def _run_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
+        chat_completion = self._client.chat.completions.create(messages=messages, **settings)
+        return asyncio.create_task(chat_completion, name="chat")
 
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         prompt_tag = settings.pop("prompt_tag", "prompt")
@@ -74,8 +66,15 @@ class OpenAIClient(IPromptClient):
 
         while True:
             try:
-                chat_completion = self._client.chat.completions.create(messages=messages, **settings)
-                response, elapsed = await self._run_timed_completion(chat_completion)
+                # Pause 1 second if the number of pending chat completions is at the limit.
+                if (max_requests := self._config.max_parallel_requests) > 0:
+                    while sum(1 for t in asyncio.all_tasks() if t.get_name() == "chat") > max_requests:
+                        await asyncio.sleep(1)
+
+                start_ts = time.time()
+                completion = await self._run_completion(messages, settings)
+                response = completion.choices[0].message.content or ""
+                elapsed = time.time() - start_ts
                 break
             except (openai.RateLimitError, openai.InternalServerError) as e:
                 logger.warning(f"Rate limit error on {prompt_tag}: {e}")
