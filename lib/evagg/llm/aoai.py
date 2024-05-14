@@ -73,11 +73,9 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    def _create_completion_task(self, messages: ChatMessages, settings_str: str) -> asyncio.Task:
+    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
         """Schedule a completion task to the event loop and return the awaitable."""
-        chat_completion = self._client.chat.completions.create(
-            messages=messages.to_list(), **(json.loads(settings_str))
-        )
+        chat_completion = self._client.chat.completions.create(messages=messages.to_list(), **settings)
         return asyncio.create_task(chat_completion, name="chat")
 
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
@@ -92,11 +90,7 @@ class OpenAIClient(IPromptClient):
                         await asyncio.sleep(1)
 
                 start_ts = time.time()
-                if settings.get("prompt_tag", "") == "phenotypes_all":
-                    print(f"messages: {hash(messages)}")
-                    print(f"settings: {hash(json.dumps(settings))}")
-
-                completion = await self._create_completion_task(messages, json.dumps(settings))
+                completion = await self._create_completion_task(messages, settings)
                 response = completion.choices[0].message.content or ""
                 elapsed = time.time() - start_ts
                 break
@@ -180,7 +174,23 @@ class OpenAIClient(IPromptClient):
 
 
 class OpenAICacheClient(OpenAIClient):
-    @lru_cache
-    def _create_completion_task(self, messages: ChatMessages, settings_str: str) -> asyncio.Task:  # type: ignore
+    task_cache: Dict[int, asyncio.Task]
+
+    def __init__(self, config: Dict[str, Any]) -> None:
+        super().__init__(config)
+        self.task_cache = {}
+
+    def _build_cache_key(self, messages: ChatMessages, settings: Dict[str, Any]) -> int:
+        return hash(("".join([json.dumps(message) for message in messages.to_list()]), json.dumps(settings)))
+
+    def _is_task_returnable(self, task: asyncio.Task) -> bool:
+        return task.done() is False or task.exception() is None
+
+    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:  # type: ignore
         """Schedule a completion task to the event loop and return the awaitable."""
-        return super()._create_completion_task(messages, settings_str)
+        cache_key = self._build_cache_key(messages, settings)
+        if cache_key in self.task_cache and self._is_task_returnable(self.task_cache[cache_key]):
+            return self.task_cache[cache_key]
+        task = super()._create_completion_task(messages, settings)
+        self.task_cache[cache_key] = task
+        return task
