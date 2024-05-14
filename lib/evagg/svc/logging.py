@@ -172,7 +172,7 @@ class LogProvider:
         # Set up the file handler logging arguments.
         LOGGING_CONFIG["handlers"]["file_handler"]["log_root"] = output_path
         LOGGING_CONFIG["handlers"]["file_handler"]["prompts_enabled"] = prompts_to_file or False
-        LOGGING_CONFIG["handlers"]["file_handler"]["console_enabled"] = console_to_file
+        LOGGING_CONFIG["handlers"]["file_handler"]["console_enabled"] = console_to_file or False
 
         # Set up the console handler logging arguments.
         LOGGING_CONFIG["handlers"]["console_handler"]["prompts_enabled"] = prompts_to_console or False
