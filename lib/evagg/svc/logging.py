@@ -17,13 +17,13 @@ LOGGING_CONFIG: Dict = {
             "class": "lib.evagg.svc.logging.ConsoleHandler",
             "filters": ["module_filter"],
         },
-        "prompt_handler": {
-            "()": "lib.evagg.svc.logging.PromptFileHandler",
+        "file_handler": {
+            "()": "lib.evagg.svc.logging.FileHandler",
             "filters": ["module_filter"],
         },
     },
     "root": {
-        "handlers": ["console_handler", "prompt_handler"],
+        "handlers": ["console_handler", "file_handler"],
     },
 }
 
@@ -57,16 +57,21 @@ class LoggingFormatter(logging.Formatter):
     yellow = "\x1b[38;5;11m"
     red = "\x1b[31;20m"
     reset = "\x1b[0m"
-    # verbose "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
-    formatting = "%(levelname)s:%(name)s:%(message)s"
+    BASE_FMT = "%(levelname)s:%(name)s:%(message)s"
+    DEFAULT_FMT = "%(asctime)s.%(msecs)03d\t" + BASE_FMT
 
     FORMATS = {
-        logging.DEBUG: dim_grey + formatting + reset,
-        logging.INFO: grey + formatting + reset,
-        logging.WARNING: yellow + formatting + reset,
-        logging.ERROR: red + formatting + reset,
-        logging.CRITICAL: red + formatting + reset,
+        logging.DEBUG: dim_grey + BASE_FMT + reset,
+        logging.INFO: grey + BASE_FMT + reset,
+        logging.WARNING: yellow + BASE_FMT + reset,
+        logging.ERROR: red + BASE_FMT + reset,
+        logging.CRITICAL: red + BASE_FMT + reset,
     }
+
+    @classmethod
+    def format_default(cls, record: logging.LogRecord) -> str:
+        formatter = logging.Formatter(cls.DEFAULT_FMT, datefmt="%Y-%m-%d %H:%M:%S")
+        return formatter.format(record)
 
     @classmethod
     def format_color(cls, formatno: int, record: logging.LogRecord) -> str:
@@ -95,21 +100,33 @@ class LoggingFormatter(logging.Formatter):
         )
 
 
-class PromptFileHandler(logging.Handler):
-    def __init__(self, log_root: Optional[str] = None) -> None:
+class FileHandler(logging.Handler):
+    def __init__(self, log_root: str, prompts_enabled: bool, console_enabled: bool) -> None:
         super().__init__()
-
-        if log_root is None:
+        self._prompts_enabled = prompts_enabled
+        self._console_enabled = console_enabled
+        # If prompts and console output are both disabled, filter out all records.
+        if not prompts_enabled and not console_enabled:
             self.addFilter(lambda _: False)
-        else:
-            self.addFilter(lambda record: record.levelno == PROMPT)
-            self._log_dir = f"{log_root}/prompt_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            os.makedirs(self._log_dir, exist_ok=True)
+            return
+
+        self._log_dir = f"{log_root}/logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        os.makedirs(self._log_dir, exist_ok=True)
+
+        # If console output is enabled, write to file the
+        # command-line arguments used to start the program.
+        if console_enabled:
+            with open(f"{self._log_dir}/console.log", "w") as f:
+                f.write("ARGS:" + " ".join(sys.argv) + "\n")
 
     def emit(self, record: logging.LogRecord) -> None:
-        file_name = record.__dict__.get("prompt_tag", "prompt")
-        with open(f"{self._log_dir}/{file_name}.log", "a") as f:
-            f.write(LoggingFormatter.format_prompt(record) + "\n")
+        if self._prompts_enabled and record.levelno == PROMPT:
+            file_name = record.__dict__.get("prompt_tag", "prompt")
+            with open(f"{self._log_dir}/{file_name}.log", "a") as f:
+                f.write(LoggingFormatter.format_prompt(record) + "\n")
+        if self._console_enabled and record.levelno != PROMPT:
+            with open(f"{self._log_dir}/console.log", "a") as f:
+                f.write(LoggingFormatter.format_default(record) + "\n")
 
 
 class ConsoleHandler(logging.StreamHandler):
@@ -143,7 +160,8 @@ class LogProvider:
         exclude_defaults: Optional[bool] = True,
         prompts_to_file: Optional[bool] = False,
         prompts_to_console: Optional[bool] = False,
-        prompts_output_root: Optional[str] = ".out",
+        console_to_file: Optional[bool] = False,
+        output_path: Optional[str] = ".out",
     ) -> None:
         # Set up the base log level (defaults to WARNING).
         level_number = self._level_to_number(level or "WARNING")
@@ -151,8 +169,10 @@ class LogProvider:
         # Add custom log level for prompts.
         logging.addLevelName(PROMPT, "PROMPT")
 
-        # Set up the prompt handler logging root if prompt files are enabled.
-        LOGGING_CONFIG["handlers"]["prompt_handler"]["log_root"] = prompts_output_root if prompts_to_file else None
+        # Set up the file handler logging arguments.
+        LOGGING_CONFIG["handlers"]["file_handler"]["log_root"] = output_path
+        LOGGING_CONFIG["handlers"]["file_handler"]["prompts_enabled"] = prompts_to_file or False
+        LOGGING_CONFIG["handlers"]["file_handler"]["console_enabled"] = console_to_file
 
         # Set up the console handler logging arguments.
         LOGGING_CONFIG["handlers"]["console_handler"]["prompts_enabled"] = prompts_to_console or False
