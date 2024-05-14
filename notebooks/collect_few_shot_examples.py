@@ -151,13 +151,13 @@ async def get_papers_and_embeddings(gene_pmid_title_abstract_dict):
     texts = list(embeddings.keys())
     embedding_values = list(embeddings.values())
     # print the embedding_values where the texts is "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
-    # print(
-    #     embedding_values[
-    #         texts.index(
-    #             "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
-    #         )
-    #     ]
-    # )
+    print(
+        embedding_values[
+            texts.index(
+                "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
+            )
+        ]
+    )
 
     return papers, texts, embedding_values
 
@@ -393,7 +393,7 @@ async def main(args):
     shutil.copy(args.json_file_name, args.outdir)
     shutil.copy(args.pickle_file_name, args.outdir)
 
-    print(f"\nProcessing truth data file to extract {args.k_means_clusters} positive examples...")
+    print(f"\nProcessing truth data file to extract k positive examples...")
 
     # Determine the number of clusters
     # num_clusters = k_set_automatically()
@@ -409,7 +409,7 @@ async def main(args):
 
     # If a benchmark file is provided - we can process negative examples
     if args.benchmark_file:
-        print(f"\nProcessing benchmark file to extract {args.k_means_clusters} negative examples...")
+        print(f"\nProcessing benchmark file to extract k negative examples...")
 
         # Collect negative (irrelevant) examples based on a pipeline run
         neg_dict = collect_neg_papers(args.benchmark_file)
