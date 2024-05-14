@@ -185,7 +185,7 @@ class PromptBasedContentExtractor(IExtractFields):
                 match_dict[term] = f"{result[0]['name']} ({result[0]['id']})"
 
         # For those we don't match, search for each word within the term and collect the unique results.
-        for term in phenotype:
+        for term in phenotype.copy():
             words = term.split()
             candidates = set()
             for word in words:
@@ -205,12 +205,13 @@ class PromptBasedContentExtractor(IExtractFields):
                 )
                 if match := response.get("match"):
                     match_dict[term] = match
-            else:
-                logger.info(f"Failed to find any candidates for {term}.")
+                    phenotype.remove(term)
 
         logger.info(f"Converted phenotypes: {match_dict}")
 
-        return list(match_dict.values())
+        all_values = list(match_dict.values())
+        all_values.extend(phenotype)
+        return all_values
 
     async def _generate_phenotype_field(self, gene_symbol: str, observation: Observation) -> str:
 
