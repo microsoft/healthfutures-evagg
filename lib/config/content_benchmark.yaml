@@ -38,7 +38,7 @@ variant_factory:
   variant_lookup_client: "{{ncbi_client}}"
   refseq_client: "{{refseq_client}}"
 llm_client:
-  di_factory: lib.evagg.llm.OpenAIClient
+  di_factory: lib.evagg.llm.OpenAICacheClient
   config:
     di_factory: lib.evagg.svc.get_dotenv_settings
     filter_prefix: "AZURE_OPENAI_"
