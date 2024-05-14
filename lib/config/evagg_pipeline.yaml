@@ -2,6 +2,7 @@ log:
   di_factory: lib.evagg.svc.init_logger
   level: INFO
   prompts_to_file: true
+  console_to_file: true
 
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
