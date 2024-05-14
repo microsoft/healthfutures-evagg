@@ -147,7 +147,9 @@ class OpenAIClient(IPromptClient):
             connection_errors = 0
             while True:
                 try:
-                    result: CreateEmbeddingResponse = await self._client.embeddings.create(input=[input], **settings)
+                    result: CreateEmbeddingResponse = await self._client.embeddings.create(
+                        input=[input], encoding_format="float", **settings
+                    )
                     embeddings[input] = result.data[0].embedding
                     return result.usage.prompt_tokens
                 except (openai.RateLimitError, openai.InternalServerError) as e:
