@@ -51,11 +51,20 @@ def read_mgt_split_tsv(mgt_split_tsv):
     with open(mgt_split_tsv, "r") as file:
         next(file)  # Skip the header
         for line in file:
+            # Only consider pmids where the "has_fulltext" column is True, and the "is_pmc_oa" column is not "not_open_access"
+            if line.strip().split("\t")[3] == "True" and line.strip().split("\t")[4] != "not_open_access":
+                gene, pmid, _ = line.strip().split("\t")
+                if gene in mgt_paper_finding_dict:
+                    mgt_paper_finding_dict[gene].append(pmid)
+                else:
+                    mgt_paper_finding_dict[gene] = [pmid]
+
             gene, pmid, _ = line.strip().split("\t")
             if gene in mgt_paper_finding_dict:
                 mgt_paper_finding_dict[gene].append(pmid)
             else:
                 mgt_paper_finding_dict[gene] = [pmid]
+    print("mgt_paper_finding_dict: ", mgt_paper_finding_dict)
     return mgt_paper_finding_dict
 
 
@@ -313,8 +322,11 @@ def main(args):
 
     # Read the intermediate manual ground truth (MGT) data file from the TSV file
     mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
+    print("Number of manual ground truth pmids: ", mgt_df.shape[0])
     if args.mgt_full_text_only:
-        mgt_df = mgt_df[mgt_df["has_fulltext"] == 1]
+        # Filter to only papers where the "has_fulltext" column is True
+        mgt_df = mgt_df[mgt_df["has_fulltext"] == True]
+        print("Only considering full text papers pmids: ", mgt_df.shape[0])
 
     # Get the query/ies from .yaml file so we know the list of genes processed.
     if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
@@ -334,6 +346,7 @@ def main(args):
         pipeline_df["paper_disease_category"] = "rare disease"
     if "paper_disease_categorizations" not in pipeline_df.columns:
         pipeline_df["paper_disease_categorizations"] = "{}"
+
     # We only need one of each paper/gene pair, so we drop duplicates.
     pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
 
@@ -414,8 +427,17 @@ def main(args):
 
             # If ev. agg. found rare disease papers, compare ev. agg. papers (PMIDs) to MGT data papers (PMIDs)
             print("Comparing Evidence Aggregator results to manual ground truth data for:", term, "...")
+
+            # Calculate the number of correct, missed, and irrelevant papers for PubMed all up
+            p_corr, p_miss, p_irr = compare_pmid_lists(paper_ids, mgt_ids)
+
+            # If the Evidence Aggregator classified rare disease papers, compare them to the MGT data papers
             if rare_disease_ids:
                 correct_pmids, missed_pmids, irrelevant_pmids = compare_pmid_lists(rare_disease_ids, mgt_ids)
+
+                # Remove any Pubmed missed papers from missed_pmids (these are either caused by an unexpected error
+                # fetching BioC entry or a particular response received from BioC, but corresponding PMC ID not found)
+                missed_pmids = list(set(missed_pmids) - set(p_miss))
 
                 # Report comparison between ev.agg. and MGT data
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
@@ -460,7 +482,6 @@ def main(args):
 
             # Compare PubMed papers to  MGT data papers
             print("Comparing PubMed results to manual ground truth data for: ", term, "...")
-            p_corr, p_miss, p_irr = compare_pmid_lists(paper_ids, mgt_ids)
             f.write("\nOf PubMed papers...\n")
             f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
             f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
