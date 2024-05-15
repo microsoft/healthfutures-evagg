@@ -204,6 +204,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Categorize papers based on keywords in the title and abstract."""
         title = paper.props.get("title") or ""
         abstract = paper.props.get("abstract") or ""
+        # if paper.props.get("pmid") == "28508084":
+        #     print("abstract", abstract)
 
         # TODO: Exclude papers that are not written in English by scanning the title or abstract
         # TODO: Exclude papers that only describe animal models and do not have human data
@@ -514,7 +516,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             and paper.props["fulltext_xml"] is not None
         ]
         logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
-    
+
         # # Categorize the papers.
         # for paper in papers:
         #     categories = await self._get_paper_categorizations(paper)  # Await the coroutine
