@@ -16,16 +16,18 @@ from functools import cache
 from typing import Dict, Set
 
 import matplotlib.pyplot as plt
-import nltk
+
+# import nltk
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as py
 import yaml
 from gap_statistic import OptimalK
-from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize
+
+# from nltk.corpus import stopwords
+# from nltk.stem import PorterStemmer
+# from nltk.tokenize import word_tokenize
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.decomposition import PCA
@@ -39,8 +41,8 @@ from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.svc import get_dotenv_settings
 
 logger = logging.getLogger(__name__)
-nltk.download("stopwords", quiet=True)
-nltk.download("punkt", quiet=True)
+# nltk.download("stopwords", quiet=True)
+# nltk.download("punkt", quiet=True)
 
 
 def get_git_commit_hash():
@@ -101,14 +103,14 @@ def parse_tsv(file):
     return gene_dict
 
 
-def preprocess_text(text):
-    text = text.lower()
-    text = text.translate(str.maketrans("", "", string.punctuation))
-    tokens = word_tokenize(text)
-    tokens = [token for token in tokens if token not in stopwords.words("english")]
-    stemmer = PorterStemmer()
-    tokens = [stemmer.stem(token) for token in tokens]
-    return " ".join(tokens)
+# def preprocess_text(text):
+#     text = text.lower()
+#     text = text.translate(str.maketrans("", "", string.punctuation))
+#     tokens = word_tokenize(text)
+#     tokens = [token for token in tokens if token not in stopwords.words("english")]
+#     stemmer = PorterStemmer()
+#     tokens = [stemmer.stem(token) for token in tokens]
+#     return " ".join(tokens)
 
 
 def k_set_automatically(X):
@@ -141,7 +143,8 @@ async def get_papers_and_embeddings(gene_pmid_title_abstract_dict):
         for gene, pmids in gene_pmid_title_abstract_dict.items()
         for pmid, data in pmids.items()
     ]
-    texts = [preprocess_text((title or "") + " " + (abstract or "")) for _, _, title, abstract in papers]
+    # texts = [preprocess_text((title or "") + " " + (abstract or "")) for _, _, title, abstract in papers]
+    texts = [(title or "") + " " + (abstract or "") for _, _, title, abstract in papers]
 
     settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")
     client = OpenAIClient(settings)
@@ -150,14 +153,19 @@ async def get_papers_and_embeddings(gene_pmid_title_abstract_dict):
 
     texts = list(embeddings.keys())
     embedding_values = list(embeddings.values())
-    # print the embedding_values where the texts is "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
-    print(
-        embedding_values[
-            texts.index(
-                "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
-            )
-        ]
-    )
+
+    # Print the first text and the first embedding_values, and their lengths
+    # print(len(texts))
+    # print(len(embedding_values))
+
+    # # print the embedding_values where the texts is "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
+    # print(
+    #     embedding_values[
+    #         texts.index(
+    #             "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
+    #         )
+    #     ]
+    # )
 
     return papers, texts, embedding_values
 
@@ -256,7 +264,7 @@ async def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or
     optimal_k_elbow, ssd = determine_optimal_k_elbow(embedding_values)
     plot_elbow(ssd, optimal_k_elbow, pos_or_neg, args.outdir)
     determine_optimal_k_silhouette(embedding_values_array)
-    determine_optimal_k_bic(embedding_values_array)
+    # determine_optimal_k_bic(embedding_values_array)
 
     k_means_clusters = int(input("Please enter the number of clusters: "))
 
@@ -393,19 +401,26 @@ async def main(args):
     shutil.copy(args.json_file_name, args.outdir)
     shutil.copy(args.pickle_file_name, args.outdir)
 
-    print(f"\nProcessing truth data file to extract k positive examples...")
+    if not args.just_find_negatives:
+        print(f"\nProcessing truth data file to extract k positive examples...")
 
-    # Determine the number of clusters
-    # num_clusters = k_set_automatically()
+        # Determine the number of clusters
+        # num_clusters = k_set_automatically()
 
-    # Cluster (based on k) the positive example papers
-    clusters = await cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
+        # Cluster (based on k) the positive example papers
+        clusters = await cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
 
-    # Save the clusters in a tsv of gene, pmid, cluster
-    save_clusters(args.outdir, clusters, "pos")
+        # Save the clusters in a tsv of gene, pmid, cluster
+        save_clusters(args.outdir, clusters, "pos")
 
-    # Sample and save positive few shot examples
-    sample_save_examples(args.seed, args.outdir, clusters, pos_gene_pmid_title_abstract, "few_shot_pos_examples.txt")
+        # Sample and save positive few shot examples
+        sample_save_examples(
+            args.seed, args.outdir, clusters, pos_gene_pmid_title_abstract, "few_shot_pos_examples.txt"
+        )
+
+    # Stop if only finding positives
+    if args.just_find_positives:
+        return
 
     # If a benchmark file is provided - we can process negative examples
     if args.benchmark_file:
@@ -446,7 +461,7 @@ if __name__ == "__main__":
         help="Default is data/v1/train_set_genes_pmids_titles_abstracts.json. This file format must be followed.",
     )
     parser.add_argument(
-        "-p",
+        "-l",  # because pickles look like "l"s, and because I want to use "p" for positive.
         "--pickle-file-name",
         nargs="?",
         default="data/v1/train_set_genes_pmids_titles_abstracts.pkl",
@@ -478,6 +493,14 @@ if __name__ == "__main__":
         help="Default is 0. This value must be an integer.",
     )
     parser.add_argument(
+        "-p",  # because pickles look like "l"s, and because I want to use "p" for positive.
+        "--just-find-positives",
+        nargs="?",
+        default=False,
+        type=bool,
+        help="Default is False. If True, only positive examples will be identified based on a benchmark file.",
+    )
+    parser.add_argument(
         "-n",
         "--just-find-negatives",
         default=False,
@@ -502,6 +525,14 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Throw error if just_find_negatives and just_find_positives are both True, only one can be true at a time, if any
+    if args.just_find_negatives and args.just_find_positives:
+        parser.error(
+            "Only one of -p/--just-find-positives or -n/--just-find-negatives can be True at a time. "
+            "If neither are true, both positive and negative few shot examples will be generated."
+        )
+
+    # File to determine the negative few shot examples is required when just_find_negatives is True
     if args.just_find_negatives and not args.benchmark_file:
         parser.error("-b/--benchmark-file is required when -n/--just-find-negatives is provided.")
 
