@@ -253,19 +253,14 @@ class RareDiseaseFileLibrary(IGetPapers):
         return tables
 
     async def _get_llm_category(self, paper: Paper) -> str:
-        paper_finding_txt = "paper_finding.txt"
-        parameters = (
-            self._get_paper_texts(paper)
-            if paper_finding_txt == "paper_finding_full_text.txt"
-            else {
+        """Categorize papers based on LLM prompts."""
+        response = await self._llm_client.prompt_file(
+            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding.txt"),
+            system_prompt="Extract field",
+            params={
                 "abstract": paper.props.get("abstract") or "no abstract",
                 "title": paper.props.get("title") or "no title",
-            }
-        )
-        response = await self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
-            system_prompt="Extract field",
-            params=parameters,
+            },
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
 
@@ -295,6 +290,28 @@ class RareDiseaseFileLibrary(IGetPapers):
             user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", paper_finding_txt),
             system_prompt="Extract field",
             params=parameters,
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+        )
+
+        if isinstance(response, str):
+            result = response
+        else:
+            logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
+
+        if result in self.CATEGORIES:
+            return result
+
+        return "other"
+    
+    async def _get_llm_category_few_shot(self, paper: Paper) -> str:
+        """Categorize papers based on LLM prompts."""
+        response = await self._llm_client.prompt_file(
+            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_few_shot.txt"),
+            system_prompt="Extract field",
+            params={
+                "abstract": paper.props.get("abstract") or "no abstract",
+                "title": paper.props.get("title") or "no title",
+            },
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
 
@@ -427,23 +444,25 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Categorize the paper by both keyword and LLM prompt.
         keyword_cat = self._get_keyword_category(paper)
-        #print("keyword_cat", keyword_cat)
-        # TODO: uncomment the line below to use the chain of thought approach
+        
+        # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         # llm_cat = await self._get_llm_category(paper)
-        llm_cat = await self._apply_chain_of_thought(paper)
-        #print("llm_cat", llm_cat)
-        # llm_cat = self._collect_neg_pos_papers(paper, all_papers)
-        # llm_cat = self._few_shot_examples(gene, paper, all_papers)
-
+        # llm_cat = await self._apply_chain_of_thought(paper)
+        llm_cat = await self._get_llm_category_few_shot(paper)
+        
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
             paper.props["disease_category"] = keyword_cat
             return keyword_cat
 
         counts: Dict[str, int] = {}
-        # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
+        
+        # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category(paper), self._get_llm_category(paper))
-        llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper), self._apply_chain_of_thought(paper))
+        #llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper), self._apply_chain_of_thought(paper))
+        llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper), self._get_llm_category_few_shot(paper))
+        
+        # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
             counts[category] = counts.get(category, 0) + 1
         assert len(counts) > 1 and sum(counts.values()) == 4
