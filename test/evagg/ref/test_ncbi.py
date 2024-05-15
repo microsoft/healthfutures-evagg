@@ -1,6 +1,6 @@
 import pytest
 
-from lib.evagg.content.fulltext import get_fulltext
+from lib.evagg.content.fulltext import NON_CONTENT_SECTION_TYPES, get_fulltext, get_section_texts
 from lib.evagg.ref import NcbiLookupClient
 from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
@@ -109,13 +109,14 @@ def test_pubmed_pmc_oa_fetch(mock_web_client):
 
 def test_pubmed_pmc_full_text(mock_web_client):
     web_client = mock_web_client(
-        "efetch_pubmed_paper_33688625.xml", "ncbi_pmc_is_oa_PMC7933980.xml", "ncbi_bioc_full_text_PMC7933980.xml"
+        "efetch_pubmed_paper_33688625.xml", "ncbi_pmc_is_oa_PMC7933980.xml", "ncbi_bioc_full_text_PMC5413961.xml"
     )
     result = NcbiLookupClient(web_client).fetch("33688625", include_fulltext=True)
     assert result and result.props["can_access"] is True
+    assert len(list(get_section_texts(result.props["fulltext_xml"], exclude=NON_CONTENT_SECTION_TYPES))) == 44
     assert (
         get_fulltext(result.props["fulltext_xml"], include=["TITLE"])
-        == "Saul-Wilson Syndrome Missense Allele Does Not Show Obvious Golgi Defects in a C. elegans Model"
+        == "Clinicopathologic and molecular spectrum of RNASEH1-related mitochondrial disease"
     )
 
 

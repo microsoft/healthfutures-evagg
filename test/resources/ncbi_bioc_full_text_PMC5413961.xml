@@ -1,0 +1,882 @@
+<collection>
+    <source>BioC-API</source>
+    <date>20240515</date>
+    <key>collection.key</key>
+    <document>
+        <id>7933980</id>
+        <infon key="license">CC BY</infon>
+        <passage>
+            <infon key="article-id_doi">10.1212/NXG.0000000000000149</infon>
+            <infon key="article-id_pmc">5413961</infon>
+            <infon key="article-id_pmid">28508084</infon>
+            <infon key="article-id_publisher-id">NG2016004481</infon>
+            <infon key="elocation-id">e149</infon>
+            <infon key="issue">3</infon>
+            <infon key="license">This is an open access article distributed under the terms of the
+                Creative Commons Attribution License 4.0 (CC BY), which permits unrestricted use,
+                distribution, and reproduction in any medium, provided the original work is properly
+                cited.</infon>
+            <infon key="name_0">surname:Bugiardini;given-names:Enrico</infon>
+            <infon key="name_1">surname:Poole;given-names:Olivia V.</infon>
+            <infon key="name_10">surname:Plant;given-names:Gordon T.</infon>
+            <infon key="name_11">surname:Poulton;given-names:Joanna</infon>
+            <infon key="name_12">surname:Zeviani;given-names:Massimo</infon>
+            <infon key="name_13">surname:Ghezzi;given-names:Daniele</infon>
+            <infon key="name_14">surname:Taylor;given-names:John</infon>
+            <infon key="name_15">surname:Smith;given-names:Conrad</infon>
+            <infon key="name_16">surname:Fratter;given-names:Carl</infon>
+            <infon key="name_17">surname:Kanikannan;given-names:Meena A.</infon>
+            <infon key="name_18">surname:Paramasivam;given-names:Arumugam</infon>
+            <infon key="name_19">surname:Thangaraj;given-names:Kumarasamy</infon>
+            <infon key="name_2">surname:Manole;given-names:Andreea</infon>
+            <infon key="name_20">surname:Spinazzola;given-names:Antonella</infon>
+            <infon key="name_21">surname:Holt;given-names:Ian J.</infon>
+            <infon key="name_22">surname:Houlden;given-names:Henry</infon>
+            <infon key="name_23">surname:Hanna;given-names:Michael G.</infon>
+            <infon key="name_24">surname:Pitceathly;given-names:Robert D.S.</infon>
+            <infon key="name_3">surname:Pittman;given-names:Alan M.</infon>
+            <infon key="name_4">surname:Horga;given-names:Alejandro</infon>
+            <infon key="name_5">surname:Hargreaves;given-names:Iain</infon>
+            <infon key="name_6">surname:Woodward;given-names:Cathy E.</infon>
+            <infon key="name_7">surname:Sweeney;given-names:Mary G.</infon>
+            <infon key="name_8">surname:Holton;given-names:Janice L.</infon>
+            <infon key="name_9">surname:Taanman;given-names:Jan-Willem</infon>
+            <infon key="section_type">TITLE</infon>
+            <infon key="type">front</infon>
+            <infon key="volume">3</infon>
+            <infon key="year">2017</infon>
+            <offset>0</offset>
+            <text>Clinicopathologic and molecular spectrum of RNASEH1-related mitochondrial disease</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract_title_1</infon>
+            <offset>82</offset>
+            <text>Objective:</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract</infon>
+            <offset>93</offset>
+            <text>Pathologic ribonuclease H1 (RNase H1) causes aberrant mitochondrial DNA (mtDNA)
+                segregation and is associated with multiple mtDNA deletions. We aimed to determine
+                the prevalence of RNase H1 gene (RNASEH1) mutations among patients with
+                mitochondrial disease and establish clinically meaningful genotype-phenotype
+                correlations.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract_title_1</infon>
+            <offset>419</offset>
+            <text>Methods:</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract</infon>
+            <offset>428</offset>
+            <text>RNASEH1 was analyzed in patients with (1) multiple deletions/depletion of muscle
+                mtDNA and (2) mendelian progressive external ophthalmoplegia (PEO) with
+                neuropathologic evidence of mitochondrial dysfunction, but no detectable multiple
+                deletions/depletion of muscle mtDNA. Clinicopathologic and molecular evaluation of
+                the newly identified and previously reported patients harboring RNASEH1 mutations
+                was subsequently undertaken.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract_title_1</infon>
+            <offset>857</offset>
+            <text>Results:</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract</infon>
+            <offset>866</offset>
+            <text>Pathogenic c.424G>A p.Val142Ile RNASEH1 mutations were detected in 3 pedigrees
+                among the 74 probands screened. Given that all 3 families had Indian ancestry,
+                RNASEH1 genetic analysis was undertaken in 50 additional Indian probands with
+                variable clinical presentations associated with multiple mtDNA deletions, but no
+                further RNASEH1 mutations were confirmed. RNASEH1-related mitochondrial disease was
+                characterized by PEO (100%), cerebellar ataxia (57%), and dysphagia (50%). The
+                ataxia neuropathy spectrum phenotype was observed in 1 patient. Although the
+                c.424G>A p.Val142Ile mutation underpins all reported RNASEH1-related mitochondrial
+                disease, haplotype analysis suggested an independent origin, rather than a founder
+                event, for the variant in our families.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract_title_1</infon>
+            <offset>1629</offset>
+            <text>Conclusions:</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABSTRACT</infon>
+            <infon key="type">abstract</infon>
+            <offset>1642</offset>
+            <text>In our cohort, RNASEH1 mutations represent the fourth most common cause of adult
+                mendelian PEO associated with multiple mtDNA deletions, following mutations in POLG,
+                RRM2B, and TWNK. RNASEH1 genetic analysis should also be considered in all patients
+                with POLG-negative ataxia neuropathy spectrum. The pathophysiologic mechanisms by
+                which the c.424G>A p.Val142Ile mutation impairs human RNase H1 warrant further
+                investigation.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>2068</offset>
+            <text>Mitochondrial diseases are commonly inherited disorders caused by mutations in
+                nuclear and mitochondrial DNA (mtDNA). Dysfunction in a subset of nuclear genes
+                involved with mtDNA maintenance results in the secondary accumulation of multiple
+                deletions and/or depletion of muscle mtDNA. The clinical spectrum of this group of
+                disorders is broad, ranging from severe infantile hepatocerebral syndromes to
+                benign, late-onset progressive external ophthalmoplegia (PEO). Mutations in the
+                mtDNA maintenance gene RNASEH1, encoding ribonuclease H1 (RNase H1), have recently
+                been linked to adult mitochondrial disease presenting with CNS and neuromuscular
+                involvement. RNase H1 degrades RNA hybridized to DNA, and knockout mice suffer
+                embryonic lethality owing to mtDNA depletion, attributable to persistent mtDNA
+                RNA/DNA hybrids. However, humans with RNASEH1 mutations develop a relatively mild
+                clinical syndrome, comprising adult-onset PEO associated with multiple mtDNA
+                deletions secondary to the impaired physical segregation of mtDNA molecules. The
+                prevalence and clinical spectrum of RNASEH1-related mitochondrial disease is
+                currently unknown.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">INTRO</infon>
+            <infon key="type">paragraph</infon>
+            <offset>3208</offset>
+            <text>We screened 74 unrelated probands with genetically undetermined mitochondrial
+                disease for RNASEH1 mutations. The previously reported pathogenic missense
+                transition c.424G>A p.Val142Ile was detected in 3 families with Indian ancestry:
+                homozygous mutations were confirmed in 2 pedigrees and compound heterozygous
+                mutations in combination with a novel c.442T>C p.Cys148Arg variant in a third.
+                Detailed clinicopathologic and molecular profiling of these newly identified
+                families harboring RNASEH1 mutations, and evaluation of all previously reported
+                cases, was subsequently undertaken to determine the phenotypic spectrum of
+                RNASEH1-mediated mitochondrial disease and establish clinically meaningful
+                genotype-phenotype correlations. Finally, the ancestral origins of the "common"
+                RNASEH1 c.424G>A p.Val142Ile mutation were investigated.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_1</infon>
+            <offset>4046</offset>
+            <text>METHODS</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_2</infon>
+            <offset>4054</offset>
+            <text>Participants.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>4068</offset>
+            <text>Patients referred to the London and Oxford NHS England nationally commissioned
+                service for mitochondrial diseases were recruited to the study according to the
+                following criteria: (1) confirmed multiple deletions/depletion of muscle mtDNA and
+                (2) mendelian PEO with pathologic evidence of mitochondrial dysfunction, including
+                ragged red fibers (RRFs) and/or cytochrome c oxidase (COX)-negative muscle fibers,
+                without detectable multiple deletions or depletion of muscle mtDNA. RNASEH1 genetic
+                analysis was also undertaken in a cohort of Indian patients with evidence of
+                multiple mtDNA deletions detectable in muscle.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_2</infon>
+            <offset>4684</offset>
+            <text>Genetic studies.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>4701</offset>
+            <text>Whole-exome and Sanger sequencing was used to analyze the 8 coding exons and
+                intron-exon boundaries of RNASEH1 (primer sequences available on request).</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_2</infon>
+            <offset>4853</offset>
+            <text>Clinicopathologic and molecular evaluation of patients.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>4909</offset>
+            <text>Patients harboring RNASEH1 mutations were assessed clinically by the authors.
+                Medical records and muscle tissue histopathologic and electron microscopy findings
+                were reviewed. Real-time quantitative PCR of DNA extracted from muscle was
+                undertaken in all patients harboring RNASEH1 mutations and multiple mtDNA deletions
+                to exclude coexisting mtDNA depletion. Previously published RNASEH1 variants
+                (pathogenic and of unknown significance) were evaluated and clinicopathologic and
+                genotypic data extracted and combined with the London-Oxford cohort to accurately
+                define the clinical genetic spectrum of all known RNASEH1-mediated mitochondrial
+                disease.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_2</infon>
+            <offset>5560</offset>
+            <text>Principal component analysis, identity by descent, and haplotyping.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>5628</offset>
+            <text>Principal component analysis (PCA), using GCTA software (version 1.26.0), was
+                performed relative to the HapMap project populations (CEU, JPT, and YRI) to study
+                the geographical origin of 2 Indian families where exome-sequencing data were
+                available (families A and B). Identity by descent (IBD) analysis was utilized in
+                plink software (v1.90 b1g) to explore the possibility of a common lineage for the
+                pedigrees. Haplotyping was adopted to investigate the possibility of a common origin
+                for the c.424G>A p.Val142Ile mutation. Six single nucleotide variants extracted from
+                available exome data were used to construct haplotypes around the mutation site, and
+                Sanger sequencing of the variants in affected individuals from the London-Oxford
+                cohort and in 2 previously reported families was undertaken. Haplotypes were phased
+                around homozygous variant sites only, given parental samples were unavailable.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">title_2</infon>
+            <offset>6528</offset>
+            <text>Standard protocol approvals, registrations, and patient consents.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">METHODS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>6594</offset>
+            <text>The study was approved and performed under the ethical guidelines issued by our
+                institutions for clinical studies, with written informed consent obtained from all
+                participants for genetic studies.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">title_1</infon>
+            <offset>6791</offset>
+            <text>RESULTS</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">title_2</infon>
+            <offset>6799</offset>
+            <text>RNASEH1 sequence data analysis.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>6831</offset>
+            <text>Seventy-four unrelated probands were recruited from the London and Oxford NHS
+                England nationally commissioned service for mitochondrial diseases and categorized
+                as follows: multiple deletions (n = 33) and depletion (n = 21) of muscle mtDNA and
+                mendelian PEO with neuropathologic evidence of mitochondrial dysfunction, but no
+                detectable multiple deletions/depletion of muscle mtDNA (n = 20). Homozygous RNASEH1
+                c.424G>A p.Val142Ile mutations were identified in 2, apparently unrelated,
+                nonconsanguineous families (family A: A-III.8, A-III.9, A-III.10, and A-III.11; and
+                family B: B-II.1 and B-II.8), and a third singleton case (family C: C-II.1) was
+                compound heterozygous with the novel missense mutation c.442T>C p.Cys148Arg (figure
+                1A). Parental segregation was confirmed. All 3 families had Indian ancestry.
+                Affected individuals harbored multiple deletions of muscle mtDNA. Fifty additional
+                unrelated Indian probands with multiple deletions of muscle mtDNA deletions were
+                screened for RNASEH1 mutations (see table e-1 at Neurology.org/ng, for
+                clinicopathologic spectrum), but no known or novel RNASEH1 variants were detected.</text>
+        </passage>
+        <passage>
+            <infon key="file">NG2016004481FF1.jpg</infon>
+            <infon key="id">F1</infon>
+            <infon key="section_type">FIG</infon>
+            <infon key="type">fig_title_caption</infon>
+            <offset>7959</offset>
+            <text>Pedigrees and histopathologic findings of patients harboring RNASEH1 c.424G>A
+                p.Val142Ile mutations</text>
+        </passage>
+        <passage>
+            <infon key="file">NG2016004481FF1.jpg</infon>
+            <infon key="id">F1</infon>
+            <infon key="section_type">FIG</infon>
+            <infon key="type">fig_caption</infon>
+            <offset>8059</offset>
+            <text>(A) Pedigrees of families harboring RNASEH1 mutations. Filled blue symbols
+                represent affected individuals. Arrows indicate probands. Long range PCR (LPCR) and
+                Southern blot (SB) demonstrate multiple deletions of muscle mitochondrial DNA
+                (B-II.8) in patient (P) when compared with control muscle (C). (B) Muscle biopsy
+                histology (A-III.8) demonstrating ragged red fibers (modified Gomori trichrome, GT),
+                ragged blue fibers (succinate dehydrogenase, SDH), and several muscle fibers
+                deficient in cytochrome c oxidase (COX), arrows. Scale bar represents 50 mum in GT
+                and 200 mum in SDH and COX. (C) Ultrastructural examination (A-III.8) showing
+                increased numbers of mitochondria, many of which are structurally abnormal,
+                including the presence of paracrystalline inclusions, arrows. Scale bar represents 1
+                mum.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">title_2</infon>
+            <offset>8866</offset>
+            <text>Clinicopathologic and molecular features in RNASEH1 mutations.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>8929</offset>
+            <text>Mean age of symptom onset in the London-Oxford cohort was 29 years (range, 13-36
+                years). All patients presented with either ptosis or imbalance. The clinical
+                phenotype was characterized by PEO, proximal muscle weakness, and cerebellar ataxia.
+                One patient had a sensory ataxic neuropathy, with nerve conduction studies (NCS) and
+                EMG indicative of a nonlength-dependent, predominantly sensory, axonal neuropathy.
+                Brain MRI demonstrated moderate generalized parenchymal volume loss (n = 2).
+                Histopathologic examination of muscle revealed RRFs and COX-negative fibers in all
+                cases examined, while ultrastructural examination showed increased and abnormal
+                mitochondria, many with paracrystalline inclusions (figure 1, B and C). There was no
+                evidence of a coexisting reduction in muscle mtDNA copy number (B-II.8 and C-II.1).</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>9751</offset>
+            <text>Three families (6 affected individuals) with confirmed RNASEH1 mutations have
+                previously been reported. An additional case was identified from variants of unknown
+                significance published in exome-sequencing studies. These data were combined with
+                the London-Oxford cohort and confirmed that PEO was a universal feature in patients
+                with RNASEH1-related mitochondrial disease and that a substantial proportion of
+                patients (57%) exhibited cerebellar dysfunction. Additional clinical features
+                (summarized in table 1) included dysphagia (50%), proximal muscle weakness (36%),
+                peripheral neuropathy (36%), and pyramidal signs (14%). NCS and EMG were consistent
+                with involvement of motor and/or sensory nerve fibers with demyelinating, axonal, or
+                ganglionic features. RRFs and/or COX-deficient fibers and multiple mtDNA deletions
+                were reported in all cases when muscle tissue was available.</text>
+        </passage>
+        <passage>
+            <infon key="file" />
+            <infon key="id">T1</infon>
+            <infon key="section_type">TABLE</infon>
+            <infon key="type">table_caption</infon>
+            <offset>10633</offset>
+            <text>Clinicopathologic, biochemical, and genetic features of newly reported and
+                previously published adults with RNASEH1-related mitochondrial disease</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>10779</offset>
+            <text>The c.424G>A p.Val142Ile mutation was detected in all 7 families (both newly
+                reported and previously published). Three were homozygous and 4 were compound
+                heterozygous with the following mutations: c.442T>C p.Cys148Arg (n = 2), c.469C>T
+                p.Arg157*, and c.554C>T p.Ala185Val.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">title_2</infon>
+            <offset>11053</offset>
+            <text>PCA, IBD, and haplotyping.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">RESULTS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>11080</offset>
+            <text>PCA revealed that families A and B clustered to the same ethnic group (figure 2A,
+                top panel), while IBD analysis implied a distant relationship to approximately
+                second cousins (mean PI_HAT 0.049 +- 0.013). Haplotyping of families A and B
+                suggested one shared founder haplotype of 3.67 Mb which was also present in family
+                C. However, given that the c.424G>A p.Val142Ile variant was heterozygous, it was not
+                possible to decipher whether this represented a population-specific or an ancestral
+                mutation (figure 2A, bottom panel). Analysis of the same haplotype marker set in 2
+                previously reported pedigrees with European ancestry (S1 and S3) revealed a
+                different haplotype at single nucleotide polymorphism rs10186193, 74 base pairs away
+                from the c.424G>A p.Val142Ile mutation. These data are consistent with an
+                independent origin for the c.424G>A p.Val142Ile mutation in the patients analyzed.</text>
+        </passage>
+        <passage>
+            <infon key="file">NG2016004481FF2.jpg</infon>
+            <infon key="id">F2</infon>
+            <infon key="section_type">FIG</infon>
+            <infon key="type">fig_title_caption</infon>
+            <offset>11971</offset>
+            <text>Principal component and haplotype analysis of families harboring c.424G>A
+                p.Val142Ile variant and schematic illustrating the newly identified and previously
+                reported RNASEH1 mutations to date</text>
+        </passage>
+        <passage>
+            <infon key="file">NG2016004481FF2.jpg</infon>
+            <infon key="id">F2</infon>
+            <infon key="section_type">FIG</infon>
+            <infon key="type">fig_caption</infon>
+            <offset>12163</offset>
+            <text>(A) Principal component analysis (top panel). X-axis represents component 1;
+                Y-axis represents component 2. Families A and B cluster to the same ethnic group.
+                Haplotype analysis of individuals harboring the RNASEH1 mutation c.424G>A
+                p.Val142Ile (bottom panel). "1" indicates the presence of the marker, "0" indicates
+                the absence of the marker, and "0/1" is used when haplotype could not be phased.
+                Haplotypes reported are for A-III.8, B-II.8, C-II.1, S-1, and S-3. Green = c.424G>A
+                mutation; gray = markers differing from reference haplotype. Families A and B shared
+                a haplotype of at least 3.57 Mb. However, 2 additional haplotypes were different,
+                suggesting distant recombination events or that the haplotypes arose independently.
+                (B) The RNASEH1 gene has 8 exons encoding 4 protein domains as follows:
+                mitochondrial targeting sequencing domain (M), hybrid-binding domain (HBD),
+                connection domain (CD), and ribonuclease H domain (H-domain). The latter conducts
+                all catalytic activity. Both herein newly identified and previously reported
+                mutations are illustrated in the schematic. To date, all affected individuals harbor
+                the "common" c.424G>A p.Val142Ile mutation either in homozygous or heterozygous
+                states. Brackets = number of families with each mutation. Red = newly reported
+                variant.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">DISCUSS</infon>
+            <infon key="type">title_1</infon>
+            <offset>13472</offset>
+            <text>DISCUSSION</text>
+        </passage>
+        <passage>
+            <infon key="section_type">DISCUSS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>13483</offset>
+            <text>Based on data obtained from patients referred to the London and Oxford NHS England
+                nationally commissioned service for mitochondrial diseases, RNASEH1 mutations
+                represent the fourth most common cause of mendelian PEO associated with multiple
+                mtDNA deletions in adults (2.7%, 3/109), following mutations in POLG (24.7%,
+                27/109), RRM2B (16.5%, 18/109), and TWNK (also known as C10orf2, PEO1, or Twinkle,
+                16.5%, 18/109). Additional, but less frequent, causes of adult mendelian PEO
+                associated with multiple mtDNA deletions in our cohort include SLC25A4 (ANT1), OPA1,
+                MFN2, TYMP, TK2, and SPG7 (1/109, 0.9%), while AFG3L2, DNA2, MGME1, POLG2, DGUOK,
+                and MPV17 were not detected.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">DISCUSS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>14158</offset>
+            <text>Two families, in whom affected individuals harbored multiple mtDNA deletions, were
+                homozygous for the previously reported c.424G>A p.Val142Ile mutation, thus
+                confirming its pathogenicity and the importance of RNase H1 in mtDNA maintenance. A
+                third proband was compound heterozygous with a novel missense mutation c.442T>C
+                p.Cys148Arg in a highly conserved region of the enzyme, resulting in a hydrophobic
+                amino acid being replaced by a positively charged residue within the RNase H1 active
+                site. This mutation was previously reported as a variant of unknown significance in
+                a patient with PEO harboring the POLG2 variant c.1105A>G p.Arg369Gly, which was
+                favored as being causative. However, a minor allele frequency of 0.003 suggests that
+                the POLG2 variant c.1105A>G p.Arg369Gly is a benign polymorphism and unlikely to be
+                deleterious. Furthermore, the similarity in clinical phenotypes and association with
+                identical mutations in our cohort supports the pathogenic basis of RNASEH1 c.442T>C
+                p.Cys148Arg when a second mutant allele is present.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">DISCUSS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>15202</offset>
+            <text>Clinically, RNASEH1-linked mitochondrial disease is relatively homogenous,
+                comprising PEO, cerebellar ataxia, dysphagia, and proximal muscle weakness. This
+                could reflect similar structural and functional consequences of the reported RNASEH1
+                mutations. Indeed, all patients are homozygous or heterozygous for c.424G>A
+                p.Val142Ile, and remaining variants all occur within in the same catalytic domain
+                (figure 2B). Additional deleterious mutations associated with more severe,
+                early-onset clinical phenotypes might exist. However, we did not identify any cases
+                in our mtDNA depletion cohort. Furthermore, it is possible that very detrimental
+                mutations are embryonic lethal as is seen in knockout mice which are completely
+                deficient in RNase H1. Finally, sensory ataxic neuropathy, previously unreported
+                with RNASEH1 mutations, expands the recognized clinical phenotype to include ataxia
+                neuropathy spectrum, most commonly associated with recessive POLG mutations.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">DISCUSS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>16163</offset>
+            <text>IBD analysis confirmed that families A and B were distantly related. However,
+                their haplotype differed from 2 previously reported European pedigrees. These data
+                suggest that the c.424G>A p.Val142Ile mutation has arisen independently in the
+                lineages analyzed. European admixing of the London-Oxford Indian families harboring
+                c.424G>A p.Val142Ile could account for the lack of RNASEH1 mutations in the 50
+                additional Indian probands screened. Furthermore, the close proximity of all 3
+                families to the CEU (European) HapMap project populations (figure 2A) suggests that
+                they belong to the Ancestral North Indian gene pool, which shares up to 70% genetic
+                affinities with Europeans.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">DISCUSS</infon>
+            <infon key="type">paragraph</infon>
+            <offset>16840</offset>
+            <text>Our data confirm that RNASEH1 mutations are an important cause of mitochondrial
+                disease resulting from the secondary accumulation of multiple mtDNA deletions and
+                that the phenotypic spectrum in adults is relatively benign. Nevertheless, RNASEH1
+                genetic analysis should be considered in all patients presenting with ataxia
+                neuropathy spectrum once POLG mutations have been excluded. Finally, although the
+                commonly occurring c.424G>A p.Val142Ile RNASEH1 variant could indicate a mutation
+                hotspot within the gene, it might instead reflect an inability of the mutant enzyme
+                to bind with a partner protein, thereby allowing Val142Ile RNase H1 to attack its
+                substrates indiscriminately. As such, loss-of-function mutations could confer
+                different clinical phenotypes.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">SUPPL</infon>
+            <infon key="type">title_1</infon>
+            <offset>17601</offset>
+            <text>Supplementary Material</text>
+        </passage>
+        <passage>
+            <infon key="section_type">SUPPL</infon>
+            <infon key="type">footnote</infon>
+            <offset>17624</offset>
+            <text>Supplemental data at Neurology.org/ng</text>
+        </passage>
+        <passage>
+            <infon key="section_type">AUTH_CONT</infon>
+            <infon key="type">title_1</infon>
+            <offset>17662</offset>
+            <text>AUTHOR CONTRIBUTIONS</text>
+        </passage>
+        <passage>
+            <infon key="section_type">AUTH_CONT</infon>
+            <infon key="type">paragraph</infon>
+            <offset>17683</offset>
+            <text>Enrico Bugiardini: study design, analysis and interpretation of data, and drafting
+                the manuscript. Olivia V. Poole: analysis and interpretation of data and revising
+                the manuscript. Andreea Manole: acquisition, analysis and interpretation of data,
+                and revising the manuscript. Alan M. Pittman, Alejandro Horga, Iain Hargreaves,
+                Cathy E. Woodward, Mary G. Sweeney, Janice L. Holton, Jan-Willem Taanman, and Gordon
+                T. Plant: acquisition, analysis and interpretation of data, and revising the
+                manuscript. Joanna Poulton: study concept, acquisition of data, and revising the
+                manuscript. Massimo Zeviani, Daniele Ghezzi, John Taylor, and Conrad Smith:
+                acquisition and interpretation of data and revising the manuscript. Carl Fratter:
+                study design, acquisition and interpretation of data, and revising the manuscript.
+                Meena A. Kanikannan and Arumugam Paramasivam: acquisition and interpretation of data
+                and revising the manuscript. Kumarasamy Thangaraj: study concept, acquisition and
+                interpretation of data, and revising the manuscript. Antonella Spinazzola, Ian J.
+                Holt, and Henry Houlden: study concept and revising the manuscript. Michael G.
+                Hanna: study concept, interpretation of data, and revising the manuscript. Robert
+                D.S. Pitceathly: study design, analysis and interpretation of data, and drafting the
+                manuscript.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ACK_FUND</infon>
+            <infon key="type">title_1</infon>
+            <offset>19001</offset>
+            <text>STUDY FUNDING</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ACK_FUND</infon>
+            <infon key="type">paragraph</infon>
+            <offset>19015</offset>
+            <text>The research leading to these results has received funding from the European
+                Community\'s Seventh Framework Programme (FP7/2007-2013) under grant agreement no.
+                2012-305121 "Integrated European:omics research project for diagnosis and therapy in
+                rare neuromuscular and neurodegenerative diseases (NEUROMICS)." This work is also
+                supported by a Medical Research Council Centre grant (G0601943) and Wellcome Trust
+                grant on Synaptopathies. Part of this work was undertaken in the University College
+                London Hospitals/University College London Institute of Neurology sequencing
+                facility, which received a proportion of funding from the Department of Health\'s
+                National Institute for Health Research Biomedical Research Centres funding scheme.
+                R.D.S.P. is funded by the National Institute for Health Research. O.V.P. has
+                received funding from the Lily Foundation. J.P. receives support from the Lily
+                Foundation, NewLife (SG/14-15/11), the Medical Research Council (MR/J010448/1), and
+                the Wellcome Trust (0948685/Z/10/Z). K.T. is supported by the Department of
+                Biotechnology and the Council of Scientific and Industrial Research
+                (BioAge:BSC0118), Government of India. A.P. is supported by the Science and
+                Engineering Research Board (PDF/2016/000881), Government of India. A.S. is supported
+                by the Medical Research Council Senior Non-Clinical Fellowship, MC_PC_13029.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">COMP_INT</infon>
+            <infon key="type">title_1</infon>
+            <offset>20377</offset>
+            <text>DISCLOSURE</text>
+        </passage>
+        <passage>
+            <infon key="section_type">COMP_INT</infon>
+            <infon key="type">paragraph</infon>
+            <offset>20388</offset>
+            <text>Enrico Bugiardini, Olivia V. Poole, Andreea Manole, Alan M. Pittman, Alejandro
+                Horga, Iain Hargreaves, Cathy E. Woodward, and Mary G. Sweeney report no
+                disclosures. Janice L. Holton has received travel funding from Merck-Serono; has
+                served on the editorial board of Neuropathology and Applied Neurobiology; has been
+                an employee of University College London; and has received research support from
+                Alzheimer\'s Research Trust, The Margaret Watson Memorial Trust Grant from The Sarah
+                Matheson Trust, Action Medical Research, Brain Net Europe: Support for the Queen
+                Square Brain Bank for Neurological Disorders, The Sarah Matheson Trust, Myositis
+                Support Group, The Multiple System Atrophy Trust, the Michael J Fox Foundation for
+                Parkinson\'s Research, Alzheimer\'s Research UK, MSA Coalition, and the King
+                Baudouin Foundation Sophia Fund. Jan-Willem Taanman has served on the scientific
+                advisory board of Novintum Bioscience Ltd.; has received research support from Royal
+                Free Charity; and receives royalty payments from the University of Oregon. Gordon T.
+                Plant has served on the editorial board of Neuro-Ophthalmology. Joanna Poulton and
+                Massimo Zeviani report no disclosures. Daniele Ghezzi has served on the editorial
+                board of Orphanet Journal of Rare Diseases and has received research support from
+                the Italian Ministry of Health, European Communities, Foundation Telethon, CARIPLO
+                Foundation Italy, and the Pierfranco and Luisa Mariani Foundation of Italy. John
+                Taylor, Conrad Smith, Carl Fratter, and Meena A. Kanikannan report no disclosures.
+                Arumugam Paramasivam has received research support from DST-SERB National Post
+                Doctoral Fellowship No.: PDF/2016/000881. Kumarasamy Thangaraj has served on the
+                editorial boards of Mitochondrion, PLoS One, BMC Medical Genetics, Scientific
+                Reports, and Clinical Genetics. Antonella Spinazzola reports no disclosures. Ian J.
+                Holt has received research support from Medical Research Council UK. Henry Houlden
+                has received research support from The Medical Research Council (MRC) UK, The BRT,
+                The MDA USA, Muscular Dystrophy UK, Ataxia UK, Muscular Dystrophy UK, Rosetrees
+                Trust, The Wellcome Trust, and the National Institute for Health (NIHR). Michael G.
+                Hanna has been a consultant for Novartis and has received research support from an
+                MRC Centre Grant and the Myositis Support Group. Robert D.S. Pitceathly reports no
+                disclosures. Go to Neurology.org/ng for full disclosure forms.</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">title</infon>
+            <offset>22815</offset>
+            <text>GLOSSARY</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22824</offset>
+            <text>COX</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22828</offset>
+            <text>cytochrome c oxidase</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22849</offset>
+            <text>IBD</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22853</offset>
+            <text>identity by descent</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22873</offset>
+            <text>mtDNA</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22879</offset>
+            <text>mitochondrial DNA</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22897</offset>
+            <text>NCS</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22901</offset>
+            <text>nerve conduction studies</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22926</offset>
+            <text>PCA</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22930</offset>
+            <text>principal component analysis</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22959</offset>
+            <text>PEO</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>22963</offset>
+            <text>progressive external ophthalmoplegia</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>23000</offset>
+            <text>RNase H1</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>23009</offset>
+            <text>ribonuclease H1</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>23025</offset>
+            <text>RRF</text>
+        </passage>
+        <passage>
+            <infon key="section_type">ABBR</infon>
+            <infon key="type">paragraph</infon>
+            <offset>23029</offset>
+            <text>ragged red fiber</text>
+        </passage>
+        <passage>
+            <infon key="section_type">REF</infon>
+            <infon key="type">title</infon>
+            <offset>23046</offset>
+            <text>REFERENCES</text>
+        </passage>
+        <passage>
+            <infon key="fpage">429</infon>
+            <infon key="lpage">444</infon>
+            <infon key="name_0">surname:DiMauro;given-names:S</infon>
+            <infon key="name_1">surname:Schon;given-names:EA</infon>
+            <infon key="name_2">surname:Carelli;given-names:V</infon>
+            <infon key="name_3">surname:Hirano;given-names:M</infon>
+            <infon key="pub-id_pmid">23835535</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Nat Rev Neurol</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">9</infon>
+            <infon key="year">2013</infon>
+            <offset>23057</offset>
+            <text>The clinical maze of mitochondrial neurology</text>
+        </passage>
+        <passage>
+            <infon key="fpage">186</infon>
+            <infon key="lpage">193</infon>
+            <infon key="name_0">surname:Reyes;given-names:A</infon>
+            <infon key="name_1">surname:Melchionda;given-names:L</infon>
+            <infon key="name_2">surname:Nasca;given-names:A</infon>
+            <infon key="pub-id_pmid">26094573</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Am J Hum Genet</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">97</infon>
+            <infon key="year">2015</infon>
+            <offset>23102</offset>
+            <text>RNASEH1 mutations impair mtDNA replication and cause adult-onset mitochondrial
+                encephalomyopathy</text>
+        </passage>
+        <passage>
+            <infon key="fpage">3360</infon>
+            <infon key="lpage">3364</infon>
+            <infon key="name_0">surname:Keller;given-names:W</infon>
+            <infon key="name_1">surname:Crouch;given-names:R</infon>
+            <infon key="pub-id_pmid">4343966</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Proc Natl Acad Sci USA</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">69</infon>
+            <infon key="year">1972</infon>
+            <offset>23199</offset>
+            <text>Degradation of DNA RNA hybrids by ribonuclease H and DNA polymerases of cellular
+                and viral origin</text>
+        </passage>
+        <passage>
+            <infon key="fpage">807</infon>
+            <infon key="lpage">815</infon>
+            <infon key="name_0">surname:Cerritelli;given-names:SM</infon>
+            <infon key="name_1">surname:Frolova;given-names:EG</infon>
+            <infon key="name_2">surname:Feng;given-names:C</infon>
+            <infon key="name_3">surname:Grinberg;given-names:A</infon>
+            <infon key="name_4">surname:Love;given-names:PE</infon>
+            <infon key="name_5">surname:Crouch;given-names:RJ</infon>
+            <infon key="pub-id_pmid">12667461</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Mol Cell</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">11</infon>
+            <infon key="year">2003</infon>
+            <offset>23297</offset>
+            <text>Failure to produce mitochondrial DNA results in embryonic lethality in Rnaseh1
+                null mice</text>
+        </passage>
+        <passage>
+            <infon key="fpage">9334</infon>
+            <infon key="lpage">9339</infon>
+            <infon key="name_0">surname:Holmes;given-names:JB</infon>
+            <infon key="name_1">surname:Akman;given-names:G</infon>
+            <infon key="name_2">surname:Wood;given-names:SR</infon>
+            <infon key="pub-id_pmid">26162680</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Proc Natl Acad Sci USA</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">112</infon>
+            <infon key="year">2015</infon>
+            <offset>23386</offset>
+            <text>Primer retention owing to the absence of RNase H1 is catastrophic for
+                mitochondrial DNA replication</text>
+        </passage>
+        <passage>
+            <infon key="fpage">E4276</infon>
+            <infon key="lpage">E4285</infon>
+            <infon key="name_0">surname:Akman;given-names:G</infon>
+            <infon key="name_1">surname:Desai;given-names:R</infon>
+            <infon key="name_2">surname:Bailey;given-names:LJ</infon>
+            <infon key="pub-id_pmid">27402764</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Proc Natl Acad Sci USA</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">113</infon>
+            <infon key="year">2016</infon>
+            <offset>23486</offset>
+            <text>Pathological ribonuclease H1 causes R-loop depletion and aberrant DNA segregation
+                in mitochondria</text>
+        </passage>
+        <passage>
+            <infon key="fpage">1762</infon>
+            <infon key="lpage">1770</infon>
+            <infon key="name_0">surname:Lieber;given-names:DS</infon>
+            <infon key="name_1">surname:Calvo;given-names:SE</infon>
+            <infon key="name_2">surname:Shanahan;given-names:K</infon>
+            <infon key="pub-id_pmid">23596069</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Neurology</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">80</infon>
+            <infon key="year">2013</infon>
+            <offset>23584</offset>
+            <text>Targeted exome sequencing of suspected mitochondrial disorders</text>
+        </passage>
+        <passage>
+            <infon key="fpage">285</infon>
+            <infon key="lpage">291</infon>
+            <infon key="name_0">surname:Lek;given-names:M</infon>
+            <infon key="name_1">surname:Karczewski;given-names:KJ</infon>
+            <infon key="name_2">surname:Minikel;given-names:EV</infon>
+            <infon key="pub-id_pmid">27535533</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Nature</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">536</infon>
+            <infon key="year">2016</infon>
+            <offset>23647</offset>
+            <text>Analysis of protein-coding genetic variation in 60,706 humans</text>
+        </passage>
+        <passage>
+            <infon key="fpage">62</infon>
+            <infon key="lpage">71</infon>
+            <infon key="name_0">surname:Lax;given-names:NZ</infon>
+            <infon key="name_1">surname:Whittaker;given-names:RG</infon>
+            <infon key="name_2">surname:Hepplewhite;given-names:PD</infon>
+            <infon key="pub-id_pmid">22189570</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Brain</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">135</infon>
+            <infon key="year">2012</infon>
+            <offset>23709</offset>
+            <text>Sensory neuronopathy in patients harbouring recessive polymerase gamma mutations</text>
+        </passage>
+        <passage>
+            <infon key="fpage">731</infon>
+            <infon key="lpage">744</infon>
+            <infon key="name_0">surname:Metspalu;given-names:M</infon>
+            <infon key="name_1">surname:Romero;given-names:IG</infon>
+            <infon key="name_2">surname:Yunusbayev;given-names:B</infon>
+            <infon key="pub-id_pmid">22152676</infon>
+            <infon key="section_type">REF</infon>
+            <infon key="source">Am J Hum Genet</infon>
+            <infon key="type">ref</infon>
+            <infon key="volume">89</infon>
+            <infon key="year">2011</infon>
+            <offset>23790</offset>
+            <text>Shared and unique components of human population structure and genome-wide signals
+                of positive selection in South Asia</text>
+        </passage>
+    </document>
+</collection>
