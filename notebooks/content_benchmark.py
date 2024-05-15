@@ -424,13 +424,14 @@ def _generalize_hpo_term(hpo_term: str, depth: int = 3) -> str:
     If the provided term is more generalized than depth (e.g., "HP:0000118"), then that term itself will be returned.
     If the provided term doesn't exist in the ontology, then an error will be raised.
     """
+    hpo_obj = Ontology.get_hpo_object(hpo_term)
     try:
-        path_len, path, _, _ = ROOT.path_to_other(Ontology.get_hpo_object(hpo_term))
+        path_len, path, _, _ = ROOT.path_to_other(hpo_obj)
     except RuntimeError:
         # No root found, occurs for obsolete terms.
-        return hpo_term
+        return hpo_obj.__str__()
     if path_len < depth:
-        return hpo_term
+        return hpo_obj.__str__()
     return path[depth - 1].__str__()
 
 
