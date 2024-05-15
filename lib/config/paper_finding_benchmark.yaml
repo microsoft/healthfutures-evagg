@@ -37,7 +37,7 @@ queries:
   #   "retmax": 3
   - "gene_symbol": "RNASEH1" # Limited
     "min_date": "2019/01/01"
-    "retmax": 62
+    "retmax": 6
 
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary

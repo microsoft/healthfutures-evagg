@@ -145,37 +145,6 @@ class TruthsetFileLibrary(IGetPapers):
         return []
 
 
-class RemoteFileLibrary(IGetPapers):
-    """A class for retrieving papers from PubMed."""
-
-    def __init__(self, paper_client: IPaperLookupClient, max_papers: int = 5) -> None:
-        """Initialize a new instance of the RemoteFileLibrary class.
-
-        Args:
-            paper_client (IPaperLookupClient): A class for searching and fetching papers.
-            max_papers (int, optional): The maximum number of papers to retrieve. Defaults to 5.
-        """
-        self._paper_client = paper_client
-        self._max_papers = max_papers
-
-    def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
-        """Search for papers based on the given query.
-
-        Args:
-            query (IPaperQuery): The query to search for.
-
-        Returns:
-            Sequence[Paper]: The set of papers that match the query.
-        """
-        # Get gene term
-        if not query.get("gene_symbol"):
-            raise ValueError("Minimum requirement to search is to input a gene symbol.")
-
-        paper_ids = self._paper_client.search(query=query["gene_symbol"])
-        papers = [paper for paper_id in paper_ids if (paper := self._paper_client.fetch(paper_id)) is not None]
-        return papers
-
-
 class RareDiseaseFileLibrary(IGetPapers):
     """A class for fetching and categorizing disease papers from PubMed."""
 
