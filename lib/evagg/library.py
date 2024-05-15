@@ -514,7 +514,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             and paper.props["fulltext_xml"] is not None
         ]
         logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
-
+    
         # # Categorize the papers.
         # for paper in papers:
         #     categories = await self._get_paper_categorizations(paper)  # Await the coroutine
