@@ -2,7 +2,10 @@ Here is some text from a paper describing genetic variants in the gene {{$gene}}
 
 Here is a list of previously defined phenotypes and diseases that are mentioned in this text: {{$candidates}}
 
-Determine the phenotypes that are specifically associated with {{$observation}}
+Selecting only from the list of phenotypes provided above, determine the phenotypes that are specifically associated 
+with {{$observation}}.
+
+Each of the extracted phenotypes and diseases should be relatively short, only a handful of words.
 
 -- Output format --
 

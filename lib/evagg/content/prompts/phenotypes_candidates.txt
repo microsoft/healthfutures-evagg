@@ -7,6 +7,9 @@ Select zero or one entries from the following list of candidates:
 
 {{$candidates}}
 
+If none of these candidates are a good semantic match for the term provided above, it is fine to provide an empty 
+response, an example of which is given below.
+
 Your response should be a valid json-formatted object of the form:
 
 {
