@@ -34,7 +34,7 @@ INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
 # TODO, just get the gene list from the yaml?
-RESTRICT_TRUTH_GENES_TO_OUTPUT = True  # if True, only compare the genes in the output set to the truth set.
+RESTRICT_TRUTH_GENES_TO_OUTPUT = False  # if True, only compare the genes in the output set to the truth set.
 
 HPO_SIMILARITY_THRESHOLD = (
     0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
@@ -424,7 +424,13 @@ def _generalize_hpo_term(hpo_term: str, depth: int = 3) -> str:
     If the provided term is more generalized than depth (e.g., "HP:0000118"), then that term itself will be returned.
     If the provided term doesn't exist in the ontology, then an error will be raised.
     """
-    hpo_obj = Ontology.get_hpo_object(hpo_term)
+    try:
+        hpo_obj = Ontology.get_hpo_object(hpo_term)
+    except RuntimeError:
+        # HPO term not found in pyhpo, can't use
+        print("Warning: HPO term not found in pyhpo, can't use", hpo_term)
+        return ""
+
     try:
         path_len, path, _, _ = ROOT.path_to_other(hpo_obj)
     except RuntimeError:
@@ -444,7 +450,9 @@ def _match_hpo_sets(hpo_left, hpo_right) -> Tuple[list[str], list[str], list[str
     right_terms = _hpo_str_to_set(hpo_right)
 
     left_gen = {_generalize_hpo_term(t) for t in left_terms}
+    left_gen -= {""}  # Remove empty strings.
     right_gen = {_generalize_hpo_term(t) for t in right_terms}
+    right_gen -= {""}  # Remove empty strings.
 
     matches = list(left_gen.intersection(right_gen))
     return matches, matches, list(left_gen - right_gen), list(right_gen - left_gen)
@@ -474,13 +482,17 @@ if CONTENT_COLUMNS:
 
         for idx, row in shared_df.iterrows():
             if match[idx]:  # type: ignore
-                print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
+                # print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
                 pass
             else:
                 # print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
-                print(f"##Mismatch ({idx}): {pheno_stats[idx]}")
+                print(f"##Mismatch ({idx})")
+                for i, x in enumerate(pheno_stats[idx]):
+                    if i != 0:
+                        print(f"  {x}")
                 print(f"  Truth: {row[f'{column}_truth']}")
                 print(f"  Output: {row[f'{column}_output']}")
+                print()
                 pass
         print()
 
