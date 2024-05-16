@@ -65,10 +65,9 @@ TRUTHSET_EVIDENCE_KEYS = [
     "zygosity",
     "variant_inheritance",
     "variant_type",
-    "functional_study",
-    # "gnomad_frequency",
     "study_type",
-    "notes",
+    "functional_study",  # TODO  Not yet in the truthset.
+    "gnomad_frequency",  # TODO  Not yet in the truthset.
 ]
 
 
@@ -102,11 +101,14 @@ class TruthsetFileLibrary(IGetPapers):
             # Parse the variant from the HGVS c. or p. description.
             text_desc = row["hgvs_c"] if row["hgvs_c"].startswith("c.") else row["hgvs_p"]
             variant = self._variant_factory.parse(text_desc, row["gene"], row["transcript"])
+            assert variant.gene_symbol == row["gene"], f"Gene mismatch {variant}: {variant.gene_symbol}/{row['gene']}"
 
             # Create an evidence dictionary from the variant/patient-specific columns.
-            evidence = {key: row.get(key, "") for key in TRUTHSET_EVIDENCE_KEYS}
+            evidence = {key: row.get(key, "unknown") for key in TRUTHSET_EVIDENCE_KEYS}
             # Add a unique identifier for this combination of paper, variant, and individual ID.
-            evidence["pub_ev_id"] = f"{paper.id}:{variant.hgvs_desc}:{row['individual_id']}".replace(" ", "")
+            id = f"{paper.id}_{variant.hgvs_desc}_{row['individual_id']}".replace(" ", "")
+            evidence["pub_ev_id"] = id.replace(":", "-").replace("/", "-").replace(">", "-")  # Make it URL-safe.
+            # Add this evidence bag to the paper object keyed by the variant and individual ID.
             paper.evidence[(variant, row["individual_id"])] = evidence
 
         return paper
@@ -118,6 +120,9 @@ class TruthsetFileLibrary(IGetPapers):
         paper_groups = defaultdict(list)
         with open(self._file_path) as tsvfile:
             header = [h.strip() for h in tsvfile.readline().split("\t")]
+            if missing_columns := set(TRUTHSET_PAPER_KEYS + TRUTHSET_EVIDENCE_KEYS) - set(header):
+                logger.warning(f"Missing columns in truthset table: {missing_columns}")
+
             reader = csv.reader(tsvfile, delimiter="\t")
             for line in reader:
                 fields = dict(zip(header, [field.strip() for field in line]))
@@ -127,7 +132,7 @@ class TruthsetFileLibrary(IGetPapers):
         logger.info(f"Loaded {row_count} rows with {len(paper_groups)} papers from {self._file_path}.")
         # Process each paper row group into a Paper object with truthset evidence filled in.
         papers = {self._process_paper(paper_id, rows) for paper_id, rows in paper_groups.items()}
-        # Make sure that each evidence truthset row is unique across the truthset.
+        # Make sure that each evidence truthset row ID is unique across the truthset.
         assert len({ev["pub_ev_id"] for p in papers for ev in p.evidence.values()}) == row_count
         return papers
 
