@@ -100,66 +100,6 @@ class PromptBasedContentExtractor(IExtractFields):
 
         return result
 
-    # async def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
-    #     if not isinstance(phenotype, list) or phenotype == ["unknown"] or phenotype == ["Unknown"]:
-    #         return ["unknown"]
-
-    #     # Give AOAI a chance to come up with the phenotype terms on its own.
-    #     response = await self._run_json_prompt(
-    #         os.path.dirname(__file__) + "/prompts/phenotype_to_hpo.txt",
-    #         {"phenotypes": ", ".join(phenotype)},
-    #         {"prompt_tag": "phenotype_to_hpo"},
-    #     )
-
-    #     # Validate AOAI's responses.
-    #     matched = response.get("matched", [])
-    #     unmatched = response.get("unmatched", [])
-    #     for m in matched.copy():
-    #         ids = re.findall(r"\(?HP:\d+\)?", m)
-    #         if not ids:
-    #             logger.info(f"Unable to find HPO identifier in {m}, shifting to unmatched.")
-    #             unmatched.append(m)
-    #             matched.remove(m)
-    #         else:
-    #             if len(ids) > 1:
-    #                 logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
-    #             id = ids[0]
-    #             move = False
-    #             # Obtain the HPO term based on the HPO id.
-    #             if not bool(id_result := self._phenotype_fetcher.fetch(id.strip("()"))):
-    #                 logger.info(f"Term {m} contains invalid HPO id.")
-    #                 move = True
-    #             # Obtain the HPO term based on the string description.
-    #             if not bool(desc_result := self._phenotype_fetcher.fetch(m.split("(")[0].strip())):
-    #                 logger.info(f"Term {m} contains invalid HPO description.")
-    #                 move = True
-    #             # Only keep this term if both exist and they match.
-    #             if not id_result or not desc_result or id_result != desc_result:
-    #                 logger.info(f"Term {m} has mismatched HPO description {desc_result} and HPO id {id_result}.")
-    #                 move = True
-    #             if move:
-    #                 # Strip the HPO identifier and move it to unmatched.
-    #                 unmatched.append(m.split("(")[0].strip())
-    #                 matched.remove(m)
-
-    # # For anything that remains unmatched, use an HPO search client to try to find the closest match.
-    # # TODO: alternatively, take a broader approach here where we search on each word within the unmatched term,
-    # # gather the results, and then ask AOAI (via another prompt) to select from all those terms which seems best.
-    # # Try to use a query-based search for the unmatched terms.
-    # for u in unmatched:
-    #     if u.lower() == "unknown":
-    #         logger.warning("Unknown value made it into phenotype list.")
-    #         continue
-    #     result = self._phenotype_searcher.search(query=u, retmax=1)
-    #     if result:
-    #         logger.info(f"Rescued term {u} with HPO term {result[0]['name']} ({result[0]['id']}).")
-    #         matched.append(f"{result[0]['name']} ({result[0]['id']})")
-    #     else:
-    #         logger.info(f"Failed to rescue term {u}.")
-    #         matched.append(u)
-
-    # return matched
-
     async def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
         """Convert a list of unstructured phenotype descriptions to HPO/OMIM terms."""
         if not phenotype:
@@ -189,6 +129,8 @@ class PromptBasedContentExtractor(IExtractFields):
             words = term.split()
             candidates = set()
             for word in words:
+                if word.lower() == "unknown":
+                    continue
                 # TODO, consider larger retmax here?
                 result = self._phenotype_searcher.search(query=word, retmax=1)
                 if result:
@@ -213,34 +155,23 @@ class PromptBasedContentExtractor(IExtractFields):
         all_values.extend(phenotype)
         return all_values
 
-    async def _generate_phenotype_field(self, gene_symbol: str, observation: Observation) -> str:
+    async def _observation_phenotypes_for_text(
+        self, text: str, observation_description: str, gene_symbol: str
+    ) -> List[str]:
 
-        # cache this per paper?
-
-        # Obtain all the phenotype strings listed in the text associated with the gene.
-        all_phenotypes_params = {
-            "passage": "\n\n".join(observation.texts),
-        }
         all_phenotypes_result = await self._run_json_prompt(
             os.path.dirname(__file__) + "/prompts/phenotypes_all.txt",
-            all_phenotypes_params,
+            {"passage": text},
             {"prompt_tag": "phenotypes_all", "max_tokens": 4096},
         )
-        all_phenotypes = all_phenotypes_result.get("phenotypes", [])
+        if (all_phenotypes := all_phenotypes_result.get("phenotypes", [])) == []:
+            return []
 
-        # Determine the phenotype strings that are associated specifically with the observation.
-        v_sub = ", ".join(observation.variant_descriptions)
-        if observation.patient_descriptions != ["unknown"]:
-            p_sub = ", ".join(observation.patient_descriptions)
-            obs_desc = f"the patient described as {p_sub} who possesses the variant described as {v_sub}."
-        else:
-            obs_desc = f"the variant described as {v_sub}."
-
-        # TODO: linked observations?
+        # TODO: consider linked observations like comp-hets?
         observation_phenotypes_params = {
             "gene": gene_symbol,
-            "passage": "\n\n".join(observation.texts),
-            "observation": obs_desc,
+            "passage": text,
+            "observation": observation_description,
             "candidates": ", ".join(all_phenotypes),
         }
         observation_phenotypes_result = await self._run_json_prompt(
@@ -248,7 +179,45 @@ class PromptBasedContentExtractor(IExtractFields):
             observation_phenotypes_params,
             {"prompt_tag": "phenotypes_observation"},
         )
-        observation_phenotypes = observation_phenotypes_result.get("phenotypes", [])
+        if (observation_phenotypes := observation_phenotypes_result.get("phenotypes", [])) == []:
+            return []
+
+        observation_acronymns_result = await self._run_json_prompt(
+            os.path.dirname(__file__) + "/prompts/phenotypes_acronyms.txt",
+            {"passage": text, "phenotypes": ", ".join(observation_phenotypes)},
+            {"prompt_tag": "phenotypes_acronyms"},
+        )
+
+        return observation_acronymns_result.get("phenotypes", [])
+
+    async def _generate_phenotype_field(self, gene_symbol: str, observation: Observation) -> str:
+
+        # Obtain all the phenotype strings listed in the text associated with the gene.
+        fulltext = "\n\n".join([t.text for t in observation.texts])
+        # TODO: treating all tables in paper as a single text, maybe this isn't ideal, consider grouping by 'id'
+        table_texts = "\n\n".join([t.text for t in observation.texts if t.section_type == "TABLE"])
+
+        # Determine the phenotype strings that are associated specifically with the observation.
+        v_sub = ", ".join(observation.variant_descriptions)
+        if observation.patient_descriptions != ["unknown"]:
+            p_sub = ", ".join(observation.patient_descriptions)
+            observation_description = (
+                f"the patient described as {p_sub} who possesses the variant described as {v_sub}."
+            )
+        else:
+            observation_description = f"the variant described as {v_sub}."
+
+        fulltext_phenotypes = await self._observation_phenotypes_for_text(
+            fulltext, observation_description, gene_symbol
+        )
+        if table_texts != "":
+            table_text_phenotypes = await self._observation_phenotypes_for_text(
+                table_texts, observation_description, gene_symbol
+            )
+
+            observation_phenotypes = list(set(fulltext_phenotypes + table_text_phenotypes))
+        else:
+            observation_phenotypes = fulltext_phenotypes
 
         # Now convert this phenotype list to OMIM/HPO ids.
         structured_phenotypes = await self._convert_phenotype_to_hpo(observation_phenotypes)
@@ -260,7 +229,8 @@ class PromptBasedContentExtractor(IExtractFields):
             return await self._generate_phenotype_field(gene_symbol, observation)
         else:
             params = {
-                "passage": "\n\n".join(observation.texts),
+                # First element is full text of the observation, consider alternatives
+                "passage": observation.texts[0],
                 "variant_descriptions": ", ".join(observation.variant_descriptions),
                 "patient_descriptions": ", ".join(observation.patient_descriptions),
                 "gene": gene_symbol,
