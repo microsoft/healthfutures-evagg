@@ -11,13 +11,12 @@ class TruthsetContentExtractor(IExtractFields):
         self._field_map = [kv for [kv] in [kv.items() for kv in field_map]]
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
-        extracted_fields = []
-        # For each queried variant for which we have evidence in the paper...
-        for v in paper.evidence.keys():
-            if v[0].gene_symbol != gene_symbol:
-                continue
-            # Union the evidence props with the paper props.
-            properties = paper.props | paper.evidence[v]
-            # Add a new evidence dict to the list, mapping evidence values to new key names.
-            extracted_fields.append({out_key: properties[k] for k, out_key in self._field_map})
+        """Extract properties from the evidence bags populated on the truthset Paper object."""
+
+        def _get_props(evidence: Dict[str, str]) -> Dict[str, str]:
+            """Extract the requested evidence properties from the paper and truthset evidence bag."""
+            return {out_key: (paper.props | evidence)[k] for k, out_key in self._field_map}
+
+        # For each evidence set in the paper that has a matching gene, extract the evidence properties.
+        extracted_fields = [_get_props(ev) for ev in paper.evidence.values() if ev["gene"] == gene_symbol]
         return extracted_fields

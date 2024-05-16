@@ -42,20 +42,21 @@ library:
   paper_client: "{{ncbi_client}}"
 extractor:
   di_factory: lib.evagg.TruthsetContentExtractor
-  field_map:
+  field_map: # input field name: output field name
     - pub_ev_id: pub_ev_id
     - gene: gene_symbol
     - id: paper_id
     - hgvs_c: hgvs_c
     - hgvs_p: hgvs_p
+    - paper_variant: variant_text
     - transcript: transcript
+    - gnomad_frequency: gnomad_frequency
     - individual_id: individual_id
     - phenotype: phenotype
     - zygosity: zygosity
     - variant_inheritance: variant_inheritance
     - variant_type: variant_type
     - functional_study: functional_study
-    # - gnomad_frequency: gnomad_frequency
     - study_type: study_type
     - citation: citation
     - link: link
