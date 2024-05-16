@@ -107,7 +107,6 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             return "".join(node.itertext()) if node is not None else None
 
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
-        props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         return props
 
     def _get_license_props(self, pmcid: str) -> Dict[str, Any]:
@@ -141,7 +140,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
     def _get_derived_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
         """Get the derived properties of a paper."""
         derived_props: Dict[str, Any] = {}
-        derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
+        derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}"
         derived_props["link"] = f"https://pubmed.ncbi.nlm.nih.gov/{props['pmid']}/"
         return derived_props
 
