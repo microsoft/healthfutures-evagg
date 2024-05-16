@@ -369,9 +369,12 @@ def main(args):
     # Save library output table (Evidence Aggregator table) to the same output directory
     shutil.copy(args.pipeline_output, args.outdir)
 
-    # Move the paper finding process prompts into the benchmarking directory
-    files = glob.glob("lib/evagg/content/prompts/paper_finding_process_*.txt")
-    for file in files:
+    # Move the paper finding directions and process prompts into the benchmarking directory
+    directions_files = glob.glob("lib/evagg/content/prompts/paper_finding_directions_*.txt")
+    for file in directions_files:
+        shutil.move(file, args.outdir)
+    process_files = glob.glob("lib/evagg/content/prompts/paper_finding_process_*.txt")
+    for file in process_files:
         shutil.move(file, args.outdir)
 
     # Compile and save the benchmarking results to a file
