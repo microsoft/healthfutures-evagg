@@ -340,22 +340,22 @@ class RareDiseaseFileLibrary(IGetPapers):
         with open("lib/evagg/content/prompts/few_shot_pos_examples_bkup.txt", "r") as filepb:
             pos_file_content_bkup = filepb.read()
 
-        # # Negative few shot examples
-        # with open("lib/evagg/content/prompts/few_shot_neg_examples.txt", "r") as filen:
-        #     neg_file_content = filen.read()
+        # Negative few shot examples
+        with open("lib/evagg/content/prompts/few_shot_neg_examples.txt", "r") as filen:
+            neg_file_content = filen.read()
             
-        # # Negative few shot examples backup if a gene in this file overlaps with the query paper gene, will pull from same cluster
-        # with open("lib/evagg/content/prompts/few_shot_neg_examples_bkup.txt", "r") as filenb:
-        #     neg_file_content_bkup = filenb.read() # TODO: This is tricky because the negative examples do not exist until the positive examples are created. Perhaps create a flag or config around this. I realize that we do not want to integrate benchmarking aspects into the pipeline.
+        # Negative few shot examples backup if a gene in this file overlaps with the query paper gene, will pull from same cluster
+        with open("lib/evagg/content/prompts/few_shot_neg_examples_bkup.txt", "r") as filenb:
+            neg_file_content_bkup = filenb.read() # TODO: This is tricky because the negative examples do not exist until the positive examples are created. Perhaps create a flag or config around this. I realize that we do not want to integrate benchmarking aspects into the pipeline.
         
         few_shot_phrases = (
             "\n\nBelow are several few shot examples of papers that are classified as 'rare disease'. These are in no particular order:\n"
 
             f"{self._replace_cluster_with_gene(pos_file_content, pos_file_content_bkup, gene)}\n"
             
-            # "\n\nBelow are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
+            "\n\nBelow are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
             
-            # f"{self.self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n" # TODO: this is tricky because sometimes you have to run the pipeline without few shot examples to know what the best negatives should be. Consider going back to generate a config flag for this (i.e. running the pipeline with positive or positive and negative few shot examples.)
+            f"{self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n" # TODO: this is tricky because sometimes you have to run the pipeline without few shot examples to know what the best negatives should be. Consider going back to generate a config flag for this (i.e. running the pipeline with positive or positive and negative few shot examples.)
         )
 
         # Read in paper_finding_directions.txt and append the few shot examples
