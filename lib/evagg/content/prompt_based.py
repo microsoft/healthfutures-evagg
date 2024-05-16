@@ -201,28 +201,22 @@ class PromptBasedContentExtractor(IExtractFields):
         v_sub = ", ".join(observation.variant_descriptions)
         if observation.patient_descriptions != ["unknown"]:
             p_sub = ", ".join(observation.patient_descriptions)
-            observation_description = (
-                f"the patient described as {p_sub} who possesses the variant described as {v_sub}."
-            )
+            obs_desc = f"the patient described as {p_sub} who possesses the variant described as {v_sub}."
         else:
-            observation_description = f"the variant described as {v_sub}."
+            obs_desc = f"the variant described as {v_sub}."
 
-        fulltext_phenotypes = await self._observation_phenotypes_for_text(
-            fulltext, observation_description, gene_symbol
-        )
+        # Run phenotype extraction for all the texts of interest.
+        texts = [fulltext]
         if table_texts != "":
-            table_text_phenotypes = await self._observation_phenotypes_for_text(
-                table_texts, observation_description, gene_symbol
-            )
-
-            observation_phenotypes = list(set(fulltext_phenotypes + table_text_phenotypes))
-        else:
-            observation_phenotypes = fulltext_phenotypes
+            texts.append(table_texts)
+        result = await asyncio.gather(*[self._observation_phenotypes_for_text(t, obs_desc, gene_symbol) for t in texts])
+        observation_phenotypes = list({item for sublist in result for item in sublist})
 
         # Now convert this phenotype list to OMIM/HPO ids.
         structured_phenotypes = await self._convert_phenotype_to_hpo(observation_phenotypes)
 
-        return ", ".join(structured_phenotypes)
+        # Duplicates are conceivable, get unique set again.
+        return ", ".join(set(structured_phenotypes))
 
     async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
         if field == "phenotype":
