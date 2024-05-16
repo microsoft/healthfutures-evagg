@@ -343,11 +343,11 @@ class RareDiseaseFileLibrary(IGetPapers):
         #     neg_file_content_bkup = filenb.read() # TODO: This is tricky because the negative examples do not exist until the positive examples are created. Perhaps create a flag or config around this. I realize that we do not want to integrate benchmarking aspects into the pipeline.
         
         few_shot_phrases = (
-            "\nBelow are several few shot examples of papers that are classified as 'rare disease'. These are in no particular order:\n"
+            "\n\nBelow are several few shot examples of papers that are classified as 'rare disease'. These are in no particular order:\n"
 
             f"{self._replace_cluster_with_gene(pos_file_content, pos_file_content_bkup, gene)}\n"
             
-            # "\nBelow are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
+            # "\n\nBelow are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
             
             # f"{self.self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n" # TODO: this is tricky because sometimes you have to run the pipeline without few shot examples to know what the best negatives should be. Consider going back to generate a config flag for this (i.e. running the pipeline with positive or positive and negative few shot examples.)
         )
@@ -365,7 +365,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         file_content += few_shot_phrases
     
         # Generate a unique file name based on paper.id
-        unique_file_name = f"paper_finding_process_{paper.id.replace('pmid:', '')}.txt"
+        unique_file_name = os.path.join(os.path.dirname(__file__), "content", "prompts", f"paper_finding_directions_{paper.id.replace('pmid:', '')}.txt")
 
         # Write the content to the unique file
         with open(unique_file_name, 'w') as f:
