@@ -32,7 +32,7 @@ refseq_client:
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   #di_factory: lib/config/queries_mgttrain_subset.yaml
-  - "gene_symbol": "EMC1" # Limited
+  - "gene_symbol": "MLH3" # Limited
     "min_date": "2020/01/01"
     "retmax": 3
 
