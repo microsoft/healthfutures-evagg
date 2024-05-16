@@ -131,7 +131,7 @@ class PromptBasedContentExtractor(IExtractFields):
             for word in words:
                 if word.lower() == "unknown":
                     continue
-                retmax = 3
+                retmax = 1
                 result = self._phenotype_searcher.search(query=word, retmax=retmax)
                 if result:
                     for i in range(min(retmax, len(result))):
