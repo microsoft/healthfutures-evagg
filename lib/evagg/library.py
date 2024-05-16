@@ -296,22 +296,84 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return "other"
 
-    async def _apply_chain_of_thought(self, paper: Paper) -> str:
+    def _check_gene_in_string(self, text, gene):
+        lines = text.split('\n')
+        for line in lines:
+            if line.startswith("Gene: "):
+                if gene in line[6:]:
+                    return True
+        return False
+    
+    def _replace_cluster_with_gene(self, examples, examples_bkup, gene):
+        # Split into clusters
+        clusters = re.split(r'(?=Gene: )', examples)
+        clusters_bkup = re.split(r'(?=Gene: )', examples_bkup)
+
+        # Iterate over clusters
+        for i, cluster in enumerate(clusters):
+            if self._check_gene_in_string(cluster, gene):
+                # Replace only the paper in the cluster
+                papers = cluster.split('\n')
+                papers_bkup = clusters_bkup[i].split('\n')
+                for j, paper in enumerate(papers):
+                    if self._check_gene_in_string(paper, gene):
+                        papers[j] = papers_bkup[j]
+                clusters[i] = '\n'.join(papers)
+
+        # Join clusters back into a single string
+        return "".join(clusters)
+            
+    async def _apply_chain_of_thought(self, paper: Paper, gene: str) -> str:
         """Categorize papers based on LLM prompts."""
-        # Check if the paper is full text or not
-        # if paper.props.get("full_text_xml") is not None:
-        #     parameters = self._get_paper_texts(paper)
-        # else:
+        
+        # Positive few shot examples
+        with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_pos_examples.txt", "r") as filep:
+            pos_file_content = filep.read()
+        
+        # Positive few shot examples backup if a gene in this file overlaps with the query paper gene, will pull from same cluster 
+        with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_pos_examples_bkup.txt", "r") as filepb:
+            pos_file_content_bkup = filepb.read()
+
+        # # Negative few shot examples
+        # with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_neg_examples.txt", "r") as filen:
+        #     neg_file_content = filen.read()
+            
+        # # Negative few shot examples backup if a gene in this file overlaps with the query paper gene, will pull from same cluster
+        # with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_neg_examples_bkup.txt", "r") as filenb:
+        #     neg_file_content_bkup = filenb.read() # TODO: This is tricky because the negative examples do not exist until the positive examples are created. Perhaps create a flag or config around this. I realize that we do not want to integrate benchmarking aspects into the pipeline.
+        
+        few_shot_phrases = (
+            "\nBelow are several few shot examples of papers that are classified as 'rare disease'. These are in no particular order:\n"
+
+            f"{self._replace_cluster_with_gene(pos_file_content, pos_file_content_bkup, gene)}\n"
+            
+            # "\nBelow are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
+            
+            # f"{self.self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n" # TODO: this is tricky because sometimes you have to run the pipeline without few shot examples to know what the best negatives should be. Consider going back to generate a config flag for this (i.e. running the pipeline with positive or positive and negative few shot examples.)
+        )
+        
         parameters = {
             "abstract": paper.props.get("abstract") or "no abstract",
             "title": paper.props.get("title") or "no title",
         }
 
-        # flexible
+        # Read in paper_finding_directions.txt and append the few shot examples
+        with open(os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"), 'r') as f:
+            file_content = f.read()
+            
+        # Append few_shot_phrases
+        file_content += few_shot_phrases
+    
+        # Generate a unique file name based on paper.id
+        unique_file_name = f"paper_finding_process_{paper.id.replace('pmid:', '')}.txt"
+
+        # Write the content to the unique file
+        with open(unique_file_name, 'w') as f:
+            f.write(file_content)
+    
+        # Chain of thought style directions for how to classify this paper
         process_response = await self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(
-                os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"
-            ),
+            user_prompt_file=unique_file_name,
             system_prompt="Extract field",
             params=parameters,
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
@@ -327,6 +389,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         #         f"Full text: {parameters['full_text']}\n"
         #     )
         # else:
+            
         phrases = (
             "\n It is essential that you provide your response as a single string: "
             "\"rare disease\" or \"other\" based on your classification. "
@@ -334,45 +397,9 @@ class RareDiseaseFileLibrary(IGetPapers):
             f"Below are the title and abstract:\n\n"
             f"Title: {paper.props.get('title') or 'no title'}\n"
             f"Abstract: {paper.props.get('abstract') or 'no abstract'}\n"
-            
-            "Below are four few shot examples of papers that are classified as 'rare disease'. These are in no particular order:\n"
-
-            "Gene: FBN2, PMID: 31316167\n"
-            "Title: A clinical scoring system for congenital contractural arachnodactyly.\n"
-            "Abstract: Congenital contractural arachnodactyly (CCA) is an autosomal dominant connective tissue disorder manifesting joint contractures, arachnodactyly, crumpled ears, and kyphoscoliosis as main features. Due to its rarity, rather aspecific clinical presentation, and overlap with other conditions including Marfan syndrome, the diagnosis is challenging, but important for prognosis and clinical management. CCA is caused by pathogenic variants in FBN2, encoding fibrillin-2, but locus heterogeneity has been suggested. We designed a clinical scoring system and diagnostic criteria to support the diagnostic process and guide molecular genetic testing.\n"
-
-            "Gene: COG4, PMID: 19494034\n"
-            "Title: Golgi function and dysfunction in the first COG4-deficient CDG type II patient.\n"
-            "Abstract: The conserved oligomeric Golgi (COG) complex is a hetero-octameric complex essential for normal glycosylation and intra-Golgi transport. An increasing number of congenital disorder of glycosylation type II (CDG-II) mutations are found in COG subunits indicating its importance in glycosylation. We report a new CDG-II patient harbouring a p.R729W missense mutation in COG4 combined with a submicroscopical deletion. The resulting downregulation of COG4 expression additionally affects expression or stability of other lobe A subunits. Despite this, full complex formation was maintained albeit to a lower extent as shown by glycerol gradient centrifugation. Moreover, our data indicate that subunits are present in a cytosolic pool and full complex formation assists tethering preceding membrane fusion. By extending this study to four other known COG-deficient patients, we now present the first comparative analysis on defects in transport, glycosylation and Golgi ultrastructure in these patients. The observed structural and biochemical abnormalities correlate with the severity of the mutation, with the COG4 mutant being the mildest. All together our results indicate that intact COG complexes are required to maintain Golgi dynamics and its associated functions. According to the current CDG nomenclature, this newly identified deficiency is designated CDG-IIj.\n"
-
-            "Gene: DNAJC7, PMID: 33193563\n"
-            "Title: A Novel Potentially Pathogenic Rare Variant in the DNAJC7 Gene Identified in Amyotrophic Lateral Sclerosis Patients From Mainland China.\n"
-            "Abstract: Variants in the DNAJC7 gene have been shown to be novel causes of amyotrophic lateral sclerosis (ALS). However, the contributions of DNAJC7 mutations in Asian ALS patients remain unclear. In this study, we screened rare pathogenic variants in the DNAJC7 gene in a cohort of 578 ALS patients from Mainland China. A novel, rare, putative pathogenic variant c.712A>G (p.R238G) was identified in one sporadic ALS patient. The carrier with this variant exhibited symptom onset at a relatively younger age and experienced rapid disease progression. Our results expand the pathogenic variant spectrum of DNAJC7 and indicate that variants in the DNAJC7 gene may also contribute to ALS in the Chinese population.\n"
-
-            "Gene: MLH3, PMID: 15193445\n"
-            "Title: No association between two MLH3 variants (S845G and P844L)and colorectal cancer risk.\n"
-            "Abstract: Recently we identified a new variant, S845G, in the MLH3 gene in 7 out of 327 patients suspected of hereditary nonpolyposis colorectal cancer but not fulfilling the Amsterdam criteria and in 1 out of 188 control subjects. As this variant might play a role in causing sporadic colorectal cancer, we analyzed its prevalence in sporadic colorectal cancer patients. We analyzed a small part of exon 1 of the MLH3 gene, including the S845G variant, in germline DNA of 467 white sporadic colorectal cancer patients and 497 white controls. The S845G variant was detected in five patients and eight controls; the results thus indicate that this variant does not confer an increased colorectal cancer risk. Another variant (P844L) was clearly a polymorphism. Three other missense variants were rare and the sample size of the study was too small to conclude whether they are pathogenic. In conclusion, no association was observed between two MLH3 variants (P844L and S845G) and colorectal cancer risk.\n"
-            
-            "Below are four few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
-            
-            "Gene: MLH3, PMID: 20308424\n"
-            "Title: Mammalian BLM helicase is critical for integrating multiple pathways of meiotic recombination.\n"
-            "Abstract: Bloom's syndrome (BS) is an autosomal recessive disorder characterized by growth retardation, cancer predisposition, and sterility. BS mutated (Blm), the gene mutated in BS patients, is one of five mammalian RecQ helicases. Although BLM has been shown to promote genome stability by assisting in the repair of DNA structures that arise during homologous recombination in somatic cells, less is known about its role in meiotic recombination primarily because of the embryonic lethality associated with Blm deletion. However, the localization of BLM protein on meiotic chromosomes together with evidence from yeast and other organisms implicates a role for BLM helicase in meiotic recombination events, prompting us to explore the meiotic phenotype of mice bearing a conditional mutant allele of Blm. In this study, we show that BLM deficiency does not affect entry into prophase I but causes severe defects in meiotic progression. This is exemplified by improper pairing and synapsis of homologous chromosomes and altered processing of recombination intermediates, resulting in increased chiasmata. Our data provide the first analysis of BLM function in mammalian meiosis and strongly argue that BLM is involved in proper pairing, synapsis, and segregation of homologous chromosomes; however, it is dispensable for the accumulation of recombination intermediates.\n"
-
-            "Gene: ZNF423, PMID: 31234811\n"
-            "Title: Master regulator analysis of paragangliomas carrying SDHx, VHL, or MAML3 genetic alterations.\n"
-            "Abstract: Succinate dehydrogenase (SDH) loss and mastermind-like 3 (MAML3) translocation are two clinically important genetic alterations that correlate with increased rates of metastasis in subtypes of human paraganglioma and pheochromocytoma (PPGL) neuroendocrine tumors. Although hypotheses propose that succinate accumulation after SDH loss poisons dioxygenases and activates pseudohypoxia and epigenomic hypermethylation, it remains unclear whether these mechanisms account for oncogenic transcriptional patterns. Additionally, MAML3 translocation has recently been identified as a genetic alteration in PPGL, but is poorly understood. We hypothesize that a key to understanding tumorigenesis driven by these genetic alterations is identification of the transcription factors responsible for the observed oncogenic transcriptional changes.\n"
-
-            "Gene: RNASEH1, PMID: 35711919\n"
-            "Title: Case Report: Rare Homozygous RNASEH1 Mutations Associated With Adult-Onset Mitochondrial Encephalomyopathy and Multiple Mitochondrial DNA Deletions.\n"
-            "Abstract: Mitochondrial DNA (mtDNA) maintenance disorders embrace a broad range of clinical syndromes distinguished by the evidence of mtDNA depletion and/or deletions in affected tissues. Among the nuclear genes associated with mtDNA maintenance disorders, RNASEH1 mutations produce a homogeneous phenotype, with progressive external ophthalmoplegia (PEO), ptosis, limb weakness, cerebellar ataxia, and dysphagia. The encoded enzyme, ribonuclease H1, is involved in mtDNA replication, whose impairment leads to an increase in replication intermediates resulting from mtDNA replication slowdown. Here, we describe two unrelated Italian probands (Patient 1 and Patient 2) affected by chronic PEO, ptosis, and muscle weakness. Cerebellar features and severe dysphagia requiring enteral feeding were observed in one patient. In both cases, muscle biopsy revealed diffuse mitochondrial abnormalities and multiple mtDNA deletions. A targeted next-generation sequencing analysis revealed the homozygous RNASEH1 mutations c.129-3C>G and c.424G>A in patients 1 and 2, respectively. The c.129-3C>G substitution has never been described as disease-related and resulted in the loss of exon 2 in Patient 1 muscle RNASEH1 transcript. Overall, we recommend implementing the use of high-throughput sequencing approaches in the clinical setting to reach genetic diagnosis in case of suspected presentations with impaired mtDNA homeostasis.\n"
-
-            "Gene: TAPBP, PMID: 24159917\n"
-            "Title: Gastrointestinal stromal tumors: a case-only analysis of single nucleotide polymorphisms and somatic mutations.\n"
-            "Abstract: Gastrointestinal stromal tumors are rare soft tissue sarcomas that typically develop from mesenchymal cells with acquired gain-in-function mutations in KIT or PDGFRA oncogenes. These somatic mutations have been well-characterized, but little is known about inherited genetic risk factors. Given evidence that certain susceptibility loci and carcinogens are associated with characteristic mutations in other cancers, we hypothesized that these signature KIT or PDGFRA mutations may be similarly fundamental to understanding gastrointestinal stromal tumor etiology. Therefore, we examined associations between 522 single nucleotide polymorphisms and seven KIT or PDGFRA tumor mutations types. Candidate pathways included dioxin response, toxin metabolism, matrix metalloproteinase production, and immune and inflammatory response.\n"
         )
 
-        process_response = str(process_response) + phrases
+        process_response = str(process_response) + phrases + few_shot_phrases
 
         # Write the output of the variable to a file
         with open(
@@ -386,7 +413,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             # TODO: Saving the paper finding process per paper is useful for benchmarking, not necessary for the
             # final product. Should I not save this to .out and instead just override w/ each new paper?
 
-        # flexible
+        # Classify the paper into rare disease or other
         classification_response = await self._llm_client.prompt_file(
             user_prompt_file=os.path.join(
                 os.path.dirname(__file__), "content", "prompts", f"paper_finding_process_{paper.id.replace("pmid:", "")}.txt"
@@ -410,7 +437,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return "other"
 
-    async def _get_paper_categorizations(self, paper: Paper) -> str:
+    async def _get_paper_categorizations(self, paper: Paper, gene: str) -> str:
         """Categorize papers with multiple strategies and return the counts of each category."""
 
         # Categorize the paper by both keyword and LLM prompt.
@@ -418,8 +445,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         
         # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         # llm_cat = await self._get_llm_category(paper)
-        # llm_cat = await self._apply_chain_of_thought(paper)
-        llm_cat = await self._get_llm_category_few_shot(paper)
+        llm_cat = await self._apply_chain_of_thought(paper, gene)
+        #llm_cat = await self._get_llm_category_few_shot(paper)
         
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
@@ -430,8 +457,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         
         # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category(paper), self._get_llm_category(paper))
-        #llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper), self._apply_chain_of_thought(paper))
-        llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper), self._get_llm_category_few_shot(paper))
+        llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper, gene), self._apply_chain_of_thought(paper, gene))
+        #llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper), self._get_llm_category_few_shot(paper))
         
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
@@ -502,7 +529,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         #     paper.props["disease_category"] = best_category
 
-        await asyncio.gather(*[self._get_paper_categorizations(paper) for paper in papers])
+        await asyncio.gather(*[self._get_paper_categorizations(paper, query["gene_symbol"]) for paper in papers])
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
