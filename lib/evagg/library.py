@@ -327,19 +327,19 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Categorize papers based on LLM prompts."""
         
         # Positive few shot examples
-        with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_pos_examples.txt", "r") as filep:
+        with open("lib/evagg/content/prompts/few_shot_pos_examples.txt", "r") as filep:
             pos_file_content = filep.read()
         
         # Positive few shot examples backup if a gene in this file overlaps with the query paper gene, will pull from same cluster 
-        with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_pos_examples_bkup.txt", "r") as filepb:
+        with open("lib/evagg/content/prompts/few_shot_pos_examples_bkup.txt", "r") as filepb:
             pos_file_content_bkup = filepb.read()
 
         # # Negative few shot examples
-        # with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_neg_examples.txt", "r") as filen:
+        # with open("lib/evagg/content/prompts/few_shot_neg_examples.txt", "r") as filen:
         #     neg_file_content = filen.read()
             
         # # Negative few shot examples backup if a gene in this file overlaps with the query paper gene, will pull from same cluster
-        # with open("/home/azureuser/ev-agg-exp/lib/evagg/content/prompts/few_shot_neg_examples_bkup.txt", "r") as filenb:
+        # with open("lib/evagg/content/prompts/few_shot_neg_examples_bkup.txt", "r") as filenb:
         #     neg_file_content_bkup = filenb.read() # TODO: This is tricky because the negative examples do not exist until the positive examples are created. Perhaps create a flag or config around this. I realize that we do not want to integrate benchmarking aspects into the pipeline.
         
         few_shot_phrases = (
