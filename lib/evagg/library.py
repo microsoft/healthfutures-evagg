@@ -274,15 +274,22 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return "other"
     
-    async def _get_llm_category_few_shot(self, paper: Paper) -> str:
+    async def _get_llm_category_few_shot(self, paper: Paper, gene: str) -> str:
         """Categorize papers based on LLM prompts."""
+        
+        # Load the few shot examples
+        unique_file_name, _ = self._load_few_shot_examples(paper, gene, "few_shot")
+    
+        parameters = {
+            "abstract": paper.props.get("abstract") or "no abstract",
+            "title": paper.props.get("title") or "no title",
+        }
+                
+        # Few shot examples embedded into paper finding classification prompt
         response = await self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_few_shot.txt"),
+            user_prompt_file=unique_file_name,
             system_prompt="Extract field",
-            params={
-                "abstract": paper.props.get("abstract") or "no abstract",
-                "title": paper.props.get("title") or "no title",
-            },
+            params=parameters,
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
 
@@ -312,20 +319,19 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Iterate over clusters
         for i, cluster in enumerate(clusters):
             if self._check_gene_in_string(cluster, gene):
-                # Replace only the paper in the cluster
+                # Replace the entire paper in the cluster
                 papers = cluster.split('\n')
                 papers_bkup = clusters_bkup[i].split('\n')
-                for j, paper in enumerate(papers):
-                    if self._check_gene_in_string(paper, gene):
-                        papers[j] = papers_bkup[j]
+                start_index = next((j for j, paper in enumerate(papers) if self._check_gene_in_string(paper, gene)), None)
+                if start_index is not None:
+                    end_index = next((j for j in range(start_index + 1, len(papers)) if papers[j].startswith('Gene: ')), len(papers))
+                    papers[start_index:end_index] = papers_bkup[start_index:end_index]
                 clusters[i] = '\n'.join(papers)
 
         # Join clusters back into a single string
         return "".join(clusters)
             
-    async def _apply_chain_of_thought(self, paper: Paper, gene: str) -> str:
-        """Categorize papers based on LLM prompts."""
-        
+    def _load_few_shot_examples(self, paper: Paper, gene: str, method: str) -> List[str]:
         # Positive few shot examples
         with open("lib/evagg/content/prompts/few_shot_pos_examples.txt", "r") as filep:
             pos_file_content = filep.read()
@@ -351,26 +357,34 @@ class RareDiseaseFileLibrary(IGetPapers):
             
             # f"{self.self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n" # TODO: this is tricky because sometimes you have to run the pipeline without few shot examples to know what the best negatives should be. Consider going back to generate a config flag for this (i.e. running the pipeline with positive or positive and negative few shot examples.)
         )
-        
-        parameters = {
-            "abstract": paper.props.get("abstract") or "no abstract",
-            "title": paper.props.get("title") or "no title",
-        }
 
         # Read in paper_finding_directions.txt and append the few shot examples
-        with open(os.path.join(os.path.dirname(__file__), "content", "prompts", "paper_finding_directions.txt"), 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), "content", "prompts", f"paper_finding_{method}.txt"), 'r') as f:
             file_content = f.read()
             
         # Append few_shot_phrases
         file_content += few_shot_phrases
     
         # Generate a unique file name based on paper.id
-        unique_file_name = os.path.join(os.path.dirname(__file__), "content", "prompts", f"paper_finding_directions_{paper.id.replace('pmid:', '')}.txt")
+        unique_file_name = os.path.join(os.path.dirname(__file__), "content", "prompts", f"paper_finding_{method}_{paper.id.replace('pmid:', '')}.txt")
 
         # Write the content to the unique file
         with open(unique_file_name, 'w') as f:
             f.write(file_content)
+        
+        return [unique_file_name, few_shot_phrases]
     
+    async def _apply_chain_of_thought(self, paper: Paper, gene: str) -> str:
+        """Categorize papers based on LLM prompts."""
+        
+        # Load the few shot examples
+        unique_file_name, few_shot_phrases = self._load_few_shot_examples(paper, gene, "directions")
+    
+        parameters = {
+            "abstract": paper.props.get("abstract") or "no abstract",
+            "title": paper.props.get("title") or "no title",
+        }
+                
         # Chain of thought style directions for how to classify this paper
         process_response = await self._llm_client.prompt_file(
             user_prompt_file=unique_file_name,
@@ -446,7 +460,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         # llm_cat = await self._get_llm_category(paper)
         llm_cat = await self._apply_chain_of_thought(paper, gene)
-        #llm_cat = await self._get_llm_category_few_shot(paper)
+        #llm_cat = await self._get_llm_category_few_shot(paper, gene)
         
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
@@ -458,7 +472,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category(paper), self._get_llm_category(paper))
         llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper, gene), self._apply_chain_of_thought(paper, gene))
-        #llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper), self._get_llm_category_few_shot(paper))
+        #llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper, gene), self._get_llm_category_few_shot(paper, gene))
         
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
