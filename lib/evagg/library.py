@@ -353,7 +353,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
             f"{self._replace_cluster_with_gene(pos_file_content, pos_file_content_bkup, gene)}\n"
             
-            "\n\nBelow are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
+            "\nBelow are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"
             
             f"{self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n" # TODO: this is tricky because sometimes you have to run the pipeline without few shot examples to know what the best negatives should be. Consider going back to generate a config flag for this (i.e. running the pipeline with positive or positive and negative few shot examples.)
         )
