@@ -56,8 +56,8 @@ extractor:
     - zygosity: zygosity
     - variant_inheritance: variant_inheritance
     - variant_type: variant_type
-    - functional_study: functional_study
     - study_type: study_type
+    - functional_study: functional_study
     - citation: citation
     - link: link
     - title: paper_title
