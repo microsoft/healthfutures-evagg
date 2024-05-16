@@ -32,12 +32,9 @@ refseq_client:
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   #di_factory: lib/config/queries_mgttrain_subset.yaml
-  # - "gene_symbol": "EXOC2" # Limited
-  #   "min_date": "2020/01/01"
-  #   "retmax": 3
-  - "gene_symbol": "RNASEH1" # Limited
-    "min_date": "2019/01/01"
-    "retmax": 6
+  - "gene_symbol": "EXOC2" # Limited
+    "min_date": "2020/01/01"
+    "retmax": 22
 
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary

@@ -285,11 +285,12 @@ def save_clusters(outdir, clusters, pos_or_neg):
                 writer.writerow([gene, pmid, cluster])
 
 
-def sample_save_examples(seed, outdir, clusters, gene_pmid_title_abstract_dict, out_name):
-    """Randomly choose 1 paper from each cluster and ensure that gene has not been sampled,
+def sample_save_examples(seed, outdir, clusters, gene_pmid_title_abstract_dict, out_name1):
+    """Randomly choose 2 papers from each cluster and ensure that gene has not been sampled,
     then save the pmid, title, and abstract to a file."""
+    out_name2 = out_name1.replace("examples", "examples_bkup")
     random.seed(seed)
-    with open(os.path.join(outdir, out_name), "w") as f:
+    with open(os.path.join(outdir, out_name1), "w") as f1, open(os.path.join(outdir, out_name2), "w") as f2:
         sampled_genes = set()  # keep track of genes that have been sampled
         clustered_papers = list(clusters.items())  # convert dict to list for indexing
         i = 0  # start from the first cluster
@@ -299,18 +300,26 @@ def sample_save_examples(seed, outdir, clusters, gene_pmid_title_abstract_dict, 
                 break  # break the loop
             cluster, papers = clustered_papers[i]
 
+            random.seed(seed)
             random.shuffle(papers)  # shuffle the papers
+            sampled_papers = 0  # count the number of papers sampled from this cluster
             for j, (gene, pmid) in enumerate(papers):
                 title = gene_pmid_title_abstract_dict[gene][pmid]["title"]
                 abstract = gene_pmid_title_abstract_dict[gene][pmid]["abstract"]
                 if (
                     gene not in sampled_genes and title is not None and abstract is not None
                 ):  # if the gene has not been sampled and the paper has a title and abstract
+                    if sampled_papers == 0:  # if it's the first paper from this cluster
+                        f = f1
+                    else:  # if it's the second paper from this cluster
+                        f = f2
                     f.write(f"Gene: {gene}, PMID: {pmid}\n")
                     f.write(f"Title: {title}\n")
                     f.write(f"Abstract: {abstract}\n\n")
                     sampled_genes.add(gene)  # mark the gene as sampled
-                    break
+                    sampled_papers += 1  # increment the number of papers sampled
+                    if sampled_papers >= 2:  # if we have sampled 2 papers from this cluster
+                        break
             else:  # if no paper with a unique gene was found in this cluster
                 if i > 0:  # if this is not the first cluster
                     i -= 1  # go back to the previous cluster
