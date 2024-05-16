@@ -131,10 +131,12 @@ class PromptBasedContentExtractor(IExtractFields):
             for word in words:
                 if word.lower() == "unknown":
                     continue
-                # TODO, consider larger retmax here?
-                result = self._phenotype_searcher.search(query=word, retmax=1)
+                retmax = 3
+                result = self._phenotype_searcher.search(query=word, retmax=retmax)
                 if result:
-                    candidates.add(f"{result[0]['name']} ({result[0]['id']})")
+                    for i in range(min(retmax, len(result))):
+                        candidates.add(f"{result[i]['name']} ({result[i]['id']})")
+
             # Ask AOAI to determine which of the unique results is the best match.
             if candidates:
                 params = {"term": term, "candidates": ", ".join(candidates)}
