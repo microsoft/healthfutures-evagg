@@ -451,6 +451,77 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         return "other"
 
+    async def _get_llm_category_chain_of_thought_few_shot_full_text_query(self, paper: Paper, gene: str) -> str:
+        """Categorize papers based on LLM prompts."""
+        
+        # Load the few shot examples
+        unique_file_name, few_shot_phrases = self._load_few_shot_examples(paper, gene, "directions")
+    
+        parameters = {
+            #"abstract": paper.props.get("abstract") or "no abstract",
+            #"title": paper.props.get("title") or "no title",
+            "full_text": paper.props.get("full_text_xml") or "no full text"
+        }
+                
+        # Chain of thought style directions for how to classify this paper
+        process_response = await self._llm_client.prompt_file(
+            user_prompt_file=unique_file_name,
+            system_prompt="Extract field",
+            params=parameters,
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+        )
+
+        # Append output requirements to process_response before saving
+        if paper.props.get("full_text_xml") is not None:
+            phrases = (
+                "\n It is essential that you provide your response as a single string: "
+                "\"rare disease\" or \"other\" based on your classification. "
+                "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
+                f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
+                f"Full text: {parameters['full_text']}\n"
+            )
+        else:
+            print("NO FULL TEXT")
+            
+        process_response = str(process_response) + phrases + few_shot_phrases
+
+        # Write the output of the variable to a file
+        with open(
+            os.path.join(
+                os.path.dirname(__file__), "content", "prompts",
+                f"paper_finding_process_query_full_text_{paper.id.replace('pmid:', '')}.txt"
+            ),
+            "w"
+        ) as f:
+            f.write(str(process_response))
+            # TODO: Saving the paper finding process per paper is useful for benchmarking, not necessary for the
+            # final product. Should I not save this to .out and instead just override w/ each new paper?
+
+        # Classify the paper into rare disease or other
+        classification_response = await self._llm_client.prompt_file(
+            user_prompt_file=os.path.join(
+                os.path.dirname(__file__), "content", "prompts", f"paper_finding_process_query_full_text_{paper.id.replace("pmid:", "")}.txt"
+            ),
+            system_prompt="Extract field",
+            params={
+                #"abstract": paper.props.get("abstract") or "no abstract",
+                #"title": paper.props.get("title") or "no title",
+                "full_text": paper.props.get("full_text_xml") or "no full text"
+            },
+            prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
+        )
+        if isinstance(classification_response, str):
+            result = classification_response
+        else:
+            logger.warning(
+                f"LLM failed to return a valid categorization response for {paper.id}: {classification_response}"
+            )
+
+        if result in self.CATEGORIES:
+            return result
+
+        return "other"
+        
     async def _get_paper_categorizations(self, paper: Paper, gene: str) -> str:
         """Categorize papers with multiple strategies and return the counts of each category."""
 
@@ -460,7 +531,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         # llm_cat = await self._get_llm_category(paper)
         #llm_cat = await self._apply_chain_of_thought(paper, gene)
-        llm_cat = await self._get_llm_category_few_shot(paper, gene)
+        #llm_cat = await self._get_llm_category_few_shot(paper, gene)
+        llm_cat = await self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene)
         
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
@@ -472,7 +544,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         # TODO: uncomment the line below to use the chain of thought or few shot approaches. Configure to be in yaml.
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category(paper), self._get_llm_category(paper))
         # llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper, gene), self._apply_chain_of_thought(paper, gene))
-        llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper, gene), self._get_llm_category_few_shot(paper, gene))
+        #llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper, gene), self._get_llm_category_few_shot(paper, gene))
+        llm_tiebreakers = await asyncio.gather(self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene), self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene)
         
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
