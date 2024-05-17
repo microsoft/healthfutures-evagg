@@ -5,12 +5,14 @@ from typing import Dict, Sequence, Tuple
 import numpy as np
 from pyhpo import HPOTerm, Ontology, helper
 
-from .interfaces import ICompareHPO, ISearchHPO
+from lib.evagg.svc import IWebContentClient
+
+from .interfaces import ICompareHPO, IFetchHPO, ISearchHPO
 
 logger = logging.getLogger(__name__)
 
 
-class HPOReference(ICompareHPO, ISearchHPO):
+class PyHPOClient(ICompareHPO, IFetchHPO):
     def __init__(self) -> None:
         # Instantiate the Ontology
         Ontology()
@@ -38,12 +40,16 @@ class HPOReference(ICompareHPO, ISearchHPO):
         for sub in subject_objs:
             comparisons = [(sub, obj) for obj in object_objs]
             batch_result = helper.batch_similarity(comparisons, kind="omim", method=method)
-            argmax = np.argmax(batch_result)
-            result[sub.id] = (batch_result[argmax], objects[argmax])  # type: ignore
+            if batch_result:
+                argmax = np.argmax(batch_result)
+                result[sub.id] = (batch_result[argmax], objects[argmax])  # type: ignore
+            else:
+                # No similarity scores returned, most likely because objects is empty.
+                result[sub.id] = (-1, "")
 
         return result
 
-    def search(self, query: str) -> Dict[str, str] | None:
+    def fetch(self, query: str) -> Dict[str, str] | None:
         # Give ourselves a fighting chance to find based on name.
         if not query.startswith("HP:"):
             query = query.capitalize()
@@ -56,4 +62,18 @@ class HPOReference(ICompareHPO, ISearchHPO):
             return None
 
     def exists(self, query: str) -> bool:
-        return bool(self.search(query))
+        return bool(self.fetch(query))
+
+
+class WebHPOClient(ISearchHPO):
+    def __init__(self, web_client: IWebContentClient) -> None:
+        self._web_client = web_client
+
+    def search(self, query: str, retmax: int = 1) -> Sequence[Dict[str, str]]:
+        url = f"https://hpo.jax.org/api/hpo/search?q={query}&max={retmax}&category=terms"
+        response = self._web_client.get(url, "json")
+
+        if not response["terms"]:
+            return []
+
+        return [{"id": term["id"], "name": term["name"]} for term in response["terms"]]
