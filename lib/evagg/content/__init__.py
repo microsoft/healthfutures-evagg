@@ -1,6 +1,6 @@
 """Package for interacting with literature sources."""
 
-from .interfaces import IFindObservations, Observation
+from .interfaces import IFindObservations, Observation, TextSection
 from .observation import ObservationFinder, TruthsetObservationFinder
 from .prompt_based import PromptBasedContentExtractor
 from .simple import SimpleContentExtractor
@@ -15,6 +15,7 @@ __all__ = [
     # Interfaces.
     "IFindObservations",
     "Observation",
+    "TextSection",
     # Mention.
     "HGVSVariantFactory",
     "HGVSVariantComparator",
