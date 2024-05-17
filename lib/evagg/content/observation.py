@@ -9,7 +9,7 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
-from .fulltext import get_fulltext, get_section_texts
+from .fulltext import get_fulltext, get_sections
 from .interfaces import ICompareVariants, IFindObservations, Observation
 
 PatientVariant = Tuple[HGVSVariant, str]
@@ -30,7 +30,7 @@ class TruthsetObservationFinder(IFindObservations):
         The returned observation objects are logically "clinical" observations of a variant in a human. Each object
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        if not (full_text := get_fulltext(paper.props.get("fulltext_xml"))):
+        if not (paper.props.get("fulltext_xml")):
             logger.info(f"Skipping {paper.id} because full text could not be retrieved")
             return []
 
@@ -53,7 +53,11 @@ class TruthsetObservationFinder(IFindObservations):
                     individual=individual,
                     variant_descriptions=list(set(variant_descriptions)),
                     patient_descriptions=[individual],
-                    texts=[full_text],
+                    texts=list(
+                        # Recreate the generator each time.
+                        # TODO, consider filtering to relevant sections.
+                        get_sections(paper.props.get("fulltext_xml"))
+                    ),
                 )
             )
 
@@ -365,7 +369,12 @@ uninterrupted sequences of whitespace characters.
             return []
 
         full_text = get_fulltext(paper.props["fulltext_xml"])
-        table_texts = list(get_section_texts(paper.props["fulltext_xml"], include=["TABLE"]))
+        table_sections = list(get_sections(paper.props["fulltext_xml"], include=["TABLE"]))
+
+        table_ids = {t.id for t in table_sections}
+        table_texts = []
+        for id in table_ids:
+            table_texts.append("\n\n".join([sec.text for sec in table_sections if sec.id == id]))
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
@@ -446,8 +455,9 @@ uninterrupted sequences of whitespace characters.
                         individual=individual,
                         variant_descriptions=descriptions,
                         patient_descriptions=[individual],
-                        # TODO, consider adding focus_texts here, or find variant/patient specific texts.
-                        texts=[full_text],
+                        # Recreate the generator each time.
+                        # TODO, consider filtering to relevant sections.
+                        texts=list(get_sections(paper.props["fulltext_xml"])),
                     )
                 )
 
