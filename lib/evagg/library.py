@@ -395,7 +395,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         )
             
         phrases = (
-            "\n It is essential that you provide your response as a single string: "
+            "\n\nIt is essential that you provide your response as a single string: "
             "\"rare disease\" or \"other\" based on your classification. "
             "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
             f"Below are the title and abstract:\n\n"
@@ -445,7 +445,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Categorize papers based on LLM prompts."""
         
         # Load the few shot examples
-        unique_file_name, few_shot_phrases = self._load_few_shot_examples(paper, gene, "directions_full_text")
+        unique_file_name, few_shot_phrases = self._load_few_shot_examples(paper, gene, "full_text_directions")
     
         full_text = get_fulltext(paper.props["fulltext_xml"])
         parameters = {
@@ -462,7 +462,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Append output requirements to process_response before saving
         phrases = (
-            "\nIt is essential that you provide your response as a single string: "
+            "\n\nIt is essential that you provide your response as a single string: "
             "\"rare disease\" or \"other\" based on your classification. "
             "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
             f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
