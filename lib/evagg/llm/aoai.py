@@ -25,12 +25,15 @@ logger = logging.getLogger(__name__)
 class ChatMessages:
     _messages: List[ChatCompletionMessageParam]
 
+    @property
+    def content(self) -> str:
+        return "".join([json.dumps(message) for message in self._messages])
+
     def __init__(self, messages: Iterable[ChatCompletionMessageParam]) -> None:
         self._messages = list(messages)
 
     def __hash__(self) -> int:
-        content = "".join([json.dumps(message) for message in self._messages])
-        return hash(content)
+        return hash(self.content)
 
     def insert(self, index: int, message: ChatCompletionMessageParam) -> None:
         self._messages.insert(index, message)
@@ -180,16 +183,13 @@ class OpenAICacheClient(OpenAIClient):
         super().__init__(config)
         self.task_cache = {}
 
-    def _build_cache_key(self, messages: ChatMessages, settings: Dict[str, Any]) -> int:
-        return hash(("".join([json.dumps(message) for message in messages.to_list()]), json.dumps(settings)))
-
-    def _is_task_returnable(self, task: asyncio.Task) -> bool:
-        return task.done() is False or task.exception() is None
+    def _is_task_errored(self, task: asyncio.Task) -> bool:
+        return task.done() and task.exception() is not None
 
     def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:  # type: ignore
-        """Schedule a completion task to the event loop and return the awaitable."""
-        cache_key = self._build_cache_key(messages, settings)
-        if cache_key in self.task_cache and self._is_task_returnable(self.task_cache[cache_key]):
+        """Create a new task only if no identical non-errored one was already cached."""
+        cache_key = hash((messages.content, json.dumps(settings)))
+        if cache_key in self.task_cache and not self._is_task_errored(self.task_cache[cache_key]):
             return self.task_cache[cache_key]
         task = super()._create_completion_task(messages, settings)
         self.task_cache[cache_key] = task
