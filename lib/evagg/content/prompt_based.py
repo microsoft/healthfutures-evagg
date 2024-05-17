@@ -21,7 +21,6 @@ class PromptBasedContentExtractor(IExtractFields):
     _PROMPT_FIELDS = {
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
-        "phenotype": os.path.dirname(__file__) + "/prompts/phenotype.txt",
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
         "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
