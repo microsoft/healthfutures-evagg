@@ -160,7 +160,7 @@ class OpenAIClient(IPromptClient):
                         if self._config.endpoint.startswith("http://localhost"):
                             logger.error("Azure OpenAI API unreachable - have you started the proxy?")
                         raise
-                    logger.warning(f"Connectivity error on embeddings, retrying...")
+                    logger.warning("Connectivity error on embeddings, retrying...")
                     connection_errors += 1
                     await asyncio.sleep(1)
 
