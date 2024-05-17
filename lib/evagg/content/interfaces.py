@@ -30,6 +30,7 @@ class TextSection:
     text_type: str
     offset: int
     text: str
+    id: str
 
 
 @dataclass(frozen=True)
