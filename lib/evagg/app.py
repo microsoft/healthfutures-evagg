@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Any, Dict, List, Sequence
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
@@ -22,6 +23,8 @@ class SynchronousLocalApp(IEvAggApp):
     def execute(self) -> None:
         all_fields: Dict[str, List[Dict[str, str]]] = {}
 
+        start_ts = time.time()
+
         for query in self._queries:
             if not query.get("gene_symbol"):
                 raise ValueError("Minimum requirement to search is to input a gene symbol.")
@@ -42,3 +45,5 @@ class SynchronousLocalApp(IEvAggApp):
 
         # Write out the result.
         self._writer.write(all_fields)
+
+        logger.info(f"Pipeline execution complete, elapsed time {time.time() - start_ts:.2f} seconds.")

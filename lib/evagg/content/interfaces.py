@@ -25,12 +25,21 @@ class ICompareVariants(Protocol):
 
 
 @dataclass(frozen=True)
+class TextSection:
+    section_type: str
+    text_type: str
+    offset: int
+    text: str
+    id: str
+
+
+@dataclass(frozen=True)
 class Observation:
     variant: HGVSVariant
     individual: str
     variant_descriptions: List[str]
     patient_descriptions: List[str]
-    texts: List[str]
+    texts: List[TextSection]
 
 
 class IFindObservations(Protocol):
