@@ -151,7 +151,7 @@ class PromptBasedContentExtractor(IExtractFields):
                     match_dict[term] = match
                     phenotype.remove(term)
 
-        logger.info(f"Converted phenotypes: {match_dict}")
+        logger.debug(f"Converted phenotypes: {match_dict}")
 
         all_values = list(match_dict.values())
         all_values.extend(phenotype)
@@ -193,7 +193,6 @@ class PromptBasedContentExtractor(IExtractFields):
         return observation_acronymns_result.get("phenotypes", [])
 
     async def _generate_phenotype_field(self, gene_symbol: str, observation: Observation) -> str:
-
         # Obtain all the phenotype strings listed in the text associated with the gene.
         fulltext = "\n\n".join([t.text for t in observation.texts])
         # TODO: treating all tables in paper as a single text, maybe this isn't ideal, consider grouping by 'id'
