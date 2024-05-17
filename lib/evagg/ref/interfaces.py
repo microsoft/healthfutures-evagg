@@ -89,8 +89,33 @@ class ICompareHPO(Protocol):
 
 
 class ISearchHPO(Protocol):
-    def search(self, query: str) -> Dict[str, str] | None:
+    def search(self, query: str, retmax: int = 1) -> Sequence[Dict[str, str]]:
         """Search for an HPO term based on a query.
+
+        Query should be a string representation of the phenotype of interest. retmax is the maximum number of results to
+        return.
+
+        Returns a sequence of dictionary representations of the HPO term, e.g.
+        [
+            {
+                "id": "HP:0012469",
+                "name": "Abnormality of the eye"
+            },
+            {
+                "id": "HP:0007270",
+                "name": "Abnormality of the ear"
+            }
+        ]
+        """
+        ...  # pragma: no cover
+
+
+class IFetchHPO(Protocol):
+    def fetch(self, query: str) -> Dict[str, str] | None:
+        """Fetch a specific HPO term based on a perfect match to a query.
+
+        Query can be either an HPO ID (formatted "HP:0012469") or a term name (e.g. "Abnormality of the eye"). Query
+        must match the element within the HPO exactly.
 
         Returns a dictionary representation of the HPO term, e.g.
         {
@@ -98,10 +123,13 @@ class ISearchHPO(Protocol):
             "name": "Abnormality of the eye"
         }
         """
-        ...  # pragma: no cover
+        ...
 
     def exists(self, query: str) -> bool:
         """Check if an HPO term exists based on a query.
+
+        Query can be either an HPO ID (formatted "HP:0012469") or a term name (e.g. "Abnormality of the eye"). Query
+        must match the element within the HPO exactly.
 
         Returns True if the term exists, False otherwise.
         """

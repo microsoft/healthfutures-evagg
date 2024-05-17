@@ -1,8 +1,9 @@
 import asyncio
+import json
 import logging
 import time
 from functools import lru_cache, reduce
-from typing import Any, Coroutine, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional
 
 import openai
 from openai import AsyncAzureOpenAI, AsyncOpenAI
@@ -18,8 +19,27 @@ from lib.evagg.svc.logging import PROMPT
 
 from .interfaces import IPromptClient
 
-ChatMessages = List[ChatCompletionMessageParam]
 logger = logging.getLogger(__name__)
+
+
+class ChatMessages:
+    _messages: List[ChatCompletionMessageParam]
+
+    @property
+    def content(self) -> str:
+        return "".join([json.dumps(message) for message in self._messages])
+
+    def __init__(self, messages: Iterable[ChatCompletionMessageParam]) -> None:
+        self._messages = list(messages)
+
+    def __hash__(self) -> int:
+        return hash(self.content)
+
+    def insert(self, index: int, message: ChatCompletionMessageParam) -> None:
+        self._messages.insert(index, message)
+
+    def to_list(self) -> List[ChatCompletionMessageParam]:
+        return self._messages.copy()
 
 
 class OpenAIConfig(PydanticYamlModel):
@@ -56,17 +76,10 @@ class OpenAIClient(IPromptClient):
         with open(prompt_file, "r") as f:
             return f.read()
 
-    async def _run_timed_completion(self, chat_completion: Coroutine[Any, Any, Any]) -> Tuple[str, float]:
-        # Pause 1 second if the number of pending chat completions is at the limit.
-        if self._config.max_parallel_requests > 0:
-            while sum(1 for t in asyncio.all_tasks() if t.get_name() == "chat") > self._config.max_parallel_requests:
-                await asyncio.sleep(1)
-
-        start_ts = time.time()
-        completion = await asyncio.create_task(chat_completion, name="chat")
-        elapsed = time.time() - start_ts
-
-        return completion.choices[0].message.content or "", elapsed
+    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
+        """Schedule a completion task to the event loop and return the awaitable."""
+        chat_completion = self._client.chat.completions.create(messages=messages.to_list(), **settings)
+        return asyncio.create_task(chat_completion, name="chat")
 
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         prompt_tag = settings.pop("prompt_tag", "prompt")
@@ -74,8 +87,15 @@ class OpenAIClient(IPromptClient):
 
         while True:
             try:
-                chat_completion = self._client.chat.completions.create(messages=messages, **settings)
-                response, elapsed = await self._run_timed_completion(chat_completion)
+                # Pause 1 second if the number of pending chat completions is at the limit.
+                if (max_requests := self._config.max_parallel_requests) > 0:
+                    while sum(1 for t in asyncio.all_tasks() if t.get_name() == "chat") > max_requests:
+                        await asyncio.sleep(1)
+
+                start_ts = time.time()
+                completion = await self._create_completion_task(messages, settings)
+                response = completion.choices[0].message.content or ""
+                elapsed = time.time() - start_ts
                 break
             except (openai.RateLimitError, openai.InternalServerError) as e:
                 logger.warning(f"Rate limit error on {prompt_tag}: {e}")
@@ -93,7 +113,7 @@ class OpenAIClient(IPromptClient):
             "prompt_tag": prompt_tag,
             "prompt_model": f"{settings.get('model')} {self._config.api_version}",
             "prompt_settings": settings,
-            "prompt_text": "\n".join([str(m.get("content")) for m in messages]),
+            "prompt_text": "\n".join([str(m.get("content")) for m in messages.to_list()]),
             "prompt_response": response,
         }
 
@@ -111,7 +131,7 @@ class OpenAIClient(IPromptClient):
         # Replace any '{{${key}}}' instances with values from the params dictionary.
         user_prompt = reduce(lambda x, kv: x.replace(f"{{{{${kv[0]}}}}}", kv[1]), (params or {}).items(), user_prompt)
 
-        messages: ChatMessages = [ChatCompletionUserMessageParam(role="user", content=user_prompt)]
+        messages: ChatMessages = ChatMessages([ChatCompletionUserMessageParam(role="user", content=user_prompt)])
         if system_prompt:
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=system_prompt))
 
@@ -170,3 +190,23 @@ class OpenAIClient(IPromptClient):
 
         logger.info(f"{len(inputs)} embeddings produced in {elapsed:.2f} seconds using {sum(tokens)} tokens.")
         return embeddings
+
+
+class OpenAICacheClient(OpenAIClient):
+    task_cache: Dict[int, asyncio.Task]
+
+    def __init__(self, config: Dict[str, Any]) -> None:
+        super().__init__(config)
+        self.task_cache = {}
+
+    def _is_task_errored(self, task: asyncio.Task) -> bool:
+        return task.done() and task.exception() is not None
+
+    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:  # type: ignore
+        """Create a new task only if no identical non-errored one was already cached."""
+        cache_key = hash((messages.content, json.dumps(settings)))
+        if cache_key in self.task_cache and not self._is_task_errored(self.task_cache[cache_key]):
+            return self.task_cache[cache_key]
+        task = super()._create_completion_task(messages, settings)
+        self.task_cache[cache_key] = task
+        return task

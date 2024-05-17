@@ -7,13 +7,13 @@ import seaborn as sns
 from pyhpo import Ontology
 from sklearn.metrics import roc_curve
 
-from lib.evagg.ref import HPOReference
+from lib.evagg.ref import PyHPOClient
 
 # %% Function definitions
 
 
 # %% Instantiate the Ontology
-reference = HPOReference()
+reference = PyHPOClient()
 
 # %% Compare two terms
 
