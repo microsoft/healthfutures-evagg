@@ -49,7 +49,7 @@ class TableOutputWriter(IWriteOutput):
     def write(self, fields: Mapping[str, Sequence[Mapping[str, str]]]) -> None:
         logger.info(f"Writing output to: {self._path or 'stdout'}")
 
-        table_lines = [variant for variant_list in fields.values() for variant in variant_list]
+        table_lines = [output_row for output_rows in fields.values() for output_row in output_rows]
         if len(table_lines) == 0:
             logger.warning("No results to write")
             return
