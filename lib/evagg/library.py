@@ -518,7 +518,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # llm_cat = await self._get_llm_category(paper)
         #llm_cat = await self._apply_chain_of_thought(paper, gene)
         #llm_cat = await self._get_llm_category_few_shot(paper, gene)
-        llm_cat = await self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene)
+        #llm_cat = await self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene)
         
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
@@ -531,7 +531,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category(paper), self._get_llm_category(paper))
         # llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper, gene), self._apply_chain_of_thought(paper, gene))
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper, gene), self._get_llm_category_few_shot(paper, gene))
-        llm_tiebreakers = await asyncio.gather(self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene), self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene))
+        #llm_tiebreakers = await asyncio.gather(self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene), self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene))
         
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
