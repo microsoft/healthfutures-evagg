@@ -1,7 +1,7 @@
 Here is a list of previously defined phenotypes and diseases that are mentioned in this text: {{$phenotypes}}
 
 Return this same list but with acryonms and abbreviations expanded to their complete forms based on definitions 
-provided in the text. Use only definitions provided in the text to do this expansion, when this is not possible, return
+provided in the text. Use only definitions provided in the text to do this expansion; when this is not possible, return
 the shortened form unmodified.
 
 -- Output format --
