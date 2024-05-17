@@ -16,7 +16,7 @@ DEFAULT_YAML="lib/config/paper_finding_benchmark.yaml"
 
 # Functions
 usage() {
-    echo "Usage: $0 <min_iterations> <max_iterations> <epsilon>"
+    echo "Usage: $0 <min_iterations> <max_iterations> <epsilon> <yaml>"
     echo "min_iterations: The minimum number of iterations to run. Default is $DEFAULT_MIN_ITERATIONS."
     echo "max_iterations: The maximum number of iterations to run. Default is $DEFAULT_MAX_ITERATIONS."
     echo "epsilon: The minimum improvement in precision and recall to continue iterating. Default is $DEFAULT_EPSILON."
