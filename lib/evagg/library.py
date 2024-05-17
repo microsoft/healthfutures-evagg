@@ -300,12 +300,12 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Append few_shot_phrases
         file_content += few_shot_phrases
 
-        # Generate a unique file name based on paper.id
+        # Generate a unique file name based on paper.id (PMID)
         unique_file_name = os.path.join(
             os.path.dirname(__file__),
             "content",
             "prompts",
-            f"paper_finding_{method}_{paper.id.replace('pmid:', '')}.txt",
+            f"paper_finding_{method}_{paper.id.replace("pmid:", "")}.txt",
         )
 
         # Write the content to the unique file
