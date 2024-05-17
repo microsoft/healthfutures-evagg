@@ -46,7 +46,6 @@ library:
       filter_prefix: "AZURE_OPENAI_"
   allowed_categories:
     - "rare disease"
-    - "non-rare disease"
     - "other"
     - "conflicting"
 extractor:
