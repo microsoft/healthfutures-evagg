@@ -29,8 +29,10 @@ def get_sections(
             raise ValueError(f"Missing 'type' infon element in passage for document {doc_id}")
         if not (offset := passage.findtext("offset")):
             raise ValueError(f"Missing 'offset' infon element in {section_type} passage for document {doc_id}")
+        if not (section_id := passage.findtext("infon[@key='id']")):
+            section_id = "unknown"
         text = " ".join(s.strip() for s in (passage.findtext("text") or "").split("\n"))
-        section = TextSection(section_type, text_type, int(offset), text)
+        section = TextSection(section_type, text_type, int(offset), text, id=section_id)
         if _include_section(section):
             # Eliminate linebreaks and strip leading/trailing whitespace from each line.
             yield section

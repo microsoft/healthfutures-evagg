@@ -69,7 +69,7 @@ def test_prompt_based_content_extractor_valid_fields(
     observation = Observation(
         variant=HGVSVariant(fields["hgvs_c"], fields["gene"], "transcript", True, True, None),
         individual="unknown",
-        texts=[TextSection("TEST", "test", 0, "Here is the observation text.")],
+        texts=[TextSection("TEST", "test", 0, "Here is the observation text.", "unknown")],
         variant_descriptions=["c.1234A>G"],
         patient_descriptions=["unknown"],
     )

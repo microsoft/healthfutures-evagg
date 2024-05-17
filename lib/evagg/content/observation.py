@@ -369,13 +369,12 @@ uninterrupted sequences of whitespace characters.
             return []
 
         full_text = get_fulltext(paper.props["fulltext_xml"])
-        table_texts = list(get_section_texts(paper.props["fulltext_xml"], include=["TABLE"]))
+        table_sections = list(get_sections(paper.props["fulltext_xml"], include=["TABLE"]))
 
-        # TODO, there's a bug here now where table_texts will contain more elements than the logical number of tables
-        # in the paper because the table title and captions each get added as their own text objects. We need to
-        # figure out how to consolidate logical tables for subsequent processing.
-        if table_texts:
-            raise NotImplementedError()
+        table_ids = {t.id for t in table_sections}
+        table_texts = []
+        for id in table_ids:
+            table_texts.append("\n\n".join([sec.text for sec in table_sections if sec.id == id]))
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
