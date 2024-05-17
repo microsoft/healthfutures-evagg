@@ -379,6 +379,9 @@ def main(args):
     few_shot_files = glob.glob("lib/evagg/content/prompts/paper_finding_few_shot_*.txt")
     for file in few_shot_files:
         shutil.move(file, args.outdir)
+    full_text__files = glob.glob("lib/evagg/content/prompts/paper_finding_full_text_directions_*.txt")
+    for file in full_text__files:
+        shutil.move(file, args.outdir)
 
     # Compile and save the benchmarking results to a file
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
