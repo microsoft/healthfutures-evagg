@@ -305,7 +305,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             os.path.dirname(__file__),
             "content",
             "prompts",
-            f"paper_finding_{method}_{paper.id.replace("pmid:", "")}.txt",
+            f"paper_finding_{method}_{paper.id.replace('pmid:', '')}.txt",
         )
 
         # Write the content to the unique file
