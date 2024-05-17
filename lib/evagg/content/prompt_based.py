@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
-from lib.evagg.ref import ISearchHPO
+from lib.evagg.ref import IFetchHPO, ISearchHPO
 from lib.evagg.types import HGVSVariant, Paper
 
 from ..interfaces import IExtractFields
@@ -21,7 +21,7 @@ class PromptBasedContentExtractor(IExtractFields):
     _PROMPT_FIELDS = {
         "zygosity": os.path.dirname(__file__) + "/prompts/zygosity.txt",
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
-        "phenotype": os.path.dirname(__file__) + "/prompts/phenotype.txt",
+        "phenotype": os.path.dirname(__file__) + "/prompts/phenotypes_all.txt",
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
         "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
@@ -46,6 +46,7 @@ class PromptBasedContentExtractor(IExtractFields):
         llm_client: IPromptClient,
         observation_finder: IFindObservations,
         phenotype_searcher: ISearchHPO,
+        phenotype_fetcher: IFetchHPO,
         prompt_settings: Dict[str, Any] | None = None,
     ) -> None:
         # Pre-check the list of fields being requested.
@@ -57,6 +58,7 @@ class PromptBasedContentExtractor(IExtractFields):
         self._llm_client = llm_client
         self._observation_finder = observation_finder
         self._phenotype_searcher = phenotype_searcher
+        self._phenotype_fetcher = phenotype_fetcher
         self._instance_prompt_settings = (
             {**self._DEFAULT_PROMPT_SETTINGS, **prompt_settings} if prompt_settings else self._DEFAULT_PROMPT_SETTINGS
         )
@@ -99,58 +101,138 @@ class PromptBasedContentExtractor(IExtractFields):
         return result
 
     async def _convert_phenotype_to_hpo(self, phenotype: List[str]) -> List[str]:
-        if not isinstance(phenotype, list):
-            print(phenotype)
-            return ["unknown"]
+        """Convert a list of unstructured phenotype descriptions to HPO/OMIM terms."""
+        if not phenotype:
+            return []
 
-        response = await self._run_json_prompt(
-            os.path.dirname(__file__) + "/prompts/phenotype_to_hpo.txt",
-            {"phenotypes": ", ".join(phenotype)},
-            {"prompt_tag": "phenotype_to_hpo"},
+        match_dict = {}
+
+        # Any descriptions that look like valid HPO terms themselves should be validated.
+        for term in phenotype.copy():
+            ids = re.findall(r"\(?HP:\d+\)?", term)
+            if ids:
+                hpo_id = ids[0]
+                id_result = self._phenotype_fetcher.fetch(hpo_id.strip("()"))
+                if id_result:
+                    phenotype.remove(term)
+                    match_dict[term] = f"{id_result['name']} ({id_result['id']})"
+
+        # Search for each term in its entirety, for those that we match, save them and move on.
+        for term in phenotype.copy():
+            result = self._phenotype_searcher.search(query=term.split("(")[0].strip(), retmax=1)
+            if result:
+                phenotype.remove(term)
+                match_dict[term] = f"{result[0]['name']} ({result[0]['id']})"
+
+        # For those we don't match, search for each word within the term and collect the unique results.
+        for term in phenotype.copy():
+            words = term.split()
+            candidates = set()
+            for word in words:
+                if word.lower() == "unknown":
+                    continue
+                retmax = 1
+                result = self._phenotype_searcher.search(query=word, retmax=retmax)
+                if result:
+                    for i in range(min(retmax, len(result))):
+                        candidates.add(f"{result[i]['name']} ({result[i]['id']})")
+
+            # Ask AOAI to determine which of the unique results is the best match.
+            if candidates:
+                params = {"term": term, "candidates": ", ".join(candidates)}
+                response = await self._run_json_prompt(
+                    os.path.dirname(__file__) + "/prompts/phenotypes_candidates.txt",
+                    params,
+                    {
+                        "prompt_tag": "phenotypes_candidates",
+                    },
+                )
+                if match := response.get("match"):
+                    match_dict[term] = match
+                    phenotype.remove(term)
+
+        logger.debug(f"Converted phenotypes: {match_dict}")
+
+        all_values = list(match_dict.values())
+        all_values.extend(phenotype)
+        return all_values
+
+    async def _observation_phenotypes_for_text(
+        self, text: str, observation_description: str, gene_symbol: str
+    ) -> List[str]:
+
+        all_phenotypes_result = await self._run_json_prompt(
+            self._PROMPT_FIELDS["phenotype"],
+            {"passage": text},
+            {"prompt_tag": "phenotypes_all", "max_tokens": 4096},
+        )
+        if (all_phenotypes := all_phenotypes_result.get("phenotypes", [])) == []:
+            return []
+
+        # TODO: consider linked observations like comp-hets?
+        observation_phenotypes_params = {
+            "gene": gene_symbol,
+            "passage": text,
+            "observation": observation_description,
+            "candidates": ", ".join(all_phenotypes),
+        }
+        observation_phenotypes_result = await self._run_json_prompt(
+            os.path.dirname(__file__) + "/prompts/phenotypes_observation.txt",
+            observation_phenotypes_params,
+            {"prompt_tag": "phenotypes_observation"},
+        )
+        if (observation_phenotypes := observation_phenotypes_result.get("phenotypes", [])) == []:
+            return []
+
+        observation_acronymns_result = await self._run_json_prompt(
+            os.path.dirname(__file__) + "/prompts/phenotypes_acronyms.txt",
+            {"passage": text, "phenotypes": ", ".join(observation_phenotypes)},
+            {"prompt_tag": "phenotypes_acronyms"},
         )
 
-        # For the matched terms, validate that they're in the HPO, else drop the HPO identifier and move them to
-        # unmatched.
-        matched = response.get("matched", [])
-        unmatched = response.get("unmatched", [])
-        for m in matched.copy():
-            ids = re.findall(r"\(?HP:\d+\)?", m)
-            if not ids:
-                logger.info(f"Unable to find HPO identifier in {m}, shifting to unmatched.")
-                unmatched.append(m)
-                matched.remove(m)
-            else:
-                if len(ids) > 1:
-                    logger.info(f"Multiple HPO identifiers found in {m}. Ignoring all but the first.")
-                id = ids[0]
-                if not self._phenotype_searcher.exists(id.strip("()")):
-                    logger.info(f"Unable to match {m} as an HPO term, searching for alternatives.")
-                    unmatched.append(m.replace(id, "").strip())
-                    matched.remove(m)
+        return observation_acronymns_result.get("phenotypes", [])
 
-        # Try to use a query-based search for the unmatched terms.
-        for u in unmatched:
-            result = self._phenotype_searcher.search(u)
-            if result:
-                matched.append(f"{result['name']} ({result['id']})")
-            else:
-                # If we can't find a match, just use the original term.
-                matched.append(u)
+    async def _generate_phenotype_field(self, gene_symbol: str, observation: Observation) -> str:
+        # Obtain all the phenotype strings listed in the text associated with the gene.
+        fulltext = "\n\n".join([t.text for t in observation.texts])
+        # TODO: treating all tables in paper as a single text, maybe this isn't ideal, consider grouping by 'id'
+        table_texts = "\n\n".join([t.text for t in observation.texts if t.section_type == "TABLE"])
 
-        return matched
+        # Determine the phenotype strings that are associated specifically with the observation.
+        v_sub = ", ".join(observation.variant_descriptions)
+        if observation.patient_descriptions != ["unknown"]:
+            p_sub = ", ".join(observation.patient_descriptions)
+            obs_desc = f"the patient described as {p_sub} who possesses the variant described as {v_sub}."
+        else:
+            obs_desc = f"the variant described as {v_sub}."
+
+        # Run phenotype extraction for all the texts of interest.
+        texts = [fulltext]
+        if table_texts != "":
+            texts.append(table_texts)
+        result = await asyncio.gather(*[self._observation_phenotypes_for_text(t, obs_desc, gene_symbol) for t in texts])
+        observation_phenotypes = list({item for sublist in result for item in sublist})
+
+        # Now convert this phenotype list to OMIM/HPO ids.
+        structured_phenotypes = await self._convert_phenotype_to_hpo(observation_phenotypes)
+
+        # Duplicates are conceivable, get unique set again.
+        return ", ".join(set(structured_phenotypes))
 
     async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
-        params = {
-            "passage": "\n\n".join(observation.texts),
-            "variant_descriptions": ", ".join(observation.variant_descriptions),
-            "patient_descriptions": ", ".join(observation.patient_descriptions),
-            "gene": gene_symbol,
-        }
-        response = await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
+        if field == "phenotype":
+            return await self._generate_phenotype_field(gene_symbol, observation)
+        else:
+            params = {
+                # First element is full text of the observation, consider alternatives
+                "passage": observation.texts[0].text,
+                "variant_descriptions": ", ".join(observation.variant_descriptions),
+                "patient_descriptions": ", ".join(observation.patient_descriptions),
+                "gene": gene_symbol,
+            }
+            response = await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
         # result can be a string or a json object.
         result = response.get(field, "failed")
-        if field == "phenotype":
-            result = await self._convert_phenotype_to_hpo(result)  # type: ignore
         # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
         if not isinstance(result, str):
             result = json.dumps(result)
@@ -200,7 +282,7 @@ class PromptBasedContentExtractor(IExtractFields):
             # See if we should cache it for next time.
             if field in self._CACHE_VARIANT_FIELDS:
                 cache[(ob.variant, field)] = prompt_task
-            elif field in self._CACHE_INDIVIDUAL_FIELDS:
+            elif ob.individual != "unknown" and field in self._CACHE_INDIVIDUAL_FIELDS:
                 cache[(ob.individual, field)] = prompt_task
             # Get the value from the completed task.
             value = await prompt_task
