@@ -1,0 +1,25 @@
+Extract all of the diseases and disease phenotypes described in the following text.  
+
+Each of the extracted phenotypes and diseases should be relatively short, only a handful of words. However the overall
+collection of these extracted phenotypes may contain few or many items, depending on the paper text.
+
+Only extract present/observed clinical phenotypes. Absence of a particular phenotype, or normal state in some way should 
+not be returned.
+
+Your output should be of the form:  
+  
+{  
+  "phenotypes": ["list", "of", "phenotypes", "found", "in", "text"],  
+}  
+  
+or   
+  
+{  
+  "phenotypes": []  
+}  
+  
+if no phenotypes are found. 
+
+-- begin text --
+
+{{$passage}}
