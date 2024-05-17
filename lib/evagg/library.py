@@ -13,6 +13,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from lib.evagg.content.fulltext import get_fulltext
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import ICreateVariants, Paper
@@ -392,17 +393,6 @@ class RareDiseaseFileLibrary(IGetPapers):
             params=parameters,
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},
         )
-
-        # Append output requirements to process_response before saving
-        # if paper.props.get("full_text_xml") is not None:
-        #     phrases = (
-        #         "\n It is essential that you provide your response as a single string: "
-        #         "\"rare disease\" or \"other\" based on your classification. "
-        #         "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
-        #         f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
-        #         f"Full text: {parameters['full_text']}\n"
-        #     )
-        # else:
             
         phrases = (
             "\n It is essential that you provide your response as a single string: "
@@ -455,12 +445,11 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Categorize papers based on LLM prompts."""
         
         # Load the few shot examples
-        unique_file_name, few_shot_phrases = self._load_few_shot_examples(paper, gene, "directions")
+        unique_file_name, few_shot_phrases = self._load_few_shot_examples(paper, gene, "directions_full_text")
     
+        full_text = get_fulltext(paper.props["fulltext_xml"])
         parameters = {
-            #"abstract": paper.props.get("abstract") or "no abstract",
-            #"title": paper.props.get("title") or "no title",
-            "full_text": paper.props.get("full_text_xml") or "no full text"
+            "full_text": full_text or "no full text"
         }
                 
         # Chain of thought style directions for how to classify this paper
@@ -472,16 +461,13 @@ class RareDiseaseFileLibrary(IGetPapers):
         )
 
         # Append output requirements to process_response before saving
-        if paper.props.get("full_text_xml") is not None:
-            phrases = (
-                "\n It is essential that you provide your response as a single string: "
-                "\"rare disease\" or \"other\" based on your classification. "
-                "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
-                f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
-                f"Full text: {parameters['full_text']}\n"
-            )
-        else:
-            print("NO FULL TEXT")
+        phrases = (
+            "\nIt is essential that you provide your response as a single string: "
+            "\"rare disease\" or \"other\" based on your classification. "
+            "The only valid values in your output response should be \"rare disease\" or \"other\".\n\n"
+            f"Below is the full text of the paper, which includes the title, abstract, full paper, and captions:\n\n"
+            f"Full text: {parameters['full_text']}\n"
+        )
             
         process_response = str(process_response) + phrases + few_shot_phrases
 
@@ -489,7 +475,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "content", "prompts",
-                f"paper_finding_process_query_full_text_{paper.id.replace('pmid:', '')}.txt"
+                f"paper_finding_process_cot_few_shot_query_full_text_{paper.id.replace('pmid:', '')}.txt"
             ),
             "w"
         ) as f:
@@ -500,7 +486,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Classify the paper into rare disease or other
         classification_response = await self._llm_client.prompt_file(
             user_prompt_file=os.path.join(
-                os.path.dirname(__file__), "content", "prompts", f"paper_finding_process_query_full_text_{paper.id.replace("pmid:", "")}.txt"
+                os.path.dirname(__file__), "content", "prompts", f"paper_finding_process_cot_few_shot_query_full_text_{paper.id.replace("pmid:", "")}.txt"
             ),
             system_prompt="Extract field",
             params={
@@ -545,7 +531,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category(paper), self._get_llm_category(paper))
         # llm_tiebreakers = await asyncio.gather(self._apply_chain_of_thought(paper, gene), self._apply_chain_of_thought(paper, gene))
         #llm_tiebreakers = await asyncio.gather(self._get_llm_category_few_shot(paper, gene), self._get_llm_category_few_shot(paper, gene))
-        llm_tiebreakers = await asyncio.gather(self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene), self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene)
+        llm_tiebreakers = await asyncio.gather(self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene), self._get_llm_category_chain_of_thought_few_shot_full_text_query(paper, gene))
         
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
