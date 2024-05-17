@@ -30,9 +30,6 @@ class SynchronousLocalApp(IEvAggApp):
             papers = self._library.get_papers(query)
             logger.info(f"Found {len(papers)} papers for {term}")
 
-            for index, paper in enumerate(papers):
-                logger.debug(f"Paper #{index + 1}: {paper}")
-
             # For all papers that match, extract the fields we want.
             fields = {paper.id: self._extractor.extract(paper, term) for paper in papers}
 
