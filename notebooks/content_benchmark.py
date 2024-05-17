@@ -16,6 +16,7 @@ from collections import defaultdict
 from typing import Any, List
 
 import pandas as pd
+from pyhpo import Ontology
 
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient, PyHPOClient
@@ -410,8 +411,6 @@ def _hpo_str_to_set(hpo_compound_string: str) -> Set[str]:
     return set(re.findall(r"HP:\d+", hpo_compound_string)) if pd.isna(hpo_compound_string) is False else set()
 
 
-from pyhpo import Ontology
-
 Ontology()
 ROOT = Ontology.get_hpo_object("HP:0000001")
 
@@ -474,11 +473,11 @@ if CONTENT_COLUMNS:
                 lambda row: _match_hpo_sets(row["phenotype_truth"], row["phenotype_output"]), axis=1
             )
             match = pheno_stats.apply(lambda x: len(x[2]) == 0 and len(x[3]) == 0)
-            print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
+            print(f"Content extraction accuracy for {column}: {match.mean():.3f} (of N={match.count()})")
         else:
             # Currently other content columns are just string compares.
             match = shared_df[f"{column}_truth"].str.lower() == shared_df[f"{column}_output"].str.lower()
-            print(f"Content extraction accuracy for {column}: {match.mean():.3f}")
+            print(f"Content extraction accuracy for {column}: {match.mean():.3f} (of N={match.count()})")
 
         for idx, row in shared_df.iterrows():
             if match[idx]:  # type: ignore
