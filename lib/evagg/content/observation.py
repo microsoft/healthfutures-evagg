@@ -9,7 +9,7 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
-from .fulltext import get_fulltext, get_section_texts, get_sections
+from .fulltext import get_fulltext, get_sections
 from .interfaces import ICompareVariants, IFindObservations, Observation
 
 PatientVariant = Tuple[HGVSVariant, str]
