@@ -1,5 +1,6 @@
 #!/bin/bash
-# paper_finding_prompt_assistant.sh
+# copilot_squared.sh
+# Ashley Conard
 # This script is in the buisness of finding the best prompts for the paper finding task.
 # First, it runs the paper finding pipeline with the original prompts.
 # Second, it runs the paper finding benchmarks.
@@ -7,10 +8,11 @@
 # Fourth, it runs the paper finding pipeline and benchmarks again.
 # Fifth, it checks if the precision and recall have improved more than epsilon (after the first min_iterations iterations), and will stop after max_iterations iterations.
 
-# Constants
+# Defaults
 DEFAULT_MIN_ITERATIONS=3
 DEFAULT_MAX_ITERATIONS=6
 DEFAULT_EPSILON=0.1
+DEFAULT_YAML="lib/config/paper_finding_benchmark.yaml"
 
 # Functions
 usage() {
@@ -18,6 +20,7 @@ usage() {
     echo "min_iterations: The minimum number of iterations to run. Default is $DEFAULT_MIN_ITERATIONS."
     echo "max_iterations: The maximum number of iterations to run. Default is $DEFAULT_MAX_ITERATIONS."
     echo "epsilon: The minimum improvement in precision and recall to continue iterating. Default is $DEFAULT_EPSILON."
+    echo "yaml: The yaml file for Evidence Aggregator pipeline to use. Default is $DEFAULT_YAML."
 }
 
 error() {
@@ -28,18 +31,18 @@ error() {
 
 run_pipeline() {
     echo -e "\n-->Running paper finding pipeline with updated prompts..."
-    run_query_sync lib/config/paper_finding_benchmark.yaml
+    run_query_sync $DEFAULT_YAML
 }
 
 run_benchmarks() {
     echo -e "\n--> Running benchmarks ..."
-    python notebooks/paper_finding_benchmarks.py -l lib/config/paper_finding_benchmark.yaml
+    python notebooks/paper_finding_benchmarks.py -l $DEFAULT_YAML
 }
 
 run_prompt_assistant() {
     echo -e "\n-->Running LLM prompt assistant ..."
     set -a; source .env; set +a;
-    python notebooks/llm_prompt_assistant.py
+    python notebooks/copilot_squared_assistant.py
 }
 
 save_pipeline_output_extract_precision_recall() {
@@ -129,7 +132,7 @@ while true; do
     prev_precision=$precision
     prev_recall=$recall
 
-    # Run the llm_prompt_assistant, pipeline, and benchmarks
+    # Run the copilot_squared_assistant, pipeline, and benchmarks
     run_prompt_assistant
     run_pipeline
     run_benchmarks
@@ -145,7 +148,7 @@ while true; do
       prev_precision=$precision
       prev_recall=$recall
 
-      # Run the llm_prompt_assistant, pipeline, and benchmarks
+      # Run the copilot_squared_assistant, pipeline, and benchmarks
       run_prompt_assistant
       run_pipeline
       run_benchmarks
