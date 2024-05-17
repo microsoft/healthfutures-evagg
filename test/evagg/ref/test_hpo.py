@@ -29,10 +29,10 @@ def test_compare_set() -> None:
     assert term_near1 in result and result[term_near1][1] == term_near2
 
 
-def test_search() -> None:
+def test_fetch() -> None:
     reference = PyHPOClient()
 
-    assert reference.search("Nephritis") == {"id": "HP:0000123", "name": "Nephritis"}
+    assert reference.fetch("Nephritis") == {"id": "HP:0000123", "name": "Nephritis"}
 
 
 def test_exists() -> None:
