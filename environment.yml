@@ -18,7 +18,6 @@ dependencies:
   - ipywidgets # Support for widgets in jupyter notebooks.
   - matplotlib
   - seaborn
-  - nltk
   - plotly
 
   # General utilities.
