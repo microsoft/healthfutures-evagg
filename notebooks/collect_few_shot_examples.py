@@ -1,37 +1,23 @@
 import argparse
 import asyncio
 import csv
-
-# Libraries
 import json
 import logging
 import os
 import pickle
 import random
 import shutil
-import string
 import subprocess
 from datetime import datetime
 from functools import cache
 from typing import Dict, Set
 
 import matplotlib.pyplot as plt
-
-# import nltk
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as py
-import yaml
-from gap_statistic import OptimalK
-
-# from nltk.corpus import stopwords
-# from nltk.stem import PorterStemmer
-# from nltk.tokenize import word_tokenize
 from sklearn.cluster import KMeans
-from sklearn.datasets import make_blobs
 from sklearn.decomposition import PCA
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import silhouette_score
 from sklearn.mixture import GaussianMixture
 
@@ -41,21 +27,22 @@ from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.svc import get_dotenv_settings
 
 logger = logging.getLogger(__name__)
-# nltk.download("stopwords", quiet=True)
-# nltk.download("punkt", quiet=True)
 
 
 def get_git_commit_hash():
+    """Get the git commit hash."""
     return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
 
 
 @cache
 def get_lookup_client() -> IPaperLookupClient:
+    """Get the lookup client."""
     ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
     return ncbi_lookup
 
 
 def get_paper_titles_abstracts(genes: Dict[str, Set[str]]) -> Dict[str, Dict[str, Dict[str, str]]]:
+    """Get the paper titles and abstracts for the given genes and pmids. This is used to get the positive examples."""
     client = get_lookup_client()
     gene_pmid_title_abstract = {}
 
@@ -74,6 +61,7 @@ def get_paper_titles_abstracts(genes: Dict[str, Set[str]]) -> Dict[str, Dict[str
 
 
 def add_abstract(gene_pmid_title: Dict[str, Dict[str, Dict[str, str]]]) -> Dict[str, Dict[str, Dict[str, str]]]:
+    """Add the abstract to the gene_pmid_title dictionary. This is used to get the negative examples."""
     client = get_lookup_client()
 
     for gene, pmids in gene_pmid_title.items():
@@ -89,6 +77,7 @@ def add_abstract(gene_pmid_title: Dict[str, Dict[str, Dict[str, str]]]) -> Dict[
 
 
 def parse_tsv(file):
+    """Parse input TSV file and return a dictionary of gene and associated pmids."""
     with open(file, "r") as f:
         reader = csv.reader(f, delimiter="\t")
         next(reader, None)  # Skip the header
@@ -103,37 +92,13 @@ def parse_tsv(file):
     return gene_dict
 
 
-def k_set_automatically(X):
-    distortions = []
-    K = range(1, 10)
-    for k in K:
-        kmeanModel = KMeans(n_clusters=k, random_state=args.seed).fit(X)
-        distortions.append(sum(np.min(cdist(X, kmeanModel.cluster_centers_, "euclidean"), axis=1)) / X.shape[0])
-
-    # Calculate the distance of each distortion point from the line formed by the first and last points
-    x1, y1 = 1, distortions[0]
-    x2, y2 = 9, distortions[-1]
-    distances = []
-    for i in range(len(distortions)):
-        x0 = i + 1
-        y0 = distortions[i]
-        numerator = abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1)
-        denominator = ((y2 - y1) ** 2 + (x2 - x1) ** 2) ** 0.5
-        distances.append(numerator / denominator)
-
-    # The optimal number of clusters is the one that corresponds to the point of maximum distance
-    optimal_k = distances.index(max(distances)) + 1
-
-    return optimal_k
-
-
 async def get_papers_and_embeddings(gene_pmid_title_abstract_dict):
+    """Get the papers and their embeddings."""
     papers = [
         (gene, pmid, data["title"], data["abstract"])
         for gene, pmids in gene_pmid_title_abstract_dict.items()
         for pmid, data in pmids.items()
     ]
-    # texts = [preprocess_text((title or "") + " " + (abstract or "")) for _, _, title, abstract in papers]
     texts = [(title or "") + " " + (abstract or "") for _, _, title, abstract in papers]
 
     settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")
@@ -158,6 +123,7 @@ def plot_elbow(ssd, optimal_k_elbow, pos_or_neg, outdir):
 
 
 def determine_optimal_k_elbow(embedding_values):
+    """Determine the optimal number of clusters using the elbow method."""
     ssd = []
     large_k = range(1, 15)
     for k in large_k:
@@ -172,6 +138,7 @@ def determine_optimal_k_elbow(embedding_values):
 
 
 def determine_optimal_k_silhouette(embedding_values_array):
+    """Determine the optimal number of clusters using the silhouette method."""
     sil_scores = []
     large_k = range(2, 15)  # this method needs at least 2 clusters
     for k in large_k:
@@ -185,6 +152,7 @@ def determine_optimal_k_silhouette(embedding_values_array):
 
 
 def determine_optimal_k_bic(embedding_values_array):
+    """Determine the optimal number of clusters using the Bayesian Information Criterion (BIC) method."""
     bic = []
     large_k = range(1, 15)
     for k in large_k:
@@ -197,6 +165,7 @@ def determine_optimal_k_bic(embedding_values_array):
 
 
 def save_clusters_to_dict(embedding_values, papers, k_means_clusters):
+    """Save the clusters and their kmeans distances."""
     kmeans = KMeans(n_clusters=k_means_clusters, random_state=args.seed)
     kmeans.fit(np.array(embedding_values))
     clusters = {i: [] for i in range(k_means_clusters)}
@@ -207,6 +176,7 @@ def save_clusters_to_dict(embedding_values, papers, k_means_clusters):
 
 
 def visualize_clusters(embedding_values, papers, clusters, k_means_clusters, kmeans, pos_or_neg):
+    """Visualize the clusters in 3D space."""
     pca = PCA(n_components=3)
     x_3d = pca.fit_transform(np.array(embedding_values))
     fig = go.Figure()
@@ -219,7 +189,7 @@ def visualize_clusters(embedding_values, papers, clusters, k_means_clusters, kme
                 z=points[:, 2],
                 mode="markers+text",
                 text=[gene for gene, _, _, _ in papers],
-                marker=dict(size=6, line=dict(width=0.5), opacity=0.8),
+                marker={"size": 6, "line": {"width": 0.5}, "opacity": 0.8},
             )
         )
     fig.update_layout(
@@ -234,18 +204,24 @@ def visualize_clusters(embedding_values, papers, clusters, k_means_clusters, kme
 
 
 async def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or_neg):
-    papers, texts, embedding_values = await get_papers_and_embeddings(gene_pmid_title_abstract_dict)
-
+    """Cluster the papers based on the embeddings of their titles and abstracts."""
+    # Gather papers and their embeddings.
+    papers, _, embedding_values = await get_papers_and_embeddings(gene_pmid_title_abstract_dict)
     embedding_values_array = np.array(embedding_values)
+
+    # Propose the optimal number of clusters
     optimal_k_elbow, ssd = determine_optimal_k_elbow(embedding_values)
     plot_elbow(ssd, optimal_k_elbow, pos_or_neg, args.outdir)
     determine_optimal_k_silhouette(embedding_values_array)
     determine_optimal_k_bic(embedding_values_array)
 
+    # Ask the user to determine the correct number of clusters, based on seeing those results
     k_means_clusters = int(input("Please enter the number of clusters: "))
 
+    # Save thoes clusters
     clusters, kmeans = save_clusters_to_dict(embedding_values, papers, k_means_clusters)
 
+    # With those clusters in place, visualize them in 3D
     visualize_clusters(embedding_values, papers, clusters, k_means_clusters, kmeans, pos_or_neg)
 
     return clusters
@@ -262,8 +238,10 @@ def save_clusters(outdir, clusters, pos_or_neg):
 
 
 def sample_save_examples(seed, outdir, clusters, gene_pmid_title_abstract_dict, out_name1):
-    """Randomly choose 2 papers from each cluster and ensure that gene has not been sampled,
-    then save the pmid, title, and abstract to a file."""
+    """Randomly choose 2 papers from each cluster and ensure that gene has not been sampled.
+
+    Then save the pmid, title, and abstract to a file.
+    """
     out_name2 = out_name1.replace("examples", "examples_bkup")
     random.seed(seed)
     with open(os.path.join(outdir, out_name1), "w") as f1, open(os.path.join(outdir, out_name2), "w") as f2:
@@ -344,11 +322,13 @@ async def main(args):
         os.remove(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
 
+    # If the user wants to fetch the paper titles and abstracts from the truth data file. This is used to sample the
+    # positive few shot examples.
     if args.fetch_paper_titles_abstracts:
         # Get ground truth data (gene and associated pmids into a dictionary) from
         gene_pmid_dict = parse_tsv(args.truth_file)
 
-        # Get and then save the titles for these pmids.
+        # Get and then save the title and abstract for these pmids
         pos_gene_pmid_title_abstract = get_paper_titles_abstracts(gene_pmid_dict)
 
         with open(args.json_file_name, "w") as f:
@@ -363,12 +343,13 @@ async def main(args):
         with open(args.pickle_file_name, "rb") as f:
             pos_gene_pmid_title_abstract = pickle.load(f)
 
-    # Ensure that you pair the .json and .pkl files with the few shot results
+    # Copy over the truth data files (.json and .pkl format) with the subsequent few shot results
     shutil.copy(args.json_file_name, args.outdir)
     shutil.copy(args.pickle_file_name, args.outdir)
 
+    # Find positive examples
     if not args.just_find_negatives:
-        print(f"\nProcessing truth data file to extract k positive examples...")
+        print("\nProcessing truth data file to extract k positive examples...")
 
         # Cluster (based on k) the positive example papers
         clusters = await cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
@@ -385,9 +366,10 @@ async def main(args):
     if args.just_find_positives:
         return
 
-    # If a benchmark file is provided - we can process negative examples
+    # Proess negative examples. Note that the script will error if an associated benchmark file is not provided. The
+    # benchmark file is needed to process irrelevant papers, from which we will sample our negative few shot examples.
     if args.benchmark_file:
-        print(f"\nProcessing benchmark file to extract k negative examples...")
+        print("\nProcessing benchmark file to extract k negative examples...")
 
         # Collect negative (irrelevant) examples based on a pipeline run
         neg_dict = collect_neg_papers(args.benchmark_file)
@@ -475,7 +457,8 @@ if __name__ == "__main__":
         "--benchmark-file",
         type=str,
         help=("Benchmark output file (benchmark_paper_finding_results... .txt). No default."),
-    )  # e.g. /home/azureuser/ev-agg-exp/.out/binary_classes_paper_finding_results_2024-04-24/benchmarking_paper_finding_results_train.txt
+    )  # e.g. /home/azureuser/ev-agg-exp/.out/binary_classes_paper_finding_results_2024-04-24/
+    #         benchmarking_paper_finding_results_train.txt
     parser.add_argument(
         "-o",
         "--outdir",
