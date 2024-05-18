@@ -296,7 +296,7 @@ class RareDiseaseFileLibrary(IGetPapers):
                 f"{self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n"
             )
 
-        # Read in paper_finding_directions.txt and append the few shot examples
+        # Read in paper_finding_*.txt and append the few shot examples
         with open(
             os.path.join(os.path.dirname(__file__), "content", "prompts", f"paper_finding_{method}.txt"), "r"
         ) as f:
