@@ -59,6 +59,8 @@ library:
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "rare disease"
+    - "other"
+    - "conflicting"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
