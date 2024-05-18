@@ -68,14 +68,14 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
-    - individual_id
     - transcript
+    - individual_id
     - phenotype
-    - variant_inheritance
-    - variant_type
-    - functional_study
-    - zygosity
-    - valid
+    # - variant_inheritance
+    # - variant_type
+    # - functional_study
+    # - zygosity
+    # - valid
   llm_client:
     di_factory: lib.evagg.llm.OpenAICacheClient
     config:
