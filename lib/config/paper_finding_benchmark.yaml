@@ -66,5 +66,5 @@ extractor:
     - variant_inheritance
 writer:
   di_factory: lib.evagg.TableOutputWriter
-  output_path: .out/pipeline_benchmark.tsv
+  output_path: .out/library_benchmark.tsv
 

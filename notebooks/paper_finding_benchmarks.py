@@ -569,15 +569,14 @@ if __name__ == "__main__":
         "--outdir",
         default=f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}",
         type=str,
-        help=(
-            "Results output directory. Default is "
-            f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/"
-        ),
+        help=("Results output directory. Default is " f".out/paper_finding_results_<YYYY-MM-DD>_<GIT_COMMIT_HASH>/"),
     )
     args = parser.parse_args()
 
     print("Evidence Aggregator Paper Finding Benchmarks:")
     for arg, value in vars(args).items():
         print(f"- {arg}: {value}")
+
+    print("\n")
 
     main(args)
