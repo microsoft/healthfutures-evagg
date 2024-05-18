@@ -337,7 +337,7 @@ async def main(args):
         with open(args.pickle_file_name, "wb") as f:
             pickle.dump(pos_gene_pmid_title_abstract, f)
 
-    else:
+    elif not args.just_find_negatives:
         print("\nReading the truth data pickle file: ", args.pickle_file_name)
 
         with open(args.pickle_file_name, "rb") as f:
@@ -464,10 +464,7 @@ if __name__ == "__main__":
         "--outdir",
         default=f".out/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/",
         type=str,
-        help=(
-            "Results output directory. Default is "
-            f".out/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/"
-        ),
+        help=("Results output directory. Default is " f".out/few_shot_examples_<YYYY-MM-DD>_<GIT_COMMIT_HASH>/"),
     )
     args = parser.parse_args()
 
