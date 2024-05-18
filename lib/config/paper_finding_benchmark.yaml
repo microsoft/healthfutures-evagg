@@ -48,6 +48,9 @@ library:
     - "rare disease"
     - "other"
     - "conflicting"
+  example_types:
+    - positive 
+    - negative
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields:
