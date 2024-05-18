@@ -103,16 +103,6 @@ def parse_tsv(file):
     return gene_dict
 
 
-# def preprocess_text(text):
-#     text = text.lower()
-#     text = text.translate(str.maketrans("", "", string.punctuation))
-#     tokens = word_tokenize(text)
-#     tokens = [token for token in tokens if token not in stopwords.words("english")]
-#     stemmer = PorterStemmer()
-#     tokens = [stemmer.stem(token) for token in tokens]
-#     return " ".join(tokens)
-
-
 def k_set_automatically(X):
     distortions = []
     K = range(1, 10)
@@ -153,20 +143,6 @@ async def get_papers_and_embeddings(gene_pmid_title_abstract_dict):
 
     texts = list(embeddings.keys())
     embedding_values = list(embeddings.values())
-
-    # Print the first text and the first embedding_values, and their lengths
-    # print(len(texts))
-    # print(len(embedding_values))
-
-    # # print the embedding_values where the texts is "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
-    # print(
-    #     embedding_values[
-    #         texts.index(
-    #             "genet variant promot g983gt code region a92t human cardiotrophin1 gene ctf1 patient dilat cardiomyopathi"
-    #         )
-    #     ]
-    # )
-
     return papers, texts, embedding_values
 
 
@@ -264,7 +240,7 @@ async def cluster_papers(gene_pmid_title_abstract_dict, k_means_clusters, pos_or
     optimal_k_elbow, ssd = determine_optimal_k_elbow(embedding_values)
     plot_elbow(ssd, optimal_k_elbow, pos_or_neg, args.outdir)
     determine_optimal_k_silhouette(embedding_values_array)
-    # determine_optimal_k_bic(embedding_values_array)
+    determine_optimal_k_bic(embedding_values_array)
 
     k_means_clusters = int(input("Please enter the number of clusters: "))
 
@@ -359,25 +335,6 @@ def collect_neg_papers(benchmark_file) -> Dict[str, Dict[str, Dict[str, str]]]:
                 i += 1
 
     return irrelevant_gene_pmid_title
-    # # Go through all genes in the data and gather their paper information, and create a separate dict of Dict(gene:Dict(pmid:title, abstract))
-    # for gene, gene_data in data.items():
-    #     print(f"Gene: {gene}")
-    #     print(f"Gene data: {gene_data}")
-    #     # for pmid, pmid_data in gene_data.items():
-    #     #     if "title" in pmid_data:
-    #     #         print(f"Gene: {gene}, PMID: {pmid}, Title: {pmid_data['title']}")
-    # exit()
-    # paper_ids = list(data["ACAT2"].keys())
-    # papers = [
-    #     paper
-    #     for paper_id in paper_ids
-    #     if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
-    # ]
-    # print("papers", papers)
-    # if self._require_full_text:
-    #     papers = [p for p in papers if p.props.get("full_text_xml")]
-
-    # logger.warning(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 
 
 async def main(args):
@@ -412,9 +369,6 @@ async def main(args):
 
     if not args.just_find_negatives:
         print(f"\nProcessing truth data file to extract k positive examples...")
-
-        # Determine the number of clusters
-        # num_clusters = k_set_automatically()
 
         # Cluster (based on k) the positive example papers
         clusters = await cluster_papers(pos_gene_pmid_title_abstract, args.k_means_clusters, "pos")
