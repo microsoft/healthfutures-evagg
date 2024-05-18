@@ -77,7 +77,7 @@ extractor:
   phenotype_fetcher:
     di_factory: lib.evagg.ref.PyHPOClient
   observation_finder:
-    di_factory: lib.evagg.content.TruthsetObservationFinder
+    di_factory: lib.evagg.content.ObservationFinder
 writer:
   di_factory: lib.evagg.TableOutputWriter
   output_path: .out/content_benchmark.tsv

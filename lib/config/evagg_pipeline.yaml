@@ -49,7 +49,10 @@ llm_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib/config/queries_mgttrain_subset.yaml
+  # di_factory: lib/config/queries_mgttrain_subset.yaml
+  - "gene_symbol": "EXOC2" # Limited
+    "min_date": "2020/01/01"
+    "retmax": 22
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"

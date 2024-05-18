@@ -349,7 +349,7 @@ def main(args):
 
     # We only need one of each paper/gene pair, so we drop duplicates.
     pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
-
+    print("yaml_genes: ", pipeline_df.gene.unique().tolist())
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
 
@@ -362,8 +362,8 @@ def main(args):
 
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
-    if os.path.isfile(args.outdir):
-        os.remove(args.outdir)
+    if os.path.isdir(args.outdir):
+        shutil.rmtree(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
 
     # Save library output table (Evidence Aggregator table) to the same output directory
@@ -575,5 +575,9 @@ if __name__ == "__main__":
         ),
     )
     args = parser.parse_args()
+
+    print("Evidence Aggregator Paper Finding Benchmarks:")
+    for arg, value in vars(args).items():
+        print(f"- {arg}: {value}")
 
     main(args)

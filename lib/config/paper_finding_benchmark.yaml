@@ -32,9 +32,9 @@ refseq_client:
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   #di_factory: lib/config/queries_mgttrain_subset.yaml
-  - "gene_symbol": "ADCY1" # Limited
+  - "gene_symbol": "EXOC2" # Limited
     "min_date": "2020/01/01"
-    "retmax": 3
+    "retmax": 22
 
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
@@ -63,5 +63,5 @@ extractor:
     - variant_inheritance
 writer:
   di_factory: lib.evagg.TableOutputWriter
-  output_path: .out/library_benchmark.tsv
+  output_path: .out/pipeline_benchmark.tsv
 
