@@ -167,7 +167,7 @@ while true; do
   fi
 
 done
-
-echo "here"
+"
 # Change results directory name to add copilot_squared_ at the beginning
 mv .out/$results_directory_name .out/copilot_squared_$results_directory_name/
+echo "Results are stored in .out/copilot_squared_$results_directory_name/"
