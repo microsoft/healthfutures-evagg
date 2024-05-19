@@ -88,7 +88,7 @@ epsilon=${3:-$DEFAULT_EPSILON}
 git_hash=$(git rev-parse HEAD)
 
 echo -e "\n--> Copilot^2 for paper finding ..."
-echo "Running with min_iterations=$min_iterations, max_iterations=$max_iterations, epsilon=$epsilon, yaml=$DEFAULT_YAML, and tsv=$DEFAULT_OUT_TSV. \n\n 
+echo "Running with min_iterations=$min_iterations, max_iterations=$max_iterations, epsilon=$epsilon, yaml=$DEFAULT_YAML, and tsv=$DEFAULT_OUT_TSV.
 Results will be saved in .out/paper_finding_results_$(date +%Y-%m-%d)_${git_hash}."
 
 prev_precision=0
@@ -167,7 +167,7 @@ while true; do
   fi
 
 done
-"
+
 # Change results directory name to add copilot_squared_ at the beginning
 mv .out/$results_directory_name .out/copilot_squared_$results_directory_name/
-echo "Results are stored in .out/copilot_squared_$results_directory_name/"
+echo "Results are stored in .out/copilot_squared_${results_directory_name}/"
