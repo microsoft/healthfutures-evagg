@@ -52,7 +52,7 @@ class ObjectFileCache(Generic[T]):
         assert not os.path.exists(os.path.join(self._cache_dir, f"{key}.json"))
         cache_path = os.path.join(self._cache_dir, f"{key}.json")
         with open(cache_path, "w") as f:
-            json.dump(self._serializer(value), f)
+            json.dump(self._serializer(value), f, indent=4)
 
 
 class ObjectCache(Generic[T]):
