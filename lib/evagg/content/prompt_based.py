@@ -224,8 +224,7 @@ class PromptBasedContentExtractor(IExtractFields):
             return await self._generate_phenotype_field(gene_symbol, observation)
         else:
             params = {
-                # First element is full text of the observation, consider alternatives
-                "passage": observation.texts[0].text,
+                "passage": "\n\n".join([t.text for t in observation.texts]),
                 "variant_descriptions": ", ".join(observation.variant_descriptions),
                 "patient_descriptions": ", ".join(observation.patient_descriptions),
                 "gene": gene_symbol,
