@@ -202,9 +202,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Check if the paper should be included in the rare disease category.
         if _has_keywords(title, INCLUSION_KEYWORDS) or _has_keywords(abstract, INCLUSION_KEYWORDS):
             return "rare disease"
-        # Check if the paper should be included in the non-rare disease category.
-        if _has_keywords(title, EXCLUSION_KEYWORDS) or _has_keywords(abstract, EXCLUSION_KEYWORDS):
-            return "non-rare disease"
         # If the paper doesn't fit in the other categories, add it to the other category.
         return "other"
 
