@@ -1,9 +1,11 @@
 """This script is an LLM prompt assistant for prompt engineering in paper finding. A copilot copilot."""
 
 # Imports
+import asyncio
 import json
 import logging
 import os
+import
 import re
 import shutil
 import subprocess
@@ -130,7 +132,10 @@ misclass_papers = create_misclassified_dict(benchmark_results)
 shutil.copyfile(main_prompt_file, updated_prompt_file)
 
 # Update the paper_finding.txt prompt based on the misclassified (i.e. irrelevant) papers (misclass_papers)
-response = await update_prompt("lib/evagg/content/prompts/paper_finding_few_shot.txt", json.dumps(misclass_papers))
+#response = await update_prompt("lib/evagg/content/prompts/paper_finding_few_shot.txt", json.dumps(misclass_papers))
+response = asyncio.run(
+    update_prompt("lib/evagg/content/prompts/paper_finding_few_shot.txt", json.dumps(misclass_papers))
+)
 
 # Save the new prompt to the main prompt file
 with open(main_prompt_file, "w") as f:
