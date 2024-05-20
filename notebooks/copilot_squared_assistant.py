@@ -49,7 +49,7 @@ def get_paper_abstracts(pmids: dict[str, str]) -> dict[str, str]:
     return abstracts
 
 
-def update_prompt(prompt_loc, misclass_papers) -> str:
+async def update_prompt(prompt_loc, misclass_papers) -> str:
     """Update the prompt given misclassified papers (from irrelevant papers for now)."""
     # Open the prompt and read its contents
     with open(prompt_loc, "r") as f:
@@ -61,7 +61,7 @@ def update_prompt(prompt_loc, misclass_papers) -> str:
     client = OpenAIClient(settings)
 
     # Prompt the user to update the prompt
-    response = client.prompt_file(
+    response = await client.prompt_file(
         user_prompt_file=("lib/evagg/content/prompts/update_paper_finding_few_shot.txt"),
         params={"prompt": prompt, "dict_gene_titles_abstracts": misclass_papers},
     )
@@ -130,7 +130,7 @@ misclass_papers = create_misclassified_dict(benchmark_results)
 shutil.copyfile(main_prompt_file, updated_prompt_file)
 
 # Update the paper_finding.txt prompt based on the misclassified (i.e. irrelevant) papers (misclass_papers)
-response = update_prompt("lib/evagg/content/prompts/paper_finding_few_shot.txt", json.dumps(misclass_papers))
+response = await update_prompt("lib/evagg/content/prompts/paper_finding_few_shot.txt", json.dumps(misclass_papers))
 
 # Save the new prompt to the main prompt file
 with open(main_prompt_file, "w") as f:
