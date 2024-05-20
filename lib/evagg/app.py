@@ -1,6 +1,6 @@
-from collections import defaultdict
 import logging
 import time
+from collections import defaultdict
 from typing import Any, Dict, List, Sequence
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
