@@ -49,7 +49,8 @@ llm_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib/config/queries_mgttrain_subset.yaml
+  #di_factory: lib/config/queries_mgttrain_subset.yaml
+  di_factory: lib/config/query_EXOC2.yaml
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
@@ -65,12 +66,12 @@ extractor:
     - hgvs_p
     - transcript
     - individual_id
-    - phenotype
+    # - phenotype
     - variant_inheritance
     - variant_type
-    - functional_study
-    - zygosity
-    - valid
+    # - functional_study
+    # - zygosity
+    # - valid
   llm_client:
     di_factory: lib.evagg.llm.OpenAICacheClient
     config:
