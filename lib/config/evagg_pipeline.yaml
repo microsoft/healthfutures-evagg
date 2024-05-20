@@ -56,8 +56,6 @@ library:
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "rare disease"
-    - "other"
-    - "conflicting"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
@@ -68,11 +66,11 @@ extractor:
     - transcript
     - individual_id
     - phenotype
-    # - variant_inheritance
-    # - variant_type
-    # - functional_study
-    # - zygosity
-    # - valid
+    - variant_inheritance
+    - variant_type
+    - functional_study
+    - zygosity
+    - valid
   llm_client:
     di_factory: lib.evagg.llm.OpenAICacheClient
     config:
