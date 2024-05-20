@@ -129,12 +129,12 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, j
 async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
     # TODO test tie-breaking
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
-    non_rare_disease_paper = Paper(**json_load("non_rare_disease_paper.json"))
-    ids = [rare_disease_paper.props["pmid"], non_rare_disease_paper.props["pmid"]]
-    paper_client = mock_paper_client(ids, rare_disease_paper, non_rare_disease_paper)
+    other_paper = Paper(**json_load("other_paper.json"))
+    ids = [rare_disease_paper.props["pmid"], other_paper.props["pmid"]]
+    paper_client = mock_paper_client(ids, rare_disease_paper, other_paper)
     llm_client = mock_llm_client(
         json.dumps({"paper_category": "rare disease"}),
-        json.dumps({"paper_category": "non-rare disease"}),
+        json.dumps({"paper_category": "other"}),
     )
     query = {"gene_symbol": "gene"}
     result = await RareDiseaseFileLibrary(paper_client, llm_client)._get_all_papers(query)
@@ -142,7 +142,7 @@ async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_clie
     assert paper_client.last_call("fetch") == ("34512170", {"include_fulltext": True})
     assert paper_client.call_count() == 3
     assert result and len(result) == 2
-    assert result == [rare_disease_paper, non_rare_disease_paper]
+    assert result == [rare_disease_paper, other_paper]
 
 
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
