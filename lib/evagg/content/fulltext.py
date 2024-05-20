@@ -1,5 +1,6 @@
 from typing import Generator, List, Optional
-from xml.etree.ElementTree import Element
+
+from defusedxml import ElementTree
 
 from .interfaces import TextSection
 
@@ -7,10 +8,10 @@ SectionFilter = Optional[List[str]]
 
 
 def get_sections(
-    doc: Optional[Element], include: SectionFilter = None, exclude: SectionFilter = None
+    doc: Optional[str], include: SectionFilter = None, exclude: SectionFilter = None
 ) -> Generator[TextSection, None, None]:
     """Build a list of TextSection objects from the XML full-text document."""
-    if doc is None:
+    if not doc:
         return
 
     def _include_section(section_type: str) -> bool:
@@ -21,9 +22,11 @@ def get_sections(
             return False
         return True
 
-    doc_id = doc.findtext("id") or "unknown"
+    # Parse the XML document.
+    root = ElementTree.fromstring(doc)
+    doc_id = root.findtext("id") or "unknown"
     # Generate all "passage" elements.
-    for passage in doc.iterfind("./passage"):
+    for passage in root.iterfind("./passage"):
         if not (section_type := passage.findtext("infon[@key='section_type']")):
             raise ValueError(f"Missing 'section_type' infon element in passage for document {doc_id}")
         if not _include_section(section_type):
@@ -40,13 +43,13 @@ def get_sections(
 
 
 def get_section_texts(
-    doc: Optional[Element], include: SectionFilter = None, exclude: SectionFilter = None
+    doc: Optional[str], include: SectionFilter = None, exclude: SectionFilter = None
 ) -> Generator[str, None, None]:
     """Filter to the given sections in the XML full-text document and return the texts."""
     for section in get_sections(doc, include, exclude):
         yield section.text
 
 
-def get_fulltext(doc: Optional[Element], include: SectionFilter = None, exclude: SectionFilter = None) -> str:
+def get_fulltext(doc: Optional[str], include: SectionFilter = None, exclude: SectionFilter = None) -> str:
     """Extract and join the text with newlines from the given sections in the XML full-text document."""
     return "\n".join(get_section_texts(doc, include, exclude))
