@@ -15,6 +15,7 @@ from openai.types.chat import (
 )
 
 from lib.config import PydanticYamlModel
+from lib.evagg.svc import ObjectCache
 from lib.evagg.svc.logging import PROMPT
 
 from .interfaces import IPromptClient
@@ -177,20 +178,16 @@ class OpenAIClient(IPromptClient):
 
 
 class OpenAICacheClient(OpenAIClient):
-    task_cache: Dict[int, asyncio.Task]
-
     def __init__(self, config: Dict[str, Any]) -> None:
+        # Don't cache tasks that have errored out.
+        self.task_cache = ObjectCache[asyncio.Task](lambda t: not t.done() or t.exception() is None)
         super().__init__(config)
-        self.task_cache = {}
 
-    def _is_task_errored(self, task: asyncio.Task) -> bool:
-        return task.done() and task.exception() is not None
-
-    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:  # type: ignore
+    def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
         """Create a new task only if no identical non-errored one was already cached."""
         cache_key = hash((messages.content, json.dumps(settings)))
-        if cache_key in self.task_cache and not self._is_task_errored(self.task_cache[cache_key]):
-            return self.task_cache[cache_key]
+        if task := self.task_cache.get(cache_key):
+            return task
         task = super()._create_completion_task(messages, settings)
-        self.task_cache[cache_key] = task
+        self.task_cache.set(cache_key, task)
         return task
