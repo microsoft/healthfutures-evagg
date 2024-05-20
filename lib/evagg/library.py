@@ -167,6 +167,11 @@ class RareDiseaseFileLibrary(IGetPapers):
         self._paper_client = paper_client
         self._llm_client = llm_client
         self._allowed_categories = allowed_categories if allowed_categories is not None else ["rare disease"]
+        # Allowed categories should be a subset of or equal to possible CATEGORIES, otherwise raise exception and halt
+        if not set(self._allowed_categories).issubset(set(self.CATEGORIES)):
+            raise ValueError(
+                "Allowed categories must be a subset of or equal to the possible categories: 'rare disease' or 'other'."
+            )
         self._example_types = example_types if example_types is not None else ["positive"]
 
     def _get_keyword_category(self, paper: Paper) -> str:
