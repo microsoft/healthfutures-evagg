@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Sequence, Set
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
+from lib.evagg.svc import ObjectFileCache
 from lib.evagg.types import ICreateVariants, Paper
 
 from .disease_keywords import EXCLUSION_KEYWORDS, INCLUSION_KEYWORDS
@@ -335,3 +336,36 @@ class RareDiseaseFileLibrary(IGetPapers):
         """
         all_papers = asyncio.run(self._get_all_papers(query))
         return list(filter(lambda p: p.props["disease_category"] in self._allowed_categories, all_papers))
+
+
+class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
+    """A class for fetching and categorizing disease papers from PubMed backed by a file-persisted cache."""
+
+    @classmethod
+    def serialize_paper_sequence(cls, papers: Sequence[Paper]) -> List[Dict[str, Any]]:
+        return [paper.props for paper in papers]
+
+    @classmethod
+    def deserialize_paper_sequence(cls, data: List[Dict[str, Any]]) -> Sequence[Paper]:
+        return [Paper(**paper) for paper in data]
+
+    def __init__(
+        self,
+        paper_client: IPaperLookupClient,
+        llm_client: IPromptClient,
+        allowed_categories: Sequence[str] | None = None,
+    ) -> None:
+        super().__init__(paper_client, llm_client, allowed_categories)
+        self._cache = ObjectFileCache[Sequence[Paper]](
+            "RareDiseaseFileLibrary",
+            serializer=RareDiseaseLibraryCached.serialize_paper_sequence,
+            deserializer=RareDiseaseLibraryCached.deserialize_paper_sequence,
+        )
+
+    def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
+        cache_key = f"get_papers_{query['gene_symbol']}"
+        if papers := self._cache.get(cache_key):
+            return papers
+        papers = super().get_papers(query)
+        self._cache.set(cache_key, papers)
+        return papers
