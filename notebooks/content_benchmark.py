@@ -373,32 +373,67 @@ precision = merged_df.in_truth[merged_df.in_output == True].mean()
 recall = merged_df.in_output[merged_df.in_truth == True].mean()
 
 # Make a copy of merged_df removing all rows where in_supplement is 'Y'
-merged_df_no_supplement = merged_df[merged_df.in_supplement != "Y"]
-precision_no_supplement = merged_df_no_supplement.in_truth[merged_df_no_supplement.in_output == True].mean()
-recall_no_supplement = merged_df_no_supplement.in_output[merged_df_no_supplement.in_truth == True].mean()
+merged_df_ns = merged_df[merged_df.in_supplement != "Y"]
+precision_ns = merged_df_ns.in_truth[merged_df_ns.in_output == True].mean()
+recall_ns = merged_df_ns.in_output[merged_df_ns.in_truth == True].mean()
 
 print("---- Observation finding performance ----")
 print("Overall")
 print(f"  Observation finding precision: {precision:.2f}")
 print(f"  Observation finding recall: {recall:.2f}")
 print("Ignoring truth papers from supplement")
-print(f"  Observation finding precision: {precision_no_supplement:.2f}")
-print(f"  Observation finding recall: {recall_no_supplement:.2f}")
+print(f"  Observation finding precision: {precision_ns:.2f}")
+print(f"  Observation finding recall: {recall_ns:.2f}")
 print()
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
 if precision < 1 or recall < 1:
-    printable_df = merged_df.reset_index()  #
-    printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
+    printable_df = merged_df_ns.reset_index()  #
+    print(
+        printable_df[(printable_df.in_truth != True) | (printable_df.in_output != True)].sort_values(
+            ["gene", "paper_id", "hgvs_desc"]
+        )[["hgvs_desc", "paper_id", "individual_id", "in_truth", "in_output"]]
+    )
 else:
     print("All observations found. This is likely because the TruthsetObservationFinder was used.")
-    # printable_df[
-    #     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
-    # ].sort_values(["gene", "paper_id", "hgvs_desc"])
 
-# %% Redo the merge and assess variant finding.
+
+# %% Redo the merge and assess observation finding if we're only concerned with finding the right variants.
+
+cols = ["hgvs_desc", "paper_id"]
+merged_var_df = pd.merge(
+    truth_df.reset_index().drop_duplicates(subset=cols).set_index(cols),
+    output_df.reset_index().drop_duplicates(subset=cols).set_index(cols),
+    how="outer",
+    left_index=True,
+    right_index=True,
+    suffixes=["_truth", "_output"],
+)
+
+merged_var_df["in_truth"] = merged_var_df["in_truth"].fillna(False)
+merged_var_df["in_output"] = merged_var_df["in_output"].fillna(False)
+
+if "gene_truth" in merged_var_df.columns:
+    merged_var_df["gene"] = merged_var_df["gene_truth"].fillna(merged_var_df["gene_output"])
+    merged_var_df.drop(columns=["gene_truth", "gene_output"], inplace=True)
+
+# Reorder columns, keeping in_truth and in_output as the last two.
+merged_var_df = merged_var_df[
+    [c for c in merged_var_df.columns if c not in {"in_truth", "in_output"}] + ["in_truth", "in_output"]
+]
+
+merged_var_df_ns = merged_var_df[merged_var_df.in_supplement != "Y"]
+precision_ns = merged_var_df_ns.in_truth[merged_var_df_ns.in_output == True].mean()
+recall_ns = merged_var_df_ns.in_output[merged_var_df_ns.in_truth == True].mean()
+
+print("---- Variant-level observation finding performance ----")
+print("Ignoring truth papers from supplement")
+print(f"  Observation finding precision: {precision_ns:.2f}")
+print(f"  Observation finding recall: {recall_ns:.2f}")
+print()
+
 
 # %% Assess content extraction.
 
@@ -482,7 +517,7 @@ def _match_hpo_sets(hpo_left, hpo_right) -> Tuple[list[str], list[str], list[str
 # %%
 
 if CONTENT_COLUMNS:
-    shared_df = merged_df_no_supplement[merged_df_no_supplement.in_truth & merged_df_no_supplement.in_output]
+    shared_df = merged_df_ns[merged_df_ns.in_truth & merged_df_ns.in_output]
 
     print("---- Content extraction performance ----")
 
