@@ -3,7 +3,7 @@
 from .app import SynchronousLocalApp
 from .content import PromptBasedContentExtractor, SimpleContentExtractor, TruthsetContentExtractor
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
-from .io import ConsoleOutputWriter, FileOutputWriter, TableOutputWriter
+from .io import TableOutputWriter
 from .library import RareDiseaseFileLibrary, RemoteFileLibrary, SimpleFileLibrary, TruthsetFileLibrary
 
 __all__ = [
@@ -15,8 +15,6 @@ __all__ = [
     # App.
     "SynchronousLocalApp",
     # IO.
-    "ConsoleOutputWriter",
-    "FileOutputWriter",
     "TableOutputWriter",
     # Library.
     "SimpleFileLibrary",

@@ -17,4 +17,4 @@ extractor:
     - phenotype
     - functional data
 writer:
-  di_factory: lib.evagg.ConsoleOutputWriter
+  di_factory: lib.evagg.TableOutputWriter
