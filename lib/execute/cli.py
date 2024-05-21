@@ -85,6 +85,7 @@ def run_sync() -> None:
         logger.error(f"Error executing app: {e}")
         # log the stack trace using logger.error
         logger.error(traceback.format_exc())
+        exit(1)
 
 
 if __name__ == "__main__":
