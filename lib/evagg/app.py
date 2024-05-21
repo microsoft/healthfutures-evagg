@@ -1,6 +1,5 @@
 import logging
 import time
-from collections import defaultdict
 from typing import Any, Dict, List, Sequence
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
@@ -22,7 +21,7 @@ class SynchronousLocalApp(IEvAggApp):
         self._writer = writer
 
     def execute(self) -> None:
-        fields_by_paper: Dict[str, List[Dict[str, str]]] = defaultdict(list)
+        output_fieldsets: List[Dict[str, str]] = []
         start_ts = time.time()
 
         for query in self._queries:
@@ -37,10 +36,10 @@ class SynchronousLocalApp(IEvAggApp):
 
             # Extract observation fieldsets for each paper.
             for paper in papers:
-                fields = self._extractor.extract(paper, term)
-                fields_by_paper[paper.id].extend(fields)
+                extracted_fieldsets = self._extractor.extract(paper, term)
+                output_fieldsets.extend(extracted_fieldsets)
 
-        # Write out the result.
-        self._writer.write(fields_by_paper)
+        # Write out the results.
+        self._writer.write(output_fieldsets)
 
         logger.info(f"Pipeline execution complete, elapsed time {time.time() - start_ts:.2f} seconds.")
