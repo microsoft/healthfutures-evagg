@@ -22,11 +22,10 @@ class TableOutputWriter(IWriteOutput):
             if os.path.exists(self._path):
                 logger.warning(f"Overwriting existing output file: {self._path}")
 
-    def write(self, fields: Mapping[str, Sequence[Mapping[str, str]]]) -> None:
+    def write(self, output: Sequence[Mapping[str, str]]) -> None:
         logger.info(f"Writing output to: {self._path or 'stdout'}")
 
-        table_lines = [output_row for output_rows in fields.values() for output_row in output_rows]
-        if len(table_lines) == 0:
+        if len(output) == 0:
             logger.warning("No results to write")
             return
 
@@ -38,8 +37,8 @@ class TableOutputWriter(IWriteOutput):
         output_stream = open(self._path, "w") if self._path else sys.stdout
         writer = csv.writer(output_stream, delimiter="\t", lineterminator="\n")
         writer.writerow([f"# Generated {self._generated.strftime('%Y-%m-%d %H:%M:%S %Z')}"])
-        writer.writerow(table_lines[0].keys())
-        for line in table_lines:
+        writer.writerow(output[0].keys())
+        for line in output:
             writer.writerow(line.values())
 
         output_stream.close()
