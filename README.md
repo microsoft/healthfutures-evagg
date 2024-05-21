@@ -30,10 +30,10 @@ Ubuntu 20.04/22.04 VM/WSL
     ```bash
     curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
     sh ./miniconda.sh # close and reopen shell.
-    export PATH=/home/azureuser/miniconda3/bin:$PATH
-    conda update -n base -c defaults conda
+    /home/azureuser/miniconda3/bin/conda init $SHELL # if you didn't init conda for your shell during setup.
+    conda update -n base -c defaults conda -y
     conda config --add channels conda-forge
-    conda install -n base conda-libmamba-solver
+    conda install -n base conda-libmamba-solver -y
     conda config --set solver libmamba
     ```
 
@@ -50,7 +50,6 @@ You will be prompted to install recommended extensions for this repository; acce
 Create a conda environment. All shell commands in this section should be executed from the repository's root directory.
 
 ```bash
-source activate base
 conda env create -f environment.yml
 conda activate evagg
 ```
