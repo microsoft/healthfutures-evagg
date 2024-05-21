@@ -13,13 +13,16 @@ import json
 import os
 import re
 from collections import defaultdict
-from typing import Any, List
+from typing import Any, List, Set, Tuple
 
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 from pyhpo import Ontology
+from sklearn.metrics import confusion_matrix
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient, PyHPOClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
 from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
@@ -389,15 +392,16 @@ print()
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
-if precision < 1 or recall < 1:
-    printable_df = merged_df_ns.reset_index()  #
-    print(
-        printable_df[(printable_df.in_truth != True) | (printable_df.in_output != True)].sort_values(
-            ["gene", "paper_id", "hgvs_desc"]
-        )[["hgvs_desc", "paper_id", "individual_id", "in_truth", "in_output"]]
-    )
-else:
-    print("All observations found. This is likely because the TruthsetObservationFinder was used.")
+
+# if precision < 1 or recall < 1:
+#     printable_df = merged_df_ns.reset_index()  #
+
+#     result = printable_df[(printable_df.in_truth != True) | (printable_df.in_output != True)].sort_values(
+#         ["gene", "paper_id", "hgvs_desc"]
+#     )[["hgvs_desc", "paper_id", "individual_id", "in_truth", "in_output"]]
+
+# else:
+#     print("All observations found. This is likely because the TruthsetObservationFinder was used.")
 
 
 # %% Redo the merge and assess observation finding if we're only concerned with finding the right variants.
@@ -437,28 +441,7 @@ print()
 
 # %% Assess content extraction.
 
-hpo = PyHPOClient()
-from typing import Set, Tuple
-
-# def _fuzzy_match_hpo_sets(left_set: str, right_set: str) -> Tuple[list[str], list[str], list[str], list[str]]:
-#     # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
-#     def _is_unknown(hpo_set: str) -> bool:
-#         return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
-
-#     left_terms = re.findall(r"HP:\d+", left_set) if isinstance(left_set, str) and not _is_unknown(left_set) else []
-#     right_terms = re.findall(r"HP:\d+", right_set) if isinstance(right_set, str) and not _is_unknown(right_set) else []
-
-#     left_result = hpo.compare_set(left_terms, right_terms)
-#     right_result = hpo.compare_set(right_terms, left_terms)
-
-#     left_matched = [f"{k}<>{v[1]}" for k, v in left_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
-#     right_matched = [f"{k}<>{v[1]}" for k, v in right_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
-
-#     left_missed = [k for k, v in left_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
-#     right_missed = [k for k, v in right_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
-
-#     # Return the shared terms, the terms in left not present in right, the terms in right not present in left
-#     return (left_matched, right_matched, left_missed, right_missed)
+# hpo = PyHPOClient()
 
 
 def _hpo_str_to_set(hpo_compound_string: str) -> Set[str]:
@@ -516,6 +499,68 @@ def _match_hpo_sets(hpo_left, hpo_right) -> Tuple[list[str], list[str], list[str
 
 # %%
 
+do_plots = True
+plot_config = {
+    "animal_model": {
+        "options": ["true", "false"],
+    },
+    "engineered_cells": {
+        "options": ["true", "false"],
+    },
+    "patient_cells_tissues": {
+        "options": ["true", "false"],
+    },
+    "variant_type": {
+        "options": [
+            "missense",
+            "stop gained",
+            "splice region",
+            "frameshift",
+            "synonymous",
+            "inframe deletion",
+            "indel",
+            "unknown",
+            "failed",
+        ],
+    },
+    "variant_inheritance": {
+        "options": [
+            "unknown",
+            "de novo",
+            "maternally inherited",
+            "paternally inherited",
+            "maternally and paternally inherited homozygous",
+            "failed",
+        ],
+    },
+    "zygosity": {
+        "options": ["none", "homozygous", "heterozygous", "compound heterozygous", "failed"],
+    },
+}
+
+
+def plot_confusion_matrix(truth, output, labels, column):
+    """
+    Plots a confusion matrix heatmap for two categorical series.
+    """
+    truth[truth.isin(labels) == False] = "other"
+    output[output.isin(labels) == False] = "other"
+
+    if any(truth == "other") or any(output == "other"):
+        labels.append("other")
+
+    cm = confusion_matrix(truth, output, labels=labels)
+    cm_df = pd.DataFrame(cm, index=labels, columns=labels)
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm_df, annot=True, fmt="d", cmap="Blues", cbar=False)
+    plt.xlabel("Output")
+    plt.ylabel("Truth")
+    plt.title(f"Confusion matrix for {column}")
+    plt.show()
+
+
+# %%
 if CONTENT_COLUMNS:
     shared_df = merged_df_ns[merged_df_ns.in_truth & merged_df_ns.in_output]
 
@@ -538,19 +583,30 @@ if CONTENT_COLUMNS:
 
         for idx, row in shared_df.iterrows():
             if match[idx]:  # type: ignore
-                # print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
+                # print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}") # noqa
                 pass
             else:
                 if column == "phenotype":
                     print(f"##Mismatch ({idx})")
-                    for i, x in enumerate(pheno_stats[idx]):
+                    for i, x in enumerate(pheno_stats[idx]):  # type: ignore
                         if i != 0:
                             print(f"  {x}")
                     print(f"  Truth: {row[f'{column}_truth']}")
                     print(f"  Output: {row[f'{column}_output']}")
                     print()
                 else:
-                    print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
+                    print(
+                        f"  Mismatch ({idx} | {row['hgvs_c_truth']}/{row['hgvs_p_truth']}): {row[f'{column}_truth']} != {row[f'{column}_output']}"
+                    )
         print()
 
+    if do_plots:
+        for column in CONTENT_COLUMNS:
+            if column in plot_config:
+                plot_confusion_matrix(
+                    shared_df[f"{column}_truth"].copy(),
+                    shared_df[f"{column}_output"].copy(),
+                    plot_config[column]["options"].copy(),
+                    column,
+                )
 # %%
