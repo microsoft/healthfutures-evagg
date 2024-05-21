@@ -1,5 +1,6 @@
 import logging
 import time
+from collections import defaultdict
 from typing import Any, Dict, List, Sequence
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
@@ -21,8 +22,7 @@ class SynchronousLocalApp(IEvAggApp):
         self._writer = writer
 
     def execute(self) -> None:
-        all_fields: Dict[str, List[Dict[str, str]]] = {}
-
+        fields_by_paper: Dict[str, List[Dict[str, str]]] = defaultdict(list)
         start_ts = time.time()
 
         for query in self._queries:
@@ -31,22 +31,16 @@ class SynchronousLocalApp(IEvAggApp):
             term = query["gene_symbol"]
             # Get the papers that match this query.
             papers = self._library.get_papers(query)
+            # Assert each returned paper has a unique id
+            assert len(papers) == len({p.id for p in papers})
             logger.info(f"Found {len(papers)} papers for {term}")
 
-            for index, paper in enumerate(papers):
-                logger.debug(f"Paper #{index + 1}: {paper}")
-
-            # For all papers that match, extract the fields we want.
-            fields = {paper.id: self._extractor.extract(paper, term) for paper in papers}
-
-            # Record the result.
-            for paper_id, paper_fields in fields.items():
-                if paper_id in all_fields:
-                    all_fields[paper_id].extend(paper_fields)
-                else:
-                    all_fields[paper_id] = list(paper_fields)
+            # Extract observation fieldsets for each paper.
+            for paper in papers:
+                fields = self._extractor.extract(paper, term)
+                fields_by_paper[paper.id].extend(fields)
 
         # Write out the result.
-        self._writer.write(all_fields)
+        self._writer.write(fields_by_paper)
 
         logger.info(f"Pipeline execution complete, elapsed time {time.time() - start_ts:.2f} seconds.")
