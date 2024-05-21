@@ -3,6 +3,7 @@ import urllib.parse as urlparse
 from abc import ABC
 from typing import Any, Dict, List, Optional, Sequence
 
+from defusedxml import ElementTree
 from pydantic import Extra, root_validator
 
 from lib.config import PydanticYamlModel
@@ -91,7 +92,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         super().__init__(web_client, settings)
 
-    def _get_xml_props(self, article: Any) -> Dict[str, Any]:
+    def _get_xml_props(self, article: Any) -> Dict[str, str]:
         """Extracts paper properties from an XML root element."""
         extractions = {
             "title": "./MedlineCitation/Article/ArticleTitle",
@@ -103,15 +104,15 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
         }
 
-        def _get_xml_string(node: Any) -> Optional[str]:
-            return "".join(node.itertext()) if node is not None else None
+        def _get_xml_string(node: Any) -> str:
+            return "".join(node.itertext()) if node is not None else ""
 
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
         return props
 
-    def _get_license_props(self, pmcid: str) -> Dict[str, Any]:
+    def _get_license_props(self, pmcid: str) -> Dict[str, str | bool]:
         """Get the access status for a paper from the PMC OA API."""
-        props = {"can_access": False, "license": "unknown"}
+        props: Dict[str, str | bool] = {"can_access": False, "license": "unknown"}
         if not pmcid:
             return props
 
@@ -137,29 +138,29 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
         return props
 
-    def _get_derived_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_derived_props(self, props: Dict[str, Any]) -> Dict[str, str]:
         """Get the derived properties of a paper."""
         derived_props: Dict[str, Any] = {}
         derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}"
         derived_props["link"] = f"https://pubmed.ncbi.nlm.nih.gov/{props['pmid']}/"
         return derived_props
 
-    def _get_full_text(self, props: Dict[str, Any]) -> Any:
+    def _get_full_text(self, props: Dict[str, Any]) -> str:
         """Get the full text of a paper from PMC."""
         pmcid = props["pmcid"]
         if not props["can_access"]:
             logger.debug(f"Cannot fetch full text, paper 'pmcid:{pmcid}' is not in PMC-OA or has unusable license.")
-            return None
+            return ""
         try:
             root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
         except Exception as e:
             logger.warning(f"Unexpected error fetching BioC entry for {pmcid}: {e}")
-            return None
+            return ""
 
         # Find and return the specific document.
         if (doc := root.find(f"./document[id='{pmcid.upper().lstrip('PMC')}']")) is None:
             logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
-        return doc
+        return ElementTree.tostring(doc, encoding="unicode")
 
     # IPaperLookupClient
     def search(self, query: str, **extra_params: Dict[str, Any]) -> Sequence[str]:
@@ -174,7 +175,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         if (article := root.find(f"PubmedArticle/MedlineCitation/PMID[.='{paper_id}']/../..")) is None:
             return None
 
-        props = {"id": f"pmid:{paper_id}", "pmid": paper_id}
+        props: Dict[str, Any] = {"id": f"pmid:{paper_id}", "pmid": paper_id}
         props.update(self._get_xml_props(article))
         props.update(self._get_license_props(props["pmcid"]))
         props.update(self._get_derived_props(props))

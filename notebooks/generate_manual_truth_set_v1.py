@@ -418,7 +418,7 @@ def get_license(pmid: str) -> str | None:
 
 def get_pmcid(pmid: str) -> str | None:
     if paper := get_paper(pmid):
-        return paper.props.get("pmcid", None)
+        return paper.props.get("pmcid", "")
     return None
 
 
