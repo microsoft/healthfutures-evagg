@@ -20,9 +20,9 @@ class SimpleContentExtractor(IExtractFields):
         if field == "paper_disease_categorizations":
             return json.dumps(paper.props.get("disease_categorizations", {}))
         if field == "pmid":
-            return paper.props.get("pmid", "Unknown")
+            return paper.props.get("pmid", "")
         if field == "pmcid":
-            return paper.props.get("pmcid", "Unknown")
+            return paper.props.get("pmcid", "")
         if field == "hgvs_c":
             return "c.101A>G"
         if field == "hgvs_p":
