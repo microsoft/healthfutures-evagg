@@ -1,9 +1,12 @@
+import logging
 import traceback
 from argparse import ArgumentParser, Namespace
 from typing import Any, Dict, Sequence
 
 from lib.di import DiContainer
 from lib.evagg import IEvAggApp
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_args(args: Sequence[str] | None = None) -> Namespace:
@@ -78,6 +81,10 @@ def run_sync() -> None:
             print(f" KeyboardInterrupt in {file_ref} at line {tb.tb_lineno}")
             # And then the innermost traceback.
             traceback.print_tb(tb, limit=-1)
+    except Exception as e:
+        logger.error(f"Error executing app: {e}")
+        # log the stack trace using logger.error
+        logger.error(traceback.format_exc())
 
 
 if __name__ == "__main__":
