@@ -25,17 +25,28 @@ from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 # %% Constants.
 
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "pipeline_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-# CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
-CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
+CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
+# CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
-# TODO, just get the gene list from the yaml?
-RESTRICT_TRUTH_GENES_TO_OUTPUT = False  # if True, only compare the genes in the output set to the truth set.
+# SET THIS TO TRUE FOR PIPELINE RUNS EXECUTED ON A SUBSET OF GENES ONLY.
+# If True, only consider genes in the truth set that are also in the output set.
+# This is useful to get an accurate assessment of recall for observation finding for partial pipeline runs, as there
+# will be a large number of genes missing from the pipeline output entirely if the pipeline wasn't configured to find
+# them. This can lead to falsely high recall scores if zero observations were found for a gene that was actually
+# processed.
+RESTRICT_TRUTH_GENES_TO_OUTPUT = False
+
+# SET THIS TO TRUE FOR END TO END PIPELINE RUNS.
+# If True, only consider papers from the output set that are in the truth set.
+# This is necessary to get an accurate assessment of precision for observation finding for full pipeline runs
+# as there will be a large number of observations from papers that aren't included in the truthset.
+RESTRICT_OUTPUT_PAPERS_TO_TRUTH = True
 
 HPO_SIMILARITY_THRESHOLD = (
     0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
@@ -119,6 +130,11 @@ if RESTRICT_TRUTH_GENES_TO_OUTPUT:
     output_genes = set(output_df.gene.unique())
     truth_df = truth_df[truth_df.gene.isin(output_genes)]
 
+if RESTRICT_OUTPUT_PAPERS_TO_TRUTH:
+    print("Warning: restricting output set to papers in the truth set.")
+    truth_papers = set(truth_df.paper_id.unique())
+    output_df = output_df[output_df.paper_id.isin(truth_papers)]
+
 # TODO: temporary, sample the both dfs so we have some missing/extra rows.
 # truth_df = truth_df.sample(frac=0.9, replace=False)
 # output_df = output_df.sample(frac=0.7, replace=False)
@@ -138,12 +154,18 @@ if missing_from_output:
 if not truth_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
     # Get a list of the non-unique indices
     non_unique_indices = truth_df[truth_df.duplicated(subset=list(INDEX_COLUMNS), keep=False)][list(INDEX_COLUMNS)]
-    raise ValueError(f"Truth table has non-unique index columns: {non_unique_indices}")
+    # Print a warning and deduplicate.
+    print(f"Warning: Truth table has non-unique index columns: {non_unique_indices}")
+    print("Deduplicating truth table.")
+    truth_df = truth_df[~truth_df.duplicated(subset=list(INDEX_COLUMNS), keep="first")]
 
 if not output_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
-    # Ge ta list of the non-unique indices
+    # Get a list of the non-unique indices
     non_unique_indices = output_df[output_df.duplicated(subset=list(INDEX_COLUMNS), keep=False)][list(INDEX_COLUMNS)]
-    raise ValueError(f"Output table has non-unique index columns: {non_unique_indices}")
+    # Print a warning and deduplicate.
+    print(f"Warning: Output table has non-unique index columns: {non_unique_indices}")
+    print("Deduplicating output table.")
+    output_df = output_df[~output_df.duplicated(subset=list(INDEX_COLUMNS), keep="first")]
 
 # %% Normalize the HGVS representations from the truth data.
 
