@@ -13,7 +13,7 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import ICreateVariants, Paper
 
-from .disease_keywords import EXCLUSION_KEYWORDS, INCLUSION_KEYWORDS
+from .disease_keywords import INCLUSION_KEYWORDS
 from .interfaces import IGetPapers
 
 logger = logging.getLogger(__name__)
