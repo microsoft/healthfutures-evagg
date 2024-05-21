@@ -484,15 +484,16 @@ if CONTENT_COLUMNS:
                 # print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
                 pass
             else:
-                # print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
-                print(f"##Mismatch ({idx})")
-                for i, x in enumerate(pheno_stats[idx]):
-                    if i != 0:
-                        print(f"  {x}")
-                print(f"  Truth: {row[f'{column}_truth']}")
-                print(f"  Output: {row[f'{column}_output']}")
-                print()
-                pass
+                if column == "phenotype":
+                    print(f"##Mismatch ({idx})")
+                    for i, x in enumerate(pheno_stats[idx]):
+                        if i != 0:
+                            print(f"  {x}")
+                    print(f"  Truth: {row[f'{column}_truth']}")
+                    print(f"  Output: {row[f'{column}_output']}")
+                    print()
+                else:
+                    print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
         print()
 
 # %%
