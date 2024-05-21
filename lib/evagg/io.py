@@ -37,8 +37,12 @@ class TableOutputWriter(IWriteOutput):
         output_stream = open(self._path, "w") if self._path else sys.stdout
         writer = csv.writer(output_stream, delimiter="\t", lineterminator="\n")
         writer.writerow([f"# Generated {self._generated.strftime('%Y-%m-%d %H:%M:%S %Z')}"])
-        writer.writerow(output[0].keys())
+
+        field_names = output[0].keys()
+        writer.writerow(field_names)
         for line in output:
+            # For table output, all rows must have the same keys.
+            assert line.keys() == field_names
             writer.writerow(line.values())
 
         output_stream.close()
