@@ -1,13 +1,28 @@
 Here is some text from a paper describing genetic variants in the gene {{$gene}}.
 
-I would like you to determine the zygosity for the patient and variant described below. Multiple patients
+I would like you to determine the zygosity for the patient and variant described below. By zygosity I mean
+the number of copies of this particular variant that the patient described below possesses. Multiple patients
 in the paper might possess this variant, but I want you to determine the zygosity for this patient specifically.
+
 The patient of interest may be referred to by any of the following identifiers: {{$patient_descriptions}}. The genetic
 variant possessed by this patient for which I want you to determine the zygosity may be described in any of
 the following ways: {{$variant_descriptions}}.
 
+It is possible that the zygosity for this patient and variant isn't described in the text, if that is the case, provide 
+"none" as your response value. This is most often the case in review papers that are summarizing information on a large 
+number of different variants.
+
+Occasionally zygosity is also referred to as the mode of inheritance for a particular patient (not to be confused with)
+the mode of inheritance for a disease. When observing the mode of inheritance for a particular patient, de novo and 
+autosomal dominant can generally be used to infer heterozygous zygosity, and autosomal recessive can generally be used
+to infer homozygous zygosity.
+
+Compound heterozygous zygosity refers to cases where an individual patient possesses two different variants, often in
+the same gene.
+
 The options for zygosity available for you to choose from are: "homozygous", "heterozygous", 
-"compound heterozygous", and "none". Choose only one of these options in your response.
+"compound heterozygous", and "none". Choose only one of these options in your response. Do not choose any other values 
+for your response.
 
 -- Output format --
 
