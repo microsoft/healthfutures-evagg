@@ -4,8 +4,9 @@ from .app import SynchronousLocalApp
 from .content import PromptBasedContentExtractor, TruthsetContentExtractor
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
-from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached, TruthsetFileLibrary
+from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached
 from .simple import SimpleContentExtractor, SimpleFileLibrary
+from .truthset import TruthsetFileLibrary
 
 __all__ = [
     # Interfaces.
