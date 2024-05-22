@@ -1,11 +1,13 @@
 """This script is an LLM prompt assistant for prompt engineering in paper finding. A copilot copilot."""
 
 # Imports
+import asyncio
 import json
 import logging
 import os
 import re
 import shutil
+import subprocess
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -19,6 +21,10 @@ from lib.evagg.svc import get_dotenv_settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=DeprecationWarning)  # want to suppress pandas warning
+
+
+def get_git_commit_hash():
+    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
 
 
 @cache
@@ -44,7 +50,7 @@ def get_paper_abstracts(pmids: dict[str, str]) -> dict[str, str]:
     return abstracts
 
 
-def update_prompt(prompt_loc, misclass_papers) -> str:
+async def update_prompt(prompt_loc, misclass_papers) -> str:
     """Update the prompt given misclassified papers (from irrelevant papers for now)."""
     # Open the prompt and read its contents
     with open(prompt_loc, "r") as f:
@@ -56,8 +62,8 @@ def update_prompt(prompt_loc, misclass_papers) -> str:
     client = OpenAIClient(settings)
 
     # Prompt the user to update the prompt
-    response = client.prompt_file(
-        user_prompt_file=("lib/evagg/content/prompts/update_paper_finding_prompt.txt"),
+    response = await client.prompt_file(
+        user_prompt_file=("lib/evagg/content/prompts/update_paper_finding_few_shot.txt"),
         params={"prompt": prompt, "dict_gene_titles_abstracts": misclass_papers},
     )
     return response
@@ -65,7 +71,6 @@ def update_prompt(prompt_loc, misclass_papers) -> str:
 
 def create_misclassified_dict(filepath) -> dict[str, dict[str, list[str]]]:
     """Create a dictionary of misclassified papers from the benchmarking results."""
-
     # TODO: Update to include missed papers and not just irrelevant ones."""
     # Initialize the irrelevant papers dictionary
     irrelevant_papers = defaultdict(dict)
@@ -107,10 +112,14 @@ def create_misclassified_dict(filepath) -> dict[str, dict[str, list[str]]]:
 
 # MAIN
 # Run LLM prompt assistant to improve paper finding
-main_prompt_file = "lib/evagg/content/prompts/paper_finding.txt"
-directory = f".out/paper_finding_results_{datetime.today().strftime('%Y-%m-%d')}/"
-updated_prompt_file = f"{directory}paper_finding_prompt_{datetime.today().strftime('%H:%M:%S')}.txt"
+main_prompt_file = "lib/evagg/content/prompts/paper_finding_few_shot.txt"
+
+directory = (
+    f".out/copilot_squared_paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/"
+)
 os.makedirs(directory, exist_ok=True)
+updated_prompt_file = f"{directory}paper_finding_few_shot_{datetime.today().strftime('%H:%M:%S')}.txt"
+
 
 # Load in the misclassified papers (irrelevant only for now)
 benchmark_results = directory + "/benchmarking_paper_finding_results_train.txt"
@@ -122,7 +131,10 @@ misclass_papers = create_misclassified_dict(benchmark_results)
 shutil.copyfile(main_prompt_file, updated_prompt_file)
 
 # Update the paper_finding.txt prompt based on the misclassified (i.e. irrelevant) papers (misclass_papers)
-response = update_prompt("lib/evagg/content/prompts/paper_finding.txt", json.dumps(misclass_papers))
+# response = await update_prompt("lib/evagg/content/prompts/paper_finding_few_shot.txt", json.dumps(misclass_papers))
+response = asyncio.run(
+    update_prompt("lib/evagg/content/prompts/paper_finding_few_shot.txt", json.dumps(misclass_papers))
+)
 
 # Save the new prompt to the main prompt file
 with open(main_prompt_file, "w") as f:

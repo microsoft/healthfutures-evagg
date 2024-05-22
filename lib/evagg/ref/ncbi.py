@@ -96,7 +96,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         """Extracts paper properties from an XML root element."""
         extractions = {
             "title": "./MedlineCitation/Article/ArticleTitle",
-            "abstract": "./MedlineCitation/Article/Abstract/AbstractText",
+            "abstract": "./MedlineCitation/Article/Abstract",
             "journal": "./MedlineCitation/Article/Journal/ISOAbbreviation",
             "first_author": "./MedlineCitation/Article/AuthorList/Author[1]/LastName",
             "pub_year": "./MedlineCitation/Article/Journal/JournalIssue/PubDate/Year",
@@ -105,7 +105,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         }
 
         def _get_xml_string(node: Any) -> str:
-            return "".join(node.itertext()) if node is not None else ""
+            return " ".join((" ".join(node.itertext())).split()) if node is not None else ""
 
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
