@@ -31,17 +31,11 @@ variant_factory:
   normalizer: "{{mutalyzer_client}}"
   variant_lookup_client: "{{ncbi_client}}"
   refseq_client: "{{refseq_client}}"
-
-di_factory: lib.evagg.SynchronousLocalApp
-queries:
-  di_factory: lib/config/queries_mgttrain_subset.yaml
-library:
+truthset_library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
   variant_factory: "{{variant_factory}}"
   paper_client: "{{ncbi_client}}"
-extractor:
-  di_factory: lib.evagg.TruthsetContentExtractor
   field_map: # input field name: output field name
     - pub_ev_id: pub_ev_id
     - gene: gene_symbol
@@ -61,6 +55,13 @@ extractor:
     - citation: citation
     - link: link
     - title: paper_title
+
+
+di_factory: lib.evagg.SynchronousLocalApp
+queries:
+  di_factory: lib/config/queries_mgttrain_subset.yaml
+library: "{{truthset_library}}"
+extractor: "{{truthset_library}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
 
