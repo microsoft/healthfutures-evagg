@@ -91,12 +91,6 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         super().__init__(web_client, settings)
 
-    def _join_abstract_sections(self, article: Any, path: str) -> Optional[str]:
-        """Join the text of all abstract sections into a single string."""
-        if (sections := article.findall(f"{path}/AbstractText")) is None:
-            return None
-        return " ".join("".join(s.itertext()) for s in sections)
-
     def _get_xml_props(self, article: Any) -> Dict[str, Any]:
         """Extracts paper properties from an XML root element."""
         extractions = {
@@ -109,14 +103,11 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             "pmcid": "./PubmedData/ArticleIdList/ArticleId[@IdType='pmc']",
         }
 
-        # self._join_abstract_sections(article,
-
         def _get_xml_string(node: Any) -> Optional[str]:
-            return "".join(node.itertext()) if node is not None else None
+            return " ".join((" ".join(node.itertext())).split()) if node is not None else None
 
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
-        props["abstract"] = self._join_abstract_sections(article, extractions["abstract"])
         return props
 
     def _get_license_props(self, pmcid: str) -> Dict[str, Any]:
