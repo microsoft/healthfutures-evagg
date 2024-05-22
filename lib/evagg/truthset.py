@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Sequence, Set
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import ICreateVariants, Paper
 
-from .interfaces import IGetPapers
+from .interfaces import IExtractFields, IGetPapers
 
 logger = logging.getLogger(__name__)
 
@@ -33,13 +33,21 @@ TRUTHSET_EVIDENCE_KEYS = [
 ]
 
 
-class TruthsetFileLibrary(IGetPapers):
+class TruthsetFileLibrary(IGetPapers, IExtractFields):
     """A class for retrieving papers from a truthset file."""
 
     _variant_factory: ICreateVariants
     _paper_client: IPaperLookupClient
 
-    def __init__(self, file_path: str, variant_factory: ICreateVariants, paper_client: IPaperLookupClient) -> None:
+    def __init__(
+        self,
+        file_path: str,
+        variant_factory: ICreateVariants,
+        paper_client: IPaperLookupClient,
+        field_map: Sequence[Dict[str, str]],
+    ) -> None:
+        # Turn list of single-element key-mapping dicts into a list of tuples.
+        self._field_map = [kv for [kv] in [kv.items() for kv in field_map]]
         self._file_path = file_path
         self._variant_factory = variant_factory
         self._paper_client = paper_client
@@ -106,3 +114,15 @@ class TruthsetFileLibrary(IGetPapers):
             # Filter to just the papers with variants that have evidence for the gene specified in the query.
             return [p for p in all_papers if gene_symbol in {v[0].gene_symbol for v in p.evidence.keys()}]
         return []
+
+    # IExtractFields
+    def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
+        """Extract properties from the evidence bags populated on the truthset Paper object."""
+
+        def _get_props(evidence: Dict[str, str]) -> Dict[str, str]:
+            """Extract the requested evidence properties from the paper and truthset evidence bag."""
+            return {out_key: (paper.props | evidence)[k] for k, out_key in self._field_map}
+
+        # For each evidence set in the paper that has a matching gene, extract the evidence properties.
+        extracted_fields = [_get_props(ev) for ev in paper.evidence.values() if ev["gene"] == gene_symbol]
+        return extracted_fields

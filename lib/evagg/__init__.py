@@ -1,7 +1,7 @@
 """The evagg core library."""
 
 from .app import SynchronousLocalApp
-from .content import PromptBasedContentExtractor, TruthsetContentExtractor
+from .content import PromptBasedContentExtractor
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
 from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached
@@ -26,5 +26,4 @@ __all__ = [
     # Content.
     "PromptBasedContentExtractor",
     "SimpleContentExtractor",
-    "TruthsetContentExtractor",
 ]
