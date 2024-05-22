@@ -1,11 +1,11 @@
 """The evagg core library."""
 
 from .app import SynchronousLocalApp
-from .content import PromptBasedContentExtractor, SimpleContentExtractor, TruthsetContentExtractor
+from .content import PromptBasedContentExtractor, TruthsetContentExtractor
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
 from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached, TruthsetFileLibrary
-from .simple import SimpleFileLibrary
+from .simple import SimpleContentExtractor, SimpleFileLibrary
 
 __all__ = [
     # Interfaces.
