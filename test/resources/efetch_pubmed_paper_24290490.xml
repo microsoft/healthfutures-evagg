@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
 <!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2024//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_240101.dtd">
 <PubmedArticleSet>
     <PubmedArticle>
@@ -46,9 +46,7 @@
                         <ForeName>N</ForeName>
                         <Initials>N</Initials>
                         <AffiliationInfo>
-                            <Affiliation>Laboratory of Genetic, Immunology and Human Pathologies,
-    Department of Biology, Faculty of Sciences, Tunis, Tunisia; Neurological Department, Charles
-    Nicolle Hospital, Tunis, Tunisia.</Affiliation>
+                            <Affiliation>Laboratory of Genetic, Immunology and Human Pathologies, Department of Biology, Faculty of Sciences, Tunis, Tunisia; Neurological Department, Charles Nicolle Hospital, Tunis, Tunisia.</Affiliation>
                         </AffiliationInfo>
                     </Author>
                     <Author ValidYN="Y">
@@ -56,8 +54,7 @@
                         <ForeName>N</ForeName>
                         <Initials>N</Initials>
                         <AffiliationInfo>
-                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva,
-    Switzerland.</Affiliation>
+                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva, Switzerland.</Affiliation>
                         </AffiliationInfo>
                     </Author>
                     <Author ValidYN="Y">
@@ -65,8 +62,7 @@
                         <ForeName>F</ForeName>
                         <Initials>F</Initials>
                         <AffiliationInfo>
-                            <Affiliation>Department of Biology, National University of Rwanda,
-    Rwanda.</Affiliation>
+                            <Affiliation>Department of Biology, National University of Rwanda, Rwanda.</Affiliation>
                         </AffiliationInfo>
                     </Author>
                     <Author ValidYN="Y">
@@ -74,8 +70,7 @@
                         <ForeName>M</ForeName>
                         <Initials>M</Initials>
                         <AffiliationInfo>
-                            <Affiliation>Department of Genetic Medicine and Laboratory, University
-    Hospitals of Geneva, Geneva, Switzerland.</Affiliation>
+                            <Affiliation>Department of Genetic Medicine and Laboratory, University Hospitals of Geneva, Geneva, Switzerland.</Affiliation>
                         </AffiliationInfo>
                     </Author>
                     <Author ValidYN="Y">
@@ -83,9 +78,7 @@
                         <ForeName>A</ForeName>
                         <Initials>A</Initials>
                         <AffiliationInfo>
-                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva,
-    Switzerland; Department of Genetic Medicine and Laboratory, University Hospitals of Geneva,
-    Geneva, Switzerland.</Affiliation>
+                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva, Switzerland; Department of Genetic Medicine and Laboratory, University Hospitals of Geneva, Geneva, Switzerland.</Affiliation>
                         </AffiliationInfo>
                     </Author>
                     <Author ValidYN="Y">
@@ -93,8 +86,7 @@
                         <ForeName>A</ForeName>
                         <Initials>A</Initials>
                         <AffiliationInfo>
-                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva,
-    Switzerland. Electronic address: annick.salzmann@hcuge.ch.</Affiliation>
+                            <Affiliation>Department of Psychiatry, University of Geneva, Geneva, Switzerland. Electronic address: annick.salzmann@hcuge.ch.</Affiliation>
                         </AffiliationInfo>
                     </Author>
                 </AuthorList>
