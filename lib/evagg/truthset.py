@@ -2,11 +2,13 @@ import csv
 import logging
 from collections import defaultdict
 from functools import cache
-from typing import Any, Dict, List, Sequence, Set
+from typing import Any, Dict, List, Optional, Sequence, Set
 
+from lib.evagg.content.fulltext import get_sections
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import ICreateVariants, Paper
 
+from .content import IFindObservations, Observation
 from .interfaces import IExtractFields, IGetPapers
 
 logger = logging.getLogger(__name__)
@@ -33,7 +35,7 @@ TRUTHSET_EVIDENCE_KEYS = [
 ]
 
 
-class TruthsetFileLibrary(IGetPapers, IExtractFields):
+class TruthsetFileLibrary(IGetPapers, IExtractFields, IFindObservations):
     """A class for retrieving papers from a truthset file."""
 
     _variant_factory: ICreateVariants
@@ -44,10 +46,10 @@ class TruthsetFileLibrary(IGetPapers, IExtractFields):
         file_path: str,
         variant_factory: ICreateVariants,
         paper_client: IPaperLookupClient,
-        field_map: Sequence[Dict[str, str]],
+        field_map: Optional[Sequence[Dict[str, str]]] = None,
     ) -> None:
         # Turn list of single-element key-mapping dicts into a list of tuples.
-        self._field_map = [kv for [kv] in [kv.items() for kv in field_map]]
+        self._field_map = [kv for [kv] in [kv.items() for kv in field_map or []]]
         self._file_path = file_path
         self._variant_factory = variant_factory
         self._paper_client = paper_client
@@ -118,6 +120,8 @@ class TruthsetFileLibrary(IGetPapers, IExtractFields):
     # IExtractFields
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         """Extract properties from the evidence bags populated on the truthset Paper object."""
+        if not self._field_map:
+            raise ValueError("TruthsetFileLibrary not configured for field extraction.")
 
         def _get_props(evidence: Dict[str, str]) -> Dict[str, str]:
             """Extract the requested evidence properties from the paper and truthset evidence bag."""
@@ -126,3 +130,46 @@ class TruthsetFileLibrary(IGetPapers, IExtractFields):
         # For each evidence set in the paper that has a matching gene, extract the evidence properties.
         extracted_fields = [_get_props(ev) for ev in paper.evidence.values() if ev["gene"] == gene_symbol]
         return extracted_fields
+
+    # IFindObservations
+    async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
+        """Identify all observations relevant to `gene_symbol` in `paper`.
+
+        `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
+        in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
+
+        The returned observation objects are logically "clinical" observations of a variant in a human. Each object
+        describes an individual in which a variant was observed along with the relevant text from the paper.
+        """
+        if not (paper.props.get("fulltext_xml")):
+            logger.info(f"Skipping {paper.id} because full text could not be retrieved")
+            return []
+
+        observations: List[Observation] = []
+        for (variant, individual), evidence in paper.evidence.items():
+
+            if variant.gene_symbol != gene_symbol:
+                logger.error(f"Unexpected gene symbol found for {paper}: {variant.gene_symbol}")
+                continue
+
+            variant_descriptions = [variant.hgvs_desc]
+            if evidence.get("paper_variant"):
+                variant_descriptions.append(evidence["paper_variant"])
+            if variant.protein_consequence:
+                variant_descriptions.append(variant.protein_consequence.hgvs_desc)
+
+            observations.append(
+                Observation(
+                    variant=variant,
+                    individual=individual,
+                    variant_descriptions=list(set(variant_descriptions)),
+                    patient_descriptions=[individual],
+                    texts=list(
+                        # Recreate the generator each time.
+                        # TODO, consider filtering to relevant sections.
+                        get_sections(paper.props.get("fulltext_xml"))
+                    ),
+                )
+            )
+
+        return observations

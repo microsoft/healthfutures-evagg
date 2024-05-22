@@ -43,16 +43,17 @@ llm_client:
   config:
     di_factory: lib.evagg.svc.get_dotenv_settings
     filter_prefix: "AZURE_OPENAI_"
+truthset_library:
+  di_factory: lib.evagg.TruthsetFileLibrary
+  file_path: data/v1/evidence_train_v1.tsv
+  variant_factory: "{{variant_factory}}"
+  paper_client: "{{ncbi_client}}"
 
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   di_factory: lib/config/queries_content_subset.yaml
-library:
-  di_factory: lib.evagg.TruthsetFileLibrary
-  file_path: data/v1/evidence_train_v1.tsv
-  variant_factory: "{{variant_factory}}"
-  paper_client: "{{ncbi_client}}"
+library: "{{truthset_library}}"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
@@ -76,8 +77,7 @@ extractor:
     web_client: "{{web_client}}"
   phenotype_fetcher:
     di_factory: lib.evagg.ref.PyHPOClient
-  observation_finder:
-    di_factory: lib.evagg.content.TruthsetObservationFinder
+  observation_finder: "{{truthset_library}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
   output_path: .out/content_benchmark.tsv

@@ -371,7 +371,7 @@ if precision < 1 or recall < 1:
     printable_df = merged_df.reset_index()  #
     printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
 else:
-    print("All observations found. This is likely because the TruthsetObservationFinder was used.")
+    print("All observations found. This is likely because the Truthset observation finder was used.")
     # printable_df[
     #     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
     # ].sort_values(["gene", "paper_id", "hgvs_desc"])
