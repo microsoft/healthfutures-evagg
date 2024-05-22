@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 import pytest
 
-from lib.evagg import RareDiseaseFileLibrary, RemoteFileLibrary, SimpleFileLibrary
+from lib.evagg import RareDiseaseFileLibrary, SimpleFileLibrary
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
@@ -21,40 +21,6 @@ def mock_paper_client(mock_client: type) -> IPaperLookupClient:
 @pytest.fixture
 def mock_llm_client(mock_client: type) -> IPromptClient:
     return mock_client(IPromptClient)
-
-
-def test_remote_init(mock_paper_client: Any) -> None:
-    paper_client = mock_paper_client()
-    library = RemoteFileLibrary(paper_client)
-    assert library._paper_client == paper_client
-
-
-def test_remote_no_paper(mock_paper_client: Any) -> None:
-    paper_client = mock_paper_client([])
-    query = {"gene_symbol": "gene", "retmax": 1}
-    result = RemoteFileLibrary(paper_client).get_papers(query)
-    assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.call_count() == 1
-    assert not result
-
-
-def test_remote_single_paper(mock_paper_client: Any) -> None:
-    paper = Paper(
-        id="10.1016/j.ajhg.2016.05.014",
-        citation="Makrythanasis et al. (2016) AJHG",
-        abstract="We report on five individuals who presented with intellectual disability and other...",
-        pmid="27392077",
-        pmcid="PMC5005447",
-        can_access=True,
-    )
-    paper_client = mock_paper_client(["27392077"], paper)
-    query = {"gene_symbol": "gene", "retmax": 1}
-    result = RemoteFileLibrary(paper_client).get_papers(query)
-    # TODO: go back once fetch is fixed:
-    assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.last_call("fetch") == ("27392077",)
-    assert paper_client.call_count() == 2
-    assert result and len(result) == 1 and result.pop() == paper
 
 
 def test_rare_disease_init(mock_paper_client: Any, mock_llm_client: Any) -> None:
@@ -97,61 +63,80 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
     paper_client = mock_paper_client([rare_disease_paper.props["pmid"]], rare_disease_paper)
     llm_client = mock_llm_client()
     llm_client._responses = iter(
-        [json.dumps({"paper_category": "rare disease"}), json.dumps({"paper_category": "rare disease"})]
+        [
+            json.dumps({"disease_category": "rare disease"}),
+            json.dumps({"disease_category": "rare disease"}),
+            json.dumps({"disease_category": "rare disease"}),
+        ]
     )
     query = {"gene_symbol": "gene"}
-    result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
+    allowed_categories = ["rare disease", "other"]
+    result = RareDiseaseFileLibrary(paper_client, llm_client, allowed_categories).get_papers(query)
+    print("result", result)
     assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.last_call("fetch") == ("33057194", {"include_fulltext": True})
+    assert paper_client.last_call("fetch") == ("37187958", {"include_fulltext": True})
     assert paper_client.call_count() == 2
     assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
     assert llm_client.last_call("prompt_file")[2] == {
         "params": {
-            "abstract": "We report on ...",
-            "title": "Evidence for 28 genetic disorders discovered by combining healthcare and research data",
+            "abstract": "The endoplasmic reticulum ...",
+            "title": "Novel compound heterozygous variants in EMC1 associated with global "
+            "developmental delay: a lesson from a non-silent synonymous exonic mutation",
         }
     }
     assert llm_client.last_call("prompt_file")[3] == {
         "prompt_settings": {"prompt_tag": "paper_category", "temperature": 0.8},
     }
-
-    assert llm_client.call_count() == 1
+    assert llm_client.call_count() == 3
     assert len(result) == 1
     assert result and result[0] == rare_disease_paper
 
 
 def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
-    non_rare_disease_paper = Paper(**json_load("non_rare_disease_paper.json"))
-    ids = [rare_disease_paper.props["pmid"], non_rare_disease_paper.props["pmid"]]
-    paper_client = mock_paper_client(ids, rare_disease_paper, non_rare_disease_paper)
+    other_paper = Paper(**json_load("other_paper.json"))
+    ids = [rare_disease_paper.props["pmid"], other_paper.props["pmid"]]
+    paper_client = mock_paper_client(ids, rare_disease_paper, other_paper)
+    allowed_categories = ["rare disease", "other"]
     llm_client = mock_llm_client(
         json.dumps({"paper_category": "rare disease"}),
-        json.dumps({"paper_category": "non-rare disease"}),
+        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "other"}),
+        json.dumps({"paper_category": "other"}),
+        json.dumps({"paper_category": "other"}),
     )
     query = {"gene_symbol": "gene"}
-    result = RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
+    result = RareDiseaseFileLibrary(paper_client, llm_client, allowed_categories).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
-    assert paper_client.last_call("fetch") == (non_rare_disease_paper.props["pmid"], {"include_fulltext": True})
+    assert paper_client.last_call("fetch") == (other_paper.props["pmid"], {"include_fulltext": True})
     assert llm_client.last_call("prompt_file")[2] == {
         "params": {
-            "abstract": "We report on ...",
-            "title": "Pancreatic cancer-derived exosomal microRNA-19a induces β-cell dysfunction by targeting ADCY1 and EPAC2",
+            "abstract": "The endoplasmic reticulum ...",
+            "title": "Novel compound heterozygous variants in EMC1 associated with global developmental delay: a lesson from a non-silent synonymous exonic mutation",
         }
     }
-    assert result and len(result) == 1
+    assert result and len(result) == 2
     assert result[0] == rare_disease_paper
+
+    # Remove all paper_finding_few_shot_*.txt from lib/evagg/content/prompts
+    for file in os.listdir("lib/evagg/content/prompts"):
+        if file.startswith("paper_finding_few_shot_"):
+            os.remove(os.path.join("lib/evagg/content/prompts", file))
 
 
 async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
-    # TODO test tie-breaking
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
-    non_rare_disease_paper = Paper(**json_load("non_rare_disease_paper.json"))
-    ids = [rare_disease_paper.props["pmid"], non_rare_disease_paper.props["pmid"]]
-    paper_client = mock_paper_client(ids, rare_disease_paper, non_rare_disease_paper)
+    other_paper = Paper(**json_load("other_paper.json"))
+    ids = [rare_disease_paper.props["pmid"], other_paper.props["pmid"]]
+    paper_client = mock_paper_client(ids, rare_disease_paper, other_paper)
     llm_client = mock_llm_client(
         json.dumps({"paper_category": "rare disease"}),
-        json.dumps({"paper_category": "non-rare disease"}),
+        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "other"}),
+        json.dumps({"paper_category": "other"}),
+        json.dumps({"paper_category": "other"})
     )
     query = {"gene_symbol": "gene"}
     result = await RareDiseaseFileLibrary(paper_client, llm_client)._get_all_papers(query)
@@ -159,7 +144,12 @@ async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_clie
     assert paper_client.last_call("fetch") == ("34512170", {"include_fulltext": True})
     assert paper_client.call_count() == 3
     assert result and len(result) == 2
-    assert result == [rare_disease_paper, non_rare_disease_paper]
+    assert result == [rare_disease_paper, other_paper]
+    
+    # Remove all paper_finding_few_shot_*.txt from lib/evagg/content/prompts
+    for file in os.listdir("lib/evagg/content/prompts"):
+        if file.startswith("paper_finding_few_shot_"):
+            os.remove(os.path.join("lib/evagg/content/prompts", file))
 
 
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:

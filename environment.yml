@@ -18,6 +18,7 @@ dependencies:
   - ipywidgets # Support for widgets in jupyter notebooks.
   - matplotlib
   - seaborn
+  - plotly
 
   # General utilities.
   - pydantic==1.10.*

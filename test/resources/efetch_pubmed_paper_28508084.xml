@@ -1,0 +1,470 @@
+<?xml version="1.0" ?>
+<!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2024//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_240101.dtd">
+<PubmedArticleSet>
+    <PubmedArticle>
+        <MedlineCitation Status="PubMed-not-MEDLINE" Owner="NLM">
+            <PMID Version="1">28508084</PMID>
+            <DateRevised>
+                <Year>2024</Year>
+                <Month>02</Month>
+                <Day>14</Day>
+            </DateRevised>
+            <Article PubModel="Electronic-eCollection">
+                <Journal>
+                    <ISSN IssnType="Print">2376-7839</ISSN>
+                    <JournalIssue CitedMedium="Print">
+                        <Volume>3</Volume>
+                        <Issue>3</Issue>
+                        <PubDate>
+                            <Year>2017</Year>
+                            <Month>Jun</Month>
+                        </PubDate>
+                    </JournalIssue>
+                    <Title>Neurology. Genetics</Title>
+                    <ISOAbbreviation>Neurol Genet</ISOAbbreviation>
+                </Journal>
+                <ArticleTitle>Clinicopathologic and molecular spectrum of <i>RNASEH1</i>-related mitochondrial disease.</ArticleTitle>
+                <Pagination>
+                    <StartPage>e149</StartPage>
+                    <MedlinePgn>e149</MedlinePgn>
+                </Pagination>
+                <ELocationID EIdType="pii" ValidYN="Y">e149</ELocationID>
+                <ELocationID EIdType="doi" ValidYN="Y">10.1212/NXG.0000000000000149</ELocationID>
+                <Abstract>
+                    <AbstractText Label="OBJECTIVE" NlmCategory="OBJECTIVE">Pathologic ribonuclease H1 (RNase H1) causes aberrant mitochondrial DNA (mtDNA) segregation and is associated with multiple mtDNA deletions. We aimed to determine the prevalence of RNase H1 gene (<i>RNASEH1</i>) mutations among patients with mitochondrial disease and establish clinically meaningful genotype-phenotype correlations.</AbstractText>
+                    <AbstractText Label="METHODS" NlmCategory="METHODS">
+                        <i>RNASEH1</i> was analyzed in patients with (1) multiple deletions/depletion of muscle mtDNA and (2) mendelian progressive external ophthalmoplegia (PEO) with neuropathologic evidence of mitochondrial dysfunction, but no detectable multiple deletions/depletion of muscle mtDNA. Clinicopathologic and molecular evaluation of the newly identified and previously reported patients harboring <i>RNASEH1</i> mutations was subsequently undertaken.</AbstractText>
+                    <AbstractText Label="RESULTS" NlmCategory="RESULTS">Pathogenic c.424G&gt;A p.Val142Ile <i>RNASEH1</i> mutations were detected in 3 pedigrees among the 74 probands screened. Given that all 3 families had Indian ancestry, <i>RNASEH1</i> genetic analysis was undertaken in 50 additional Indian probands with variable clinical presentations associated with multiple mtDNA deletions, but no further <i>RNASEH1</i> mutations were confirmed. <i>RNASEH1</i>-related mitochondrial disease was characterized by PEO (100%), cerebellar ataxia (57%), and dysphagia (50%). The ataxia neuropathy spectrum phenotype was observed in 1 patient. Although the c.424G&gt;A p.Val142Ile mutation underpins all reported <i>RNASEH1</i>-related mitochondrial disease, haplotype analysis suggested an independent origin, rather than a founder event, for the variant in our families.</AbstractText>
+                    <AbstractText Label="CONCLUSIONS" NlmCategory="CONCLUSIONS">In our cohort, <i>RNASEH1</i> mutations represent the fourth most common cause of adult mendelian PEO associated with multiple mtDNA deletions, following mutations in <i>POLG</i>,                        <i>RRM2B</i>, and <i>TWNK</i>.                        <i>RNASEH1</i> genetic analysis should also be considered in all patients with <i>POLG</i>-negative ataxia neuropathy spectrum. The pathophysiologic mechanisms by which the c.424G&gt;A p.Val142Ile mutation impairs human RNase H1 warrant further investigation.</AbstractText>
+                </Abstract>
+                <AuthorList CompleteYN="Y">
+                    <Author ValidYN="Y">
+                        <LastName>Bugiardini</LastName>
+                        <ForeName>Enrico</ForeName>
+                        <Initials>E</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Poole</LastName>
+                        <ForeName>Olivia V</ForeName>
+                        <Initials>OV</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Manole</LastName>
+                        <ForeName>Andreea</ForeName>
+                        <Initials>A</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Pittman</LastName>
+                        <ForeName>Alan M</ForeName>
+                        <Initials>AM</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Horga</LastName>
+                        <ForeName>Alejandro</ForeName>
+                        <Initials>A</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Hargreaves</LastName>
+                        <ForeName>Iain</ForeName>
+                        <Initials>I</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Woodward</LastName>
+                        <ForeName>Cathy E</ForeName>
+                        <Initials>CE</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Sweeney</LastName>
+                        <ForeName>Mary G</ForeName>
+                        <Initials>MG</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Holton</LastName>
+                        <ForeName>Janice L</ForeName>
+                        <Initials>JL</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Taanman</LastName>
+                        <ForeName>Jan-Willem</ForeName>
+                        <Initials>JW</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Plant</LastName>
+                        <ForeName>Gordon T</ForeName>
+                        <Initials>GT</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Poulton</LastName>
+                        <ForeName>Joanna</ForeName>
+                        <Initials>J</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Zeviani</LastName>
+                        <ForeName>Massimo</ForeName>
+                        <Initials>M</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Ghezzi</LastName>
+                        <ForeName>Daniele</ForeName>
+                        <Initials>D</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Taylor</LastName>
+                        <ForeName>John</ForeName>
+                        <Initials>J</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Smith</LastName>
+                        <ForeName>Conrad</ForeName>
+                        <Initials>C</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Fratter</LastName>
+                        <ForeName>Carl</ForeName>
+                        <Initials>C</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Kanikannan</LastName>
+                        <ForeName>Meena A</ForeName>
+                        <Initials>MA</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Paramasivam</LastName>
+                        <ForeName>Arumugam</ForeName>
+                        <Initials>A</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Thangaraj</LastName>
+                        <ForeName>Kumarasamy</ForeName>
+                        <Initials>K</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Spinazzola</LastName>
+                        <ForeName>Antonella</ForeName>
+                        <Initials>A</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Holt</LastName>
+                        <ForeName>Ian J</ForeName>
+                        <Initials>IJ</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Houlden</LastName>
+                        <ForeName>Henry</ForeName>
+                        <Initials>H</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Hanna</LastName>
+                        <ForeName>Michael G</ForeName>
+                        <Initials>MG</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                    <Author ValidYN="Y">
+                        <LastName>Pitceathly</LastName>
+                        <ForeName>Robert D S</ForeName>
+                        <Initials>RDS</Initials>
+                        <AffiliationInfo>
+                            <Affiliation>MRC Centre for Neuromuscular Diseases (E.B., O.V.P., A.M., A.H., J.L.H., H.H., M.G.H., R.D.S.P.), UCL Institute of Neurology and National Hospital for Neurology and Neurosurgery; Department of Molecular Neuroscience (A.M., A.M.P., J.L.H., H.H., M.G.H.), Division of Neuropathology (J.L.H.), Department of Clinical Neuroscience (J.-W.T., A.S., I.J.H.), UCL Institute of Neurology; Neurometabolic Unit (I.H.), Neurogenetics Unit (C.E.W., M.G.S.), Department of Neuro-ophthalmology (G.T.P.), National Hospital for Neurology and Neurosurgery, London; Nuffield Department of Obstetrics and Gynaecology (J.P.), University of Oxford; MRC-Mitochondrial Biology Unit (M.Z.), Cambridge, UK; Unit of Molecular Neurogenetics (D.G.), Fondazione IRCCS Istituto Neurologico "Carlo Besta," Milan, Italy; Oxford Medical Genetics Laboratories (J.T., C.S., C.F.), Oxford University Hospitals NHS Foundation Trust, Churchill Hospital, UK; Department of Neurology (M.A.K.), Nizam's Institute of Medical Sciences; CSIR-Centre for Cellular and Molecular Biology (A.P., K.T.), Hyderabad, Telangana, India; MRC Mill Hill Laboratory (I.J.H.), London, UK; Biodonostia Research Institute (I.J.H.), San Sebasti&#xe1;n, Spain; and Department of Basic and Clinical Neuroscience (R.D.S.P.), Institute of Psychiatry, Psychology and Neuroscience, King's College London, UK.</Affiliation>
+                        </AffiliationInfo>
+                    </Author>
+                </AuthorList>
+                <Language>eng</Language>
+                <GrantList CompleteYN="Y">
+                    <Grant>
+                        <GrantID>MR/K000608/1</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MR/J010448/1</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>G108/638</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MC_PC_13029/2</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>G0800674</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MR/J004758/1</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MC_UP_1202/14</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MC_UP_1002/1</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>G0601943</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MC_U105663140</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MC_UU_00015/5</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>G0802760</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>G1001253</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MC_UU_00015/8</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                    <Grant>
+                        <GrantID>MC_PC_13029</GrantID>
+                        <Acronym>MRC_</Acronym>
+                        <Agency>Medical Research Council</Agency>
+                        <Country>United Kingdom</Country>
+                    </Grant>
+                </GrantList>
+                <PublicationTypeList>
+                    <PublicationType UI="D016428">Journal Article</PublicationType>
+                </PublicationTypeList>
+                <ArticleDate DateType="Electronic">
+                    <Year>2017</Year>
+                    <Month>05</Month>
+                    <Day>02</Day>
+                </ArticleDate>
+            </Article>
+            <MedlineJournalInfo>
+                <Country>United States</Country>
+                <MedlineTA>Neurol Genet</MedlineTA>
+                <NlmUniqueID>101671068</NlmUniqueID>
+                <ISSNLinking>2376-7839</ISSNLinking>
+            </MedlineJournalInfo>
+        </MedlineCitation>
+        <PubmedData>
+            <History>
+                <PubMedPubDate PubStatus="received">
+                    <Year>2016</Year>
+                    <Month>12</Month>
+                    <Day>19</Day>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="accepted">
+                    <Year>2017</Year>
+                    <Month>3</Month>
+                    <Day>13</Day>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="entrez">
+                    <Year>2017</Year>
+                    <Month>5</Month>
+                    <Day>17</Day>
+                    <Hour>6</Hour>
+                    <Minute>0</Minute>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="pubmed">
+                    <Year>2017</Year>
+                    <Month>5</Month>
+                    <Day>17</Day>
+                    <Hour>6</Hour>
+                    <Minute>0</Minute>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="medline">
+                    <Year>2017</Year>
+                    <Month>5</Month>
+                    <Day>17</Day>
+                    <Hour>6</Hour>
+                    <Minute>1</Minute>
+                </PubMedPubDate>
+                <PubMedPubDate PubStatus="pmc-release">
+                    <Year>2017</Year>
+                    <Month>5</Month>
+                    <Day>2</Day>
+                </PubMedPubDate>
+            </History>
+            <PublicationStatus>epublish</PublicationStatus>
+            <ArticleIdList>
+                <ArticleId IdType="pubmed">28508084</ArticleId>
+                <ArticleId IdType="pmc">PMC5413961</ArticleId>
+                <ArticleId IdType="doi">10.1212/NXG.0000000000000149</ArticleId>
+                <ArticleId IdType="pii">NG2016004481</ArticleId>
+            </ArticleIdList>
+            <ReferenceList>
+                <Reference>
+                    <Citation>DiMauro S, Schon EA, Carelli V, Hirano M. The clinical maze of mitochondrial neurology. Nat Rev Neurol 2013;9:429&#x2013;444.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC3959773</ArticleId>
+                        <ArticleId IdType="pubmed">23835535</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Reyes A, Melchionda L, Nasca A, et al. . RNASEH1 mutations impair mtDNA replication and cause adult-onset mitochondrial encephalomyopathy. Am J Hum Genet 2015;97:186&#x2013;193.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC4572567</ArticleId>
+                        <ArticleId IdType="pubmed">26094573</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Keller W, Crouch R. Degradation of DNA RNA hybrids by ribonuclease H and DNA polymerases of cellular and viral origin. Proc Natl Acad Sci USA 1972;69:3360&#x2013;3364.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC389771</ArticleId>
+                        <ArticleId IdType="pubmed">4343966</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Cerritelli SM, Frolova EG, Feng C, Grinberg A, Love PE, Crouch RJ. Failure to produce mitochondrial DNA results in embryonic lethality in Rnaseh1 null mice. Mol Cell 2003;11:807&#x2013;815.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pubmed">12667461</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Holmes JB, Akman G, Wood SR, et al. . Primer retention owing to the absence of RNase H1 is catastrophic for mitochondrial DNA replication. Proc Natl Acad Sci USA 2015;112:9334&#x2013;9339.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC4522766</ArticleId>
+                        <ArticleId IdType="pubmed">26162680</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Akman G, Desai R, Bailey LJ, et al. . Pathological ribonuclease H1 causes R-loop depletion and aberrant DNA segregation in mitochondria. Proc Natl Acad Sci USA 2016;113:E4276&#x2013;E4285.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC4968715</ArticleId>
+                        <ArticleId IdType="pubmed">27402764</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Lieber DS, Calvo SE, Shanahan K, et al. . Targeted exome sequencing of suspected mitochondrial disorders. Neurology 2013;80:1762&#x2013;1770.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC3719425</ArticleId>
+                        <ArticleId IdType="pubmed">23596069</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Lek M, Karczewski KJ, Minikel EV, et al. . Analysis of protein-coding genetic variation in 60,706 humans. Nature 2016;536:285&#x2013;291.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC5018207</ArticleId>
+                        <ArticleId IdType="pubmed">27535533</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Lax NZ, Whittaker RG, Hepplewhite PD, et al. . Sensory neuronopathy in patients harbouring recessive polymerase gamma mutations. Brain 2012;135:62&#x2013;71.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC3267986</ArticleId>
+                        <ArticleId IdType="pubmed">22189570</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+                <Reference>
+                    <Citation>Metspalu M, Romero IG, Yunusbayev B, et al. . Shared and unique components of human population structure and genome-wide signals of positive selection in South Asia. Am J Hum Genet 2011;89:731&#x2013;744.</Citation>
+                    <ArticleIdList>
+                        <ArticleId IdType="pmc">PMC3234374</ArticleId>
+                        <ArticleId IdType="pubmed">22152676</ArticleId>
+                    </ArticleIdList>
+                </Reference>
+            </ReferenceList>
+        </PubmedData>
+    </PubmedArticle>
+</PubmedArticleSet>
