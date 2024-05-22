@@ -7,14 +7,15 @@ variant possessed by this patient for which I want you to determine the mode of 
 the following ways: {{$variant_descriptions}}.
 
 The options for variant inheritance available for you to choose from are: "maternally inherited", 
-"paternally inherited", "inherited", "de novo", "de novo suspected", and "unknown". Choose only one of these options in
-your response.
+"paternally inherited", "maternally and paternally inherited homozygous", "de novo", and "unknown". Choose only one of 
+these options in your response. Do not choose any other options other than these. If none of these match the variant 
+inheritance pattern, respond "unknown".
 
 -- Output format --
 
 Provide your response as a valid JSON object, using the following format.
 {
-  "variant_inheritance": "maternally inherited" | "paternally inherited" | "inherited" | "de novo" | "de novo suspected" | "unknown"
+  "variant_inheritance": "maternally inherited" | "paternally inherited" | "maternally and paternally inherited homozygous" | "de novo" | "unknown"
 }
 
 -- Begin paper text --
