@@ -160,14 +160,30 @@ class OpenAIClient(IPromptClient):
     async def embeddings(
         self, inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None
     ) -> Dict[str, List[float]]:
-        settings = {"model": "text-embedding-ada-002", **(embedding_settings or {})}
+        settings = {"model": "text-embedding-ada-002-v2", **(embedding_settings or {})}
 
         embeddings = {}
 
         async def _run_single_embedding(input: str) -> int:
-            result: CreateEmbeddingResponse = await self._client.embeddings.create(input=[input], **settings)
-            embeddings[input] = result.data[0].embedding
-            return result.usage.prompt_tokens
+            connection_errors = 0
+            while True:
+                try:
+                    result: CreateEmbeddingResponse = await self._client.embeddings.create(
+                        input=[input], encoding_format="float", **settings
+                    )
+                    embeddings[input] = result.data[0].embedding
+                    return result.usage.prompt_tokens
+                except (openai.RateLimitError, openai.InternalServerError) as e:
+                    logger.warning(f"Rate limit error on embeddings: {e}")
+                    await asyncio.sleep(1)
+                except (openai.APIConnectionError, openai.APITimeoutError):
+                    if connection_errors > 2:
+                        if self._config.endpoint.startswith("http://localhost"):
+                            logger.error("Azure OpenAI API unreachable - have you started the proxy?")
+                        raise
+                    logger.warning("Connectivity error on embeddings, retrying...")
+                    connection_errors += 1
+                    await asyncio.sleep(1)
 
         start_overall = time.time()
         tokens = await asyncio.gather(*[_run_single_embedding(input) for input in inputs])

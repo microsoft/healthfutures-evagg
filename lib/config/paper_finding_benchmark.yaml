@@ -2,7 +2,7 @@
 log:
   di_factory: lib.evagg.svc.init_logger
   prompts_to_file: true
-  console_to_file: true
+  prompts_to_console: false
   # level: "DEBUG"
   # exclude_modules: [lib.evagg.svc.*]
   # include_modules: [lib.evagg.svc.web]
@@ -40,11 +40,11 @@ library:
     config:
       di_factory: lib.evagg.svc.get_dotenv_settings
       filter_prefix: "AZURE_OPENAI_"
-  allowed_categories:
+  allowed_categories: 
     - "rare disease"
-    - "non-rare disease"
-    - "other"
-    - "conflicting"
+  example_types:
+    - positive 
+    - negative
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields:
