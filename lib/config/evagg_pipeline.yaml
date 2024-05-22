@@ -63,8 +63,8 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
-    - individual_id
     - transcript
+    - individual_id
     - phenotype
     - variant_inheritance
     - variant_type
