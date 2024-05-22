@@ -105,7 +105,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         }
 
         def _get_xml_string(node: Any) -> str:
-            return " ".join((" ".join(node.itertext())).split()) if node is not None else ""
+            return " ".join(("".join(node.itertext())).split()) if node is not None else ""
 
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
         return props
