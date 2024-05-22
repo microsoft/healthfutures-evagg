@@ -28,11 +28,11 @@ from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 # %% Constants.
 
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "pipeline_benchmark.tsv")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
+CONTENT_COLUMNS = {"zygosity", "variant_inheritance", "variant_type"}
 # CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
