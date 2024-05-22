@@ -63,9 +63,9 @@ extractor:
     - transcript
     - individual_id
     # - phenotype
-    - zygosity
+    # - zygosity
     - variant_inheritance
-    - variant_type
+    # - variant_type
     # - functional_study
     # - gnomad_frequency
     # - study_type
