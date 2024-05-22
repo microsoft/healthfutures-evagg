@@ -45,4 +45,5 @@ class TableOutputWriter(IWriteOutput):
             assert line.keys() == field_names
             writer.writerow(line.values())
 
-        output_stream.close()
+        if self._path:
+            output_stream.close()
