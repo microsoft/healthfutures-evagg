@@ -6,17 +6,27 @@ The patient of interest may be referred to by any of the following identifiers: 
 variant possessed by this patient for which I want you to determine the mode of inheritance may be described in any of
 the following ways: {{$variant_descriptions}}.
 
-The options for variant inheritance available for you to choose from are: "maternally inherited", 
-"paternally inherited", "maternally and paternally inherited homozygous", "de novo", and "unknown". Choose only one of 
-these options in your response. Do not choose any other options other than these. If none of these match the variant 
-inheritance pattern, respond "unknown".
+The only options for variant inheritance available for you to choose from are: "inherited", "de novo", and "unknown". 
+Choose only one of  these options in your response. Do not choose any other options other than these. 
+
+- "inherited" refers to cases where the variant in question was inherited by the patient from one or both of their 
+parents.
+
+- "de novo" refers to cases where the variant in question was not inherited by either parent, but instead arose
+through the process of aberrant DNA replication during cell division.
+
+- "unknown" should be provided as your response when there is insufficient information available to determine whether
+the variant inheritance is one of the other two types.
 
 -- Output format --
 
 Provide your response as a valid JSON object, using the following format.
 {
-  "variant_inheritance": "maternally inherited" | "paternally inherited" | "maternally and paternally inherited homozygous" | "de novo" | "unknown"
+  "variant_inheritance": "inherited" | "de novo" | "unknown"
 }
+
+Your response should ALWAYS be a valid json object with the key "variant_inheritance" and a value that is one of 
+"inherited", "de novo", or "unknown".
 
 -- Begin paper text --
 

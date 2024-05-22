@@ -32,7 +32,7 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_ben
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"zygosity", "variant_inheritance", "variant_type"}
+CONTENT_COLUMNS = {"variant_inheritance"}
 # CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
@@ -126,6 +126,11 @@ if "variant_type" in CONTENT_COLUMNS:
             lambda x: "frameshift" if x in ["frameshift insertion", "frameshift deletion"] else x
         )
 
+if "variant_inheritance" in CONTENT_COLUMNS:
+    # For both dataframes, recode "maternally inherited", "paternally inherited", "maternally and paternally inherited homozygous" to "inherited"
+    orig = ["maternally inherited", "paternally inherited", "maternally and paternally inherited homozygous"]
+    for df in [truth_df, output_df]:
+        df["variant_inheritance"] = df["variant_inheritance"].apply(lambda x: "inherited" if x in orig else x)
 
 # %% Restrict the truth set to the genes in the output set.
 if RESTRICT_TRUTH_GENES_TO_OUTPUT:
@@ -527,9 +532,7 @@ plot_config = {
         "options": [
             "unknown",
             "de novo",
-            "maternally inherited",
-            "paternally inherited",
-            "maternally and paternally inherited homozygous",
+            "inherited",
             "failed",
         ],
     },
