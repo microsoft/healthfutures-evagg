@@ -161,7 +161,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
             example_types (Sequence[str], optional): The types of examples to use in few shot setting. These can be
-                           positive or positive and negative examples. Default is just positive.
+            positive or positive and negative examples. Default is just positive.
         """
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
@@ -206,7 +206,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # If the paper doesn't fit in the other categories, add it to the other category.
         return "other"
 
-    async def _get_llm_category_few_shot(self, paper: Paper, gene: str) -> str:
+    async def _get_llm_category(self, paper: Paper, gene: str) -> str:
         """Categorize papers based on LLM prompts."""
         # Load the few shot examples
         unique_file_name, _ = self._load_few_shot_examples(paper, gene, "few_shot")
@@ -326,8 +326,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Categorize papers with multiple strategies and return the counts of each category."""
         # Categorize the paper by both keyword and LLM prompt.
         keyword_cat = self._get_keyword_category(paper)
-
-        llm_cat = await self._get_llm_category_few_shot(paper, gene)
+        llm_cat = await self._get_llm_category(paper, gene)
 
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
@@ -335,13 +334,9 @@ class RareDiseaseFileLibrary(IGetPapers):
             return keyword_cat
 
         counts: Dict[str, int] = {}
-
-        llm_tiebreakers = await asyncio.gather(
-            self._get_llm_category_few_shot(paper, gene), self._get_llm_category_few_shot(paper, gene)
-        )
-
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
-        for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
+        tiebreakers = await asyncio.gather(self._get_llm_category(paper, gene), self._get_llm_category(paper, gene))
+        for category in [keyword_cat, llm_cat, *tiebreakers]:
             counts[category] = counts.get(category, 0) + 1
         assert len(counts) > 1 and sum(counts.values()) == 4
 
