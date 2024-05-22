@@ -1,0 +1,12 @@
+Given this paper content below, your task is to categorize the paper into "rare disease" or "other". Please explain the process that you would go through to correctly classify papers into "rare disease" or "other".
+
+You can use all of the paper content provided to explain how you would go about determinating the category ("rare disease" or "other").
+
+When considering the provided criteria, remember to focus on the paper content without overfitting to specific examples. The goal is to ensure high precision and recall for identifying rare disease papers in general.
+
+Below is the paper content that you have access to:
+
+Title: {{$title}}
+Abstract: {{$abstract}}
+
+Provide your process response clearly and precisely, in sentence and/or paragraph format.
