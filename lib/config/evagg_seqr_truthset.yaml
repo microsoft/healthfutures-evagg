@@ -1,6 +1,7 @@
 log:
   di_factory: lib.evagg.svc.init_logger
   level: INFO
+
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
   web_client:
@@ -10,7 +11,8 @@ ncbi_client:
       filter_prefix: "EVAGG_CONTENT_CACHE_"
   settings:
     di_factory: lib.evagg.svc.get_dotenv_settings
-    filter_prefix: "NCBI_EUTILS_"  
+    filter_prefix: "NCBI_EUTILS_" 
+
 mutalyzer_client:
   di_factory: lib.evagg.ref.MutalyzerClient
   web_client:
@@ -31,32 +33,16 @@ variant_factory:
   normalizer: "{{mutalyzer_client}}"
   variant_lookup_client: "{{ncbi_client}}"
   refseq_client: "{{refseq_client}}"
+
 truthset_library:
   di_factory: lib.evagg.TruthsetFileLibrary
   file_path: data/v1/evidence_train_v1.tsv
   variant_factory: "{{variant_factory}}"
   paper_client: "{{ncbi_client}}"
-  field_map: # input field name: output field name
-    - pub_ev_id: pub_ev_id
-    - gene: gene_symbol
-    - id: paper_id
-    - hgvs_c: hgvs_c
-    - hgvs_p: hgvs_p
-    - paper_variant: variant_text
-    - transcript: transcript
-    - gnomad_frequency: gnomad_frequency
-    - individual_id: individual_id
-    - phenotype: phenotype
-    - zygosity: zygosity
-    - variant_inheritance: variant_inheritance
-    - variant_type: variant_type
-    - study_type: study_type
-    - functional_study: functional_study
-    - citation: citation
-    - link: link
-    - title: paper_title
+  fields:
+    di_factory: lib/config/fields_seqr.yaml
 
-
+# Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
   di_factory: lib/config/queries_mgttrain_subset.yaml
