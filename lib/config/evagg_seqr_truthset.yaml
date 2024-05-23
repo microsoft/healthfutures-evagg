@@ -40,12 +40,12 @@ truthset_library:
   variant_factory: "{{variant_factory}}"
   paper_client: "{{ncbi_client}}"
   fields:
-    di_factory: lib/config/fields_seqr.yaml
+    di_factory: lib/config/fields/seqr.yaml
 
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib/config/queries_mgttrain_subset.yaml
+  di_factory: lib/config/queries/mgttrain_subset.yaml
 library: "{{truthset_library}}"
 extractor: "{{truthset_library}}"
 writer:

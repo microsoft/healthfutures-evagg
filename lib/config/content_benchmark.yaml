@@ -52,12 +52,12 @@ truthset_library:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  di_factory: lib/config/queries_content_subset.yaml
+  di_factory: lib/config/queries/content_subset.yaml
 library: "{{truthset_library}}"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
-    di_factory: lib/config/fields_content_benchmark.yaml
+    di_factory: lib/config/fields/content_subset.yaml
   llm_client: "{{llm_client}}"
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
