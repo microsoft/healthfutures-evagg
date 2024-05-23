@@ -67,4 +67,4 @@ extractor:
   observation_finder: "{{truthset_library}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
-  output_path: .out/content_benchmark_new.tsv
+  output_path: .out/content_benchmark.tsv
