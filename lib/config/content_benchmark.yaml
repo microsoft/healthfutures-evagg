@@ -57,20 +57,7 @@ library: "{{truthset_library}}"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
-    - gene
-    - paper_id
-    - hgvs_c
-    - hgvs_p
-    - transcript
-    - individual_id
-    - phenotype
-    # - zygosity
-    # - variant_inheritance
-    # - variant_type
-    # - functional_study
-    # - gnomad_frequency
-    # - study_type
-    # - citation    
+    di_factory: lib/config/fields_content_benchmark.yaml
   llm_client: "{{llm_client}}"
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
@@ -80,4 +67,4 @@ extractor:
   observation_finder: "{{truthset_library}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
-  output_path: .out/content_benchmark.tsv
+  output_path: .out/content_benchmark_new.tsv

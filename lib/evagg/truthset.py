@@ -84,7 +84,7 @@ class TruthsetFileLibrary(IGetPapers, IFindObservations, IExtractFields):
 
         def _get_observation(evidence: Dict[str, str]) -> Observation:
             """Create an Observation object from the evidence dictionary."""
-            individual = evidence["individual"]
+            individual = evidence["individual_id"]
             # TODO, consider filtering to relevant sections.
             texts = list(get_sections(paper.props["fulltext_xml"]))
             # Parse the variant from the evidence values.
