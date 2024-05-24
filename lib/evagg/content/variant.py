@@ -139,6 +139,13 @@ class HGVSVariantFactory(ICreateVariants):
             # If there's a protein consequence, keep it handy.
             if "protein" in normalized:
                 protein_hgvs = normalized["protein"].get("description", "")
+
+                # Attempt to normalize the protein description, since mutalyzer occasionally returns this description
+                # without normalization.
+                protein_normalized = self._normalizer.normalize(protein_hgvs)
+                if "normalized_description" in protein_normalized:
+                    protein_hgvs = protein_normalized["normalized_description"]
+
                 # protein description should be NM_1234.1(NP_1234.1):p.(Arg123Gly) or NG_ in place of NM, extract the
                 # NP_ and p. parts.
                 if protein_hgvs.find(":") >= 0:
