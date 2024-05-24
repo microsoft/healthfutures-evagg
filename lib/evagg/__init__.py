@@ -4,7 +4,7 @@ from .app import SynchronousLocalApp
 from .content import PromptBasedContentExtractor, SimpleContentExtractor, TruthsetContentExtractor
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import ConsoleOutputWriter, FileOutputWriter, TableOutputWriter
-from .library import RareDiseaseFileLibrary, SimpleFileLibrary, TruthsetFileLibrary
+from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached, SimpleFileLibrary, TruthsetFileLibrary
 
 __all__ = [
     # Interfaces.
@@ -22,6 +22,7 @@ __all__ = [
     "SimpleFileLibrary",
     "TruthsetFileLibrary",
     "RareDiseaseFileLibrary",
+    "RareDiseaseLibraryCached",
     # Content.
     "PromptBasedContentExtractor",
     "SimpleContentExtractor",

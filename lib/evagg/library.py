@@ -11,9 +11,10 @@ from typing import Any, Dict, List, Sequence, Set
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
+from lib.evagg.svc import ObjectFileCache
 from lib.evagg.types import ICreateVariants, Paper
 
-from .disease_keywords import EXCLUSION_KEYWORDS, INCLUSION_KEYWORDS
+from .disease_keywords import INCLUSION_KEYWORDS
 from .interfaces import IGetPapers
 
 logger = logging.getLogger(__name__)
@@ -160,13 +161,18 @@ class RareDiseaseFileLibrary(IGetPapers):
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
             example_types (Sequence[str], optional): The types of examples to use in few shot setting. These can be
-                           positive or positive and negative examples. Default is just positive.
+            positive or positive and negative examples. Default is just positive.
         """
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
         self._allowed_categories = allowed_categories if allowed_categories is not None else ["rare disease"]
+        # Allowed categories should be a subset of or equal to possible CATEGORIES, otherwise raise exception and halt
+        if not set(self._allowed_categories).issubset(set(self.CATEGORIES)):
+            raise ValueError(
+                "Allowed categories must be a subset of or equal to the possible categories: 'rare disease' or 'other'."
+            )
         self._example_types = example_types if example_types is not None else ["positive"]
 
     def _get_keyword_category(self, paper: Paper) -> str:
@@ -197,13 +203,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Check if the paper should be included in the rare disease category.
         if _has_keywords(title, INCLUSION_KEYWORDS) or _has_keywords(abstract, INCLUSION_KEYWORDS):
             return "rare disease"
-        # Check if the paper should be included in the non-rare disease category.
-        if _has_keywords(title, EXCLUSION_KEYWORDS) or _has_keywords(abstract, EXCLUSION_KEYWORDS):
-            return "non-rare disease"
         # If the paper doesn't fit in the other categories, add it to the other category.
         return "other"
 
-    async def _get_llm_category_few_shot(self, paper: Paper, gene: str) -> str:
+    async def _get_llm_category(self, paper: Paper, gene: str) -> str:
         """Categorize papers based on LLM prompts."""
         # Load the few shot examples
         unique_file_name, _ = self._load_few_shot_examples(paper, gene, "few_shot")
@@ -323,8 +326,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Categorize papers with multiple strategies and return the counts of each category."""
         # Categorize the paper by both keyword and LLM prompt.
         keyword_cat = self._get_keyword_category(paper)
-
-        llm_cat = await self._get_llm_category_few_shot(paper, gene)
+        llm_cat = await self._get_llm_category(paper, gene)
 
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
@@ -338,7 +340,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         )
 
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
-        for category in [keyword_cat, llm_cat, *llm_tiebreakers]:
+        tiebreakers = await asyncio.gather(self._get_llm_category(paper, gene), self._get_llm_category(paper, gene))
+        for category in [keyword_cat, llm_cat, *tiebreakers]:
             counts[category] = counts.get(category, 0) + 1
         assert len(counts) > 1 and sum(counts.values()) == 4
 
@@ -405,3 +408,36 @@ class RareDiseaseFileLibrary(IGetPapers):
         """
         all_papers = asyncio.run(self._get_all_papers(query))
         return list(filter(lambda p: p.props["disease_category"] in self._allowed_categories, all_papers))
+
+
+class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
+    """A class for fetching and categorizing disease papers from PubMed backed by a file-persisted cache."""
+
+    @classmethod
+    def serialize_paper_sequence(cls, papers: Sequence[Paper]) -> List[Dict[str, Any]]:
+        return [paper.props for paper in papers]
+
+    @classmethod
+    def deserialize_paper_sequence(cls, data: List[Dict[str, Any]]) -> Sequence[Paper]:
+        return [Paper(**paper) for paper in data]
+
+    def __init__(
+        self,
+        paper_client: IPaperLookupClient,
+        llm_client: IPromptClient,
+        allowed_categories: Sequence[str] | None = None,
+    ) -> None:
+        super().__init__(paper_client, llm_client, allowed_categories)
+        self._cache = ObjectFileCache[Sequence[Paper]](
+            "RareDiseaseFileLibrary",
+            serializer=RareDiseaseLibraryCached.serialize_paper_sequence,
+            deserializer=RareDiseaseLibraryCached.deserialize_paper_sequence,
+        )
+
+    def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
+        cache_key = f"get_papers_{query['gene_symbol']}"
+        if papers := self._cache.get(cache_key):
+            return papers
+        papers = super().get_papers(query)
+        self._cache.set(cache_key, papers)
+        return papers
