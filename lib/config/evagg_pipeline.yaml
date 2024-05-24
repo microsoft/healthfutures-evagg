@@ -49,8 +49,8 @@ llm_client:
 # Application
 di_factory: lib.evagg.SynchronousLocalApp
 queries:
-  #di_factory: lib/config/queries_mgttrain_subset.yaml
-  di_factory: lib/config/query_EXOC2.yaml
+  di_factory: lib/config/queries_mgttrain_subset.yaml
+  #di_factory: lib/config/query_EXOC2.yaml
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: "{{ncbi_client}}"
