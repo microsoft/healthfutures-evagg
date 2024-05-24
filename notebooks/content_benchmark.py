@@ -28,11 +28,12 @@ from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
 # %% Constants.
 
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "observation_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = {"variant_inheritance"}
+CONTENT_COLUMNS = set()
+# CONTENT_COLUMNS = {"variant_inheritance"}
 # CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
@@ -398,15 +399,29 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
 
-# if precision < 1 or recall < 1:
-#     printable_df = merged_df_ns.reset_index()  #
+if precision < 1 or recall < 1:
+    printable_df = merged_df_ns.reset_index()  #
 
-#     result = printable_df[(printable_df.in_truth != True) | (printable_df.in_output != True)].sort_values(
-#         ["gene", "paper_id", "hgvs_desc"]
-#     )[["hgvs_desc", "paper_id", "individual_id", "in_truth", "in_output"]]
+    result = printable_df[(printable_df.in_truth != True) | (printable_df.in_output != True)].sort_values(
+        ["gene", "paper_id", "hgvs_desc"]
+    )[
+        [
+            "hgvs_desc",
+            "paper_id",
+            "individual_id",
+            "hgvs_c_truth",
+            "hgvs_p_truth",
+            "hgvs_p_output",
+            "hgvs_c_output",
+            "in_truth",
+            "in_output",
+        ]
+    ]
 
-# else:
-#     print("All observations found. This is likely because the TruthsetObservationFinder was used.")
+    print(result)
+
+else:
+    print("All observations found. This is likely because the TruthsetObservationFinder was used.")
 
 
 # %% Redo the merge and assess observation finding if we're only concerned with finding the right variants.
