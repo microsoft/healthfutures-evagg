@@ -109,7 +109,6 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
         props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
-        props["abstract"] = self._join_abstract_sections(article, extractions["abstract"])
         return props
 
     def _get_license_props(self, pmcid: str) -> Dict[str, str | bool]:
