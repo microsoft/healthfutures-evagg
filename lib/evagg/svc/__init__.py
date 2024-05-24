@@ -1,5 +1,6 @@
 """Package for interacting with services."""
 
+from .cache import ObjectCache, ObjectFileCache
 from .logging import init_logger
 from .settings import get_dotenv_settings, get_env_settings
 from .web import CosmosCachingWebClient, IWebContentClient, RequestsWebContentClient
@@ -14,4 +15,7 @@ __all__ = [
     "CosmosCachingWebClient",
     "IWebContentClient",
     "RequestsWebContentClient",
+    # Cache.
+    "ObjectCache",
+    "ObjectFileCache",
 ]
