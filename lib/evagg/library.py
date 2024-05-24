@@ -335,10 +335,6 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         counts: Dict[str, int] = {}
 
-        llm_tiebreakers = await asyncio.gather(
-            self._get_llm_category_few_shot(paper, gene), self._get_llm_category_few_shot(paper, gene)
-        )
-
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         tiebreakers = await asyncio.gather(self._get_llm_category(paper, gene), self._get_llm_category(paper, gene))
         for category in [keyword_cat, llm_cat, *tiebreakers]:
