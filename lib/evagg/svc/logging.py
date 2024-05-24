@@ -3,8 +3,9 @@ import logging.config
 import os
 import sys
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set
 
+_log_root: Optional[str] = None
 LogFilter = Callable[[logging.LogRecord], bool]
 PROMPT = logging.CRITICAL + 5
 
@@ -151,63 +152,57 @@ class ConsoleHandler(logging.StreamHandler):
         return "\n".join(outputs)
 
 
-class LogProvider:
-    def __init__(
-        self,
-        level: Optional[str] = None,
-        exclude_modules: Optional[List[str]] = None,
-        include_modules: Optional[List[str]] = None,
-        exclude_defaults: Optional[bool] = True,
-        prompts_to_file: Optional[bool] = False,
-        prompts_to_console: Optional[bool] = False,
-        console_to_file: Optional[bool] = False,
-        output_path: Optional[str] = ".out",
-    ) -> None:
-        # Set up the base log level (defaults to WARNING).
-        level_number = self._level_to_number(level or "WARNING")
-        LOGGING_CONFIG["root"]["level"] = level_number
-        # Add custom log level for prompts.
-        logging.addLevelName(PROMPT, "PROMPT")
-
-        # Set up the file handler logging arguments.
-        LOGGING_CONFIG["handlers"]["file_handler"]["log_root"] = output_path
-        LOGGING_CONFIG["handlers"]["file_handler"]["prompts_enabled"] = prompts_to_file or False
-        LOGGING_CONFIG["handlers"]["file_handler"]["console_enabled"] = console_to_file or False
-
-        # Set up the console handler logging arguments.
-        LOGGING_CONFIG["handlers"]["console_handler"]["prompts_enabled"] = prompts_to_console or False
-        LOGGING_CONFIG["handlers"]["console_handler"]["prompt_msgs_enabled"] = level_number <= logging.INFO
-
-        # Set up the module filter.
-        exclusions = set(DEFAULT_EXCLUSIONS if exclude_defaults else [])
-        exclusions.update(exclude_modules or [])
-        inclusions = set(include_modules or [])
-        LOGGING_CONFIG["filters"]["module_filter"]["exclude_modules"] = exclusions
-        LOGGING_CONFIG["filters"]["module_filter"]["include_modules"] = inclusions
-
-        # Set up the global logging configuration.
-        logging.config.dictConfig(LOGGING_CONFIG)
-
-        logger = logging.getLogger(__name__)
-        level_name = logging.getLevelName(logger.getEffectiveLevel())
-        logger.info(f"Level:{level_name}")
-
-    @classmethod
-    def _level_to_number(cls, level: str) -> int:
-        level_number = getattr(logging, level, None)
-        if not isinstance(level_number, int):
-            raise ValueError(f"Invalid log level: {level}")
-        return level_number
+def get_log_root() -> str:
+    global _log_root
+    if _log_root is None:
+        raise ValueError("Logging service not initialized.")
+    return _log_root
 
 
-_log_provider: Optional[LogProvider] = None
-
-
-def init_logger(**kwargs: Any) -> LogProvider:
-    global _log_provider
-    if not _log_provider:
-        _log_provider = LogProvider(**kwargs)
-    else:
+def init_logger(
+    level: Optional[str] = None,
+    exclude_modules: Optional[List[str]] = None,
+    include_modules: Optional[List[str]] = None,
+    exclude_defaults: Optional[bool] = True,
+    prompts_to_file: Optional[bool] = False,
+    prompts_to_console: Optional[bool] = False,
+    console_to_file: Optional[bool] = False,
+    output_path: Optional[str] = ".out",
+) -> None:
+    global _log_root
+    if _log_root:
         logger = logging.getLogger(__name__)
         logger.warning("Logging service already initialized - ignoring new initialization.")
-    return _log_provider
+        return
+
+    _log_root = output_path
+    # Set up the base log level (defaults to WARNING).
+    level_number = getattr(logging, level or "WARNING", None)
+    if not isinstance(level_number, int):
+        raise ValueError(f"Invalid log level: {level}")
+    LOGGING_CONFIG["root"]["level"] = level_number
+    # Add custom log level for prompts.
+    logging.addLevelName(PROMPT, "PROMPT")
+
+    # Set up the file handler logging arguments.
+    LOGGING_CONFIG["handlers"]["file_handler"]["log_root"] = output_path
+    LOGGING_CONFIG["handlers"]["file_handler"]["prompts_enabled"] = prompts_to_file or False
+    LOGGING_CONFIG["handlers"]["file_handler"]["console_enabled"] = console_to_file or False
+
+    # Set up the console handler logging arguments.
+    LOGGING_CONFIG["handlers"]["console_handler"]["prompts_enabled"] = prompts_to_console or False
+    LOGGING_CONFIG["handlers"]["console_handler"]["prompt_msgs_enabled"] = level_number <= logging.INFO
+
+    # Set up the module filter.
+    exclusions = set(DEFAULT_EXCLUSIONS if exclude_defaults else [])
+    exclusions.update(exclude_modules or [])
+    inclusions = set(include_modules or [])
+    LOGGING_CONFIG["filters"]["module_filter"]["exclude_modules"] = exclusions
+    LOGGING_CONFIG["filters"]["module_filter"]["include_modules"] = inclusions
+
+    # Set up the global logging configuration.
+    logging.config.dictConfig(LOGGING_CONFIG)
+
+    logger = logging.getLogger(__name__)
+    level_name = logging.getLevelName(logger.getEffectiveLevel())
+    logger.info(f"Level:{level_name}")

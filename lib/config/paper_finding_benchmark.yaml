@@ -40,10 +40,8 @@ library:
     config:
       di_factory: lib.evagg.svc.get_dotenv_settings
       filter_prefix: "AZURE_OPENAI_"
-  allowed_categories:
+  allowed_categories: 
     - "rare disease"
-    - "other"
-    - "conflicting"
   example_types:
     - positive 
     - negative
