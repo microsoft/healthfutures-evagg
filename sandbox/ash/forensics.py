@@ -143,8 +143,8 @@ import pandas as pd
 
 isolated_run = "/home/azureuser/ev-agg-exp/.out/final_isolated_92recall_paper_finding_results_2024-05-22_2aff4d256c1ab5e15e24378c95143f3992bcda3e/library_benchmark_just_rare_disease.tsv"
 truth = pd.read_csv("data/v1/papers_train_v1.tsv", sep="\t")
-output = pd.read_csv(".out/pipeline_benchmark.tsv", sep="\t", header=1)
-# output = pd.read_csv(isolated_run, sep="\t")
+# output = pd.read_csv(".out/pipeline_benchmark.tsv", sep="\t", header=1)
+output = pd.read_csv(isolated_run, sep="\t")
 genes_to_remove = ["NPPA", "ADCY1", "OTUD7A", "RGS9", "TAPBP", "TOPBP1"]
 
 truth_sub = truth[~truth["gene"].isin(genes_to_remove)]
