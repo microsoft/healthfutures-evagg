@@ -49,7 +49,7 @@ truthset_library:
   paper_client: "{{ncbi_client}}"
 
 # Application
-di_factory: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/content_subset.yaml
 library: "{{truthset_library}}"

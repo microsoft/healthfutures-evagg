@@ -1,20 +1,21 @@
 log:
   di_factory: lib.evagg.svc.init_logger
 
-di_factory: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.PaperQueryApp
 queries:
   - "gene_symbol": "TUBB3"
 library: 
   di_factory: lib.evagg.SimpleFileLibrary
   collections: 
-    - .data/evagg_local
+    - data/sample
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields:
+    - paper_id
     - gene
-    - variant
-    - MOI
+    - hgvs_c
+    - zygosity
     - phenotype
-    - functional data
+    - citation
 writer:
   di_factory: lib.evagg.TableOutputWriter
