@@ -1,8 +1,7 @@
 log:
   di_factory: lib.evagg.svc.init_logger
   level: INFO
-  prompts_to_file: true
-  console_to_file: true
+  to_file: true
 
 web_client:
   di_factory: lib.evagg.svc.CosmosCachingWebClient
@@ -91,4 +90,4 @@ extractor:
     normalizer: "{{mutalyzer_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
-  output_path: .out/pipeline_benchmark.tsv
+  tsv_name: pipeline_benchmark
