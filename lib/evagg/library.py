@@ -261,7 +261,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
             and paper.props["fulltext_xml"] is not None
         ]
-        logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
+        logger.info(f"Categorizing {len(papers)} papers with full text for {query['gene_symbol']}.")
 
         await asyncio.gather(*[self._get_paper_categorizations(paper, query["gene_symbol"]) for paper in papers])
         return papers
