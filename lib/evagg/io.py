@@ -5,22 +5,17 @@ import sys
 from datetime import datetime
 from typing import Mapping, Optional, Sequence
 
+from lib.evagg.svc.logging import get_run_root
+
 from .interfaces import IWriteOutput
 
 logger = logging.getLogger(__name__)
 
 
 class TableOutputWriter(IWriteOutput):
-    def __init__(self, output_path: Optional[str] = None, append_timestamp: bool = False) -> None:
+    def __init__(self, tsv_name: Optional[str] = None) -> None:
         self._generated = datetime.now().astimezone()
-        self._path = output_path
-        if self._path:
-            if append_timestamp:
-                # Append timestamp to the output path.
-                base, ext = os.path.splitext(self._path)
-                self._path = f"{base}_{self._generated.strftime('%Y%m%d_%H%M%S')}{ext}"
-            if os.path.exists(self._path):
-                logger.warning(f"Overwriting existing output file: {self._path}")
+        self._path = os.path.join(get_run_root(), f"{tsv_name}.tsv") if tsv_name else None
 
     def write(self, output: Sequence[Mapping[str, str]]) -> None:
         logger.info(f"Writing output to: {self._path or 'stdout'}")

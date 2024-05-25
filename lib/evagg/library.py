@@ -252,6 +252,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Perform the search for papers
         paper_ids = self._paper_client.search(**params)
+        logger.info(f"Fetching {len(paper_ids)} papers for {query['gene_symbol']}.")
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = [
@@ -294,8 +295,9 @@ class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
         paper_client: IPaperLookupClient,
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
+        example_types: Sequence[str] | None = None,
     ) -> None:
-        super().__init__(paper_client, llm_client, allowed_categories)
+        super().__init__(paper_client, llm_client, allowed_categories, example_types)
         self._cache = ObjectFileCache[Sequence[Paper]](
             "RareDiseaseFileLibrary",
             serializer=RareDiseaseLibraryCached.serialize_paper_sequence,
@@ -305,6 +307,7 @@ class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
         cache_key = f"get_papers_{query['gene_symbol']}"
         if papers := self._cache.get(cache_key):
+            logger.info(f"Retrieved {len(papers)} papers from cache for {query['gene_symbol']}.")
             return papers
         papers = super().get_papers(query)
         self._cache.set(cache_key, papers)
