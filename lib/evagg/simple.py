@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 from typing import Any, Dict, Sequence
 
 from lib.evagg.types import Paper
 
 from .interfaces import IExtractFields, IGetPapers
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleFileLibrary(IGetPapers):
@@ -13,6 +16,7 @@ class SimpleFileLibrary(IGetPapers):
 
     def _load_collection(self, collection: str) -> Dict[str, Paper]:
         papers = {}
+        logger.debug(f"Loading papers from collection: {collection}")
         # collection is a local directory, get a list of all of the json files in that directory
         for filename in os.listdir(collection):
             if filename.endswith(".json"):
@@ -30,6 +34,7 @@ class SimpleFileLibrary(IGetPapers):
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
+        logger.debug(f"Getting papers for query: {query}")
         # Dummy implementation that returns all papers regardless of query.
         all_papers = list(self._load().values())
         return all_papers
@@ -64,11 +69,12 @@ class SimpleContentExtractor(IExtractFields):
             return "Heterozygous"
         if field == "variant_inheritance":
             return "AD"
-        if field == "functional data":
-            return "No"
+        if field == "citation":
+            return paper.citation or "none"
         else:
             return "Unknown"
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
+        logger.debug(f"Extracting fields from paper {paper.id} for gene {gene_symbol}")
         # Dummy implementation that returns a single variant with a static set of fields.
         return [{field: self._field_to_value(field, paper, gene_symbol) for field in self._fields}]

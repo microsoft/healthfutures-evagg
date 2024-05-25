@@ -45,7 +45,7 @@ llm_client:
     di_factory: lib.evagg.svc.get_dotenv_settings
     filter_prefix: "AZURE_OPENAI_"
 
-di_factory: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.PaperQueryApp
 queries:
   - gene_symbol: "CTF1"
   - gene_symbol: "FBN2"

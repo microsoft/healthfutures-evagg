@@ -46,7 +46,7 @@ llm_client:
     filter_prefix: "AZURE_OPENAI_"
 
 # Application
-di_factory: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttrain_subset.yaml
 library:
