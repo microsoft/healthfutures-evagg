@@ -7,8 +7,8 @@ from defusedxml import ElementTree
 from pydantic import Extra, root_validator
 
 from lib.config import PydanticYamlModel
-from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
+from lib.evagg.utils import IWebContentClient
 
 from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient, IVariantLookupClient
 

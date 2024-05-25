@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 
 from lib.evagg.ref import MutalyzerClient
-from lib.evagg.svc import IWebContentClient
+from lib.evagg.utils import IWebContentClient
 
 
 @pytest.fixture
