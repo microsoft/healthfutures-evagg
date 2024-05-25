@@ -9,13 +9,12 @@ Outputs:
 papers
 - benchmarking_paper_finding_results_train.png: barplot of average number of correct, missed, and irrelevant papers
 for the Evidence Aggregator tool and PubMed
-- filtering_paper_finding_results_train.png: barplot of average number of papers filtered into rare, non-rare, and
+- filtering_paper_finding_results_train.png: barplot of average number of papers filtered into rare and
 other categories
 """
 
-import argparse
-
 # Libraries
+import argparse
 import glob
 import json
 import logging
@@ -40,32 +39,6 @@ logger = logging.getLogger(__name__)
 
 def get_git_commit_hash():
     return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
-
-
-def read_mgt_split_tsv(mgt_split_tsv):
-    """Build a gene:["PMID_1, "PMID_2", ...] dictionary from an input tsv file.
-
-    Returns a dictionary of gene:["PMID_1, "PMID_2", ...].
-    """
-    mgt_paper_finding_dict = {}
-    with open(mgt_split_tsv, "r") as file:
-        next(file)  # Skip the header
-        for line in file:
-            # Only consider pmids where the "has_fulltext" column is True, and the "is_pmc_oa" column is not "not_open_access"
-            if line.strip().split("\t")[3] == "True" and line.strip().split("\t")[4] != "not_open_access":
-                gene, pmid, _ = line.strip().split("\t")
-                if gene in mgt_paper_finding_dict:
-                    mgt_paper_finding_dict[gene].append(pmid)
-                else:
-                    mgt_paper_finding_dict[gene] = [pmid]
-
-            gene, pmid, _ = line.strip().split("\t")
-            if gene in mgt_paper_finding_dict:
-                mgt_paper_finding_dict[gene].append(pmid)
-            else:
-                mgt_paper_finding_dict[gene] = [pmid]
-    print("mgt_paper_finding_dict: ", mgt_paper_finding_dict)
-    return mgt_paper_finding_dict
 
 
 def read_queries(yaml_data):
@@ -117,11 +90,96 @@ def compare_pmid_lists(input_pmids, truth_pmids):
         irrelevant_pmids (list): the PMIDs of the papers that are in the papers that were found but not in
         the MGT data papers
     """
-    correct_pmids = list(set(input_pmids).intersection(truth_pmids))
-    missed_pmids = list(set(truth_pmids).difference(input_pmids))
-    irrelevant_pmids = list(set(input_pmids).difference(truth_pmids))
+    # print("INPUT PMIDS: ", len(input_pmids), input_pmids)
+    # print("TRUTH PMIDS: ", len(truth_pmids), truth_pmids)
+    correct_pmids = list(set(input_pmids).intersection(set(truth_pmids)))
+    missed_pmids = list(set(truth_pmids).difference(set(input_pmids)))
+    irrelevant_pmids = list(set(input_pmids).difference(set(truth_pmids)))
 
     return correct_pmids, missed_pmids, irrelevant_pmids
+
+
+def plot_benchmarking_results_tool_only(
+    benchmarking_train_results,
+):  # TODO: consider merging this function with plot_benchmarking_results, given the code similarity
+    """Plot the benchmarking results from the  set in a barplot.
+
+    Return the results dataframe (see keys below) for subsequent plotting.
+    """
+    keys = [
+        "Gene",
+        "Rare Disease Papers",
+        "Other Papers",
+        "Conflicting Papers",
+        "E.A. Correct",
+        "E.A. Missed",
+        "E.A. Irrelevant",
+    ]
+    results_to_plot = {key: [] for key in keys}
+
+    for gene, values in benchmarking_train_results.items():
+        for i, key in enumerate(keys):
+            if key == "Gene":
+                results_to_plot[key].append(gene)
+            else:
+                results_to_plot[key].append(values[i - 1])
+
+    results_to_plot = pd.DataFrame(results_to_plot)
+
+    # List of categories
+    ea_categories = ["E.A. Correct", "E.A. Missed", "E.A. Irrelevant"]
+
+    # Calculate averages
+    tool_averages = results_to_plot[ea_categories].mean()
+
+    # Calculate standard deviations
+    tool_std = results_to_plot[ea_categories].std()
+
+    # Create a figure and a set of subplots
+    fig, ax = plt.subplots()
+
+    # Define bar width
+    bar_width = 0.35
+
+    # Positions of the left bar boundaries
+    bar_l = np.arange(len(tool_averages))
+
+    # Positions of the x-axis ticks (center of the bars as bar labels)
+    tick_pos = [i + (bar_width / 2) for i in bar_l]
+
+    # Create a bar plot for 'Tool'
+    tool_bars = ax.bar(
+        bar_l,
+        tool_averages,
+        width=bar_width,
+        label="Tool",
+        alpha=0.5,
+        color="b",
+        yerr=tool_std,
+    )
+
+    # Set the ticks to be first names
+    plt.xticks(tick_pos, list(tool_averages.index))
+    ax.set_ylabel("Average")
+    ax.set_xlabel("Categories")
+    plt.legend(loc="upper right")
+    plt.title("Avg. # correct, missed & irrelevant papers: E.A.")
+
+    # Function to add average value in bar plot labels
+    def add_labels(bars):
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2, bar.get_y() + height + 0.9, "%.2f" % height, ha="left", va="bottom"
+            )
+
+    # Add appropriate labels
+    add_labels(tool_bars)
+    plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
+
+    # Save barplot
+    plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train.png")
+    return results_to_plot
 
 
 def plot_benchmarking_results(benchmarking_train_results):
@@ -132,7 +190,6 @@ def plot_benchmarking_results(benchmarking_train_results):
     keys = [
         "Gene",
         "Rare Disease Papers",
-        "Non-Rare Disease Papers",
         "Other Papers",
         "Conflicting Papers",
         "E.A. Correct",
@@ -226,10 +283,9 @@ def plot_benchmarking_results(benchmarking_train_results):
 
 # Plot the filtereds into paper 4 categories
 def plot_filtered_categories(results_to_plot):
-    """Plot the filtered results (3 categories: rare disease, non-rare disease, other) in a barplot."""
+    """Plot the filtered results (2 categories: rare disease, other) in a barplot."""
     # Calculate averages
     rare_disease_avg = results_to_plot["Rare Disease Papers"].mean()
-    non_rare_disease_avg = results_to_plot["Non-Rare Disease Papers"].mean()
     other_papers_avg = results_to_plot["Other Papers"].mean()
     conflicting = results_to_plot["Conflicting Papers"].mean()
 
@@ -240,7 +296,7 @@ def plot_filtered_categories(results_to_plot):
     bar_width = 0.35
 
     # Positions of the left bar boundaries
-    bar_l = np.arange(4)
+    bar_l = np.arange(3)
 
     # Positions of the x-axis ticks (center of the bars as bar labels)
     tick_pos = [i + (bar_width / 2) for i in bar_l]
@@ -248,19 +304,17 @@ def plot_filtered_categories(results_to_plot):
     # Create a bar plot
     bars = ax.bar(
         bar_l,
-        [rare_disease_avg, non_rare_disease_avg, other_papers_avg, conflicting],
+        [rare_disease_avg, other_papers_avg, conflicting],
         width=bar_width,
         alpha=0.5,
         color="b",
     )
 
     # Set the ticks to be first names
-    plt.xticks(
-        tick_pos, ["Rare Disease Papers", "Non-Rare Disease Papers", "Other Papers", "Conflicting Papers"], rotation=10
-    )
+    plt.xticks(tick_pos, ["Rare Disease Papers", "Other Papers", "Conflicting Papers"], rotation=10)
     ax.set_ylabel("Average")
     ax.set_xlabel("Categories")
-    plt.title("Average # PubMed papers filtered into rare, non-rare, and other categories")
+    plt.title("Avg. # PubMed papers filtered into rare and other categories")
 
     # Function to add labels
     def add_labels(bars):
@@ -323,10 +377,13 @@ def main(args):
     # Read the intermediate manual ground truth (MGT) data file from the TSV file
     mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
     print("Number of manual ground truth pmids: ", mgt_df.shape[0])
+
+    # Filter to only papers where the "has_fulltext" column is True
     if args.mgt_full_text_only:
-        # Filter to only papers where the "has_fulltext" column is True
         mgt_df = mgt_df[mgt_df["has_fulltext"] == True]
         print("Only considering full text papers pmids: ", mgt_df.shape[0])
+    print("LENGTH OF TRUTH DATA: ", mgt_df.shape[0])
+    print("mgt_df: ", mgt_df)
 
     # Get the query/ies from .yaml file so we know the list of genes processed.
     if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
@@ -349,6 +406,8 @@ def main(args):
 
     # We only need one of each paper/gene pair, so we drop duplicates.
     pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
+    print("LENGTH OF PIPELINE OUTPUT: ", pipeline_df.shape[0])
+
     print("yaml_genes: ", pipeline_df.gene.unique().tolist())
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
@@ -356,9 +415,9 @@ def main(args):
     # Initialize benchmarking results dictionary
     benchmarking_results = {}
 
-    # Average precision and recall for all genes
-    avg_precision = []
-    avg_recall = []
+    # # Average precision and recall for all genes
+    # avg_precision = []
+    # avg_recall = []
 
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
@@ -383,24 +442,71 @@ def main(args):
     for file in full_text__files:
         shutil.move(file, args.outdir)
 
+    # Compute overall precision and recall prior to gene-specific analysis
+    truth_pmids = set(mgt_df[mgt_df["has_fulltext"] == True].pmid)
+    print("truth_pmids: ", len(truth_pmids))
+    pipeline_pmids = set(pipeline_df["paper_id"].str.lstrip("pmid:").astype(int))
+    print("pipeline_df", len(pipeline_pmids))
+
+    # Calculate the false positives
+    overall_false_positives = pipeline_pmids.difference(truth_pmids)
+    print("overall_false_positives", len(overall_false_positives))
+
+    overall_false_negatives = truth_pmids.difference(pipeline_pmids)
+    print("overall_false_negatives", len(overall_false_negatives))
+
+    overall_true_positives = pipeline_pmids.intersection(truth_pmids)
+
+    precision = len(overall_true_positives) / (len(overall_true_positives) + len(overall_false_positives))
+    recall = len(overall_true_positives) / (len(overall_true_positives) + len(overall_false_negatives))
+
+    # Assert that the tp + fp + fn = pipeline_pmids
+    print(len(overall_true_positives) + len(overall_false_positives))
+    print(len(pipeline_pmids))
+    assert len(overall_true_positives) + len(overall_false_positives) == len(pipeline_pmids)
+
+    # Assert that tp + fn = truth_pmids
+    assert len(overall_true_positives) + len(overall_false_negatives) == len(truth_pmids)
+
     # Compile and save the benchmarking results to a file
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
+        f.write(f"\nOverall Precision: {precision} (N_irrelevant = {len(overall_false_positives)})")
+        f.write(f"\nOverall Recall: {recall} (N_missed = {len(overall_false_negatives)})")
+        f.write(f"\n true positives: {len(overall_true_positives)}")
+        f.write(f"\n false negatives: {len(overall_false_negatives)}")
+        f.write(f"\n false positives: {len(overall_false_positives)}\n")
+
+        # Write out the true positives
+        f.write(f"\nTrue positives:\n")
+        for i, p in enumerate(overall_true_positives):
+            f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
+
+        # Write out the false negatives
+        f.write(f"\nFalse negatives:\n")
+        for i, p in enumerate(overall_false_negatives):
+            f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
+
+        # Write out the false positives
+        f.write(f"\nFalse positives:\n")
+        for i, p in enumerate(overall_false_positives):
+            f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
+
+        # Iterate through all genes and associated PMIDS
         for term, gene_df in pipeline_df.groupby("gene"):
+
             # Get the gene name from the query
             f.write(f"\nGENE: {term}\n")
             print("Analyzing found papers for: ", term, "...")
 
             # Initialize the list for this gene
-            benchmarking_results[term] = [0] * 10
+            if args.isolated_run:
+                benchmarking_results[term] = [0] * 9
+            else:
+                benchmarking_results[term] = [0] * 6
 
             # Get pmids from pipeline output for this gene.
             rare_disease_ids = (
                 gene_df[gene_df["paper_disease_category"] == "rare disease"]["paper_id"].str.lstrip("pmid:").tolist()
-            )
-            non_rare_disease_ids = (
-                gene_df[gene_df["paper_disease_category"] == "non-rare disease"]["paper_id"]
-                .str.lstrip("pmid:")
-                .tolist()
             )
             other_ids = gene_df[gene_df["paper_disease_category"] == "other"]["paper_id"].str.lstrip("pmid:").tolist()
             conflicting_ids = (
@@ -424,12 +530,10 @@ def main(args):
             # Report the number of papers in each category
             f.write(f"Rare Disease Papers: {len(rare_disease_ids)}\n")
             benchmarking_results[term][0] = len(rare_disease_ids)
-            f.write(f"Non-Rare Disease Papers: {len(non_rare_disease_ids)}\n")
-            benchmarking_results[term][1] = len(non_rare_disease_ids)
             f.write(f"Other Papers: {len(other_ids)}\n")
-            benchmarking_results[term][2] = len(other_ids)
+            benchmarking_results[term][1] = len(other_ids)
             f.write(f"Conflicting Papers: {len(conflicting_ids)}\n")
-            benchmarking_results[term][3] = len(conflicting_ids)
+            benchmarking_results[term][2] = len(conflicting_ids)
             for i, id in enumerate(conflicting_ids):
                 f.write(f"* {i + 1} * {id} * {titles[id]}\n")
                 f.write(f"* {i + 1}-counts * {conflicting_counts[i]}\n")
@@ -438,7 +542,8 @@ def main(args):
             print("Comparing Evidence Aggregator results to manual ground truth data for:", term, "...")
 
             # Calculate the number of correct, missed, and irrelevant papers for PubMed all up
-            p_corr, p_miss, p_irr = compare_pmid_lists(paper_ids, mgt_ids)
+            if args.isolated_run:
+                p_corr, p_miss, p_irr = compare_pmid_lists(paper_ids, mgt_ids)
 
             # If the Evidence Aggregator classified rare disease papers, compare them to the MGT data papers
             if rare_disease_ids:
@@ -446,7 +551,7 @@ def main(args):
 
                 # Remove any Pubmed missed papers from missed_pmids (these are either caused by an unexpected error
                 # fetching BioC entry or a particular response received from BioC, but corresponding PMC ID not found)
-                missed_pmids = list(set(missed_pmids) - set(p_miss))
+                # missed_pmids = list(set(missed_pmids) - set(p_miss))
 
                 # Report comparison between ev.agg. and MGT data
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
@@ -461,15 +566,16 @@ def main(args):
                     f.write(f"\nPrecision: {precision}\n")
                     f.write(f"Recall: {recall}\n")
                     f.write(f"F1 Score: {f1_score}\n")
-                    avg_precision.append(precision)
-                    avg_recall.append(recall)
+                    # avg_precision.append(precision)
+                    # avg_recall.append(recall)
+
                 else:
                     f.write("\nNo true positives. Precision and recall are undefined.\n")
 
                 # Update the metrics in the list for this gene
-                benchmarking_results[term][4] = len(correct_pmids)
-                benchmarking_results[term][5] = len(missed_pmids)
-                benchmarking_results[term][6] = len(irrelevant_pmids)
+                benchmarking_results[term][3] = len(correct_pmids)
+                benchmarking_results[term][4] = len(missed_pmids)
+                benchmarking_results[term][5] = len(irrelevant_pmids)
 
                 f.write(f"\nFound E.A. {len(correct_pmids)} correct.\n")
                 for i, p in enumerate(correct_pmids):
@@ -482,6 +588,7 @@ def main(args):
                 f.write(f"\nFound E.A. {len(irrelevant_pmids)} irrelevant.\n")
                 for i, p in enumerate(irrelevant_pmids):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
+                    # print(titles[p])
 
             else:
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
@@ -490,42 +597,46 @@ def main(args):
                 f.write("E.A. # Irrelevant Papers: 0\n")
 
             # Compare PubMed papers to  MGT data papers
-            print("Comparing PubMed results to manual ground truth data for: ", term, "...")
-            f.write("\nOf PubMed papers...\n")
-            f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
-            f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
-            f.write(f"Pubmed # Irrelevant Papers: {len(p_irr)}\n")
+            if args.isolated_run:
+                print("Comparing PubMed results to manual ground truth data for: ", term, "...")
+                f.write("\nOf PubMed papers...\n")
+                f.write(f"Pubmed # Correct Papers: {len(p_corr)}\n")
+                f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
+                f.write(f"Pubmed # Irrelevant Papers: {len(p_irr)}\n")
 
-            # Update the counts in the list for this gene
-            benchmarking_results[term][7] = len(p_corr)
-            benchmarking_results[term][8] = len(p_miss)
-            benchmarking_results[term][9] = len(p_irr)
+                # Update the counts in the list for this gene
+                benchmarking_results[term][6] = len(p_corr)
+                benchmarking_results[term][7] = len(p_miss)
+                benchmarking_results[term][8] = len(p_irr)
 
-            f.write(f"\nFound Pubmed {len(p_corr)} correct.\n")
-            for i, p in enumerate(p_corr):
-                f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
+                f.write(f"\nFound Pubmed {len(p_corr)} correct.\n")
+                for i, p in enumerate(p_corr):
+                    f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
-            f.write(f"\nFound Pubmed {len(p_miss)} missed.\n")
-            for i, p in enumerate(p_miss):
-                f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
+                f.write(f"\nFound Pubmed {len(p_miss)} missed.\n")
+                for i, p in enumerate(p_miss):
+                    f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
-            f.write(f"\nFound Pubmed {len(p_irr)} irrelevant.\n")
-            for i, p in enumerate(p_irr):
-                f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
+                f.write(f"\nFound Pubmed {len(p_irr)} irrelevant.\n")
+                for i, p in enumerate(p_irr):
+                    f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
-        # Calculate average precision and recall
-        if len(avg_precision) != 0:
-            avg_precision = sum(avg_precision) / len(avg_precision)
-            avg_recall = sum(avg_recall) / len(avg_recall)
+        # # Calculate average precision and recall
+        # if len(avg_precision) != 0:
+        #     avg_precision = sum(avg_precision) / len(avg_precision)
+        #     avg_recall = sum(avg_recall) / len(avg_recall)
 
-            # Write average precision and recall to the file
-            f.write(f"\nAverage Precision: {avg_precision}\n")
-            f.write(f"Average Recall: {avg_recall}\n")
-        else:
-            f.write("\nNo true positives. Precision and recall are undefined.\n")
+        #     # Write average precision and recall to the file
+        #     f.write(f"\nAverage Precision: {avg_precision}\n")
+        #     f.write(f"Average Recall: {avg_recall}\n")
+        # else:
+        #     f.write("\nNo true positives. Precision and recall are undefined.\n")
 
     # Plot benchmarking results
-    results_to_plot = plot_benchmarking_results(benchmarking_results)
+    if args.isolated_run:
+        results_to_plot = plot_benchmarking_results(benchmarking_results)
+    else:
+        results_to_plot = plot_benchmarking_results_tool_only(benchmarking_results)
 
     # Plot filtering results
     plot_filtered_categories(results_to_plot)
@@ -566,6 +677,24 @@ if __name__ == "__main__":
         help="Default is False",
     )
     parser.add_argument(
+        "-t",
+        "--plot-tool-only",
+        nargs="?",
+        default=False,
+        type=bool,
+        help="Default is False",
+    )
+    parser.add_argument(
+        "-i",
+        "--isolated-run",
+        nargs="?",
+        default=False,
+        type=bool,
+        help="Default is False. If True, this paper finding benchmarking run is considered to be an isolated benchmark."
+        "Thus, paper finding benchmarks are run immediately. Not after entire an Evidence Aggregator pipeline run.",
+    )
+    parser.add_argument(
+        "-o",
         "--outdir",
         default=f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}",
         type=str,
