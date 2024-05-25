@@ -145,6 +145,11 @@ isolated_run = "/home/azureuser/ev-agg-exp/.out/final_isolated_92recall_paper_fi
 truth = pd.read_csv("data/v1/papers_train_v1.tsv", sep="\t")
 output = pd.read_csv(".out/pipeline_benchmark.tsv", sep="\t", header=1)
 # output = pd.read_csv(isolated_run, sep="\t")
+genes_to_remove = ["NPPA", "ADCY1", "OTUD7A", "RGS9", "TAPBP", "TOPBP1"]
+
+truth_sub = truth[~truth["gene"].isin(genes_to_remove)]
+
+output_sub = output[~output["gene"].isin(genes_to_remove)]
 # %%
 
 truth_pmids = set(truth[truth.has_fulltext == True].pmid)
