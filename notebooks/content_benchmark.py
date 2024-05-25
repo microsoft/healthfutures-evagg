@@ -20,7 +20,7 @@ from pyhpo import Ontology
 
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient, PyHPOClient
-from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
+from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
