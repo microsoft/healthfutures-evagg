@@ -6,7 +6,7 @@ from typing import Any, Dict, Sequence
 from Bio.SeqUtils import IUPACData
 from requests.exceptions import HTTPError
 
-from lib.evagg.svc import IWebContentClient
+from lib.evagg.utils import IWebContentClient
 
 from .interfaces import IBackTranslateVariants, INormalizeVariants, IValidateVariants
 

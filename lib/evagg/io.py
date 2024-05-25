@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 from typing import Mapping, Optional, Sequence
 
-from lib.evagg.svc.logging import get_run_root
+from lib.evagg.utils.logging import get_run_root
 
 from .interfaces import IWriteOutput
 

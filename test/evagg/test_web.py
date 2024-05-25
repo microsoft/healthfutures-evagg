@@ -5,7 +5,7 @@ import requests
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from pytest import raises
 
-from lib.evagg.svc import CosmosCachingWebClient, RequestsWebContentClient
+from lib.evagg.utils import CosmosCachingWebClient, RequestsWebContentClient
 
 
 def test_settings():
@@ -106,7 +106,7 @@ def mock_container(json_load):
     return Container(json_load("cosmos_cache.json"))
 
 
-@patch("lib.evagg.svc.web.CosmosClient")
+@patch("lib.evagg.utils.web.CosmosClient")
 def test_cosmos_cache_hit(mock_client, mock_container):
     mock_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
 
@@ -125,7 +125,7 @@ def test_cosmos_cache_hit(mock_client, mock_container):
 
 
 @patch("requests.sessions.Session.request")
-@patch("lib.evagg.svc.web.CosmosClient")
+@patch("lib.evagg.utils.web.CosmosClient")
 def test_cosmos_cache_miss(mock_client, mock_request, mock_container):
     mock_client.return_value.get_database_client.return_value.get_container_client.return_value = mock_container
     mock_request.side_effect = [

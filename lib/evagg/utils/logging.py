@@ -46,14 +46,14 @@ def get_previous_run() -> Optional[str]:
 LOGGING_CONFIG: Dict = {
     "version": 1,
     "disable_existing_loggers": False,
-    "filters": {"module_filter": {"()": "lib.evagg.svc.logging.init_module_filter"}},
+    "filters": {"module_filter": {"()": "lib.evagg.utils.logging.init_module_filter"}},
     "handlers": {
         "console_handler": {
-            "class": "lib.evagg.svc.logging.ConsoleHandler",
+            "class": "lib.evagg.utils.logging.ConsoleHandler",
             "filters": ["module_filter"],
         },
         "file_handler": {
-            "()": "lib.evagg.svc.logging.FileHandler",
+            "()": "lib.evagg.utils.logging.FileHandler",
             "filters": ["module_filter"],
         },
     },
