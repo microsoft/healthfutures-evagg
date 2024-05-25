@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Sequence
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.svc import ObjectFileCache
 from lib.evagg.types import Paper
+from lib.evagg.utils import ObjectFileCache
 
 from .disease_keywords import INCLUSION_KEYWORDS
 from .interfaces import IGetPapers

@@ -1,5 +1,5 @@
 log:
-  di_factory: lib.evagg.svc.init_logger
+  di_factory: lib.evagg.utils.init_logger
 
 di_factory: lib.evagg.PaperQueryApp
 queries:

@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from lib.evagg.ref import IRefSeqLookupClient, NcbiReferenceLookupClient
-from lib.evagg.svc import IWebContentClient
+from lib.evagg.utils import IWebContentClient
 
 
 @pytest.fixture

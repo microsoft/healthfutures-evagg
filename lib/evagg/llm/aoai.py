@@ -15,8 +15,8 @@ from openai.types.chat import (
 )
 
 from lib.config import PydanticYamlModel
-from lib.evagg.svc import ObjectCache
-from lib.evagg.svc.logging import PROMPT
+from lib.evagg.utils import ObjectCache
+from lib.evagg.utils.logging import PROMPT
 
 from .interfaces import IPromptClient
 
