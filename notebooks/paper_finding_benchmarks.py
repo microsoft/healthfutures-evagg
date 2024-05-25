@@ -90,8 +90,6 @@ def compare_pmid_lists(input_pmids, truth_pmids):
         irrelevant_pmids (list): the PMIDs of the papers that are in the papers that were found but not in
         the MGT data papers
     """
-    # print("INPUT PMIDS: ", len(input_pmids), input_pmids)
-    # print("TRUTH PMIDS: ", len(truth_pmids), truth_pmids)
     correct_pmids = list(set(input_pmids).intersection(set(truth_pmids)))
     missed_pmids = list(set(truth_pmids).difference(set(input_pmids)))
     irrelevant_pmids = list(set(input_pmids).difference(set(truth_pmids)))
@@ -376,14 +374,12 @@ def main(args):
 
     # Read the intermediate manual ground truth (MGT) data file from the TSV file
     mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
-    print("Number of manual ground truth pmids: ", mgt_df.shape[0])
+    print("Number of manual ground truth pmids: ", mgt_df.shape[0] - 1)
 
     # Filter to only papers where the "has_fulltext" column is True
     if args.mgt_full_text_only:
         mgt_df = mgt_df[mgt_df["has_fulltext"] == True]
-        print("Only considering full text papers pmids: ", mgt_df.shape[0])
-    print("LENGTH OF TRUTH DATA: ", mgt_df.shape[0])
-    print("mgt_df: ", mgt_df)
+        print("Only considering full text papers pmids: ", mgt_df.shape[0] - 1)
 
     # Get the query/ies from .yaml file so we know the list of genes processed.
     if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
@@ -399,6 +395,9 @@ def main(args):
 
     # Read in the corresponding pipeline output.
     pipeline_df = pd.read_csv(args.pipeline_output, sep="\t", skiprows=1)
+    if "paper_disease_category" in pipeline_df.columns:
+        # Create rare disease pipeline df
+        pipeline_df = pipeline_df[pipeline_df["paper_disease_category"] == "rare disease"]
     if "paper_disease_category" not in pipeline_df.columns:
         pipeline_df["paper_disease_category"] = "rare disease"
     if "paper_disease_categorizations" not in pipeline_df.columns:
@@ -406,18 +405,12 @@ def main(args):
 
     # We only need one of each paper/gene pair, so we drop duplicates.
     pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
-    print("LENGTH OF PIPELINE OUTPUT: ", pipeline_df.shape[0])
 
-    print("yaml_genes: ", pipeline_df.gene.unique().tolist())
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
 
     # Initialize benchmarking results dictionary
     benchmarking_results = {}
-
-    # # Average precision and recall for all genes
-    # avg_precision = []
-    # avg_recall = []
 
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
@@ -444,16 +437,12 @@ def main(args):
 
     # Compute overall precision and recall prior to gene-specific analysis
     truth_pmids = set(mgt_df[mgt_df["has_fulltext"] == True].pmid)
-    print("truth_pmids: ", len(truth_pmids))
     pipeline_pmids = set(pipeline_df["paper_id"].str.lstrip("pmid:").astype(int))
-    print("pipeline_df", len(pipeline_pmids))
 
     # Calculate the false positives
     overall_false_positives = pipeline_pmids.difference(truth_pmids)
-    print("overall_false_positives", len(overall_false_positives))
 
     overall_false_negatives = truth_pmids.difference(pipeline_pmids)
-    print("overall_false_negatives", len(overall_false_negatives))
 
     overall_true_positives = pipeline_pmids.intersection(truth_pmids)
 
@@ -461,8 +450,6 @@ def main(args):
     recall = len(overall_true_positives) / (len(overall_true_positives) + len(overall_false_negatives))
 
     # Assert that the tp + fp + fn = pipeline_pmids
-    print(len(overall_true_positives) + len(overall_false_positives))
-    print(len(pipeline_pmids))
     assert len(overall_true_positives) + len(overall_false_positives) == len(pipeline_pmids)
 
     # Assert that tp + fn = truth_pmids
@@ -549,10 +536,6 @@ def main(args):
             if rare_disease_ids:
                 correct_pmids, missed_pmids, irrelevant_pmids = compare_pmid_lists(rare_disease_ids, mgt_ids)
 
-                # Remove any Pubmed missed papers from missed_pmids (these are either caused by an unexpected error
-                # fetching BioC entry or a particular response received from BioC, but corresponding PMC ID not found)
-                # missed_pmids = list(set(missed_pmids) - set(p_miss))
-
                 # Report comparison between ev.agg. and MGT data
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
                 f.write(f"E.A. # Correct Papers: {len(correct_pmids)}\n")
@@ -566,8 +549,6 @@ def main(args):
                     f.write(f"\nPrecision: {precision}\n")
                     f.write(f"Recall: {recall}\n")
                     f.write(f"F1 Score: {f1_score}\n")
-                    # avg_precision.append(precision)
-                    # avg_recall.append(recall)
 
                 else:
                     f.write("\nNo true positives. Precision and recall are undefined.\n")
@@ -621,17 +602,6 @@ def main(args):
                 for i, p in enumerate(p_irr):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
-        # # Calculate average precision and recall
-        # if len(avg_precision) != 0:
-        #     avg_precision = sum(avg_precision) / len(avg_precision)
-        #     avg_recall = sum(avg_recall) / len(avg_recall)
-
-        #     # Write average precision and recall to the file
-        #     f.write(f"\nAverage Precision: {avg_precision}\n")
-        #     f.write(f"Average Recall: {avg_recall}\n")
-        # else:
-        #     f.write("\nNo true positives. Precision and recall are undefined.\n")
-
     # Plot benchmarking results
     if args.isolated_run:
         results_to_plot = plot_benchmarking_results(benchmarking_results)
@@ -640,6 +610,8 @@ def main(args):
 
     # Plot filtering results
     plot_filtered_categories(results_to_plot)
+
+    print("Note: No need to few plots. They should be updated.")
 
 
 if __name__ == "__main__":
