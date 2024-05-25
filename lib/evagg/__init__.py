@@ -1,6 +1,6 @@
 """The evagg core library."""
 
-from .app import SynchronousLocalApp
+from .app import PaperQueryApp
 from .content import PromptBasedContentExtractor
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
@@ -15,7 +15,7 @@ __all__ = [
     "IExtractFields",
     "IWriteOutput",
     # App.
-    "SynchronousLocalApp",
+    "PaperQueryApp",
     # IO.
     "TableOutputWriter",
     # Library.

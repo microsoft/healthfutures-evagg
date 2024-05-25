@@ -33,7 +33,7 @@ error() {
 
 run_pipeline() {
     echo -e "\n-->Running paper finding pipeline with updated prompts..."
-    run_query_sync $DEFAULT_YAML
+    run_evagg_app $DEFAULT_YAML
 }
 
 run_benchmarks() {

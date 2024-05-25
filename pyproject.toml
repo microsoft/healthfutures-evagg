@@ -7,7 +7,7 @@ description = "local repo library"
 authors = ["Microsoft Biomedical Computing Group <BiomedComp@microsoft.com>"]
 
 [tool.poetry.scripts]
-run_query_sync = "lib.execute:run_sync"
+run_evagg_app = "lib.execute:run_evagg_app"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

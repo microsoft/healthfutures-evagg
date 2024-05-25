@@ -43,7 +43,7 @@ truthset_library:
     di_factory: lib/config/fields/seqr.yaml
 
 # Application
-di_factory: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttrain_subset.yaml
 library: "{{truthset_library}}"

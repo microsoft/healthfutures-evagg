@@ -7,7 +7,7 @@ from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 logger = logging.getLogger(__name__)
 
 
-class SynchronousLocalApp(IEvAggApp):
+class PaperQueryApp(IEvAggApp):
     def __init__(
         self,
         queries: Sequence[Dict[str, Any]],

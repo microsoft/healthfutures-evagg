@@ -1,10 +1,12 @@
 import logging
+import os
 import traceback
 from argparse import ArgumentParser, Namespace
 from typing import Any, Dict, Sequence
 
-from lib.di import DiContainer
 from lib.evagg import IEvAggApp
+
+from .di import DiContainer
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ def _parse_args(args: Sequence[str] | None = None) -> Namespace:
         "-o",
         "--override",
         nargs="*",
-        help="Override config values. Specify as key1.key2.keyN:value. Can be specified multiple times.",
+        help="Override config values. Specify as key.subkey.subkey:value. Can be specified multiple times.",
     )
 
     return parser.parse_args()
@@ -60,10 +62,20 @@ def _parse_override_args(overrides: Sequence[str] | None) -> Dict[str, Any]:
     return override_dict
 
 
-def run_sync() -> None:
+def run_evagg_app() -> None:
     args = _parse_args()
+
+    config_yaml = args.config
+    if not os.path.exists(config_yaml):
+        if not config_yaml.endswith(".yaml"):
+            config_yaml += ".yaml"
+        if not os.path.exists(config_yaml):
+            config_yaml = os.path.join("lib", "config", config_yaml)
+            if not os.path.exists(config_yaml):
+                raise FileNotFoundError(f"EvAgg app config file not found: {args.config}")
+
     # Make a spec dictionary out of the factory yaml and the override args and instantiate it.
-    spec = {"di_factory": args.config, **_parse_override_args(args.override)}
+    spec = {"di_factory": config_yaml, **_parse_override_args(args.override)}
     app: IEvAggApp = DiContainer().create_instance(spec, {})
 
     try:
@@ -89,4 +101,4 @@ def run_sync() -> None:
 
 
 if __name__ == "__main__":
-    run_sync()
+    run_evagg_app()

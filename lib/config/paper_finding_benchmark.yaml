@@ -24,7 +24,7 @@ refseq_client:
 # removed HGVSVariantFactory as not part of this .yaml's test.
   
 # Application
-di_factory: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttrain_subset.yaml
 library:
