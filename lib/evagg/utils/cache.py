@@ -24,8 +24,8 @@ def _get_file_cache_root() -> str:
     # If a cache directory exists from a prior run, ask the user if they want to use it.
     if (old_run := get_previous_run()) and os.path.exists(os.path.join(str(old_run.path), "results_cache")):
         # Print out the run record for the most recent run.
-        print(f"Found existing cached run for {old_run.name} started on {old_run.start}.")
-        if input("Use this cache? [y/n]: ").lower() == "y":
+        print(f"\x1b[32mFound existing cached run for {old_run.name} started on {old_run.start}.")
+        if input("Use this cache? [y/n]: \x1b[0m").lower() == "y":
             logger.warning(f"Copying existing cached run results from {old_run.dir_name} to current run.")
             os.system(f"cp -r {os.path.join(str(old_run.path), 'results_cache')} {get_run_path()}")
 
