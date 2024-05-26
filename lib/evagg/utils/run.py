@@ -66,13 +66,14 @@ def set_run_complete(output_file: Optional[str]) -> None:
     if output_file and not _current_run.path:
         raise ValueError("Cannot set output file without a persisted run path.")
 
-    # Write out the final updated RunRecord to "run.json"
-    _current_run.elapsed_secs = datetime.now().timestamp() - _current_run.start_datetime.timestamp()
+    # Write out the final updated RunRecord to "run.json" if the run path is set.
+    _current_run.elapsed_secs = round(datetime.now().timestamp() - _current_run.start_datetime.timestamp(), 1)
     _current_run.output_file = os.path.relpath(output_file, _current_run.path) if output_file else None
-    with open(os.path.join(get_run_path(), "run.json"), "w") as f:
-        f.write(_current_run.json(indent=4))
+    if _current_run.path:
+        with open(os.path.join(_current_run.path, "run.json"), "w") as f:
+            f.write(_current_run.json(indent=4))
 
-    logger.info(f"Run complete, elapsed time {_current_run.elapsed_secs:.2f} seconds.")
+    logger.info(f"Run complete, elapsed time {_current_run.elapsed_secs} seconds.")
 
 
 def get_previous_run(name: Optional[str] = None) -> Optional[RunRecord]:
