@@ -108,7 +108,7 @@ class ConsoleHandler(logging.StreamHandler):
     BASE_FMT = "%(levelname)s:%(name)s:%(message)s"
     dim_grey = "\x1b[38;5;8m"
     grey = "\x1b[38;20m"
-    yellow = "\x1b[38;5;11m"
+    yellow = "\x1b[1;33m"
     red = "\x1b[31;20m"
     reset = "\x1b[0m"
 
