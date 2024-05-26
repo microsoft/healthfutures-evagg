@@ -1,6 +1,7 @@
 import logging
-import time
 from typing import Any, Dict, List, Sequence
+
+from lib.evagg.utils.run import set_run_complete
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 
@@ -22,7 +23,6 @@ class PaperQueryApp(IEvAggApp):
 
     def execute(self) -> None:
         output_fieldsets: List[Dict[str, str]] = []
-        start_ts = time.time()
 
         for query in self._queries:
             if not query.get("gene_symbol"):
@@ -40,6 +40,5 @@ class PaperQueryApp(IEvAggApp):
                 output_fieldsets.extend(extracted_fieldsets)
 
         # Write out the results.
-        self._writer.write(output_fieldsets)
-
-        logger.info(f"Pipeline execution complete, elapsed time {time.time() - start_ts:.2f} seconds.")
+        output_file = self._writer.write(output_fieldsets)
+        set_run_complete(output_file)

@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Any, Callable, Dict, Generic, Optional, TypeVar
 
-from .logging import get_previous_run, get_run_root
+from .run import get_previous_run, get_run_path
 
 T = TypeVar("T")
 Serializer = Optional[Callable[[T], Any]]
@@ -18,15 +18,16 @@ def _get_file_cache_root() -> str:
     global file_cache_root
     if file_cache_root is None:
         # Create a new cache directory for the current run.
-        file_cache_root = os.path.join(get_run_root(), "results_cache")
+        file_cache_root = os.path.join(get_run_path(), "results_cache")
         os.makedirs(file_cache_root, exist_ok=True)
 
     # If a cache directory exists from a prior run, ask the user if they want to use it.
-    if (old_path := get_previous_run()) and os.path.exists(os.path.join(old_path, "results_cache")):
-        old_run_name = os.path.basename(old_path)
-        if input(f"Found existing cached pipeline run: {old_run_name}. Use this cache? [y/n]: ").lower() == "y":
-            logger.warning(f"Copying existing cached pipeline results ({old_run_name}) to current run.")
-            os.system(f"cp -r {os.path.join(old_path, 'results_cache')} {get_run_root()}")
+    if (old_run := get_previous_run()) and os.path.exists(os.path.join(str(old_run.path), "results_cache")):
+        # Print out the run record for the most recent run.
+        print(f"Found existing cached run for {old_run.name} started on {old_run.start}.")
+        if input("Use this cache? [y/n]: ").lower() == "y":
+            logger.warning(f"Copying existing cached run results from {old_run.dir_name} to current run.")
+            os.system(f"cp -r {os.path.join(str(old_run.path), 'results_cache')} {get_run_path()}")
 
     return file_cache_root
 

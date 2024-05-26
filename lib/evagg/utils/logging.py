@@ -2,45 +2,14 @@ import logging
 import logging.config
 import os
 import sys
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable, Dict, List, Optional, Set
 
-_run_handler: Optional["RunHandler"] = None
+from .run import get_run_path, set_output_root
+
 LogFilter = Callable[[logging.LogRecord], bool]
 PROMPT = logging.CRITICAL + 5
-
-
-@dataclass
-class RunHandler:
-    log_root: str
-    name: str
-    run_root: Optional[str] = None
-
-
-def get_run_root() -> str:
-    global _run_handler
-    if _run_handler is None:
-        raise ValueError("Logging service not initialized.")
-
-    # Create the run root the first time it is accessed.
-    if _run_handler.run_root is None:
-        run_start = datetime.now().strftime("%Y%m%d_%H%M%S")
-        _run_handler.run_root = os.path.join(_run_handler.log_root, f"run_{_run_handler.name}_{run_start}")
-        os.makedirs(_run_handler.run_root)
-
-    return _run_handler.run_root
-
-
-def get_previous_run() -> Optional[str]:
-    global _run_handler
-    if _run_handler is None:
-        raise ValueError("Logging service not initialized.")
-    # Get the most recent run directory name.
-    current = os.path.basename(get_run_root())
-    # Get the set of matching prior runs.
-    runs = [d for d in os.listdir(_run_handler.log_root) if d.startswith(f"run_{_run_handler.name}_") and d != current]
-    return os.path.join(_run_handler.log_root, sorted(runs, reverse=True)[0]) if runs else None
+_log_initialized = False
 
 
 LOGGING_CONFIG: Dict = {
@@ -121,14 +90,14 @@ class FileHandler(logging.Handler):
 
         # If console output is enabled, write to file the
         # command-line arguments used to start the program.
-        self._console_log = os.path.join(get_run_root(), "console.log")
+        self._console_log = os.path.join(get_run_path(), "console.log")
         with open(self._console_log, "a") as f:
             f.write("ARGS:" + " ".join(sys.argv) + "\n")
 
     def emit(self, record: logging.LogRecord) -> None:
         if record.levelno == PROMPT:
             file_name = record.__dict__.get("prompt_tag", "prompt")
-            with open(os.path.join(get_run_root(), f"{file_name}.log"), "a") as f:
+            with open(os.path.join(get_run_path(), f"{file_name}.log"), "a") as f:
                 f.write(_format_prompt(record) + "\n")
         if record.levelno != PROMPT or self._prompt_msgs_enabled:
             with open(self._console_log, "a") as f:
@@ -180,16 +149,16 @@ def init_logger(
     to_file: Optional[bool] = False,
     root: Optional[str] = ".out",
 ) -> None:
-    global _run_handler
-    if _run_handler is not None:
+    global _log_initialized
+    if _log_initialized:
         logger = logging.getLogger(__name__)
         logger.warning("Logging service already initialized - ignoring new initialization.")
         return
 
-    # Initialize the run handler from the command-line arguments.
-    config_name = os.path.splitext(os.path.basename(sys.argv[1]))[0]
-    _run_handler = RunHandler(root or ".out", name=config_name)
+    if root:
+        set_output_root(root)
 
+    _log_initialized = True
     # Set up the base log level (defaults to WARNING).
     level_number = getattr(logging, level or "WARNING", None)
     if not isinstance(level_number, int):
