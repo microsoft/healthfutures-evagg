@@ -11,7 +11,6 @@ import requests
 import semantic_kernel as sk
 from semantic_kernel.connectors.ai.open_ai import AzureTextCompletion
 
-from lib.config import PydanticYamlModel
 from lib.evagg.sk import SemanticKernelClient, SemanticKernelDotEnvConfig
 
 # %% Constants.

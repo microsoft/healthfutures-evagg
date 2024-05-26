@@ -32,10 +32,10 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from lib.config import PydanticYamlModel
 from lib.di import DiContainer
 from lib.evagg.llm import aoai
 from lib.evagg.ref import IPaperLookupClient
+from lib.evagg.utils.settings import SettingsModel
 
 logger = logging.getLogger(__name__)
 nltk.download("stopwords", quiet=True)
@@ -134,7 +134,7 @@ def k_set_automatically(X):
     return optimal_k
 
 
-class OpenAIConfig(PydanticYamlModel):
+class OpenAIConfig(SettingsModel):
     deployment: str
     endpoint: str
     api_key: str
