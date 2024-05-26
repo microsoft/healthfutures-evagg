@@ -14,9 +14,9 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from lib.config import PydanticYamlModel
-from lib.evagg.utils import ObjectCache
+from lib.evagg.utils.cache import ObjectCache
 from lib.evagg.utils.logging import PROMPT
+from lib.evagg.utils.settings import SettingsModel
 
 from .interfaces import IPromptClient
 
@@ -43,7 +43,7 @@ class ChatMessages:
         return self._messages.copy()
 
 
-class OpenAIConfig(PydanticYamlModel):
+class OpenAIConfig(SettingsModel):
     deployment: str
     endpoint: str
     api_key: str
