@@ -611,7 +611,7 @@ def main(args):
     # Plot filtering results
     plot_filtered_categories(results_to_plot)
 
-    print("Note: No need to few plots. They should be updated.")
+    print("Note: No need to view plots. They need to be updated.")
 
 
 if __name__ == "__main__":
