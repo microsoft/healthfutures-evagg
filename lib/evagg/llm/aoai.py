@@ -118,7 +118,7 @@ class OpenAIClient(IPromptClient):
             "prompt_response": response,
         }
 
-        logger.log(PROMPT, f"Chat '{prompt_tag}' complete in {elapsed:.2f} seconds.", extra=prompt_log)
+        logger.log(PROMPT, f"Chat '{prompt_tag}' complete in {elapsed:.1f} seconds.", extra=prompt_log)
         return response
 
     async def prompt(
@@ -189,7 +189,7 @@ class OpenAIClient(IPromptClient):
         tokens = await asyncio.gather(*[_run_single_embedding(input) for input in inputs])
         elapsed = time.time() - start_overall
 
-        logger.info(f"{len(inputs)} embeddings produced in {elapsed:.2f} seconds using {sum(tokens)} tokens.")
+        logger.info(f"{len(inputs)} embeddings produced in {elapsed:.1f} seconds using {sum(tokens)} tokens.")
         return embeddings
 
 
