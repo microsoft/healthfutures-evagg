@@ -10,15 +10,15 @@ Functions:
     get_git_version: Returns the version string from git.
 
 Revision History:
-    =========== =============== ==================================================================================================
+    =========== =============== ========================================================================================
     Date        Author          Revision
-    =========== =============== ==================================================================================================
+    =========== =============== ========================================================================================
     08-08-2018  gabe            Initial implementation
     08-10-2018  gabe            Added contains() to Repo
     08-13-2018  gabe            Added Repo.fast_forward() and Repo.discard_changes()
     09-25-2018  gabe            Added Repo.get_status_str()
     10-04-2018  gabe            Migrated to python 3
-    =========== =============== ==================================================================================================
+    =========== =============== ========================================================================================
 
 """
 
@@ -65,7 +65,8 @@ class ModifiedFile:
         if status_line.startswith("1"):
             self.type = "changed"
             match = re.match(
-                r"1 (?P<XY>\S{2}) (?P<sub>\S{4}) (?P<mH>\S+) (?P<mI>\S+) (?P<mW>\S+) (?P<hH>\S+) (?P<hI>\S+) " + r"(?P<path>.+)",
+                r"1 (?P<XY>\S{2}) (?P<sub>\S{4}) (?P<mH>\S+) (?P<mI>\S+) (?P<mW>\S+) (?P<hH>\S+) (?P<hI>\S+) "
+                + r"(?P<path>.+)",
                 status_line,
             )
         if status_line.startswith("2"):
@@ -122,22 +123,30 @@ class RepoStatus:
         ignored_files (List[ModifiedFile]): List of ignored files.
         all_modified_files (List[ModifiedFile]): List of all modified files, including those in the above lists.
         status_str (str): Full string returned from 'git status --porcelain=2 --branch' command.
+
     Methods:
         is_clean: Determine whether or not the repo is clean.
         is_up_to_date: Determine whether or not the repo is ahead/behind the upstream branch.
 
     """
 
-    def __init__(self, repo_root_path: str) -> None:
+    def __init__(self, repo_root_path: Optional[str] = None) -> None:
         """Get the status of the specified repo and fill out all attributes of the class.
 
         Args:
-            repo_root_path (str): Path to root directory of a Git repository to get the status of.
+            repo_root_path (str): Path to root directory of a Git repository to get the status of. Searches up the
+            current directory tree if not specified.
 
         Raises:
             GitError: If unable to run git status on the repo.
 
         """
+        if not repo_root_path:
+            repo_root_path = os.getcwd()
+            while not os.path.isdir(os.path.join(repo_root_path, ".git")):
+                repo_root_path = os.path.dirname(repo_root_path)
+                if repo_root_path == "/":
+                    raise GitError("No git repo found in the current directory or any parent directory")
         self._repo_root = repo_root_path
 
         # Run git status on the repo.
@@ -265,7 +274,7 @@ class Repo:
     """
 
     @classmethod
-    def clone(cls, repo_url: str, dest_dir: str = None, dir_name: str = None) -> "Repo":
+    def clone(cls, repo_url: str, dest_dir: Optional[str] = None, dir_name: Optional[str] = None) -> "Repo":
         """Clone the specified repo and returns a Repo object.
 
         Args:
@@ -340,7 +349,7 @@ class Repo:
 
         Args:
             include_staged_diff (bool): If True, the diff of staged changes are included. Defaults to False.
-            include_all_diff (bool): If True, then the diff of both staged changes and working tree changes are included.
+            include_all_diff (bool): If True, then the diff of staged changes and working tree changes are included.
                 Defaults to False.
 
         Raises:
@@ -353,8 +362,10 @@ class Repo:
                 args.append("-vv")
             elif include_staged_diff:
                 args.append("-v")
-            return subprocess.check_output(["git", "status"] + args, stderr=subprocess.STDOUT, cwd=self.root_path).decode()
-        except:
+            return subprocess.check_output(
+                ["git", "status"] + args, stderr=subprocess.STDOUT, cwd=self.root_path
+            ).decode()
+        except Exception:
             raise GitError("Unable to run git status on the specified repo")
 
     def fetch(self, remotes: Union[List[str], None] = None, all_tags: Union[bool, None] = False) -> str:
@@ -362,8 +373,9 @@ class Repo:
 
         Args:
             remotes (List[str] or None): A list of remotes to update. If None, then all remotes will be fetched.
-            all_tags (bool or None): If True all tags are fetched ('--tags' option), if False only tags that point into the
-                histories being fetched are downloaded (default option), and if None then no tags are fetched ('--no-tags' option)
+            all_tags (bool or None): If True all tags are fetched ('--tags' option), if False only tags that point
+                into the histories being fetched are downloaded (default option), and if None then no tags are fetched
+                ('--no-tags' option)
 
         Returns:
             str: Command line output from 'git fetch'.
@@ -389,7 +401,9 @@ class Repo:
             args.append("--tags")
 
         try:
-            output = subprocess.check_output(["git", "fetch"] + args, stderr=subprocess.STDOUT, cwd=self.root_path).decode()
+            output = subprocess.check_output(
+                ["git", "fetch"] + args, stderr=subprocess.STDOUT, cwd=self.root_path
+            ).decode()
         except subprocess.CalledProcessError as err:
             raise GitError(f"Git fetch returned an error code: {err.output}")
         return output
@@ -414,8 +428,8 @@ class Repo:
         """Advance the current branch pointer ahead to the specified target position.
 
         Args:
-            target (str): Commit representing the final position after the fast-forward. If not specified, then this will be the
-                head of the upstream (remote) branch.
+            target (str): Commit representing the final position after the fast-forward. If not specified, then
+                this will be the head of the upstream (remote) branch.
 
         Returns:
             str: Command line output from 'git merge'.
@@ -456,18 +470,19 @@ class Repo:
     def lookup_commit_hash(self, ref: str, include_remotes: bool = False) -> str:
         """Return SHA-1 commit hash associated with the specified reference (branch, tag, or commit).
 
-        The reference name must be the complete name. For example if `ref`='my-branch' and that branch name does not exist,
-            but 'feature/my-branch' does exist, then an exception will be raised since the specified reference does not exist.
+        The reference name must be the complete name. For example if `ref`='my-branch' and that branch name does not
+            exist, but 'feature/my-branch' does exist, then an exception will be raised since the specified reference
+            does not exist.
 
         Using the `include_remotes` option, branches present on the remotes will also be searched. For example, if
             `ref`='feature/my-branch' and 'feature/my-branch' does not exist, but 'origin/feature/my-branch' does exist,
-            the behavior is based on the value of `include_remotes`. If `include_remotes` is True, then a SHA-1 hash is returned,
-            but if `include_remotes` is False (default), then an exception is raised since the specified reference name does not
-            exist in the local repo.
+            the behavior is based on the value of `include_remotes`. If `include_remotes` is True, then a SHA-1 hash is
+            returned, but if `include_remotes` is False (default), then an exception is raised since the specified
+            reference name does not exist in the local repo.
 
         Args:
             ref (str): Reference to lookup. This can be a branch, tag, or SHA-1 commit hash.
-            include_remotes (bool): If True, the remotes are also searched for the specified branch name. Defaults to False.
+            include_remotes (bool): If True, the remotes are also searched for the specified branch name. Default False.
 
         Returns:
             str: SHA-1 commit hash associated with the specified reference (branch, tag, or commit).
@@ -483,10 +498,13 @@ class Repo:
         if not commit and include_remotes:
             try:
                 branch_names = subprocess.check_output(
-                    ["git", "rev-parse", "--symbolic-full-name", f"--glob=*/{ref}"], stderr=subprocess.STDOUT, cwd=self.root_path
+                    ["git", "rev-parse", "--symbolic-full-name", f"--glob=*/{ref}"],
+                    stderr=subprocess.STDOUT,
+                    cwd=self.root_path,
                 ).decode()
 
-                # Parse output from 'git rev-parse' to find the branch name that exactly matches the reference plus a remote name.
+                # Parse output from 'git rev-parse' to find the branch name
+                # that exactly matches the reference plus a remote name.
                 for branch in branch_names.splitlines():
                     if re.match(f"refs/remotes/[^/]+/{ref}", branch):
                         commit = self._get_commit_hash(branch)
@@ -502,18 +520,18 @@ class Repo:
     def contains(self, ref: str, include_remotes: bool = False) -> bool:
         """Return True if the repo contains the specified reference (branch, tag, or commit).
 
-        The reference name must be the complete name. For example if `ref`='my-branch' and that branch name does not exist,
-            but 'feature/my-branch' does exist, then False is returned since the specified reference does not exist.
+        The reference name must be the complete name. For example if `ref`='my-branch' and that branch name does not
+            exist, but 'feature/my-branch' does, then False is returned since the specified reference does not exist.
 
         Using the `include_remotes` option, branches present on the remotes will also be searched. For example, if
             `ref`='feature/my-branch' and 'feature/my-branch' does not exist, but 'origin/feature/my-branch' does exist,
-            the behavior is based on the value of `include_remotes`. If `include_remotes` is True, then True is returned,
-            but if `include_remotes` is False (default), then False is returned since the specified reference name does not
-            exist in the local repo.
+            the behavior is based on the value of `include_remotes`. If `include_remotes` is True, then True is
+            returned, but if `include_remotes` is False (default), then False is returned since the specified reference
+            name does not exist in the local repo.
 
         Args:
             ref (str): Reference to lookup. This can be a branch, tag, or SHA-1 commit hash.
-            include_remotes (bool): If True, the remotes are also searched for the specified branch name. Defaults to False.
+            include_remotes (bool): If True, the remotes are also searched for the specified branch name. Default False.
 
         Returns:
             bool: True if the repo contains the specified reference (branch, tag, or commit), False otherwise.
@@ -537,7 +555,7 @@ class Repo:
             remove_untracked_files (bool): If True, all untracked files will also be removed. Defaults to False.
             remove_untracked_dirs (bool): If True, all untracked directories will also be removed.
                 If True, `remove_untracked_files` must also be True. Defaults to False.
-            remove_ignored_files (bool): If True, all files ignored by .gitignore will also be removed. Defaults to False.
+            remove_ignored_files (bool): If True, all files ignored by .gitignore will also be removed. Default False.
 
         Raises:
             ValueError: If invalid arguments are given.
@@ -607,6 +625,6 @@ def get_git_version() -> str:
     """
     try:
         version = subprocess.check_output(["git", "--version"]).decode()
-    except:
+    except Exception:
         version = ""
     return version
