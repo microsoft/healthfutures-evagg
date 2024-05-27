@@ -82,7 +82,9 @@ def set_run_complete(output_file: Optional[str]) -> None:
         with open(os.path.join(_current_run.path, "run.json"), "w") as f:
             f.write(_current_run.json(indent=4))
 
-    logger.info(f"Run complete, elapsed time {_current_run.elapsed_secs} seconds.")
+    if files := len([f for f in repo.all_modified_files if f.name.startswith("lib/")]):
+        logger.warning(f"{files} modified {'file' if files == 1 else 'files'} in 'lib'.")
+    logger.info(f"Run complete in {_current_run.elapsed_secs} secs on branch {repo.branch} ({repo.commit[:7]})")
 
 
 def get_previous_run(name: Optional[str] = None) -> Optional[RunRecord]:
