@@ -2,8 +2,9 @@ import logging
 import os
 import sys
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
+from .git import RepoStatus
 from .settings import SettingsModel
 
 
@@ -11,6 +12,7 @@ class RunRecord(SettingsModel):
     name: str
     timestamp: str
     args: List[str]
+    git: Dict[str, Any]
     path: Optional[str] = None
     output_file: Optional[str] = None
     elapsed_secs: Optional[float] = None
@@ -31,11 +33,18 @@ class RunRecord(SettingsModel):
 DATE_FORMAT = "%Y%m%d_%H%M%S"
 logger = logging.getLogger(__name__)
 _output_root = ".out"
+
 # Initialize the current run record from the command-line arguments.
+repo = RepoStatus()
 _current_run = RunRecord(
     name=os.path.splitext(os.path.basename(sys.argv[1]))[0],
     args=sys.argv[1:],
     timestamp=datetime.now().strftime(DATE_FORMAT),
+    git={
+        "branch": repo.branch,
+        "commit": repo.commit,
+        "modified_files": [f.name for f in repo.all_modified_files],
+    },
 )
 
 
