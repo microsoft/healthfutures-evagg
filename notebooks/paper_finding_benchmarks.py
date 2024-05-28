@@ -17,7 +17,6 @@ other categories
 import argparse
 import glob
 import json
-import logging
 import os
 import shutil
 import subprocess
@@ -32,9 +31,6 @@ import yaml
 
 from lib.di import DiContainer
 from lib.evagg.ref import IPaperLookupClient
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def get_git_commit_hash():
@@ -98,40 +94,15 @@ def compare_pmid_lists(input_pmids, truth_pmids):
 
 
 def plot_benchmarking_results_tool_only(
-    benchmarking_train_results,
+    num_correct,
+    num_missed,
+    num_irrelevant,
 ):  # TODO: consider merging this function with plot_benchmarking_results, given the code similarity
-    """Plot the benchmarking results from the  set in a barplot.
-
-    Return the results dataframe (see keys below) for subsequent plotting.
-    """
-    keys = [
-        "Gene",
-        "Rare Disease Papers",
-        "Other Papers",
-        "Conflicting Papers",
-        "E.A. Correct",
-        "E.A. Missed",
-        "E.A. Irrelevant",
-    ]
-    results_to_plot = {key: [] for key in keys}
-
-    for gene, values in benchmarking_train_results.items():
-        for i, key in enumerate(keys):
-            if key == "Gene":
-                results_to_plot[key].append(gene)
-            else:
-                results_to_plot[key].append(values[i - 1])
-
-    results_to_plot = pd.DataFrame(results_to_plot)
-
+    """Plot the benchmarking results from the  set in a barplot."""
     # List of categories
     ea_categories = ["E.A. Correct", "E.A. Missed", "E.A. Irrelevant"]
 
-    # Calculate averages
-    tool_averages = results_to_plot[ea_categories].mean()
-
-    # Calculate standard deviations
-    tool_std = results_to_plot[ea_categories].std()
+    values = [num_correct, num_missed, num_irrelevant]
 
     # Create a figure and a set of subplots
     fig, ax = plt.subplots()
@@ -140,73 +111,53 @@ def plot_benchmarking_results_tool_only(
     bar_width = 0.35
 
     # Positions of the left bar boundaries
-    bar_l = np.arange(len(tool_averages))
+    bar_l = np.arange(len(values))
 
     # Positions of the x-axis ticks (center of the bars as bar labels)
     tick_pos = [i + (bar_width / 2) for i in bar_l]
 
-    # Create a bar plot for 'Tool'
-    tool_bars = ax.bar(
-        bar_l,
-        tool_averages,
-        width=bar_width,
-        label="Tool",
-        alpha=0.5,
-        color="b",
-        yerr=tool_std,
-    )
+    # Create a bar plot
+    bars = ax.bar(bar_l, values, width=bar_width, label="Tool", alpha=0.5, color="b")
 
     # Set the ticks to be first names
-    plt.xticks(tick_pos, list(tool_averages.index))
-    ax.set_ylabel("Average")
+    plt.xticks(tick_pos, ea_categories)
+    ax.set_ylabel("Count")
     ax.set_xlabel("Categories")
     plt.legend(loc="upper right")
-    plt.title("Avg. # correct, missed & irrelevant papers: E.A.")
+    plt.title("Evidence Aggregator: #correct, # missed & # irrelevant papers")
 
-    # Function to add average value in bar plot labels
+    # Function to add value in bar plot labels
     def add_labels(bars):
         for bar in bars:
             height = bar.get_height()
             ax.text(
-                bar.get_x() + bar.get_width() / 2, bar.get_y() + height + 0.9, "%.2f" % height, ha="left", va="bottom"
+                bar.get_x() + bar.get_width() / 2, bar.get_y() + height + 0.9, "%.2f" % height, ha="center", va="bottom"
             )
 
     # Add appropriate labels
-    add_labels(tool_bars)
+    add_labels(bars)
     plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
 
     # Save barplot
     plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train.png")
-    return results_to_plot
 
 
-def plot_benchmarking_results(benchmarking_train_results):
-    """Plot the benchmarking results from the  set in a barplot.
+def plot_benchmarking_results(
+    num_correct, num_missed, num_irrelevant, num_pub_correct, num_pub_missed, num_pub_irrelevant
+):
+    """Plot the benchmarking results from the  set in a barplot."""
 
-    Return the results dataframe (see keys below) for subsequent plotting.
-    """
-    keys = [
-        "Gene",
-        "Rare Disease Papers",
-        "Other Papers",
-        "Conflicting Papers",
-        "E.A. Correct",
-        "E.A. Missed",
-        "E.A. Irrelevant",
-        "PubMed Correct",
-        "PubMed Missed",
-        "PubMed Irrelevant",
-    ]
-    results_to_plot = {key: [] for key in keys}
-
-    for gene, values in benchmarking_train_results.items():
-        for i, key in enumerate(keys):
-            if key == "Gene":
-                results_to_plot[key].append(gene)
-            else:
-                results_to_plot[key].append(values[i - 1])
-
-    results_to_plot = pd.DataFrame(results_to_plot)
+    # Create a DataFrame from the input data
+    results_to_plot = pd.DataFrame(
+        {
+            "E.A. Correct": [num_correct],
+            "E.A. Missed": [num_missed],
+            "E.A. Irrelevant": [num_irrelevant],
+            "PubMed Correct": [num_pub_correct],
+            "PubMed Missed": [num_pub_missed],
+            "PubMed Irrelevant": [num_pub_irrelevant],
+        }
+    )
 
     # List of categories
     ea_categories = ["E.A. Correct", "E.A. Missed", "E.A. Irrelevant"]
@@ -275,17 +226,14 @@ def plot_benchmarking_results(benchmarking_train_results):
     plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
 
     # Save barplot
-    plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train.png")
-    return results_to_plot
+    plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train_EA_vs_PubMed.png")
 
 
 # Plot the filtereds into paper 4 categories
-def plot_filtered_categories(results_to_plot):
+def plot_filtered_categories(class_results):
     """Plot the filtered results (2 categories: rare disease, other) in a barplot."""
     # Calculate averages
-    rare_disease_avg = results_to_plot["Rare Disease Papers"].mean()
-    other_papers_avg = results_to_plot["Other Papers"].mean()
-    conflicting = results_to_plot["Conflicting Papers"].mean()
+    averages = [np.mean(values) for values in zip(*class_results.values())]
 
     # Create a figure and a set of subplots
     fig, ax = plt.subplots()
@@ -302,7 +250,7 @@ def plot_filtered_categories(results_to_plot):
     # Create a bar plot
     bars = ax.bar(
         bar_l,
-        [rare_disease_avg, other_papers_avg, conflicting],
+        averages,
         width=bar_width,
         alpha=0.5,
         color="b",
@@ -312,7 +260,7 @@ def plot_filtered_categories(results_to_plot):
     plt.xticks(tick_pos, ["Rare Disease Papers", "Other Papers", "Conflicting Papers"], rotation=10)
     ax.set_ylabel("Average")
     ax.set_xlabel("Categories")
-    plt.title("Avg. # PubMed papers filtered into rare and other categories")
+    plt.title("Avg. # PubMed papers filtered into rare, other, or conflicting categories")
 
     # Function to add labels
     def add_labels(bars):
@@ -409,9 +357,6 @@ def main(args):
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
 
-    # Initialize benchmarking results dictionary
-    benchmarking_results = {}
-
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
     if os.path.isdir(args.outdir):
@@ -436,24 +381,46 @@ def main(args):
         shutil.move(file, args.outdir)
 
     # Compute overall precision and recall prior to gene-specific analysis
+
     truth_pmids = set(mgt_df[mgt_df["has_fulltext"] == True].pmid)
     pipeline_pmids = set(pipeline_df["paper_id"].str.lstrip("pmid:").astype(int))
 
-    # Calculate the false positives
+    # Calculate the false positives (irrelevant)
     overall_false_positives = pipeline_pmids.difference(truth_pmids)
+    ea_irrelevant = len(overall_false_positives)
 
+    # Calculate the false negatives (missed)
     overall_false_negatives = truth_pmids.difference(pipeline_pmids)
+    ea_missed = len(overall_false_negatives)
 
+    # Calculate the true positives (correct)
     overall_true_positives = pipeline_pmids.intersection(truth_pmids)
+    ea_correct = len(overall_true_positives)
 
-    precision = len(overall_true_positives) / (len(overall_true_positives) + len(overall_false_positives))
-    recall = len(overall_true_positives) / (len(overall_true_positives) + len(overall_false_negatives))
+    precision = ea_correct / (ea_correct + ea_irrelevant)
+    recall = ea_correct / (ea_correct + ea_missed)
 
     # Assert that the tp + fp + fn = pipeline_pmids
-    assert len(overall_true_positives) + len(overall_false_positives) == len(pipeline_pmids)
+    assert ea_correct + ea_irrelevant == len(pipeline_pmids)
 
     # Assert that tp + fn = truth_pmids
-    assert len(overall_true_positives) + len(overall_false_negatives) == len(truth_pmids)
+    assert ea_correct + ea_missed == len(truth_pmids)
+
+    # Plot benchmarking results
+    if args.isolated_run:
+        plot_benchmarking_results(
+            ea_correct,
+            ea_missed,
+            ea_irrelevant,
+            0,
+            0,
+            0,
+        )
+    else:
+        plot_benchmarking_results_tool_only(ea_correct, ea_missed, ea_irrelevant)
+
+    # Initialize the classification results dictionary
+    class_results = {}
 
     # Compile and save the benchmarking results to a file
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
@@ -478,6 +445,8 @@ def main(args):
         for i, p in enumerate(overall_false_positives):
             f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
+        # Plot overall number of correct, missed, and irrelevant papers for pipeline and PubMed.
+
         # Iterate through all genes and associated PMIDS
         for term, gene_df in pipeline_df.groupby("gene"):
 
@@ -485,11 +454,8 @@ def main(args):
             f.write(f"\nGENE: {term}\n")
             print("Analyzing found papers for: ", term, "...")
 
-            # Initialize the list for this gene
-            if args.isolated_run:
-                benchmarking_results[term] = [0] * 9
-            else:
-                benchmarking_results[term] = [0] * 6
+            # Initialize the classification results dictionary for this gene
+            class_results[term] = [0] * 3
 
             # Get pmids from pipeline output for this gene.
             rare_disease_ids = (
@@ -516,11 +482,11 @@ def main(args):
 
             # Report the number of papers in each category
             f.write(f"Rare Disease Papers: {len(rare_disease_ids)}\n")
-            benchmarking_results[term][0] = len(rare_disease_ids)
+            class_results[term][0] = len(rare_disease_ids)
             f.write(f"Other Papers: {len(other_ids)}\n")
-            benchmarking_results[term][1] = len(other_ids)
+            class_results[term][1] = len(other_ids)
             f.write(f"Conflicting Papers: {len(conflicting_ids)}\n")
-            benchmarking_results[term][2] = len(conflicting_ids)
+            class_results[term][2] = len(conflicting_ids)
             for i, id in enumerate(conflicting_ids):
                 f.write(f"* {i + 1} * {id} * {titles[id]}\n")
                 f.write(f"* {i + 1}-counts * {conflicting_counts[i]}\n")
@@ -553,11 +519,6 @@ def main(args):
                 else:
                     f.write("\nNo true positives. Precision and recall are undefined.\n")
 
-                # Update the metrics in the list for this gene
-                benchmarking_results[term][3] = len(correct_pmids)
-                benchmarking_results[term][4] = len(missed_pmids)
-                benchmarking_results[term][5] = len(irrelevant_pmids)
-
                 f.write(f"\nFound E.A. {len(correct_pmids)} correct.\n")
                 for i, p in enumerate(correct_pmids):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
@@ -569,7 +530,6 @@ def main(args):
                 f.write(f"\nFound E.A. {len(irrelevant_pmids)} irrelevant.\n")
                 for i, p in enumerate(irrelevant_pmids):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
-                    # print(titles[p])
 
             else:
                 f.write("\nOf Ev. Agg.'s rare disease papers...\n")
@@ -585,11 +545,6 @@ def main(args):
                 f.write(f"Pubmed # Missed Papers: {len(p_miss)}\n")
                 f.write(f"Pubmed # Irrelevant Papers: {len(p_irr)}\n")
 
-                # Update the counts in the list for this gene
-                benchmarking_results[term][6] = len(p_corr)
-                benchmarking_results[term][7] = len(p_miss)
-                benchmarking_results[term][8] = len(p_irr)
-
                 f.write(f"\nFound Pubmed {len(p_corr)} correct.\n")
                 for i, p in enumerate(p_corr):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
@@ -602,16 +557,8 @@ def main(args):
                 for i, p in enumerate(p_irr):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
-    # Plot benchmarking results
-    if args.isolated_run:
-        results_to_plot = plot_benchmarking_results(benchmarking_results)
-    else:
-        results_to_plot = plot_benchmarking_results_tool_only(benchmarking_results)
-
     # Plot filtering results
-    plot_filtered_categories(results_to_plot)
-
-    print("Note: No need to view plots. They need to be updated.")
+    plot_filtered_categories(class_results)
 
 
 if __name__ == "__main__":
