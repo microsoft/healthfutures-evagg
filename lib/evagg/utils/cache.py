@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import subprocess  # nosec B404 # allow careful use of subprocess
 from typing import Any, Callable, Dict, Generic, Optional, TypeVar
 
 from .run import get_previous_run, get_run_path
@@ -22,13 +23,14 @@ def _get_file_cache_root() -> str:
         os.makedirs(file_cache_root, exist_ok=True)
 
     # If a cache directory exists from a prior run, ask the user if they want to use it.
-    if (old_run := get_previous_run()) and os.path.exists(os.path.join(str(old_run.path), "results_cache")):
+    if (run := get_previous_run()) and os.path.exists(os.path.join(str(run.path), "results_cache")):
         # Print out the run record for the most recent run.
-        print(f"\x1b[32mFound existing cached run for {old_run.name} started on {old_run.start}.")
+        print(f"\x1b[32mFound existing cached run for {run.name} started on {run.start}.")
         if input("Use this cache? [y/n]: \x1b[0m").lower() == "y":
-            logger.warning(f"Copying existing cached run results from {old_run.dir_name} to current run.")
-            os.system(f"cp -r {os.path.join(str(old_run.path), 'results_cache')} {get_run_path()}")
-
+            logger.warning(f"Copying existing cached run results from {run.dir_name} to current run.")
+            subprocess.run(
+                ["cp", "-r", os.path.join(str(run.path), "results_cache"), get_run_path()], check=True
+            )  # nosec B603, B607 # no untrusted input/partial path
     return file_cache_root
 
 
