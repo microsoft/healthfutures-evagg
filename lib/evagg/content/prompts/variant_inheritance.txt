@@ -7,7 +7,7 @@ variant possessed by this patient for which I want you to determine the mode of 
 the following ways: {{$variant_descriptions}}.
 
 The only options for variant inheritance available for you to choose from are: "inherited", "de novo", and "unknown". 
-Choose only one of  these options in your response. Do not choose any other options other than these. 
+Choose only one of these options in your response. Do not choose any other options other than these. 
 
 - "inherited" refers to cases where the variant in question was inherited by the patient from one or both of their 
 parents.
