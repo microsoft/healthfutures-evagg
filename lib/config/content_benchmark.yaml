@@ -63,13 +63,13 @@ extractor:
     - transcript
     - individual_id
     - phenotype
-    # - zygosity
-    # - variant_inheritance
-    # - variant_type
-    # - functional_study
-    # - gnomad_frequency
-    # - study_type
-    # - citation    
+    - zygosity
+    - variant_inheritance
+    - variant_type
+    - functional_study
+    - gnomad_frequency
+    - study_type
+    - citation    
   llm_client: "{{llm_client}}"
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
