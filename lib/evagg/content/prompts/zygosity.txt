@@ -12,8 +12,8 @@ It is possible that the zygosity for this patient and variant isn't described in
 "none" as your response value. This is most often the case in review papers that are summarizing information on a large 
 number of different variants.
 
-Occasionally zygosity is also referred to as the mode of inheritance for a particular patient (not to be confused with)
-the mode of inheritance for a disease. When observing the mode of inheritance for a particular patient, de novo and 
+Occasionally zygosity is also referred to as the mode of inheritance for a particular patient (not to be confused with
+the mode of inheritance for a disease). When observing the mode of inheritance for a particular patient, de novo and 
 autosomal dominant can generally be used to infer heterozygous zygosity, and autosomal recessive can generally be used
 to infer homozygous zygosity.
 
