@@ -136,7 +136,7 @@ async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_clie
         json.dumps({"paper_category": "rare disease"}),
         json.dumps({"paper_category": "other"}),
         json.dumps({"paper_category": "other"}),
-        json.dumps({"paper_category": "other"})
+        json.dumps({"paper_category": "other"}),
     )
     query = {"gene_symbol": "gene"}
     result = await RareDiseaseFileLibrary(paper_client, llm_client)._get_all_papers(query)
@@ -145,7 +145,7 @@ async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_clie
     assert paper_client.call_count() == 3
     assert result and len(result) == 2
     assert result == [rare_disease_paper, other_paper]
-    
+
     # Remove all paper_finding_few_shot_*.txt from lib/evagg/content/prompts
     for file in os.listdir("lib/evagg/content/prompts"):
         if file.startswith("paper_finding_few_shot_"):
