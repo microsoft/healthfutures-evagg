@@ -18,7 +18,7 @@ TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "license", "l
 TRUTHSET_PAPER_KEYS_MAPPING = {"paper_id": "id", "paper_title": "title"}
 
 
-class TruthsetFileLibrary(IGetPapers, IFindObservations, IExtractFields):
+class TruthsetFileHandler(IGetPapers, IFindObservations, IExtractFields):
     """A class for retrieving papers from a truthset file."""
 
     def __init__(
@@ -53,7 +53,7 @@ class TruthsetFileLibrary(IGetPapers, IFindObservations, IExtractFields):
 
     # IGetPapers
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
-        """For the TruthsetFileLibrary, query is expected to be a gene symbol."""
+        """For the TruthsetFileHandler, query is expected to be a gene symbol."""
         if not (gene_symbol := query.get("gene_symbol")):
             logger.warning("No gene symbol provided for truthset query.")
             return []
@@ -106,7 +106,7 @@ class TruthsetFileLibrary(IGetPapers, IFindObservations, IExtractFields):
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         """Extract properties from the evidence bags populated on the truthset Paper object."""
         if not self._fields:
-            raise ValueError("TruthsetFileLibrary not configured for field extraction.")
+            raise ValueError("TruthsetFileHandler not configured for field extraction.")
 
         def _get_field(evidence: Dict[str, str], field: str) -> str:
             """Extract the requested evidence properties from the truthset evidence."""
