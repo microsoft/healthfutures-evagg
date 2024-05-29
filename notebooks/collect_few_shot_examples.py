@@ -24,7 +24,7 @@ from sklearn.mixture import GaussianMixture
 from lib.di import DiContainer
 from lib.evagg.llm import OpenAIClient
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.svc import get_dotenv_settings
+from lib.evagg.utils import get_dotenv_settings
 
 logger = logging.getLogger(__name__)
 

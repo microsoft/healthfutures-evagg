@@ -6,16 +6,16 @@ from typing import Any, Dict, List, Optional, Sequence
 from defusedxml import ElementTree
 from pydantic import Extra, root_validator
 
-from lib.config import PydanticYamlModel
-from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
+from lib.evagg.utils import IWebContentClient
+from lib.evagg.utils.settings import SettingsModel
 
 from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient, IVariantLookupClient
 
 logger = logging.getLogger(__name__)
 
 
-class NcbiApiSettings(PydanticYamlModel, extra=Extra.forbid):
+class NcbiApiSettings(SettingsModel, extra=Extra.forbid):
     api_key: Optional[str] = None
     email: str = "biomedcomp@microsoft.com"
 
@@ -108,7 +108,6 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             return " ".join(("".join(node.itertext())).split()) if node is not None else ""
 
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
-        props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
         return props
 
     def _get_license_props(self, pmcid: str) -> Dict[str, str | bool]:
@@ -141,8 +140,8 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
     def _get_derived_props(self, props: Dict[str, Any]) -> Dict[str, str]:
         """Get the derived properties of a paper."""
-        derived_props: Dict[str, str] = {}
-        derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}, {props['doi']}"
+        derived_props: Dict[str, Any] = {}
+        derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}"
         derived_props["link"] = f"https://pubmed.ncbi.nlm.nih.gov/{props['pmid']}/"
         return derived_props
 

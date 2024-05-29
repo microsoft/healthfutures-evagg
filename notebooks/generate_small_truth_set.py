@@ -38,7 +38,7 @@ import requests
 from Bio import Entrez, Medline
 from defusedxml import ElementTree
 
-from lib.config import PydanticYamlModel
+from lib.evagg.utils.settings import SettingsModel
 
 # %% Constants.
 # Goofy joins to support both running interactive and as a script.
@@ -51,7 +51,7 @@ TINY_GENE_SET = ["COQ2", "JPH1"]
 # %% Handle configuration.
 
 
-class Config(PydanticYamlModel):
+class Config(SettingsModel):
     email: str
 
 
