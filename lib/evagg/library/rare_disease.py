@@ -1,17 +1,16 @@
 import asyncio
 import logging
-import os
 import re
 from datetime import date
+from os import path
 from typing import Any, Dict, List, Sequence
 
+from lib.evagg.interfaces import IGetPapers
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
-from lib.evagg.utils.cache import ObjectFileCache
 
 from .disease_keywords import INCLUSION_KEYWORDS
-from .interfaces import IGetPapers
 
 logger = logging.getLogger(__name__)
 
@@ -127,9 +126,7 @@ class RareDiseaseFileLibrary(IGetPapers):
                 # Replace the entire paper in the cluster
                 papers = cluster.split("\n")
                 papers_bkup = clusters_bkup[i].split("\n")
-                start_index = next(
-                    (j for j, paper in enumerate(papers) if self._check_gene_in_string(paper, gene)), None
-                )
+                start_index = next((j for j, p in enumerate(papers) if self._check_gene_in_string(p, gene)), None)
                 if start_index is not None:
                     end_index = next(
                         (j for j in range(start_index + 1, len(papers)) if papers[j].startswith("Gene: ")), len(papers)
@@ -174,21 +171,15 @@ class RareDiseaseFileLibrary(IGetPapers):
             )
 
         # Read in paper_finding_*.txt and append the few shot examples
-        with open(
-            os.path.join(os.path.dirname(__file__), "content", "prompts", f"paper_finding_{method}.txt"), "r"
-        ) as f:
+        prompts_path = path.join(path.dirname(path.dirname(__file__)), "content", "prompts")
+        with open(path.join(prompts_path, f"paper_finding_{method}.txt"), "r") as f:
             file_content = f.read()
 
         # Append few_shot_phrases
         file_content += few_shot_phrases
 
         # Generate a unique file name based on paper.id (PMID)
-        unique_file_name = os.path.join(
-            os.path.dirname(__file__),
-            "content",
-            "prompts",
-            f"paper_finding_{method}_{paper.id.replace('pmid:', '')}.txt",
-        )
+        unique_file_name = path.join(prompts_path, f"paper_finding_{method}_{paper.id.replace('pmid:', '')}.txt")
 
         # Write the content to the unique file
         with open(unique_file_name, "w") as f:
@@ -277,38 +268,3 @@ class RareDiseaseFileLibrary(IGetPapers):
         """
         all_papers = asyncio.run(self._get_all_papers(query))
         return list(filter(lambda p: p.props["disease_category"] in self._allowed_categories, all_papers))
-
-
-class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
-    """A class for fetching and categorizing disease papers from PubMed backed by a file-persisted cache."""
-
-    @classmethod
-    def serialize_paper_sequence(cls, papers: Sequence[Paper]) -> List[Dict[str, Any]]:
-        return [paper.props for paper in papers]
-
-    @classmethod
-    def deserialize_paper_sequence(cls, data: List[Dict[str, Any]]) -> Sequence[Paper]:
-        return [Paper(**paper) for paper in data]
-
-    def __init__(
-        self,
-        paper_client: IPaperLookupClient,
-        llm_client: IPromptClient,
-        allowed_categories: Sequence[str] | None = None,
-        example_types: Sequence[str] | None = None,
-    ) -> None:
-        super().__init__(paper_client, llm_client, allowed_categories, example_types)
-        self._cache = ObjectFileCache[Sequence[Paper]](
-            "RareDiseaseFileLibrary",
-            serializer=RareDiseaseLibraryCached.serialize_paper_sequence,
-            deserializer=RareDiseaseLibraryCached.deserialize_paper_sequence,
-        )
-
-    def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
-        cache_key = f"get_papers_{query['gene_symbol']}"
-        if papers := self._cache.get(cache_key):
-            logger.info(f"Retrieved {len(papers)} papers from cache for {query['gene_symbol']}.")
-            return papers
-        papers = super().get_papers(query)
-        self._cache.set(cache_key, papers)
-        return papers
