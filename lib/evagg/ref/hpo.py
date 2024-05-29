@@ -6,7 +6,7 @@ from typing import Dict, Sequence, Tuple
 import numpy as np
 from pyhpo import HPOTerm, Ontology, helper
 
-from lib.evagg.svc import IWebContentClient
+from lib.evagg.utils import IWebContentClient
 
 from .interfaces import ICompareHPO, IFetchHPO, ISearchHPO
 

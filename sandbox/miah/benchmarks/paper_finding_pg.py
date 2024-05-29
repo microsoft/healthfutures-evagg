@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from lib.evagg import TruthsetFileLibrary
+from lib.evagg import TruthsetFileHandler
 from lib.evagg.types import Paper, Query
 
 # %% Constants.
@@ -22,7 +22,7 @@ truth_papers["pmid"] = truth_papers["pmid"].astype(str)
 # %% For the list of queries (genes) in the truth table, attempt to find papers.
 
 # This should change to whatever FileLibrary we want to evaluate.
-truthset_library = TruthsetFileLibrary(truth_table_path)
+truthset_library = TruthsetFileHandler(truth_table_path)
 
 
 def paper_to_dict(paper: Paper) -> Dict[str, Any]:

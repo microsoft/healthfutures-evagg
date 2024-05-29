@@ -3,7 +3,7 @@
 from typing import Any
 
 from lib.evagg.ref import NcbiLookupClient
-from lib.evagg.svc import CosmosCachingWebClient, RequestsWebContentClient, get_dotenv_settings
+from lib.evagg.utils import CosmosCachingWebClient, RequestsWebContentClient, get_dotenv_settings
 
 client = NcbiLookupClient(
     # CosmosCachingWebClient(get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_")),
@@ -67,7 +67,7 @@ for ensg in list(set(ensgs)):
         continue
 
     time.sleep(0.5)
-    
+
     pairings[ensg] = (gene_symbol, gene_id)
 
 

@@ -77,7 +77,7 @@ TRUTHSET_EVIDENCE_KEYS = [
 ]
 
 
-class TruthsetFileLibrary(IGetPapers):
+class TruthsetFileHandler(IGetPapers):
     """A class for retrieving papers from a truthset file."""
 
     _variant_factory: ICreateVariants
@@ -137,7 +137,7 @@ class TruthsetFileLibrary(IGetPapers):
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
-        """For the TruthsetFileLibrary, query is expected to be a gene symbol."""
+        """For the TruthsetFileHandler, query is expected to be a gene symbol."""
         all_papers = self._load_truthset()
 
         if gene_symbol := query.get("gene_symbol"):
