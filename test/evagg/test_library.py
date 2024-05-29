@@ -10,7 +10,7 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
 
-# TODO, test TruthsetFileLibrary, but better.
+# TODO, test TruthsetFileHandler, but better.
 
 
 @pytest.fixture

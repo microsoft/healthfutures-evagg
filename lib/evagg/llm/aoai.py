@@ -14,9 +14,9 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam,
 )
 
-from lib.config import PydanticYamlModel
-from lib.evagg.svc import ObjectCache
-from lib.evagg.svc.logging import PROMPT
+from lib.evagg.utils.cache import ObjectCache
+from lib.evagg.utils.logging import PROMPT
+from lib.evagg.utils.settings import SettingsModel
 
 from .interfaces import IPromptClient
 
@@ -43,7 +43,7 @@ class ChatMessages:
         return self._messages.copy()
 
 
-class OpenAIConfig(PydanticYamlModel):
+class OpenAIConfig(SettingsModel):
     deployment: str
     endpoint: str
     api_key: str
@@ -118,7 +118,7 @@ class OpenAIClient(IPromptClient):
             "prompt_response": response,
         }
 
-        logger.log(PROMPT, f"Chat '{prompt_tag}' complete in {elapsed:.2f} seconds.", extra=prompt_log)
+        logger.log(PROMPT, f"Chat '{prompt_tag}' complete in {elapsed:.1f} seconds.", extra=prompt_log)
         return response
 
     async def prompt(
@@ -189,7 +189,7 @@ class OpenAIClient(IPromptClient):
         tokens = await asyncio.gather(*[_run_single_embedding(input) for input in inputs])
         elapsed = time.time() - start_overall
 
-        logger.info(f"{len(inputs)} embeddings produced in {elapsed:.2f} seconds using {sum(tokens)} tokens.")
+        logger.info(f"{len(inputs)} embeddings produced in {elapsed:.1f} seconds using {sum(tokens)} tokens.")
         return embeddings
 
 
