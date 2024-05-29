@@ -6,7 +6,7 @@ from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
 from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached
 from .simple import SimpleContentExtractor, SimpleFileLibrary
-from .truthset import TruthsetFileLibrary
+from .truthset import TruthsetFileHandler
 
 __all__ = [
     # Interfaces.
@@ -20,7 +20,7 @@ __all__ = [
     "TableOutputWriter",
     # Library.
     "SimpleFileLibrary",
-    "TruthsetFileLibrary",
+    "TruthsetFileHandler",
     "RareDiseaseFileLibrary",
     "RareDiseaseLibraryCached",
     # Content.
