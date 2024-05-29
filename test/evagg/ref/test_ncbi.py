@@ -2,8 +2,8 @@ import pytest
 
 from lib.evagg.content.fulltext import get_fulltext
 from lib.evagg.ref import NcbiLookupClient
-from lib.evagg.svc import IWebContentClient
 from lib.evagg.types import Paper
+from lib.evagg.utils import IWebContentClient
 
 
 @pytest.fixture

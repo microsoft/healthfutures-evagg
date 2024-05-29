@@ -1,4 +1,4 @@
-from typing import Any, Dict, Mapping, Protocol, Sequence
+from typing import Any, Dict, Mapping, Optional, Protocol, Sequence
 
 from lib.evagg.types import Paper
 
@@ -22,6 +22,6 @@ class IExtractFields(Protocol):
 
 
 class IWriteOutput(Protocol):
-    def write(self, fields: Mapping[str, Sequence[Mapping[str, str]]]) -> None:
+    def write(self, output: Sequence[Mapping[str, str]]) -> Optional[str]:
         """Write the output."""
         ...  # pragma: no cover
