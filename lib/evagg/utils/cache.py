@@ -1,36 +1,36 @@
 import json
 import logging
 import os
-import sys
-from datetime import datetime
+import subprocess  # nosec B404 # allow careful use of subprocess
 from typing import Any, Callable, Dict, Generic, Optional, TypeVar
 
-from .logging import get_log_root
+from .run import get_previous_run, get_run_path
 
 T = TypeVar("T")
 Serializer = Optional[Callable[[T], Any]]
 Deserializer = Optional[Callable[[Any], T]]
 Validator = Optional[Callable[[T], bool]]
+file_cache_root: Optional[str] = None
 
 logger = logging.getLogger(__name__)
-file_cache_root: Optional[str] = None
 
 
 def _get_file_cache_root() -> str:
-    output_root = get_log_root()
     global file_cache_root
     if file_cache_root is None:
-        # Extract the cache dir base name from the file argument in the command-line.
-        cache_name = os.path.splitext(os.path.basename(sys.argv[1]))[0]
-        # Look for the most recent matching cache directory (creation time encoded in the directory name as a suffix).
-        # If a cache directory already exists, ask the user if they want to use it.
-        if cache_dirs := sorted([d for d in os.listdir(output_root) if d.startswith(cache_name)], reverse=True):
-            file_cache_root = os.path.join(output_root, cache_dirs[0])
-            if input(f"Found existing cached pipeline run: {file_cache_root}. Use this cache? [y/n]: ").lower() == "y":
-                logger.warning(f"Using existing cached pipeline results: {file_cache_root}")
-                return file_cache_root
-    # Otherwise, create a new cache directory with the current timestamp.
-    file_cache_root = os.path.join(output_root, f"{cache_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        # Create a new cache directory for the current run.
+        file_cache_root = os.path.join(get_run_path(), "results_cache")
+        os.makedirs(file_cache_root, exist_ok=True)
+
+    # If a cache directory exists from a prior run, ask the user if they want to use it.
+    if (run := get_previous_run()) and os.path.exists(os.path.join(str(run.path), "results_cache")):
+        # Print out the run record for the most recent run.
+        print(f"\x1b[32mFound existing cached run for {run.name} started on {run.start}.")
+        if input("Use this cache? [y/n]: \x1b[0m").lower() == "y":
+            logger.warning(f"Copying existing cached run results from {run.dir_name} to current run.")
+            subprocess.run(
+                ["cp", "-r", os.path.join(str(run.path), "results_cache"), get_run_path()], check=True
+            )  # nosec B603, B607 # no untrusted input/partial path
     return file_cache_root
 
 

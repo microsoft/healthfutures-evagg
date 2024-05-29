@@ -1,0 +1,69 @@
+# Services
+log:
+  di_factory: lib.evagg.utils.init_logger
+  level: INFO
+  to_file: true
+ncbi_settings:
+  di_factory: lib.evagg.utils.get_dotenv_settings
+  filter_prefix: "NCBI_EUTILS_"
+web_client:
+  di_factory: lib.evagg.utils.CosmosCachingWebClient
+  cache_settings:
+    di_factory: lib.evagg.utils.get_dotenv_settings
+    filter_prefix: "EVAGG_CONTENT_CACHE_"  
+ncbi_client: 
+  di_factory: lib.evagg.ref.NcbiLookupClient
+  web_client: "{{web_client}}"
+  settings: "{{ncbi_settings}}"
+mutalyzer_client:
+  di_factory: lib.evagg.ref.MutalyzerClient
+  # Dedicated web-client that doesn't raise on 422 because of mutalyzer's behavior.
+  web_client:
+    di_factory: lib.evagg.utils.CosmosCachingWebClient
+    web_settings:
+      # Mutalyzer response code of 422 signifies an unprocessable entity.
+      no_raise_codes: [422]
+    cache_settings:
+      di_factory: lib.evagg.utils.get_dotenv_settings
+      filter_prefix: "EVAGG_CONTENT_CACHE_"
+refseq_client:
+  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
+  # Dedicated web-client without caching, TODO: don't cache large files and use a shared client.
+  web_client:
+    di_factory: lib.evagg.utils.RequestsWebContentClient
+variant_factory:
+  di_factory: lib.evagg.content.HGVSVariantFactory
+  normalizer: "{{mutalyzer_client}}"
+  validator: "{{mutalyzer_client}}"
+  variant_lookup_client: "{{ncbi_client}}"
+  refseq_client: "{{refseq_client}}"
+llm_client:
+  di_factory: lib.evagg.llm.OpenAICacheClient
+  config:
+    di_factory: lib.evagg.utils.get_dotenv_settings
+    filter_prefix: "AZURE_OPENAI_"
+truthset_library:
+  di_factory: lib.evagg.TruthsetFileHandler
+  file_path: data/v1/evidence_train_v1.tsv
+  variant_factory: "{{variant_factory}}"
+  paper_client: "{{ncbi_client}}"
+
+# Application
+di_factory: lib.evagg.PaperQueryApp
+queries:
+  di_factory: lib/config/queries/content_subset.yaml
+library: "{{truthset_library}}"
+extractor:
+  di_factory: lib.evagg.PromptBasedContentExtractor
+  fields:
+    di_factory: lib/config/fields/content_subset.yaml
+  llm_client: "{{llm_client}}"
+  phenotype_searcher:
+    di_factory: lib.evagg.ref.WebHPOClient
+    web_client: "{{web_client}}"
+  phenotype_fetcher:
+    di_factory: lib.evagg.ref.PyHPOClient
+  observation_finder: "{{truthset_library}}"
+writer:
+  di_factory: lib.evagg.TableOutputWriter
+  tsv_name: content_benchmark

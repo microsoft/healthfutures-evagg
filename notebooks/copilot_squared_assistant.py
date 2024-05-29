@@ -16,7 +16,7 @@ from functools import cache
 from lib.di import DiContainer
 from lib.evagg.llm import OpenAIClient
 from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.svc import get_dotenv_settings
+from lib.evagg.utils import get_dotenv_settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

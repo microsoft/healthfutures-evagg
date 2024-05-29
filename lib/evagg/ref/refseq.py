@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Dict, Optional
 
-from lib.evagg.svc import IWebContentClient
+from lib.evagg.utils import IWebContentClient
 
 from .interfaces import IRefSeqLookupClient
 from .ncbi import NcbiClientBase

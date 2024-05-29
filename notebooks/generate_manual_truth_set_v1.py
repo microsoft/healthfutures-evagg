@@ -32,7 +32,7 @@ import openpyxl
 import pandas as pd
 
 from lib.evagg.ref import NcbiLookupClient
-from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
+from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
