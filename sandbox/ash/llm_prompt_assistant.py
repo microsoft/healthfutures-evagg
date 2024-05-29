@@ -20,7 +20,7 @@ import yaml
 from dotenv import load_dotenv
 
 from lib.di import DiContainer
-from lib.evagg.library import RareDiseaseFileLibrary
+from evagg.library.rare_disease import RareDiseaseFileLibrary
 from lib.evagg.llm import OpenAIClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
