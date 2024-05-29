@@ -283,14 +283,16 @@ def plot_filtered_categories(class_results):
 def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
     # Calculate precision and recall from benchmarking results
     # precision is calc as true_positives / (true_positives + false_positives)
-    precision = len(num_correct) / (len(num_correct) + len(num_irrelevant))
+    precision = num_correct / (num_correct + num_irrelevant) if num_correct + num_irrelevant != 0 else 0
 
     # recall is calc as true_positives / (true_positives + false_negatives)
-    recall = len(num_correct) / (len(num_correct) + len(num_missed))
+    recall = num_correct / (num_correct + num_missed) if num_correct + num_missed != 0 else 0
 
     # F1 score is useful when classes are imbalanced
-    f1_score = 2 * (precision * recall) / (precision + recall)
-    return precision, recall, f1_score
+    # If precision and recall are both 0, set F1 score to 0 to avoid ZeroDivisionError
+    f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall != 0 else 0
+
+    return round(precision, 4), round(recall, 4), round(f1_score, 4)
 
 
 @cache
@@ -343,9 +345,6 @@ def main(args):
 
     # Read in the corresponding pipeline output.
     pipeline_df = pd.read_csv(args.pipeline_output, sep="\t", skiprows=1)
-    if "paper_disease_category" in pipeline_df.columns:
-        # Create rare disease pipeline df
-        pipeline_df = pipeline_df[pipeline_df["paper_disease_category"] == "rare disease"]
     if "paper_disease_category" not in pipeline_df.columns:
         pipeline_df["paper_disease_category"] = "rare disease"
     if "paper_disease_categorizations" not in pipeline_df.columns:
@@ -355,7 +354,7 @@ def main(args):
     pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
 
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
-        raise ValueError("Gene(s) in pipeline output not found in the .yaml file.")
+        raise ValueError("Gene(s) in pipeline output .tsv not found in the .yaml file.")
 
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
@@ -363,10 +362,11 @@ def main(args):
         shutil.rmtree(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
 
-    # Save library output table (Evidence Aggregator table) to the same output directory
+    # Save pipeline/library output table (Evidence Aggregator .tsv) to the same output directory
     shutil.copy(args.pipeline_output, args.outdir)
 
     # Move the paper finding directions, process, and/or few shot prompts into the benchmarking directory
+    # TODO: consider removing the files that match methodologies that I ruled out. Still useful if comparing methods.
     directions_files = glob.glob("lib/evagg/content/prompts/paper_finding_directions_*.txt")
     for file in directions_files:
         shutil.move(file, args.outdir)
@@ -381,71 +381,139 @@ def main(args):
         shutil.move(file, args.outdir)
 
     # Compute overall precision and recall prior to gene-specific analysis
-
     truth_pmids = set(mgt_df[mgt_df["has_fulltext"] == True].pmid)
     pipeline_pmids = set(pipeline_df["paper_id"].str.lstrip("pmid:").astype(int))
 
-    # Calculate the false positives (irrelevant)
-    overall_false_positives = pipeline_pmids.difference(truth_pmids)
-    ea_irrelevant = len(overall_false_positives)
+    # If isolated run, compute overall PubMed correct, missed, and irrelevant papers
+    if args.isolated_run:
+        # Calculate PubMed overall correct, missed, and irrelevant papers
+        pub_overall_true_positives, pub_overall_false_negatives, pub_overall_false_positives = compare_pmid_lists(
+            pipeline_pmids, truth_pmids
+        )
 
-    # Calculate the false negatives (missed)
-    overall_false_negatives = truth_pmids.difference(pipeline_pmids)
-    ea_missed = len(overall_false_negatives)
+        # Calculate PubMed precision, recall, and F1
+        pub_precision, pub_recall, pub_f1_score = calculate_metrics(
+            len(pub_overall_true_positives), len(pub_overall_false_negatives), len(pub_overall_false_positives)
+        )
 
-    # Calculate the true positives (correct)
-    overall_true_positives = pipeline_pmids.intersection(truth_pmids)
-    ea_correct = len(overall_true_positives)
+    # Check that pipeline .tsv is from pipeline run. Thus, only paper_disease_category category should be 'rare disease'
+    else:
+        if not all(x == "rare disease" for x in pipeline_df["paper_disease_category"]):
+            raise ValueError(
+                "All papers in pipeline .tsv must be classified as 'rare disease', or run in --isolated-run=True mode."
+            )
 
-    precision = ea_correct / (ea_correct + ea_irrelevant)
-    recall = ea_correct / (ea_correct + ea_missed)
+    # Calculate the number of correct, missed, and irrelevant papers for the Evidence Aggregator tool
+    rare_disease_df = pipeline_df[pipeline_df["paper_disease_category"] == "rare disease"]
+    rare_disease_pmids = set(rare_disease_df["paper_id"].str.lstrip("pmid:").astype(int))
 
-    # Assert that the tp + fp + fn = pipeline_pmids
-    assert ea_correct + ea_irrelevant == len(pipeline_pmids)
+    # Calculate the number of correct, missed, and irrelevant papers for the Evidence Aggregator tool
+    ea_overall_true_positives, ea_overall_false_negatives, ea_overall_false_positives = compare_pmid_lists(
+        rare_disease_pmids, truth_pmids
+    )
 
-    # Assert that tp + fn = truth_pmids
-    assert ea_correct + ea_missed == len(truth_pmids)
+    # Calculate precision, recall, and F1
+    ea_precision, ea_recall, ea_f1_score = calculate_metrics(
+        len(ea_overall_true_positives), len(ea_overall_false_negatives), len(ea_overall_false_positives)
+    )
+
+    if args.isolated_run:
+        # Assert that the tp + fp = rare_disease_pmids length
+        assert len(ea_overall_true_positives) + len(ea_overall_false_positives) == len(rare_disease_pmids)
+
+        # Assert that tp + fn = truth_pmids
+        assert len(ea_overall_true_positives) + len(ea_overall_false_negatives) == len(truth_pmids)
+
+    else:  # Pipeline run so should only have rare disease papers and not other categories
+        # Assert that the tp + fp = pipeline_pmids
+        assert len(ea_overall_true_positives) + len(ea_overall_false_positives) == len(pipeline_pmids)
+
+        # Assert that tp + fn = truth_pmids
+        assert len(ea_overall_true_positives) + len(ea_overall_false_negatives) == len(truth_pmids)
 
     # Plot benchmarking results
     if args.isolated_run:
         plot_benchmarking_results(
-            ea_correct,
-            ea_missed,
-            ea_irrelevant,
-            0,
-            0,
-            0,
+            len(ea_overall_true_positives),  # correct Evidence Aggregator papers
+            len(ea_overall_false_negatives),  # missed Evidence Aggregator papers
+            len(ea_overall_false_positives),  # irrelevant Evidence Aggregator papers
+            len(pub_overall_true_positives),  # correct PubMed papers
+            len(pub_overall_false_negatives),  # missed PubMed papers
+            len(pub_overall_false_positives),  # irrelevant PubMed papers
         )
     else:
-        plot_benchmarking_results_tool_only(ea_correct, ea_missed, ea_irrelevant)
+        plot_benchmarking_results_tool_only(
+            len(ea_overall_true_positives),  # correct Evidence Aggregator papers
+            len(ea_overall_false_negatives),  # missed Evidence Aggregator papers
+            len(ea_overall_false_positives),  # irrelevant Evidence Aggregator papers
+        )
 
     # Initialize the classification results dictionary
     class_results = {}
 
     # Compile and save the benchmarking results to a file
     with open(os.path.join(args.outdir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
-        f.write(f"\nOverall Precision: {precision} (N_irrelevant = {len(overall_false_positives)})")
-        f.write(f"\nOverall Recall: {recall} (N_missed = {len(overall_false_negatives)})")
-        f.write(f"\n true positives: {len(overall_true_positives)}")
-        f.write(f"\n false negatives: {len(overall_false_negatives)}")
-        f.write(f"\n false positives: {len(overall_false_positives)}\n")
+        f.write("Evidence Aggregator Paper Finding Benchmarks Key: \n")
+        f.write(
+            "- Search 'E.A. overall precision' to see 1) overall Evidence Aggregator precision, recall, F1, and 2) "
+            "associated TP, FN, FP paper information. Directly below that, you will see 3) the exact PMIDs and paper "
+            "titles in those 3 categories.\n"
+        )
+        if args.isolated_run:
+            f.write(
+                "- Search 'Pub overall precision' to see 1) overall PubMed precision, recall, F1, and 2) "
+                "associated TP, FN, FP paper information. Directly below that, you will see 3) the exact PMIDs and "
+                "paper titles in those 3 categories.\n"
+            )
+        f.write(
+            "- Search 'GENE' to gene level stats: 1) paper classifications into rare disease, other, and conflicting, "
+            "2) TP, FN, FP paper information, and 3) the exact PMIDs and paper titles in those 3 categories.\n"
+        )
+        f.write(f"\nE.A. overall precision: {ea_precision} (N_irrelevant = {len(ea_overall_false_positives)})")
+        f.write(f"\nE.A. overall recall: {ea_recall} (N_missed = {len(ea_overall_false_negatives)})")
+        f.write(f"\nE.A. overall F1 score: {ea_f1_score}")
+        f.write(f"\nE.A. # true positives: {len(ea_overall_true_positives)}")
+        f.write(f"\nE.A. # false negatives: {len(ea_overall_false_negatives)}")
+        f.write(f"\nE.A. # false positives: {len(ea_overall_false_positives)}\n")
 
         # Write out the true positives
-        f.write(f"\nTrue positives:\n")
-        for i, p in enumerate(overall_true_positives):
+        f.write(f"\nE.A. true positives\n")
+        for i, p in enumerate(ea_overall_true_positives):
             f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
         # Write out the false negatives
-        f.write(f"\nFalse negatives:\n")
-        for i, p in enumerate(overall_false_negatives):
+        f.write(f"\nE.A. false negatives:\n")
+        for i, p in enumerate(ea_overall_false_negatives):
             f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
         # Write out the false positives
-        f.write(f"\nFalse positives:\n")
-        for i, p in enumerate(overall_false_positives):
+        f.write(f"\nE.A. false positives:\n")
+        for i, p in enumerate(ea_overall_false_positives):
             f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
-        # Plot overall number of correct, missed, and irrelevant papers for pipeline and PubMed.
+        # If considering PubMed: print out the precision, recall, and associated TP, FN, FP paper information
+        if args.isolated_run:
+            f.write(f"\nPubMed overall precision: {pub_precision} (N_irrelevant = {len(pub_overall_false_positives)})")
+            f.write(f"\nPubMed overall recall: {pub_recall} (N_missed = {len(pub_overall_false_negatives)})")
+            f.write(f"\nPubMed overall F1 score: {pub_f1_score}")
+            f.write(f"\nPubMed # true positives: {len(pub_overall_true_positives)}")
+            f.write(f"\nPubMed # false negatives: {len(pub_overall_false_negatives)}")
+            f.write(f"\nPubMed # false positives: {len(pub_overall_false_positives)}\n")
+
+            # Write out the true positives
+            f.write(f"\nPubMed true positives\n")
+            for i, p in enumerate(pub_overall_true_positives):
+                f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
+
+            # Write out the false negatives
+            f.write(f"\nPubMed false negatives:\n")
+            for i, p in enumerate(pub_overall_false_negatives):
+                f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
+
+            # Write out the false positives
+            f.write(f"\nPubMed false positives:\n")
+            for i, p in enumerate(pub_overall_false_positives):
+                f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
         # Iterate through all genes and associated PMIDS
         for term, gene_df in pipeline_df.groupby("gene"):
@@ -472,6 +540,7 @@ def main(args):
                 ].tolist()
             ]
 
+            # Get all of the PMIDs from evidence aggregator output, for given gene
             paper_ids = gene_df["paper_id"].str.lstrip("pmid:").tolist()
 
             # Get the pmids from MGT.
@@ -510,7 +579,9 @@ def main(args):
 
                 # Calculate precision and recall
                 if len(correct_pmids) > 0:
-                    precision, recall, f1_score = calculate_metrics(correct_pmids, missed_pmids, irrelevant_pmids)
+                    precision, recall, f1_score = calculate_metrics(
+                        len(correct_pmids), len(missed_pmids), len(irrelevant_pmids)
+                    )
 
                     f.write(f"\nPrecision: {precision}\n")
                     f.write(f"Recall: {recall}\n")
@@ -624,6 +695,12 @@ if __name__ == "__main__":
     print("Evidence Aggregator Paper Finding Benchmarks:")
     for arg, value in vars(args).items():
         print(f"- {arg}: {value}")
+
+    if args.isolated_run:
+        print("\n")
+        print(
+            "NOTE: Ensure that your pipeline resultant .tsv (e.g. library_benchmark.yaml) contains results across all classification categories considered (e.g. rare disease and other). Running isolated paper finding benchmarks..."
+        )
 
     print("\n")
 
