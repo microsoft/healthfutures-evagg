@@ -63,10 +63,10 @@ poetry install
 Test script installation of by running the following command:
 
 ```bash
-run_query_sync -h
+run_evagg_app -h
 ```
 
-You should see a help message displayed providing usage for the `run_query_sync` script.
+You should see a help message displayed providing usage for the `run_evagg_app` script.
 
 ## Codespaces setup
 
@@ -100,7 +100,7 @@ codespaces. Github personal free accounts include 120 core hours and 15 GiB per 
 
 The library code consists of a variety of independent components for querying, filtering, and aggregating genetic
 variant publication evidence. These components are designed to be assembled in various ways into an experiment "app"
-that can be run via the `run_query_sync` entrypoint to perform some sort of concrete analysis.
+that can be run via the `run_evagg_app` entrypoint to perform some sort of concrete analysis.
 
 ### Defining experiment apps
 
@@ -110,10 +110,12 @@ class/parameter hierarchy to be instantiated before `execute` is called. The abs
 is as follows:
 
 ```yaml
+# Reusable resource definitions.
 resource_1: <value or spec sub-dictionary>
 ...
 resource_n: <value or spec sub-dictionary>
 
+# Application definition.
 di_factory: <fully-qualified class name, factory method, or yaml file path>
 param_1: <value or spec sub-dictionary>
 ...
@@ -135,35 +137,37 @@ A library of existing app specs for defining various experiments can be found in
 
 ### Executing experiment apps
 
-The script `run_query_sync` is used to execute an experiment app. It has one required argument - a pointer to a yaml
+The script `run_evagg_app` is used to execute an experiment app. It has one required argument - a pointer to a yaml
 app spec - and is invoked as follows:
 
 ```bash
-run_query_sync <path_to_yaml_app_spec_file>
+run_evagg_app <path_to_yaml_app_spec_file>
 ```
 
 This will instantiate the app object via the `lib.di` system described above and call the `IEvAggApp.execute`
-method on it.
+method on it. For convenience you may omit the the `lib/config/` prefix or the `.yaml` suffix.
 
-**Note:** A yaml spec may define any instantiable object, but `run_query_sync` assumes a spec defining a top-level
+**Note:** A yaml spec may define any instantiable object, but `run_evagg_app` requires a spec defining a top-level
 object that implements `IEvAggApp`.
 
 As a simple test of script execution, run the following specific commands from the repo root:
 
 ```bash
 python test/make_local_library.py
-run_query_sync lib/config/simple_config.yaml
+run_evagg_app lib/config/simple_config.yaml
+# equivalently: run_evagg_app simple_config
 ```
 
 This will create a fake local library of papers, extract content from those papers using a dummy implementation, and
 print the results of these operations to `stdout`. While this doesn't actually do anything useful, it's a good way to
 verify that the pipeline and dependencies are configured correctly.
 
-You can optionally add or override any leaf value within an app spec dictionary or sub-dictionary using
-the `-o` argument followed by one or more dictionary key:value specifications separated by spaces:
+You can optionally add or override any leaf value within an app spec dictionary (or sub-dictionary) using
+the `-o` argument followed by one or more dictionary `key:value` specifications separated by spaces. The following
+command overrides the default log level and outputs the run results to a named file in the `.out` directory:
 
 ```bash
-run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.tsv log.level:DEBUG
+run_evagg_app simple_config -o writer.tsv_name:simple_test log.level:DEBUG
 ```
 
 ### Configuration and secrets
@@ -171,13 +175,13 @@ run_query_sync lib/config/table_config.yaml -o writer.outputpath:.out/override.t
 Various concrete components in the library code (e.g. `OpenAIClient`, `NcbiLookupClient`) require runtime
 configuration and/or secrets passed in as constructor arguments in order to securely access external resources. This is
 done via settings dictionaries that are instantiated with an appropriate factory specified in the app spec yaml.
-The most common built in factory is `lib.evagg.svc.get_dotenv_settings`, which reads all settings with a given
+The most common built in factory is `lib.evagg.utils.get_dotenv_settings`, which reads all settings with a given
 prefix (e.g. `AZURE_OPENAI_`) from a `.env` file in the repo root and parses them into a corresponding settings
 dictionary. A template file `template.env` documenting known component settings is offered at the repo root - to get
 started, copy this file , rename to `.env`, and fill it in with actual secrets as needed.
 
 For development on this repo from within [Codespaces](#codespaces-setup),
-make use of the analogous factory `lib.evagg.svc.get_env_settings` in the app spec, which reads
+make use of the analogous factory `lib.evagg.utils.get_env_settings` in the app spec, which reads
 settings in from environment variables. Create the required GitHub secrets and settings by following
 [these instructions](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-secrets-for-your-codespaces)
 and granting the ev-agg-exp repo access to those secrets.
