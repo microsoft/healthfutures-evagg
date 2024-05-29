@@ -1,14 +1,14 @@
 import logging
-import time
-from collections import defaultdict
 from typing import Any, Dict, List, Sequence
+
+from lib.evagg.utils.run import set_run_complete
 
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 
 logger = logging.getLogger(__name__)
 
 
-class SynchronousLocalApp(IEvAggApp):
+class PaperQueryApp(IEvAggApp):
     def __init__(
         self,
         queries: Sequence[Dict[str, Any]],
@@ -22,8 +22,7 @@ class SynchronousLocalApp(IEvAggApp):
         self._writer = writer
 
     def execute(self) -> None:
-        fields_by_paper: Dict[str, List[Dict[str, str]]] = defaultdict(list)
-        start_ts = time.time()
+        output_fieldsets: List[Dict[str, str]] = []
 
         for query in self._queries:
             if not query.get("gene_symbol"):
@@ -37,10 +36,9 @@ class SynchronousLocalApp(IEvAggApp):
 
             # Extract observation fieldsets for each paper.
             for paper in papers:
-                fields = self._extractor.extract(paper, term)
-                fields_by_paper[paper.id].extend(fields)
+                extracted_fieldsets = self._extractor.extract(paper, term)
+                output_fieldsets.extend(extracted_fieldsets)
 
-        # Write out the result.
-        self._writer.write(fields_by_paper)
-
-        logger.info(f"Pipeline execution complete, elapsed time {time.time() - start_ts:.2f} seconds.")
+        # Write out the results.
+        output_file = self._writer.write(output_fieldsets)
+        set_run_complete(output_file)
