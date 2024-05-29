@@ -13,29 +13,44 @@ import json
 import os
 import re
 from collections import defaultdict
-from typing import Any, List
+from typing import Any, List, Set, Tuple
 
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 from pyhpo import Ontology
+from sklearn.metrics import confusion_matrix
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient, PyHPOClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
 from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "content_benchmark.tsv")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "observation_benchmark.tsv")
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-# CONTENT_COLUMNS = {"phenotype", "zygosity", "variant_inheritance", "variant_type", "functional_study"}
-CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
+CONTENT_COLUMNS = set()
+# CONTENT_COLUMNS = {"variant_inheritance"}
+# CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
-# TODO, just get the gene list from the yaml?
-RESTRICT_TRUTH_GENES_TO_OUTPUT = False  # if True, only compare the genes in the output set to the truth set.
+# SET THIS TO TRUE FOR PIPELINE RUNS EXECUTED ON A SUBSET OF GENES ONLY.
+# If True, only consider genes in the truth set that are also in the output set.
+# This is useful to get an accurate assessment of recall for observation finding for partial pipeline runs, as there
+# will be a large number of genes missing from the pipeline output entirely if the pipeline wasn't configured to find
+# them. This can lead to falsely high recall scores if zero observations were found for a gene that was actually
+# processed.
+RESTRICT_TRUTH_GENES_TO_OUTPUT = False
+
+# SET THIS TO TRUE FOR END TO END PIPELINE RUNS.
+# If True, only consider papers from the output set that are in the truth set.
+# This is necessary to get an accurate assessment of precision for observation finding for full pipeline runs
+# as there will be a large number of observations from papers that aren't included in the truthset.
+RESTRICT_OUTPUT_PAPERS_TO_TRUTH = True
 
 HPO_SIMILARITY_THRESHOLD = (
     0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
@@ -112,12 +127,22 @@ if "variant_type" in CONTENT_COLUMNS:
             lambda x: "frameshift" if x in ["frameshift insertion", "frameshift deletion"] else x
         )
 
+if "variant_inheritance" in CONTENT_COLUMNS:
+    # For both dataframes, recode "maternally inherited", "paternally inherited", "maternally and paternally inherited homozygous" to "inherited"
+    orig = ["maternally inherited", "paternally inherited", "maternally and paternally inherited homozygous"]
+    for df in [truth_df, output_df]:
+        df["variant_inheritance"] = df["variant_inheritance"].apply(lambda x: "inherited" if x in orig else x)
 
 # %% Restrict the truth set to the genes in the output set.
 if RESTRICT_TRUTH_GENES_TO_OUTPUT:
     print("Warning: restricting truth set to genes in the output set.")
     output_genes = set(output_df.gene.unique())
     truth_df = truth_df[truth_df.gene.isin(output_genes)]
+
+if RESTRICT_OUTPUT_PAPERS_TO_TRUTH:
+    print("Warning: restricting output set to papers in the truth set.")
+    truth_papers = set(truth_df.paper_id.unique())
+    output_df = output_df[output_df.paper_id.isin(truth_papers)]
 
 # TODO: temporary, sample the both dfs so we have some missing/extra rows.
 # truth_df = truth_df.sample(frac=0.9, replace=False)
@@ -138,12 +163,18 @@ if missing_from_output:
 if not truth_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
     # Get a list of the non-unique indices
     non_unique_indices = truth_df[truth_df.duplicated(subset=list(INDEX_COLUMNS), keep=False)][list(INDEX_COLUMNS)]
-    raise ValueError(f"Truth table has non-unique index columns: {non_unique_indices}")
+    # Print a warning and deduplicate.
+    print(f"Warning: Truth table has non-unique index columns: {non_unique_indices}")
+    print("Deduplicating truth table.")
+    truth_df = truth_df[~truth_df.duplicated(subset=list(INDEX_COLUMNS), keep="first")]
 
 if not output_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
-    # Ge ta list of the non-unique indices
+    # Get a list of the non-unique indices
     non_unique_indices = output_df[output_df.duplicated(subset=list(INDEX_COLUMNS), keep=False)][list(INDEX_COLUMNS)]
-    raise ValueError(f"Output table has non-unique index columns: {non_unique_indices}")
+    # Print a warning and deduplicate.
+    print(f"Warning: Output table has non-unique index columns: {non_unique_indices}")
+    print("Deduplicating output table.")
+    output_df = output_df[~output_df.duplicated(subset=list(INDEX_COLUMNS), keep="first")]
 
 # %% Normalize the HGVS representations from the truth data.
 
@@ -351,57 +382,86 @@ precision = merged_df.in_truth[merged_df.in_output == True].mean()
 recall = merged_df.in_output[merged_df.in_truth == True].mean()
 
 # Make a copy of merged_df removing all rows where in_supplement is 'Y'
-merged_df_no_supplement = merged_df[merged_df.in_supplement != "Y"]
-precision_no_supplement = merged_df_no_supplement.in_truth[merged_df_no_supplement.in_output == True].mean()
-recall_no_supplement = merged_df_no_supplement.in_output[merged_df_no_supplement.in_truth == True].mean()
+merged_df_ns = merged_df[merged_df.in_supplement != "Y"]
+precision_ns = merged_df_ns.in_truth[merged_df_ns.in_output == True].mean()
+recall_ns = merged_df_ns.in_output[merged_df_ns.in_truth == True].mean()
 
 print("---- Observation finding performance ----")
 print("Overall")
 print(f"  Observation finding precision: {precision:.2f}")
 print(f"  Observation finding recall: {recall:.2f}")
 print("Ignoring truth papers from supplement")
-print(f"  Observation finding precision: {precision_no_supplement:.2f}")
-print(f"  Observation finding recall: {recall_no_supplement:.2f}")
+print(f"  Observation finding precision: {precision_ns:.2f}")
+print(f"  Observation finding recall: {recall_ns:.2f}")
 print()
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
+
 if precision < 1 or recall < 1:
-    printable_df = merged_df.reset_index()  #
-    printable_df[printable_df.in_supplement != "Y"].sort_values(["gene", "paper_id", "hgvs_desc"])
+    printable_df = merged_df_ns.reset_index()  #
+
+    result = printable_df[(printable_df.in_truth != True) | (printable_df.in_output != True)].sort_values(
+        ["gene", "paper_id", "hgvs_desc"]
+    )[
+        [
+            "hgvs_desc",
+            "paper_id",
+            "individual_id",
+            "hgvs_c_truth",
+            "hgvs_p_truth",
+            "hgvs_p_output",
+            "hgvs_c_output",
+            "in_truth",
+            "in_output",
+        ]
+    ]
+
+    print(result)
+
 else:
     print("All observations found. This is likely because the Truthset observation finder was used.")
-    # printable_df[
-    #     (printable_df.in_supplement != "Y") & ((printable_df.in_truth != True) | (printable_df.in_output != True))
-    # ].sort_values(["gene", "paper_id", "hgvs_desc"])
 
-# %% Redo the merge and assess variant finding.
+
+# %% Redo the merge and assess observation finding if we're only concerned with finding the right variants.
+
+cols = ["hgvs_desc", "paper_id"]
+merged_var_df = pd.merge(
+    truth_df.reset_index().drop_duplicates(subset=cols).set_index(cols),
+    output_df.reset_index().drop_duplicates(subset=cols).set_index(cols),
+    how="outer",
+    left_index=True,
+    right_index=True,
+    suffixes=["_truth", "_output"],
+)
+
+merged_var_df["in_truth"] = merged_var_df["in_truth"].fillna(False)
+merged_var_df["in_output"] = merged_var_df["in_output"].fillna(False)
+
+if "gene_truth" in merged_var_df.columns:
+    merged_var_df["gene"] = merged_var_df["gene_truth"].fillna(merged_var_df["gene_output"])
+    merged_var_df.drop(columns=["gene_truth", "gene_output"], inplace=True)
+
+# Reorder columns, keeping in_truth and in_output as the last two.
+merged_var_df = merged_var_df[
+    [c for c in merged_var_df.columns if c not in {"in_truth", "in_output"}] + ["in_truth", "in_output"]
+]
+
+merged_var_df_ns = merged_var_df[merged_var_df.in_supplement != "Y"]
+precision_ns = merged_var_df_ns.in_truth[merged_var_df_ns.in_output == True].mean()
+recall_ns = merged_var_df_ns.in_output[merged_var_df_ns.in_truth == True].mean()
+
+print("---- Variant-level observation finding performance ----")
+print("Ignoring truth papers from supplement")
+print(f"  Observation finding precision: {precision_ns:.2f}")
+print(f"  Observation finding recall: {recall_ns:.2f}")
+print()
+
 
 # %% Assess content extraction.
 
-hpo = PyHPOClient()
-from typing import Set, Tuple
-
-# def _fuzzy_match_hpo_sets(left_set: str, right_set: str) -> Tuple[list[str], list[str], list[str], list[str]]:
-#     # First, if both sets are nan, 'unknown', "Unknown" or empty, we'll consider them a match.
-#     def _is_unknown(hpo_set: str) -> bool:
-#         return pd.isna(hpo_set) or hpo_set.lower() == '["unknown"]' or hpo_set == "[]"
-
-#     left_terms = re.findall(r"HP:\d+", left_set) if isinstance(left_set, str) and not _is_unknown(left_set) else []
-#     right_terms = re.findall(r"HP:\d+", right_set) if isinstance(right_set, str) and not _is_unknown(right_set) else []
-
-#     left_result = hpo.compare_set(left_terms, right_terms)
-#     right_result = hpo.compare_set(right_terms, left_terms)
-
-#     left_matched = [f"{k}<>{v[1]}" for k, v in left_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
-#     right_matched = [f"{k}<>{v[1]}" for k, v in right_result.items() if v[0] >= HPO_SIMILARITY_THRESHOLD]
-
-#     left_missed = [k for k, v in left_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
-#     right_missed = [k for k, v in right_result.items() if v[0] < HPO_SIMILARITY_THRESHOLD]
-
-#     # Return the shared terms, the terms in left not present in right, the terms in right not present in left
-#     return (left_matched, right_matched, left_missed, right_missed)
+# hpo = PyHPOClient()
 
 
 def _hpo_str_to_set(hpo_compound_string: str) -> Set[str]:
@@ -459,8 +519,68 @@ def _match_hpo_sets(hpo_left, hpo_right) -> Tuple[list[str], list[str], list[str
 
 # %%
 
+do_plots = True
+plot_config = {
+    "animal_model": {
+        "options": ["true", "false"],
+    },
+    "engineered_cells": {
+        "options": ["true", "false"],
+    },
+    "patient_cells_tissues": {
+        "options": ["true", "false"],
+    },
+    "variant_type": {
+        "options": [
+            "missense",
+            "stop gained",
+            "splice region",
+            "frameshift",
+            "synonymous",
+            "inframe deletion",
+            "indel",
+            "unknown",
+            "failed",
+        ],
+    },
+    "variant_inheritance": {
+        "options": [
+            "unknown",
+            "de novo",
+            "inherited",
+            "failed",
+        ],
+    },
+    "zygosity": {
+        "options": ["none", "homozygous", "heterozygous", "compound heterozygous", "failed"],
+    },
+}
+
+
+def plot_confusion_matrix(truth, output, labels, column):
+    """
+    Plots a confusion matrix heatmap for two categorical series.
+    """
+    truth[truth.isin(labels) == False] = "other"
+    output[output.isin(labels) == False] = "other"
+
+    if any(truth == "other") or any(output == "other"):
+        labels.append("other")
+
+    cm = confusion_matrix(truth, output, labels=labels)
+    cm_df = pd.DataFrame(cm, index=labels, columns=labels)
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm_df, annot=True, fmt="d", cmap="Blues", cbar=False)
+    plt.xlabel("Output")
+    plt.ylabel("Truth")
+    plt.title(f"Confusion matrix for {column}")
+    plt.show()
+
+
+# %%
 if CONTENT_COLUMNS:
-    shared_df = merged_df_no_supplement[merged_df_no_supplement.in_truth & merged_df_no_supplement.in_output]
+    shared_df = merged_df_ns[merged_df_ns.in_truth & merged_df_ns.in_output]
 
     print("---- Content extraction performance ----")
 
@@ -481,18 +601,30 @@ if CONTENT_COLUMNS:
 
         for idx, row in shared_df.iterrows():
             if match[idx]:  # type: ignore
-                # print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}")
+                # print(f"!!Match ({idx}): {row[f'{column}_truth']} == {row[f'{column}_output']}") # noqa
                 pass
             else:
-                # print(f"  Mismatch ({idx}): {row[f'{column}_truth']} != {row[f'{column}_output']}")
-                print(f"##Mismatch ({idx})")
-                for i, x in enumerate(pheno_stats[idx]):
-                    if i != 0:
-                        print(f"  {x}")
-                print(f"  Truth: {row[f'{column}_truth']}")
-                print(f"  Output: {row[f'{column}_output']}")
-                print()
-                pass
+                if column == "phenotype":
+                    print(f"##Mismatch ({idx})")
+                    for i, x in enumerate(pheno_stats[idx]):  # type: ignore
+                        if i != 0:
+                            print(f"  {x}")
+                    print(f"  Truth: {row[f'{column}_truth']}")
+                    print(f"  Output: {row[f'{column}_output']}")
+                    print()
+                else:
+                    print(
+                        f"  Mismatch ({idx} | {row['hgvs_c_truth']}/{row['hgvs_p_truth']}): {row[f'{column}_truth']} != {row[f'{column}_output']}"
+                    )
         print()
 
+    if do_plots:
+        for column in CONTENT_COLUMNS:
+            if column in plot_config:
+                plot_confusion_matrix(
+                    shared_df[f"{column}_truth"].copy(),
+                    shared_df[f"{column}_output"].copy(),
+                    plot_config[column]["options"].copy(),
+                    column,
+                )
 # %%
