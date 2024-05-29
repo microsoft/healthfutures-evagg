@@ -1,4 +1,5 @@
 import logging
+import urllib.parse
 from functools import cache
 from typing import Dict, Sequence, Tuple
 
@@ -69,11 +70,21 @@ class WebHPOClient(ISearchHPO):
     def __init__(self, web_client: IWebContentClient) -> None:
         self._web_client = web_client
 
+    def _clean_query(self, query: str) -> str:
+        # urllib.parse.quote doesn't get everything, so we'll manually fix the rest.
+        # Forward slashes generate 500 errors even when encoded, replace with spaces.
+        # Tilde's cause 500 errors only when they're at the end of a string, even when encoded, replace with spaces.
+        return urllib.parse.quote(query).replace("/", " ").replace("~", " ")
+
     def search(self, query: str, retmax: int = 1) -> Sequence[Dict[str, str]]:
-        url = f"https://hpo.jax.org/api/hpo/search?q={query}&max={retmax}&category=terms"
+        query = self._clean_query(query)
+        url = f"https://ontology.jax.org/api/hp/search?q={query}&limit={retmax}"
         response = self._web_client.get(url, "json")
 
         if not response["terms"]:
             return []
 
-        return [{"id": term["id"], "name": term["name"]} for term in response["terms"]]
+        return [
+            {"id": term["id"], "name": term["name"], "definition": term["definition"], "synonyms": term["synonyms"]}
+            for term in response["terms"]
+        ]
