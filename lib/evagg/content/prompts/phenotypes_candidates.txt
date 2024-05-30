@@ -3,17 +3,16 @@ phenotype:
 
 {{$term}}
 
-Select zero or one entries from the following list of candidates:
+Select zero or one entries from the list of candidates below. For each candidate you have been provided the name
+of the ontology term, its ID, its definition, and optionally a list of synonymous terms.
 
-{{$candidates}}
-
-If none of these candidates are a good semantic match for the term provided above, it is fine to provide an empty 
-response, an example of which is given below.
+If none of the provided candidates are a good semantic match for the original description, it is fine to provide an 
+empty response, an example of which is given below.
 
 Your response should be a valid json-formatted object of the form:
 
 {
-    "match": "selected_term"
+    "match": "<selected term name > (<selected term ID>)"
 }
 
 or
@@ -22,3 +21,43 @@ or
 }
 
 if no match was found in the list of candidates.
+
+-- Examples --
+
+Term: "neonatal pleural effusion"
+
+Candidates: 
+
+Transudative pleural effusion (HP:0011920) - A type of pleural effusion with a transudate (extravascular fluid with low protein content and a low specific gravity). Pleural effusions can be classified as transudates or exudates based on Light's criteria, which classify an effusion as exudate if one or more of the following are present: (1) the ratio of pleural fluid protein to serum protein is greater than 0.5, (2) the ratio of pleural fluid lactate dehydrogenase (LDH) to serum LDH is greater than 0.6, or (3) the pleural fluid LDH level is greater than two thirds of the upper limit of normal for serum LDH.
+Exudative pleural effusion (HP:0011921) - A type of pleural effusion with a exudate (extravascular fluid that has exuded out of a tissue or its capillaries due to injury or inflammation). Pleural effusions can be classified as transudates or exudates based on Light's criteria, which classify an effusion as exudate if one or more of the following are present: (1) the ratio of pleural fluid protein to serum protein is greater than 0.5, (2) the ratio of pleural fluid lactate dehydrogenase (LDH) to serum LDH is greater than 0.6, or (3) the pleural fluid LDH level is greater than two thirds of the upper limit of normal for serum LDH.
+Fetal pleural effusion (HP:0025676) - Fetal pleural effusion is the accumulation of excess fluid in the layers of tissue (pleura) lining the lungs and wall of the chest. It may be primary, also termed hydrothorax, occurring as an isolated finding or it may be secondary, most commonly resulting from non-immune hydrops.
+Pleural effusion (HP:0002202) - The presence of an excessive amount of fluid in the pleural cavity. - synonymous with Fluid around lungs
+
+Response:
+
+{
+    "match": "Pleural effusion (HP:0002202)"
+}
+
+--
+
+Term: "mild hypotonia"
+
+Candidates:
+
+Mild (HP:0012825) - Having a relatively minor degree of severity. For quantitative traits, a deviation of between two and three standard deviations from the appropriate population mean. - synonymous with Mild
+Mild hypermetropia (HP:0031728) - A form of hypermetropia with not more than +2.00 diopters. - synonymous with Mild Hyperopia
+
+Response:
+{   
+}
+
+-- Task --
+
+Term: {{$term}}
+
+Candidates:
+
+{{$candidates}}
+
+Response:
