@@ -23,7 +23,9 @@ class PromptBasedContentExtractor(IExtractFields):
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
         "phenotype": os.path.dirname(__file__) + "/prompts/phenotypes_all.txt",
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
-        "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
+        "engineered_cells": os.path.dirname(__file__) + "/prompts/functional_study.txt",
+        "patient_cells_tissues": os.path.dirname(__file__) + "/prompts/functional_study.txt",
+        "animal_model": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
     # These are the expensive prompt fields we should cache per paper.
     _CACHE_VARIANT_FIELDS = ["variant_type", "functional_study"]
@@ -219,24 +221,45 @@ class PromptBasedContentExtractor(IExtractFields):
         # Duplicates are conceivable, get unique set again.
         return ", ".join(set(structured_phenotypes))
 
-    async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
-        if field == "phenotype":
-            return await self._generate_phenotype_field(gene_symbol, observation)
-        else:
-            params = {
-                # First element is full text of the observation, consider alternatives
-                "passage": "\n\n".join([t.text for t in observation.texts]),
-                "variant_descriptions": ", ".join(observation.variant_descriptions),
-                "patient_descriptions": ", ".join(observation.patient_descriptions),
-                "gene": gene_symbol,
-            }
-            response = await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
+    async def _run_field_prompt(self, gene_symbol: str, observation: Observation, field: str) -> Dict[str, Any]:
+        params = {
+            # First element is full text of the observation, consider alternatives
+            "passage": "\n\n".join([t.text for t in observation.texts]),
+            "variant_descriptions": ", ".join(observation.variant_descriptions),
+            "patient_descriptions": ", ".join(observation.patient_descriptions),
+            "gene": gene_symbol,
+        }
+        return await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
+
+    async def _generate_basic_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+        result = (await self._run_field_prompt(gene_symbol, observation, field)).get(field, "failed")
         # result can be a string or a json object.
-        result = response.get(field, "failed")
         # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
         if not isinstance(result, str):
             result = json.dumps(result)
         return result
+
+    async def _generate_functional_study_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+        result = await self._run_field_prompt(gene_symbol, observation, field)
+        func_studies = result.get("functional_study", [])
+
+        # Note the prompt uses a different set of strings to represent the study types found, so we need to map them.
+        map = {
+            "engineered_cells": "cell line",
+            "patient_cells_tissues": "patient cells",
+            "animal_model": "animal model",
+            "none": "none",
+        }
+
+        return "True" if (map[field] in func_studies) else "False"
+
+    async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+        if field == "phenotype":
+            return await self._generate_phenotype_field(gene_symbol, observation)
+        elif field in ["engineered_cells", "patient_cells_tissues", "animal_model"]:
+            return await self._generate_functional_study_field(gene_symbol, observation, field)
+        else:
+            return await self._generate_basic_field(gene_symbol, observation, field)
 
     def _get_fixed_field(self, gene_symbol: str, ob: Observation, field: str) -> Tuple[str, str]:
         if field == "gene":
