@@ -26,6 +26,41 @@ class DiContainer:
                 d[k] = v
         return d
 
+    def _instance_from_yaml(self, factory: str, parameters: Dict[str, object], resources: Dict[str, object]) -> Any:
+        """Create an instance from a yaml file sub-spec."""
+        if not Path(factory).exists():
+            # Check if prefixing path with lib/config exists.
+            if (Path("lib/config") / Path(factory)).exists():
+                factory = str(Path("lib/config") / Path(factory))
+            else:
+                raise FileNotFoundError(f"Factory config file {factory} not found.")
+
+        # Read in the spec dictionary from yaml.
+        with open(Path(factory), "r") as f:
+            yaml_object = yaml.safe_load(f)
+
+        # If it's not a dictionary, treat it as a simple object.
+        if not isinstance(yaml_object, dict):
+            return yaml_object
+
+        # Parameters to the yaml are considered overrides to items inside the yaml.
+        yaml_object = self._nested_update(yaml_object, parameters)
+        instance = self.create_instance(yaml_object, resources.copy())
+        return instance
+
+    def _instance_from_module(self, factory: str, parameters: Dict[str, object]) -> Any:
+        """Create an instance from a module and factory entrypoint."""
+        # Locate the module and instance factory from module path.
+        module_name, _, factory_name = factory.rpartition(".")
+        module = self._try_import(module_name)
+        try:
+            instance_factory = getattr(module, factory_name)
+        except AttributeError:
+            raise TypeError(f"Module {module_name} does not define a {factory_name} entry point.")
+        # Instantiate the instance with parameters.
+        instance = instance_factory(**parameters)
+        return instance
+
     def create_instance(self, spec: Dict[str, Any], resources: Dict[str, object]) -> Any:
         """Create an instance of an object using the provided factory spec."""
         parameters: Dict[str, object] = {}
@@ -59,25 +94,8 @@ class DiContainer:
                 values[key] = value
 
         if factory.endswith(".yaml"):
-            # Read in the spec dictionary from yaml.
-            with open(Path(factory), "r") as f:
-                yaml_spec = yaml.safe_load(f)
-
-            if isinstance(yaml_spec, dict):
-                # Parameters to the yaml are considered overrides to items inside the yaml.
-                yaml_spec = self._nested_update(yaml_spec, parameters)
-                instance = self.create_instance(yaml_spec, resources.copy())
-            else:  # If it's not a dictionary, treat it as a simple object.
-                instance = yaml_spec
+            instance = self._instance_from_yaml(factory, parameters, resources)
         else:
-            # Locate the module and instance factory from module path.
-            module_name, _, factory_name = factory.rpartition(".")
-            module = self._try_import(module_name)
-            try:
-                instance_factory = getattr(module, factory_name)
-            except AttributeError:
-                raise TypeError(f"Module {module_name} does not define a {factory_name} entry point.")
-            # Instantiate the instance with parameters.
-            instance = instance_factory(**parameters)
+            instance = self._instance_from_module(factory, parameters)
 
         return instance
