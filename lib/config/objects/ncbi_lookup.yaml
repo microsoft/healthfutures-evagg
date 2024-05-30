@@ -1,14 +1,14 @@
 log:
-  di_factory: lib.evagg.svc.init_logger
+  di_factory: lib.evagg.utils.init_logger
   level: INFO
   prompts_to_console: true
 ncbi_settings:
-  di_factory: lib.evagg.svc.get_dotenv_settings
+  di_factory: lib.evagg.utils.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
 web_resource:
-  di_factory: lib.evagg.svc.CosmosCachingWebClient
+  di_factory: lib.evagg.utils.CosmosCachingWebClient
   cache_settings:
-    di_factory: lib.evagg.svc.get_dotenv_settings
+    di_factory: lib.evagg.utils.get_dotenv_settings
     filter_prefix: "EVAGG_CONTENT_CACHE_"  
  
 di_factory: lib.evagg.ref.NcbiLookupClient

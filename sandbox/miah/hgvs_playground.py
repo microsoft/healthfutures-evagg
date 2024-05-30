@@ -16,8 +16,8 @@ import requests
 
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
-from lib.evagg.svc import CosmosCachingWebClient, RequestsWebContentClient, get_dotenv_settings
 from lib.evagg.types import Paper
+from lib.evagg.utils import CosmosCachingWebClient, RequestsWebContentClient, get_dotenv_settings
 
 logger = logging.getLogger(__name__)
 
@@ -134,10 +134,10 @@ web_client = CosmosCachingWebClient(
 ref_seq_lookup_client = NcbiReferenceLookupClient(web_client)
 
 #   web_client:
-#     # di_factory: lib.evagg.svc.RequestsWebContentClient
-#     di_factory: lib.evagg.svc.CosmosCachingWebClient
+#     # di_factory: lib.evagg.utils.RequestsWebContentClient
+#     di_factory: lib.evagg.utils.CosmosCachingWebClient
 #     cache_settings:
-#       di_factory: lib.evagg.svc.get_dotenv_settings
+#       di_factory: lib.evagg.utils.get_dotenv_settings
 #       filter_prefix: "EVAGG_CONTENT_CACHE_"
 #     web_settings:
 #       max_retries: 3

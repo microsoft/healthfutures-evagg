@@ -9,7 +9,7 @@ import pandas as pd
 import seaborn as sns
 
 from lib.evagg.llm import OpenAIClient
-from lib.evagg.svc import get_dotenv_settings
+from lib.evagg.utils import get_dotenv_settings
 
 # %% Setup.
 settings = get_dotenv_settings(filter_prefix="AZURE_OPENAI_")

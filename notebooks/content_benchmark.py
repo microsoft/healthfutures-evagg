@@ -23,7 +23,7 @@ from sklearn.metrics import confusion_matrix
 
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
-from lib.evagg.svc import CosmosCachingWebClient, get_dotenv_settings
+from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
 
 # %% Constants.
 
@@ -421,7 +421,7 @@ if precision < 1 or recall < 1:
     print(result)
 
 else:
-    print("All observations found. This is likely because the TruthsetObservationFinder was used.")
+    print("All observations found. This is likely because the Truthset observation finder was used.")
 
 
 # %% Redo the merge and assess observation finding if we're only concerned with finding the right variants.
