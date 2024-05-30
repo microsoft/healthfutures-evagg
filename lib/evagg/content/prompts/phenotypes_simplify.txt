@@ -1,0 +1,21 @@
+Below is text description of a phenotype. Make the following changes to this description
+
+1) remove leading adjectives that talk about disease severity, e.g., "mild", "severe", "subtle"
+2) when plural nouns in the description refer to specific parts of the body, make them singular, e.g., change "hippocampi" to "hippocampus"
+3) when adjectives refer to a phenotype that affects all of the body (e.g., "general", "centralized", "systemic"), remove them
+4) when a description is an adjective followed by a noun, reverse the order an insert a comma, e.g., change "abnormal hippocampus" to "hippocampus, abnormal"
+
+
+-- Output format --
+
+Provide your response as a valid JSON object, in the following format:
+
+{
+    "simplified": "<simplified description>"
+}
+
+-- Task --
+
+Description: {{$term}}
+
+
