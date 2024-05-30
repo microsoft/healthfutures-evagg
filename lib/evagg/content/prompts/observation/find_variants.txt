@@ -21,6 +21,8 @@ Genetic variants can be described a number of different ways, here are a few exa
  - "rs123456789"
  - "T65I"
  - "Ser195Gly"
+ - "m.1234G>T"
+ - "NC_012920.1:m.4321A>G"
 
 They are also commonly found as combinations of any of the above descriptions separated by punctuation and/or 
 whitespace, for example:
