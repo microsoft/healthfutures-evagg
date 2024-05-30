@@ -12,7 +12,9 @@
 - variant_inheritance
 - variant_type
 - study_type
-- functional_study
+- engineered_cells
+- patient_cells_tissues
+- animal_model
 - citation
 - link
 - paper_title
