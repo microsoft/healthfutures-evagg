@@ -17,53 +17,6 @@ PatientVariant = Tuple[HGVSVariant, str]
 logger = logging.getLogger(__name__)
 
 
-class TruthsetObservationFinder(IFindObservations):
-    def __init__(self) -> None:
-        pass
-
-    async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
-        """Identify all observations relevant to `gene_symbol` in `paper`.
-
-        `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
-        in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
-
-        The returned observation objects are logically "clinical" observations of a variant in a human. Each object
-        describes an individual in which a variant was observed along with the relevant text from the paper.
-        """
-        if not (paper.props.get("fulltext_xml")):
-            logger.info(f"Skipping {paper.id} because full text could not be retrieved")
-            return []
-
-        observations: List[Observation] = []
-        for (variant, individual), evidence in paper.evidence.items():
-
-            if variant.gene_symbol != gene_symbol:
-                logger.error(f"Unexpected gene symbol found for {paper}: {variant.gene_symbol}")
-                continue
-
-            variant_descriptions = [variant.hgvs_desc]
-            if evidence.get("paper_variant"):
-                variant_descriptions.append(evidence["paper_variant"])
-            if variant.protein_consequence:
-                variant_descriptions.append(variant.protein_consequence.hgvs_desc)
-
-            observations.append(
-                Observation(
-                    variant=variant,
-                    individual=individual,
-                    variant_descriptions=list(set(variant_descriptions)),
-                    patient_descriptions=[individual],
-                    texts=list(
-                        # Recreate the generator each time.
-                        # TODO, consider filtering to relevant sections.
-                        get_sections(paper.props.get("fulltext_xml"))
-                    ),
-                )
-            )
-
-        return observations
-
-
 class ObservationFinder(IFindObservations):
     _PROMPTS = {
         "check_patients": os.path.dirname(__file__) + "/prompts/observation/check_patients.txt",

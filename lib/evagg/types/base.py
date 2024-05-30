@@ -7,7 +7,7 @@ class Paper:
     def __init__(self, **kwargs: Any) -> None:
         self.id = kwargs["id"]  # id is required, DOI
         self.evidence = kwargs.pop("evidence", {})
-        self.citation = kwargs.get("citation")  # TODO: determine format
+        self.citation = kwargs.get("citation")
         self.abstract = kwargs.get("abstract")
         self.props = kwargs
 
@@ -20,7 +20,7 @@ class Paper:
         return self.id == o.id
 
     def __repr__(self) -> str:
-        text = self.props.get("paper_title") or self.props.get("citation") or self.props.get("abstract") or "unknown"
+        text = self.props.get("paper_title") or self.citation or self.abstract or "unknown"
         return f'id: {self.id} - "{text[:15]}{"..." if len(text) > 15 else ""}"'
 
 
