@@ -1,55 +1,55 @@
-# Services
 log:
-  di_factory: lib.evagg.svc.init_logger
+  di_factory: lib.evagg.utils.init_logger
   level: INFO
-  prompts_to_file: true
-  console_to_file: true
-ncbi_settings:
-  di_factory: lib.evagg.svc.get_dotenv_settings
-  filter_prefix: "NCBI_EUTILS_"
+  to_file: true
+
 web_client:
-  di_factory: lib.evagg.svc.CosmosCachingWebClient
+  di_factory: lib.evagg.utils.CosmosCachingWebClient
   cache_settings:
-    di_factory: lib.evagg.svc.get_dotenv_settings
-    filter_prefix: "EVAGG_CONTENT_CACHE_"  
+    di_factory: lib.evagg.utils.get_dotenv_settings
+    filter_prefix: "EVAGG_CONTENT_CACHE_"
+
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
   web_client: "{{web_client}}"
-  settings: "{{ncbi_settings}}"
+  settings:
+    di_factory: lib.evagg.utils.get_dotenv_settings
+    filter_prefix: "NCBI_EUTILS_"
+  
 mutalyzer_client:
   di_factory: lib.evagg.ref.MutalyzerClient
-  # Dedicated web-client that doesn't raise on 422 because of mutalyzer's behavior.
   web_client:
-    di_factory: lib.evagg.svc.CosmosCachingWebClient
+    di_factory: lib.evagg.utils.CosmosCachingWebClient
     web_settings:
       # Mutalyzer response code of 422 signifies an unprocessable entity.
       no_raise_codes: [422]
     cache_settings:
-      di_factory: lib.evagg.svc.get_dotenv_settings
+      di_factory: lib.evagg.utils.get_dotenv_settings
       filter_prefix: "EVAGG_CONTENT_CACHE_"
+
 refseq_client:
   di_factory: lib.evagg.ref.NcbiReferenceLookupClient
-  # Dedicated web-client without caching, TODO: don't cache large files and use a shared client.
   web_client:
-    di_factory: lib.evagg.svc.RequestsWebContentClient
+    di_factory: lib.evagg.utils.RequestsWebContentClient
+
 variant_factory:
   di_factory: lib.evagg.content.HGVSVariantFactory
-  normalizer: "{{mutalyzer_client}}"
   validator: "{{mutalyzer_client}}"
+  normalizer: "{{mutalyzer_client}}"
   variant_lookup_client: "{{ncbi_client}}"
   refseq_client: "{{refseq_client}}"
+
 llm_client:
-  di_factory: lib.evagg.llm.OpenAICacheClient
+  di_factory: lib.evagg.llm.OpenAIClient
   config:
-    di_factory: lib.evagg.svc.get_dotenv_settings
+    di_factory: lib.evagg.utils.get_dotenv_settings
     filter_prefix: "AZURE_OPENAI_"
 
-# Application
-di_factory: lib.evagg.SynchronousLocalApp
+di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries_content_subset.yaml
 library:
-  di_factory: lib.evagg.TruthsetFileLibrary
+  di_factory: lib.evagg.TruthsetFileHandler
   file_path: data/v1/evidence_train_v1.tsv
   variant_factory: "{{variant_factory}}"
   paper_client: "{{ncbi_client}}"
@@ -60,16 +60,9 @@ extractor:
     - paper_id
     - hgvs_c
     - hgvs_p
-    - transcript
     - individual_id
-    - phenotype
-    - zygosity
-    - variant_inheritance
-    - variant_type
-    - functional_study
-    - gnomad_frequency
-    - study_type
-    - citation    
+    - transcript
+    - valid
   llm_client: "{{llm_client}}"
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
@@ -77,7 +70,13 @@ extractor:
   phenotype_fetcher:
     di_factory: lib.evagg.ref.PyHPOClient
   observation_finder:
-    di_factory: lib.evagg.content.TruthsetObservationFinder
+    di_factory: lib.evagg.content.ObservationFinder
+    llm_client: "{{llm_client}}"
+    paper_lookup_client: "{{ncbi_client}}"
+    variant_factory: "{{variant_factory}}"
+    variant_comparator: 
+      di_factory: lib.evagg.content.HGVSVariantComparator
+    normalizer: "{{mutalyzer_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
-  output_path: .out/content_benchmark.tsv
+  tsv_name: observation_benchmark
