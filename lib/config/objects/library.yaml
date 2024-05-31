@@ -24,3 +24,7 @@ llm_client: # depends on above services
   config:
     di_factory: lib.evagg.utils.get_dotenv_settings # required for llm_client
     filter_prefix: "AZURE_OPENAI_"
+    token_provider:
+      di_factory: lib.evagg.utils.get_azure_credential
+      bearer_scope: "https://cognitiveservices.azure.com/.default"
+      cred_type: "AzureCli"
