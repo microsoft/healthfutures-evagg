@@ -61,7 +61,7 @@ library:
   paper_client: "{{ncbi_client}}"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
-  fields:
+  fields: # These are the only fields we want for observation benchmarking.
     - gene
     - paper_id
     - hgvs_c

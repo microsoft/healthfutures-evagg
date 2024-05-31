@@ -42,10 +42,10 @@ for col in gene_categorical_columns:
 
 # %% Paper-level plots
 
-paper_categorical_columns = ["is_pmc_oa", "license", "study_type"]
+paper_categorical_columns = ["can_access", "license", "study_type"]
 
 for col in paper_categorical_columns:
-    # Only counting once for each paper, get a dataframe of value_counts of is_pmc_oa on a per-paper basis, stratified on group.
+    # Only counting once for each paper, get a dataframe of value_counts of can_access on a per-paper basis, stratified on group.
 
     normalized_value_counts = df.groupby(["paper_id"]).first().groupby("group")[col].value_counts(normalize=True)
     normalized_value_counts = normalized_value_counts.rename("proportion").reset_index()
