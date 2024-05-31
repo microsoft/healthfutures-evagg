@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Hashable, Mapping, Optional, Type, TypeVar
 
 import yaml
-from azure.identity import AzureCliCredential, DefaultAzureCredential
+from azure.identity import AzureCliCredential, DefaultAzureCredential, get_bearer_token_provider
 from dotenv import dotenv_values
 from pydantic import BaseModel
 
@@ -60,10 +60,12 @@ def get_env_settings(filter_prefix: Optional[str] = None, **additional_settings:
     return settings
 
 
-def get_azure_credential(cred_type: Optional[str] = "Default") -> Any:
+def get_azure_credential(cred_type: Optional[str] = "Default", bearer_scope: Optional[str] = None) -> Any:
+    cred: Any
     if cred_type == "Default":
-        return DefaultAzureCredential()
+        cred = DefaultAzureCredential()
     elif cred_type == "AzureCli":
-        return AzureCliCredential()
+        cred = AzureCliCredential()
     else:
         raise ValueError(f"Unsupported credential type: {cred_type}")
+    return get_bearer_token_provider(cred, bearer_scope) if bearer_scope else cred
