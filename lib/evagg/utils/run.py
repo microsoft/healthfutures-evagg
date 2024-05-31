@@ -37,7 +37,7 @@ _output_root = ".out"
 # Initialize the current run record from the command-line arguments.
 repo = RepoStatus()
 _current_run = RunRecord(
-    name=os.path.splitext(os.path.basename(sys.argv[1]))[0],
+    name=os.path.splitext(os.path.basename(sys.argv[1]))[0] if len(sys.argv) > 1 else os.path.basename(sys.argv[0]),
     args=sys.argv[1:],
     timestamp=datetime.now().strftime(DATE_FORMAT),
     git={
