@@ -4,7 +4,11 @@ Each of the extracted phenotypes and diseases should be relatively short, only a
 collection of these extracted phenotypes may contain few or many items, depending on the paper text.
 
 Only extract present/observed clinical phenotypes. Absence of a particular phenotype, or normal state in some way should 
-not be returned.
+not be returned. Do not include adjectives that describe the severity of a particular phenotype, e.g., instead of "mild 
+developmental delay" respond with "developmental delay". 
+
+Do not return phenotypes based on biomarkers or lab tests, e.g., "elevated levels of creatine kinase". Do not return
+molecular or cellular phenotypes, e.g., "heterogeneity in cell size".
 
 Your output should be of the form:  
   
