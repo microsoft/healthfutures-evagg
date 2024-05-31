@@ -37,7 +37,7 @@ library:
     - negative
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
-  fields:
+  fields: # These are the only fields we want for paper finding benchmarking.
     - gene
     - paper_id
     - paper_disease_category
