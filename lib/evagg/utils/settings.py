@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Hashable, Mapping, Optional, Type, TypeVar
 
 import yaml
+from azure.identity import AzureCliCredential, DefaultAzureCredential
 from dotenv import dotenv_values
 from pydantic import BaseModel
 
@@ -45,9 +46,24 @@ def get_settings(settings: Mapping, filter_prefix: Optional[str] = None) -> Dict
     return {transform(k): v for k, v in settings.items() if filter_match(k)}
 
 
-def get_dotenv_settings(dotenv_path: Optional[str] = None, filter_prefix: Optional[str] = None) -> Dict[str, str]:
-    return get_settings(dotenv_values(dotenv_path), filter_prefix)
+def get_dotenv_settings(
+    dotenv_path: Optional[str] = None, filter_prefix: Optional[str] = None, **additional_settings: Any
+) -> Dict[str, Any]:
+    settings = get_settings(dotenv_values(dotenv_path), filter_prefix)
+    settings.update(additional_settings)
+    return settings
 
 
-def get_env_settings(filter_prefix: Optional[str] = None) -> Dict[str, str]:
-    return get_settings(os.environ, filter_prefix)
+def get_env_settings(filter_prefix: Optional[str] = None, **additional_settings: Any) -> Dict[str, str]:
+    settings = get_settings(os.environ, filter_prefix)
+    settings.update(additional_settings)
+    return settings
+
+
+def get_azure_credential(cred_type: Optional[str] = "Default") -> Any:
+    if cred_type == "Default":
+        return DefaultAzureCredential()
+    elif cred_type == "AzureCli":
+        return AzureCliCredential()
+    else:
+        raise ValueError(f"Unsupported credential type: {cred_type}")

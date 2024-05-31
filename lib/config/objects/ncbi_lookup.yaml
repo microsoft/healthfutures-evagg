@@ -10,6 +10,9 @@ web_resource:
   cache_settings:
     di_factory: lib.evagg.utils.get_dotenv_settings
     filter_prefix: "EVAGG_CONTENT_CACHE_"  
+    credential:
+      di_factory: lib.evagg.utils.get_azure_credential
+      cred_type: "AzureCli"
  
 di_factory: lib.evagg.ref.NcbiLookupClient
 web_client: "{{web_resource}}"
