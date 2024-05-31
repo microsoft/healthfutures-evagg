@@ -5,3 +5,7 @@ resource "azurerm_resource_group" "rg" {
     ignore_changes = [tags]
   }
 }
+
+data "azuread_users" "users" {
+  mail_nicknames = values(var.users)
+}

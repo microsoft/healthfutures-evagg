@@ -25,3 +25,9 @@ variable "subscription_id" {
   description = "Subscription in which to create all resources."
   type        = string
 }
+
+variable "users" {
+  description = "Map of person name => email account or service principal GUID to allow service usage."
+  type        = map(string)
+  default     = {}
+}
