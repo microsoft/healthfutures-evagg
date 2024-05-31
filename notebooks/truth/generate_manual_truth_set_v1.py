@@ -404,9 +404,9 @@ def get_paper_title(pmid: str) -> str:
     return "unknown"
 
 
-def get_pmc_oa(pmid: str) -> bool:
+def get_can_access(pmid: str) -> bool:
     if paper := get_paper(pmid):
-        return paper.props.get("is_pmc_oa", False)
+        return paper.props.get("can_access", False)
     return False
 
 
@@ -432,16 +432,16 @@ def has_full_text(pmid: str) -> bool:
 evidence_df["paper_title"] = evidence_df["pmid"].apply(get_paper_title)
 
 # Now add the pmc_oa status.
-evidence_df["is_pmc_oa"] = evidence_df["pmid"].apply(get_pmc_oa)
-
+evidence_df["can_access"] = evidence_df["pmid"].apply(get_can_access)
+# %%
 # Drop the papers that aren't in PMC-OA.
-if evidence_df.query("is_pmc_oa == False").shape[0] > 0:
+if evidence_df.query("can_access == False").shape[0] > 0:
     print(
         "WARNING: Dropping {} papers that are not in PMC-OA".format(
-            evidence_df.query("is_pmc_oa == False").groupby("paper_id").first().shape[0]
+            evidence_df.query("can_access == False").groupby("paper_id").first().shape[0]
         )
     )
-    evidence_df = evidence_df.query("is_pmc_oa == True")
+    evidence_df = evidence_df.query("can_access == True")
 
 # Now add the license.
 evidence_df["license"] = evidence_df["pmid"].apply(get_license)
@@ -455,9 +455,14 @@ evidence_df["link"] = "https://pubmed.ncbi.nlm.nih.gov/" + evidence_df["pmid"].a
 # Remove any newlines from "pheno_text_description".
 evidence_df["pheno_text_description"] = evidence_df["pheno_text_description"].str.replace("\n", " ")
 
+# Remap the "engineered_cells", "patient_cells_tissues", and "animal_model" columns to be boolean.
+evidence_df["engineered_cells"] = evidence_df["engineered_cells"] == "x"
+evidence_df["patient_cells_tissues"] = evidence_df["patient_cells_tissues"] == "x"
+evidence_df["animal_model"] = evidence_df["animal_model"] == "x"
+
 # %% Post process gene_paper_df before writing out.
 gene_paper_df["has_fulltext"] = gene_paper_df["pmid"].apply(has_full_text)
-gene_paper_df["is_pmc_oa"] = gene_paper_df["pmid"].apply(get_pmc_oa)
+gene_paper_df["can_access"] = gene_paper_df["pmid"].apply(get_can_access)
 gene_paper_df["license"] = gene_paper_df["pmid"].apply(get_license)
 
 # %% Load in the group assignments and merge with gene_df gene_paper_df, and evidence_df.
