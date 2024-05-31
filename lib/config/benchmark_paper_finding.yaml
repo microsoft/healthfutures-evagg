@@ -10,18 +10,13 @@ web_client:
   cache_settings:
     di_factory: lib.evagg.utils.get_dotenv_settings
     filter_prefix: "EVAGG_CONTENT_CACHE_"  
+    credential:
+      di_factory: lib.evagg.utils.get_azure_credential
+      cred_type: "AzureCli"
 ncbi_client: 
   di_factory: lib.evagg.ref.NcbiLookupClient
   web_client: "{{web_client}}"
   settings: "{{ncbi_settings}}"
-mutalyzer_client:
-  di_factory: lib.evagg.ref.MutalyzerClient
-  web_client: "{{web_client}}"
-refseq_client:
-  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
-  web_client:
-    di_factory: lib.evagg.utils.RequestsWebContentClient
-# removed HGVSVariantFactory as not part of this .yaml's test.
   
 # Application
 di_factory: lib.evagg.PaperQueryApp

@@ -9,6 +9,9 @@ ncbi_client:
     cache_settings:
       di_factory: lib.evagg.utils.get_dotenv_settings
       filter_prefix: "EVAGG_CONTENT_CACHE_"
+      credential:
+        di_factory: lib.evagg.utils.get_azure_credential
+        cred_type: "AzureCli"
   settings:
     di_factory: lib.evagg.utils.get_dotenv_settings
     filter_prefix: "NCBI_EUTILS_" 
@@ -23,6 +26,9 @@ mutalyzer_client:
     cache_settings:
       di_factory: lib.evagg.utils.get_dotenv_settings
       filter_prefix: "EVAGG_CONTENT_CACHE_"
+      credential:
+        di_factory: lib.evagg.utils.get_azure_credential
+        cred_type: "AzureCli"
 refseq_client:
   di_factory: lib.evagg.ref.NcbiReferenceLookupClient
   web_client:
