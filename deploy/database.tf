@@ -61,10 +61,22 @@ resource "azurerm_cosmosdb_sql_role_definition" "cache_role" {
 
 # Assign the custom role to all authorized users.
 resource "azurerm_cosmosdb_sql_role_assignment" "cache_role_assignment" {
-  for_each = {for user in data.azuread_users.users.users : user.object_id => user}
+  for_each            = toset([for user in data.azuread_users.users.users : user.object_id])
   resource_group_name = azurerm_resource_group.rg.name
   account_name        = azurerm_cosmosdb_account.db.name
   role_definition_id  = azurerm_cosmosdb_sql_role_definition.cache_role.id
-  principal_id        = each.value.object_id
   scope               = azurerm_cosmosdb_account.db.id
+  principal_id        = each.value
 }
+
+output "EVAGG_CONTENT_CACHE_ENDPOINT" {
+  description = "The endpoint for the CosmosDB cache."
+  value       = azurerm_cosmosdb_account.db.endpoint
+}
+
+output "EVAGG_CONTENT_CACHE_CREDENTIAL" {
+  description = "The primary key for the CosmosDB cache."
+  value       = azurerm_cosmosdb_account.db.primary_key
+  sensitive   = true
+}
+
