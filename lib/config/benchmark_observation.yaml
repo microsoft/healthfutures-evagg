@@ -57,7 +57,7 @@ llm_client:
 
 di_factory: lib.evagg.PaperQueryApp
 queries:
-  di_factory: lib/config/queries_content_subset.yaml
+  di_factory: lib/config/queries/content_subset.yaml
 library:
   di_factory: lib.evagg.TruthsetFileHandler
   file_path: data/v1/evidence_train_v1.tsv

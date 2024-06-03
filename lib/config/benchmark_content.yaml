@@ -48,6 +48,10 @@ llm_client:
   config:
     di_factory: lib.evagg.utils.get_dotenv_settings
     filter_prefix: "AZURE_OPENAI_"
+    token_provider:
+      di_factory: lib.evagg.utils.get_azure_credential
+      bearer_scope: "https://cognitiveservices.azure.com/.default"
+      cred_type: "AzureCli"    
 truthset_library:
   di_factory: lib.evagg.TruthsetFileHandler
   file_path: data/v1/evidence_train_v1.tsv
@@ -67,10 +71,13 @@ extractor:
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
     web_client:
-      di_factory: lib.evagg.svc.CosmosCachingWebClient
+      di_factory: lib.evagg.utils.CosmosCachingWebClient
       cache_settings:
-        di_factory: lib.evagg.svc.get_dotenv_settings
-        filter_prefix: "EVAGG_CONTENT_CACHE_"
+        di_factory: lib.evagg.utils.get_dotenv_settings
+        filter_prefix: "EVAGG_CONTENT_CACHE_"  
+        credential:
+          di_factory: lib.evagg.utils.get_azure_credential
+          cred_type: "AzureCli"
       web_settings:
         max_retries: 10       
   phenotype_fetcher:

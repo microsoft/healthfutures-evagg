@@ -65,6 +65,9 @@ library:
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "rare disease"
+  example_types:
+    - positive 
+    - negative
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
@@ -77,13 +80,13 @@ extractor:
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
     web_client:
-      di_factory: lib.evagg.svc.CosmosCachingWebClient
+      di_factory: lib.evagg.utils.CosmosCachingWebClient
       cache_settings:
-        di_factory: lib.evagg.svc.get_dotenv_settings
+        di_factory: lib.evagg.utils.get_dotenv_settings
         filter_prefix: "EVAGG_CONTENT_CACHE_"    
-      credential:
-        di_factory: lib.evagg.utils.get_azure_credential
-        cred_type: "AzureCli"
+        credential:
+          di_factory: lib.evagg.utils.get_azure_credential
+          cred_type: "AzureCli"
       web_settings:
         max_retries: 10
   phenotype_fetcher:
