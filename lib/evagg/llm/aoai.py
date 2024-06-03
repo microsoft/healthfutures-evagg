@@ -46,7 +46,7 @@ class ChatMessages:
 class OpenAIConfig(SettingsModel):
     deployment: str
     endpoint: str
-    api_key: str
+    api_key: str | None = None
     api_version: str
     max_parallel_requests: int = 0
     token_provider: Any = None
