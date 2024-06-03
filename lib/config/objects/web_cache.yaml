@@ -1,0 +1,9 @@
+di_factory: lib.evagg.utils.CosmosCachingWebClient
+cache_settings:
+  di_factory: lib.evagg.utils.get_dotenv_settings
+  filter_prefix: "EVAGG_CONTENT_CACHE_"
+  credential:
+    di_factory: lib.evagg.utils.get_azure_credential
+    cred_type: "AzureCli"
+web_settings:
+  max_retries: 10 

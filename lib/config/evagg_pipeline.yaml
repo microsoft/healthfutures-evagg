@@ -3,65 +3,18 @@ log:
   level: INFO
   to_file: true
 
-web_client:
-  di_factory: lib.evagg.utils.CosmosCachingWebClient
-  cache_settings:
-    di_factory: lib.evagg.utils.get_dotenv_settings
-    filter_prefix: "EVAGG_CONTENT_CACHE_"
-    credential:
-      di_factory: lib.evagg.utils.get_azure_credential
-      cred_type: "AzureCli"
-
-ncbi_client: 
-  di_factory: lib.evagg.ref.NcbiLookupClient
-  web_client: "{{web_client}}"
-  settings:
-    di_factory: lib.evagg.utils.get_dotenv_settings
-    filter_prefix: "NCBI_EUTILS_"
-  
-mutalyzer_client:
-  di_factory: lib.evagg.ref.MutalyzerClient
-  web_client:
-    di_factory: lib.evagg.utils.CosmosCachingWebClient
-    web_settings:
-      # Mutalyzer response code of 422 signifies an unprocessable entity.
-      no_raise_codes: [422]
-    cache_settings:
-      di_factory: lib.evagg.utils.get_dotenv_settings
-      filter_prefix: "EVAGG_CONTENT_CACHE_"
-      credential:
-        di_factory: lib.evagg.utils.get_azure_credential
-        cred_type: "AzureCli"
-
-refseq_client:
-  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
-  web_client:
-    di_factory: lib.evagg.utils.RequestsWebContentClient
-
-variant_factory:
-  di_factory: lib.evagg.content.HGVSVariantFactory
-  validator: "{{mutalyzer_client}}"
-  normalizer: "{{mutalyzer_client}}"
-  variant_lookup_client: "{{ncbi_client}}"
-  refseq_client: "{{refseq_client}}"
-  
+# Imported objects.
 llm_client:
-  di_factory: lib.evagg.llm.OpenAIClient
-  config:
-    di_factory: lib.evagg.utils.get_dotenv_settings
-    filter_prefix: "AZURE_OPENAI_"
-    token_provider:
-      di_factory: lib.evagg.utils.get_azure_credential
-      bearer_scope: "https://cognitiveservices.azure.com/.default"
-      cred_type: "AzureCli"
+  di_factory: lib/config/objects/llm.yaml
 
-# Application
+# Application.
 di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttrain_subset.yaml
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
-  paper_client: "{{ncbi_client}}"
+  paper_client:
+    di_factory: lib/config/objects/ncbi.yaml
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "rare disease"
@@ -73,32 +26,22 @@ extractor:
   fields:
     di_factory: lib/config/fields/content_subset.yaml
   llm_client:
-    di_factory: lib.evagg.llm.OpenAICacheClient
-    config:
-      di_factory: lib.evagg.utils.get_dotenv_settings
-      filter_prefix: "AZURE_OPENAI_"  
+    di_factory: lib/config/objects/llm_cache.yaml
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
     web_client:
-      di_factory: lib.evagg.utils.CosmosCachingWebClient
-      cache_settings:
-        di_factory: lib.evagg.utils.get_dotenv_settings
-        filter_prefix: "EVAGG_CONTENT_CACHE_"    
-        credential:
-          di_factory: lib.evagg.utils.get_azure_credential
-          cred_type: "AzureCli"
-      web_settings:
-        max_retries: 10
+      di_factory: lib/config/objects/web_cache.yaml
   phenotype_fetcher:
     di_factory: lib.evagg.ref.PyHPOClient    
   observation_finder:
     di_factory: lib.evagg.content.ObservationFinder
     llm_client: "{{llm_client}}"
-    paper_lookup_client: "{{ncbi_client}}"
-    variant_factory: "{{variant_factory}}"
+    variant_factory: 
+      di_factory: lib/config/objects/variant_factory.yaml
     variant_comparator: 
       di_factory: lib.evagg.content.HGVSVariantComparator
-    normalizer: "{{mutalyzer_client}}"
+    normalizer: 
+      di_factory: lib/config/objects/mutalyzer.yaml
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark
