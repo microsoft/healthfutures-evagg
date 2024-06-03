@@ -1,50 +1,12 @@
+# Logging.
 log:
   di_factory: lib.evagg.utils.init_logger
   level: INFO
 
-ncbi_client: 
-  di_factory: lib.evagg.ref.NcbiLookupClient
-  web_client:
-    di_factory: lib.evagg.utils.CosmosCachingWebClient
-    cache_settings:
-      di_factory: lib.evagg.utils.get_dotenv_settings
-      filter_prefix: "EVAGG_CONTENT_CACHE_"
-      credential:
-        di_factory: lib.evagg.utils.get_azure_credential
-        cred_type: "AzureCli"
-  settings:
-    di_factory: lib.evagg.utils.get_dotenv_settings
-    filter_prefix: "NCBI_EUTILS_" 
-
-mutalyzer_client:
-  di_factory: lib.evagg.ref.MutalyzerClient
-  web_client:
-    di_factory: lib.evagg.utils.CosmosCachingWebClient
-    web_settings:
-      # Mutalyzer response code of 422 signifies an unprocessable entity.
-      no_raise_codes: [422]
-    cache_settings:
-      di_factory: lib.evagg.utils.get_dotenv_settings
-      filter_prefix: "EVAGG_CONTENT_CACHE_"
-      credential:
-        di_factory: lib.evagg.utils.get_azure_credential
-        cred_type: "AzureCli"
-refseq_client:
-  di_factory: lib.evagg.ref.NcbiReferenceLookupClient
-  web_client:
-    di_factory: lib.evagg.utils.RequestsWebContentClient
-variant_factory:
-  di_factory: lib.evagg.content.HGVSVariantFactory
-  validator: "{{mutalyzer_client}}"
-  normalizer: "{{mutalyzer_client}}"
-  variant_lookup_client: "{{ncbi_client}}"
-  refseq_client: "{{refseq_client}}"
-
-truthset_library:
-  di_factory: lib.evagg.TruthsetFileHandler
-  file_path: data/v1/evidence_train_v1.tsv
-  variant_factory: "{{variant_factory}}"
-  paper_client: "{{ncbi_client}}"
+# Imported objects.
+# Configure truthset source to use seqr fields.
+truthset_source:
+  di_factory: lib/config/objects/truthset.yaml
   fields:
     di_factory: lib/config/fields/seqr.yaml
 
@@ -52,8 +14,8 @@ truthset_library:
 di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttrain_subset.yaml
-library: "{{truthset_library}}"
-extractor: "{{truthset_library}}"
+library: "{{truthset_source}}"
+extractor: "{{truthset_source}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
 
