@@ -1,6 +1,7 @@
 # Services
 log:
   di_factory: lib.evagg.utils.init_logger
+  level: INFO
   to_file: true
 ncbi_settings:
   di_factory: lib.evagg.utils.get_dotenv_settings
