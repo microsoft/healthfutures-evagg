@@ -9,7 +9,6 @@ This notebook compares the performance of the two components separately.
 
 # %% Imports.
 
-import json
 import os
 import re
 from collections import defaultdict
@@ -28,7 +27,9 @@ from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
 # %% Constants.
 
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", ".out", "observation_benchmark.tsv")
+OUTPUT_PATH = os.path.join(
+    os.path.dirname(__file__), "..", ".out", "run_benchmark_content_20240530_172939", "content_benchmark.tsv"
+)
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
@@ -44,17 +45,13 @@ EXTRA_COLUMNS = {"gene", "in_supplement"}
 # will be a large number of genes missing from the pipeline output entirely if the pipeline wasn't configured to find
 # them. This can lead to falsely high recall scores if zero observations were found for a gene that was actually
 # processed.
-RESTRICT_TRUTH_GENES_TO_OUTPUT = False
+RESTRICT_TRUTH_GENES_TO_OUTPUT = True
 
 # SET THIS TO TRUE FOR END TO END PIPELINE RUNS.
 # If True, only consider papers from the output set that are in the truth set.
 # This is necessary to get an accurate assessment of precision for observation finding for full pipeline runs
 # as there will be a large number of observations from papers that aren't included in the truthset.
-RESTRICT_OUTPUT_PAPERS_TO_TRUTH = True
-
-HPO_SIMILARITY_THRESHOLD = (
-    0.2  # The threshold for considering two HPO terms to be the same. See sandbox/miah/hpo_pg.py.
-)
+RESTRICT_OUTPUT_PAPERS_TO_TRUTH = False
 
 # %% Read in the truth and output tables.
 
@@ -87,34 +84,11 @@ if "individual_id" in output_df.columns:
     output_df["individual_id_orig"] = output_df["individual_id"]
     output_df["individual_id"] = output_df["individual_id"].apply(_normalize_individual_id)
 
-# If the column "functional_study" is included in CONTENT_COLUMNS, we need to decode that column into the corresponding
-# one-shot values to compare to the truth set.
-
-
-def _decode_functional_study(value: str, encoding: str) -> str:
-    items = json.loads(value)
-    return "true" if encoding in items else "false"
-
-
-if "functional_study" in CONTENT_COLUMNS:
-    # Handle output_df.
-    functional_column_map = {
-        "engineered_cells": "cell line",
-        "patient_cells_tissues": "patient cells",
-        "animal_model": "animal model",
-    }
-    for column, encoding in functional_column_map.items():
-        assert column in truth_df.columns, f"Column {column} not found in truth set."
-        output_df[column] = output_df["functional_study"].apply(func=_decode_functional_study, encoding=encoding)
-
-    CONTENT_COLUMNS -= {"functional_study"}
-    CONTENT_COLUMNS.update(functional_column_map.keys())
-
-    output_df = output_df.drop(columns=["functional_study"])
-
-    # Handle truth_df.
-    for column in functional_column_map.keys():
-        truth_df[column] = truth_df[column].apply(lambda x: "true" if x == "x" else "false")
+# Remap functional study columns to use string values "true" and "false" instead of boolean True and False.
+for col in ["engineered_cells", "patient_cells_tissues", "animal_model"]:
+    if col in CONTENT_COLUMNS:
+        truth_df[col] = truth_df[col].apply(lambda x: "true" if x else "false")
+        output_df[col] = output_df[col].apply(lambda x: "true" if x else "false")
 
 if "variant_type" in CONTENT_COLUMNS:
     # For both dataframes, recode "splice donor", "splice acceptor" to "splice region"
@@ -460,8 +434,6 @@ print()
 
 
 # %% Assess content extraction.
-
-# hpo = PyHPOClient()
 
 
 def _hpo_str_to_set(hpo_compound_string: str) -> Set[str]:

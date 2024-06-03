@@ -23,7 +23,9 @@ class PromptBasedContentExtractor(IExtractFields):
         "variant_inheritance": os.path.dirname(__file__) + "/prompts/variant_inheritance.txt",
         "phenotype": os.path.dirname(__file__) + "/prompts/phenotypes_all.txt",
         "variant_type": os.path.dirname(__file__) + "/prompts/variant_type.txt",
-        "functional_study": os.path.dirname(__file__) + "/prompts/functional_study.txt",
+        "engineered_cells": os.path.dirname(__file__) + "/prompts/functional_study.txt",
+        "patient_cells_tissues": os.path.dirname(__file__) + "/prompts/functional_study.txt",
+        "animal_model": os.path.dirname(__file__) + "/prompts/functional_study.txt",
     }
     # These are the expensive prompt fields we should cache per paper.
     _CACHE_VARIANT_FIELDS = ["variant_type", "functional_study"]
@@ -117,29 +119,18 @@ class PromptBasedContentExtractor(IExtractFields):
                     phenotype.remove(term)
                     match_dict[term] = f"{id_result['name']} ({id_result['id']})"
 
-        # Search for each term in its entirety, for those that we match, save them and move on.
-        for term in phenotype.copy():
-            result = self._phenotype_searcher.search(query=term.split("(")[0].strip(), retmax=1)
-            if result:
-                phenotype.remove(term)
-                match_dict[term] = f"{result[0]['name']} ({result[0]['id']})"
+        async def _get_match_for_term(term: str) -> str | None:
+            result = self._phenotype_searcher.search(query=term, retmax=10)
 
-        # For those we don't match, search for each word within the term and collect the unique results.
-        for term in phenotype.copy():
-            words = term.split()
             candidates = set()
-            for word in words:
-                if word.lower() == "unknown":
-                    continue
-                retmax = 1
-                result = self._phenotype_searcher.search(query=word, retmax=retmax)
-                if result:
-                    for i in range(min(retmax, len(result))):
-                        candidates.add(f"{result[i]['name']} ({result[i]['id']})")
+            for i in range(len(result)):
+                candidate = f"{result[i]['name']} ({result[i]['id']}) - {result[i]['definition']}"
+                if result[i]["synonyms"]:
+                    candidate += f" - Synonymous with {result[i]['synonyms']}"
+                candidates.add(candidate)
 
-            # Ask AOAI to determine which of the unique results is the best match.
             if candidates:
-                params = {"term": term, "candidates": ", ".join(candidates)}
+                params = {"term": term, "candidates": "\n".join(candidates)}
                 response = await self._run_json_prompt(
                     os.path.dirname(__file__) + "/prompts/phenotypes_candidates.txt",
                     params,
@@ -147,15 +138,42 @@ class PromptBasedContentExtractor(IExtractFields):
                         "prompt_tag": "phenotypes_candidates",
                     },
                 )
-                if match := response.get("match"):
-                    match_dict[term] = match
+                return response.get("match")
+
+            return None
+
+        # Alternatively, search for the term in the HPO database, use AOAI to determine which of the results appears
+        # to be the best match.
+        for term in phenotype.copy():
+            match = await _get_match_for_term(term)
+            if match:
+                match_dict[term] = match
+                phenotype.remove(term)
+
+        # Before we give up, try again with a simplified version of the term.
+        for term in phenotype.copy():
+            params = {"term": term}
+            response = await self._run_json_prompt(
+                os.path.dirname(__file__) + "/prompts/phenotypes_simplify.txt",
+                params,
+                {
+                    "prompt_tag": "phenotypes_simplify",
+                },
+            )
+            if simplified := response.get("simplified"):
+                match = await _get_match_for_term(simplified)
+                if match:
+                    match_dict[f"{term} (S)"] = match
                     phenotype.remove(term)
 
-        logger.debug(f"Converted phenotypes: {match_dict}")
-
         all_values = list(match_dict.values())
-        all_values.extend(phenotype)
-        return all_values
+        logger.info(f"Converted phenotypes: {match_dict}")
+
+        if phenotype:
+            logger.warning(f"Failed to convert phenotypes: {phenotype}")
+            all_values.extend(phenotype)
+
+        return list(set(all_values))
 
     async def _observation_phenotypes_for_text(
         self, text: str, observation_description: str, gene_symbol: str
@@ -211,7 +229,7 @@ class PromptBasedContentExtractor(IExtractFields):
         if table_texts != "":
             texts.append(table_texts)
         result = await asyncio.gather(*[self._observation_phenotypes_for_text(t, obs_desc, gene_symbol) for t in texts])
-        observation_phenotypes = list({item for sublist in result for item in sublist})
+        observation_phenotypes = list({item.lower() for sublist in result for item in sublist})
 
         # Now convert this phenotype list to OMIM/HPO ids.
         structured_phenotypes = await self._convert_phenotype_to_hpo(observation_phenotypes)
@@ -219,24 +237,45 @@ class PromptBasedContentExtractor(IExtractFields):
         # Duplicates are conceivable, get unique set again.
         return ", ".join(set(structured_phenotypes))
 
-    async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
-        if field == "phenotype":
-            return await self._generate_phenotype_field(gene_symbol, observation)
-        else:
-            params = {
-                # First element is full text of the observation, consider alternatives
-                "passage": "\n\n".join([t.text for t in observation.texts]),
-                "variant_descriptions": ", ".join(observation.variant_descriptions),
-                "patient_descriptions": ", ".join(observation.patient_descriptions),
-                "gene": gene_symbol,
-            }
-            response = await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
+    async def _run_field_prompt(self, gene_symbol: str, observation: Observation, field: str) -> Dict[str, Any]:
+        params = {
+            # First element is full text of the observation, consider alternatives
+            "passage": "\n\n".join([t.text for t in observation.texts]),
+            "variant_descriptions": ", ".join(observation.variant_descriptions),
+            "patient_descriptions": ", ".join(observation.patient_descriptions),
+            "gene": gene_symbol,
+        }
+        return await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
+
+    async def _generate_basic_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+        result = (await self._run_field_prompt(gene_symbol, observation, field)).get(field, "failed")
         # result can be a string or a json object.
-        result = response.get(field, "failed")
         # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
         if not isinstance(result, str):
             result = json.dumps(result)
         return result
+
+    async def _generate_functional_study_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+        result = await self._run_field_prompt(gene_symbol, observation, field)
+        func_studies = result.get("functional_study", [])
+
+        # Note the prompt uses a different set of strings to represent the study types found, so we need to map them.
+        map = {
+            "engineered_cells": "cell line",
+            "patient_cells_tissues": "patient cells",
+            "animal_model": "animal model",
+            "none": "none",
+        }
+
+        return "True" if (map[field] in func_studies) else "False"
+
+    async def _generate_prompt_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
+        if field == "phenotype":
+            return await self._generate_phenotype_field(gene_symbol, observation)
+        elif field in ["engineered_cells", "patient_cells_tissues", "animal_model"]:
+            return await self._generate_functional_study_field(gene_symbol, observation, field)
+        else:
+            return await self._generate_basic_field(gene_symbol, observation, field)
 
     def _get_fixed_field(self, gene_symbol: str, ob: Observation, field: str) -> Tuple[str, str]:
         if field == "gene":
