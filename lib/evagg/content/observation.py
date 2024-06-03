@@ -42,13 +42,11 @@ uninterrupted sequences of whitespace characters.
     def __init__(
         self,
         llm_client: IPromptClient,
-        paper_lookup_client: IPaperLookupClient,
         variant_factory: ICreateVariants,
         variant_comparator: ICompareVariants,
         normalizer: INormalizeVariants,
     ) -> None:
         self._llm_client = llm_client
-        self._paper_lookup_client = paper_lookup_client
         self._variant_factory = variant_factory
         self._variant_comparator = variant_comparator
         self._normalizer = normalizer
