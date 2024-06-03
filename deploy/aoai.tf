@@ -1,4 +1,4 @@
-
+# TODO: hardcoded for now, should be parameterized and turned into a managed resource.
 data "azurerm_cognitive_account" "aoai_service" {
   resource_group_name = "aoai-dev"
   name                = "bmcaoai2"
