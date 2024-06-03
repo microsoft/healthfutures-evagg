@@ -1,0 +1,6 @@
+di_factory: lib.evagg.ref.NcbiLookupClient
+web_client:
+  di_factory: lib/config/objects/web_cache.yaml
+settings:
+  di_factory: lib.evagg.utils.get_dotenv_settings
+  filter_prefix: "NCBI_EUTILS_"
