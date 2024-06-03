@@ -1,0 +1,10 @@
+ncbi_client: 
+  di_factory: lib/config/objects/ncbi.yaml
+mutalyzer_client:
+  di_factory: lib/config/objects/mutalyzer.yaml  
+di_factory: lib.evagg.content.HGVSVariantFactory
+normalizer: "{{mutalyzer_client}}"
+validator: "{{mutalyzer_client}}"
+variant_lookup_client: "{{ncbi_client}}"
+refseq_client:
+  di_factory: lib/config/objects/refseq.yaml

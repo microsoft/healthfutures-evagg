@@ -1,0 +1,4 @@
+di_factory: lib.evagg.ref.NcbiReferenceLookupClient
+# Dedicated web-client without caching, TODO: don't cache large files and use a shared client.
+web_client:
+  di_factory: lib.evagg.utils.RequestsWebContentClient
