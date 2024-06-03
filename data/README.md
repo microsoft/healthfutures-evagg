@@ -37,7 +37,7 @@ separated files with the following columns:
   - **questions**: any additional questions from the curator
   - **paper_id**: pmid-prefixed paper id
   - **paper_title**: the title of the paper
-  - **is_pmc_oa**: boolean indicator of whether the paper is in the pmc-oa dataset
+  - **can_access**: boolean indicator of whether the paper permits full-text access
   - **license**: indicator of the license terms, if available
   - **pmcid**: pubmed central id for the paper, if available
   - **link**: link to the paper on pubmed

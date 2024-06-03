@@ -60,7 +60,13 @@ extractor:
   llm_client: "{{llm_client}}"
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
-    web_client: "{{web_client}}"
+    web_client:
+      di_factory: lib.evagg.svc.CosmosCachingWebClient
+      cache_settings:
+        di_factory: lib.evagg.svc.get_dotenv_settings
+        filter_prefix: "EVAGG_CONTENT_CACHE_"
+      web_settings:
+        max_retries: 10       
   phenotype_fetcher:
     di_factory: lib.evagg.ref.PyHPOClient
   observation_finder: "{{truthset_library}}"
