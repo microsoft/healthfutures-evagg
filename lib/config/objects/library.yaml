@@ -1,3 +1,4 @@
+# TODO: This YAML is used only by notebooks and sandbox code. Refactor into one of those subdirectories.
 log:
   di_factory: lib.evagg.utils.init_logger
   level: CRITICAL
@@ -10,6 +11,9 @@ web_client:
   cache_settings:
     di_factory: lib.evagg.utils.get_dotenv_settings
     filter_prefix: "EVAGG_CONTENT_CACHE_"  
+    credential:
+      di_factory: lib.evagg.utils.get_azure_credential
+      cred_type: "AzureCli"
 ncbi_client:
   di_factory: lib.evagg.ref.NcbiLookupClient
   web_client: "{{web_client}}"
@@ -21,3 +25,7 @@ llm_client: # depends on above services
   config:
     di_factory: lib.evagg.utils.get_dotenv_settings # required for llm_client
     filter_prefix: "AZURE_OPENAI_"
+    token_provider:
+      di_factory: lib.evagg.utils.get_azure_credential
+      bearer_scope: "https://cognitiveservices.azure.com/.default"
+      cred_type: "AzureCli"
