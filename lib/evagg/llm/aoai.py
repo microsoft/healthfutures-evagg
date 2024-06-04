@@ -46,9 +46,10 @@ class ChatMessages:
 class OpenAIConfig(SettingsModel):
     deployment: str
     endpoint: str
-    api_key: str
+    api_key: str | None = None
     api_version: str
     max_parallel_requests: int = 0
+    token_provider: Any = None
 
 
 class OpenAIClient(IPromptClient):
@@ -64,8 +65,12 @@ class OpenAIClient(IPromptClient):
     @lru_cache
     def _get_client_instance(self) -> AsyncOpenAI:
         logger.info(f"Using AOAI API at {self._config.endpoint} (max_parallel={self._config.max_parallel_requests}).")
-        # Can configure a default model deployment here, but model is still required in the settings, so there's
-        # no point in doing so. Instead we'll just put the deployment from the config into the default settings.
+        if self._config.token_provider:
+            return AsyncAzureOpenAI(
+                azure_endpoint=self._config.endpoint,
+                azure_ad_token_provider=self._config.token_provider,
+                api_version=self._config.api_version,
+            )
         return AsyncAzureOpenAI(
             azure_endpoint=self._config.endpoint,
             api_key=self._config.api_key,

@@ -1,6 +1,8 @@
+# Logging.
 log:
   di_factory: lib.evagg.utils.init_logger
 
+# Application.
 di_factory: lib.evagg.PaperQueryApp
 queries:
   - "gene_symbol": "TUBB3"

@@ -8,7 +8,9 @@
 - zygosity
 - variant_inheritance
 - variant_type
-- functional_study
+- engineered_cells
+- patient_cells_tissues
+- animal_model
 - gnomad_frequency
 - study_type
 - citation
