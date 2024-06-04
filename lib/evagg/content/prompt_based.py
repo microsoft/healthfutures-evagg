@@ -54,7 +54,7 @@ class PromptBasedContentExtractor(IExtractFields):
         # Pre-check the list of fields being requested.
         supported_fields = self._STATIC_FIELDS + self._PAPER_FIELDS + list(self._PROMPT_FIELDS)
         if any(f not in supported_fields for f in fields):
-            raise ValueError()
+            raise ValueError(f"Unsupported field(s): {set(fields) - set(supported_fields)}")
 
         self._fields = fields
         self._llm_client = llm_client

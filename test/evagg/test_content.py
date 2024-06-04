@@ -77,19 +77,21 @@ def test_prompt_based_content_extractor_valid_fields(
     prompts = mock_prompt(
         json.dumps({"zygosity": fields["zygosity"]}),
         json.dumps({"variant_inheritance": fields["variant_inheritance"]}),
-        json.dumps({"phenotypes": ["test"]}),  # phenotypes_all
-        json.dumps({"phenotypes": ["test"]}),  # phenotypes_observation
-        json.dumps({"phenotypes": ["test"]}),  # phenotypes_acronyms
-        json.dumps({"matched": ["test (HP:0123)"], "unmatched": []}),
+        json.dumps({"phenotypes": ["test"]}),  # phenotypes_all, only one text, so only once.
+        json.dumps({"phenotypes": ["test"]}),  # phenotypes_observation, only one text, so only once.
+        json.dumps({"phenotypes": ["test"]}),  # phenotypes_acronyms, only one text, so only once.
+        json.dumps({"match": "test (HP:0123)"}),
     )
-    pheno_searcher = mock_phenotype_searcher([{"id": "HP:0123", "name": "test"}])
+    pheno_searcher = mock_phenotype_searcher(
+        [{"id": "HP:0123", "name": "test", "definition": "test", "synonyms": "test"}]
+    )
     pheno_fetcher = mock_phenotype_fetcher()
     content_extractor = PromptBasedContentExtractor(
         list(fields.keys()), prompts, mock_observation([observation]), pheno_searcher, pheno_fetcher
     )
     content = content_extractor.extract(paper, fields["gene"])
 
-    assert prompts.call_count("prompt_file") == 5
+    assert prompts.call_count("prompt_file") == 6
     assert len(content) == 1
     print("CONTENT")
     print(content[0])
