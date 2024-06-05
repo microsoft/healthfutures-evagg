@@ -1,0 +1,29 @@
+services:
+  # # gpt-4, 1106, TPM 120k
+  # - endpoint: https://gcraoai3sw1.openai.azure.com
+  # # gpt-4, 1106, TPM 10k
+  # - endpoint: https://gcraoai3sw2.openai.azure.com
+  # gpt-4, 0314, 10k
+  # - endpoint: https://gcrgpt4aoai3.openai.azure.com
+  # gpt-4, 0613, 1k
+  # - endpoint: https://gcrgpt4aoai3c.openai.azure.com
+  # gpt-4-1106-preview, 1106, 80k
+  - endpoint: https://bmcaoai2.openai.azure.com
+  # gpt-4-1106-preview, 1106, 80k
+  - endpoint: https://hf-lab-openai-auseast.openai.azure.com
+  # gpt-4-1106-preview, 1106, 80k
+  - endpoint: https://hf-lab-openai-francecentral.openai.azure.com
+  # gpt-4-1106-preview, 1106, 150k
+  - endpoint: https://hf-lab-openai-norwayeast.openai.azure.com
+  # gpt-4-1106-preview, 1106, 150k
+  - endpoint: https://hf-lab-openai-southindia.openai.azure.com
+  # gpt-4-1106-preview, 1106, 80k
+  - endpoint: https://hf-lab-openai-uksouth.openai.azure.com
+  # gpt-4-1106-preview, 1106, 80k
+  - endpoint: https://hf-lab-openai-westus.openai.azure.com
+  # gpt-4, 0314, 65k; gpt-4-0125-preview, 0125, 80k
+  # - endpoint: https://hf-lab-openai.openai.azure.com
+  # gpt-4-0125-preview, 0125, 80k
+  # - endpoint: https://hf-lab-openai-southcentralus.openai.azure.com
+  # gpt-4-0125-preview, 0125, 80k
+  # - endpoint: https://hf-lab-openai-northcentralus.openai.azure.com
