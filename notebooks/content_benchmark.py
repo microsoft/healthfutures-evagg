@@ -22,13 +22,17 @@ from sklearn.metrics import confusion_matrix
 
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
-from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
+from lib.evagg.utils import CosmosCachingWebClient, get_azure_credential, get_dotenv_settings
 
 # %% Constants.
 
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
 OUTPUT_PATH = os.path.join(
-    os.path.dirname(__file__), "..", ".out", "run_benchmark_content_20240530_172939", "content_benchmark.tsv"
+    os.path.dirname(__file__),
+    "..",
+    ".out",
+    "run_benchmark_observation_20240605_193705",
+    "observation_benchmark.tsv",
 )
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
@@ -45,7 +49,7 @@ EXTRA_COLUMNS = {"gene", "in_supplement"}
 # will be a large number of genes missing from the pipeline output entirely if the pipeline wasn't configured to find
 # them. This can lead to falsely high recall scores if zero observations were found for a gene that was actually
 # processed.
-RESTRICT_TRUTH_GENES_TO_OUTPUT = True
+RESTRICT_TRUTH_GENES_TO_OUTPUT = False
 
 # SET THIS TO TRUE FOR END TO END PIPELINE RUNS.
 # If True, only consider papers from the output set that are in the truth set.
@@ -154,8 +158,12 @@ if not output_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
 
 # TODO, consider normalizing truthset variants during generation of the truthset?
 
+cache_settings = get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_")
+cache_settings.update({"credential": get_azure_credential(cred_type="AzureCli")})
+
 web_client = CosmosCachingWebClient(
-    get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"no_raise_codes": [422]}
+    cache_settings=cache_settings,
+    web_settings={"no_raise_codes": [422]},
 )
 mutalyzer_client = MutalyzerClient(web_client)
 ncbi_client = NcbiLookupClient(web_client)
@@ -381,6 +389,7 @@ if precision < 1 or recall < 1:
     )[
         [
             "hgvs_desc",
+            "gene",
             "paper_id",
             "individual_id",
             "hgvs_c_truth",
