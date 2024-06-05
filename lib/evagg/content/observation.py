@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+from collections import defaultdict
 from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
@@ -236,6 +237,22 @@ uninterrupted sequences of whitespace characters.
 
         return response
 
+    def _get_text_sections(self, paper: Paper) -> Tuple[str, List[str]]:
+        # Get paper texts.
+        if not paper.props.get("fulltext_xml"):
+            logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
+            return "", []
+
+        full_text = get_fulltext(paper.props["fulltext_xml"])
+        table_sections = list(get_sections(paper.props["fulltext_xml"], include=["TABLE"]))
+
+        table_ids = {t.id for t in table_sections}
+        table_texts = []
+        for id in table_ids:
+            table_texts.append("\n\n".join([sec.text for sec in table_sections if sec.id == id]))
+
+        return full_text, table_texts
+
     def _create_variant_from_text(
         self, variant_str: str, gene_symbol: str, genome_build: str | None
     ) -> HGVSVariant | None:
@@ -315,17 +332,8 @@ uninterrupted sequences of whitespace characters.
         The returned observation objects are logically "clinical" observations of a variant in a human. Each object
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
-        if not paper.props.get("fulltext_xml"):
-            logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
-            return []
-
-        full_text = get_fulltext(paper.props["fulltext_xml"])
-        table_sections = list(get_sections(paper.props["fulltext_xml"], include=["TABLE"]))
-
-        table_ids = {t.id for t in table_sections}
-        table_texts = []
-        for id in table_ids:
-            table_texts.append("\n\n".join([sec.text for sec in table_sections if sec.id == id]))
+        # Get the full text of the paper and any focus texts (e.g., tables).
+        full_text, table_texts = self._get_text_sections(paper)
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
@@ -348,7 +356,14 @@ uninterrupted sequences of whitespace characters.
             if (variant := self._create_variant_from_text(description, gene_symbol, genome_build)) is not None
         }
 
-        variants_by_patient = {}
+        # Consolidate the variant objects.
+        cons_map = self._variant_comparator.consolidate(list(variants_by_description.values()), disregard_refseq=True)
+        rev_cons_map = {value: key for key, values in cons_map.items() for value in values}
+
+        # Replace variant objects with their consolidated versions.
+        variants_by_description = {d: rev_cons_map.get(v, v) for d, v in variants_by_description.items()}
+
+        descriptions_by_patient = {}
         # If there are both variants and patients, build a mapping between the two,
         # if there are only variants and no patients, no need to link, just assign all the variants to "unknown".
         # if there are no variants (regardless of patients), then there are no observations to report.
@@ -360,42 +375,37 @@ uninterrupted sequences of whitespace characters.
 
             # TODO, consider consolidating variants here, before linking with patients.
             if patients:
-                variants_by_patient = await self._link_entities(full_text, patients, descriptions, gene_symbol)
+                descriptions_by_patient = await self._link_entities(full_text, patients, descriptions, gene_symbol)
+                # TODO, consider validating returned patients.
             else:
-                variants_by_patient = {"unknown": descriptions}
+                descriptions_by_patient = {"unknown": descriptions}
 
-        # TODO, if we've split variant descriptions above, then we run the risk of the observations returning the
-        # unsplit variant entity, which will not match the keys in variant objects. Either try to convince the LLM to
-        # only use the specific variants we provide, or find a way to be robust to the split during variant object
-        # lookup below.
-
+        # Assemble the observations.
         observations: List[Observation] = []
-        for individual, variant_descriptions in variants_by_patient.items():
+
+        individuals = list(descriptions_by_patient.keys())
+        # Ensure "unmatched_variants" is always last in the list.
+        if "unmatched_variants" in individuals:
+            individuals.remove("unmatched_variants")
+            individuals.append("unmatched_variants")
+
+        for individual in individuals:
+            variant_descriptions = descriptions_by_patient[individual]
             # LLM should not have returned any patient-linked variants that were not in the input.
             if missing_variants := [d for d in variant_descriptions if d not in variants_by_description]:
                 logger.error(f"Variants '{", ".join(missing_variants)}' not found in paper variants.")
-            variants = [(variants_by_description[d], d) for d in variant_descriptions if d in variants_by_description]
 
-            # Consolidate variants within each observation so we only get one variant object per observation.
-            consolidation_map = self._variant_comparator.consolidate([v for v, _ in variants], disregard_refseq=True)
-            # Build a reverse map from each consolidated variants to the variant to which it was consolidated.
-            reverse_consolidation_map = {value: key for key, values in consolidation_map.items() for value in values}
-            # For all the variants to consolidate, collect their corresponding variant
-            # descriptions into a list of strings, keyed by the consolidated variant.
-            consolidated_variants: Dict[HGVSVariant, List[str]] = {}
-            for variant, description in variants:
-                consolidated_variant = reverse_consolidation_map.get(variant, variant)
-                if consolidated_variant not in consolidated_variants:
-                    consolidated_variants[consolidated_variant] = []
-                consolidated_variants[consolidated_variant].append(description)
-                consolidated_variants[consolidated_variant].append(variant.hgvs_desc)  # TODO, reconsider?
+            variants: Dict[HGVSVariant, List[str]] = defaultdict(list)
+            for description in variant_descriptions:
+                variants[variants_by_description[description]].append(description)
 
-            for variant, descriptions in consolidated_variants.items():
+            for variant, descriptions in variants.items():
                 if any(o.variant == variant and o.individual == individual for o in observations):
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
                 # Only keep variants associated with the "unmatched_variants"
-                # individual if they're not already associated with a "real" individual.
+                # individual if they're not also associated with a "real" individual, if they are, they'll already be
+                # an observation.
                 if individual == "unmatched_variants":
                     if any(o.variant == variant for o in observations):
                         continue
@@ -404,7 +414,7 @@ uninterrupted sequences of whitespace characters.
                     Observation(
                         variant=variant,
                         individual=individual,
-                        variant_descriptions=descriptions,
+                        variant_descriptions=list(set(descriptions)),
                         patient_descriptions=[individual],
                         # Recreate the generator each time.
                         # TODO, consider filtering to relevant sections.
