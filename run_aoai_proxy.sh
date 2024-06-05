@@ -17,7 +17,7 @@
 
 # Update this to new releases as they come out at
 # https://github.com/health-futures/aoaiproxy/releases
-VERSION=v0.5-dev
+VERSION=v0.5
 
 # Check if the directory exists; if not, create it.
 DIR="$(dirname $0)/.bin/aoaiproxy/$VERSION"
