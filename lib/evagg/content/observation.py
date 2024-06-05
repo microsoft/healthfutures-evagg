@@ -317,6 +317,14 @@ uninterrupted sequences of whitespace characters.
         # Frameshift should be designated with fs, not frameshift
         variant_str = variant_str.replace("frameshift", "fs")
 
+        # If there's a hypen that's not surrounded by numbers, remove it.
+        variant_str = re.sub(r"(?<!\d)-(?!\d)", "", variant_str)
+
+        # Remove everything after the first occurrence of "fs" if it occurs,
+        # HGVS nomenclature gets fairly in these cases.
+        if "fs" in variant_str:
+            variant_str = variant_str.split("fs")[0] + "fs"
+
         try:
             return self._variant_factory.parse(variant_str, gene_symbol, refseq)
         except Exception as e:
