@@ -394,6 +394,7 @@ uninterrupted sequences of whitespace characters.
             # LLM should not have returned any patient-linked variants that were not in the input.
             if missing_variants := [d for d in variant_descriptions if d not in variants_by_description]:
                 logger.error(f"Variants '{", ".join(missing_variants)}' not found in paper variants.")
+                variant_descriptions = [d for d in variant_descriptions if d not in missing_variants]
 
             variants: Dict[HGVSVariant, List[str]] = defaultdict(list)
             for description in variant_descriptions:
