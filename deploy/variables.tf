@@ -26,8 +26,8 @@ variable "subscription_id" {
   type        = string
 }
 
-variable "users" {
-  description = "Map of person name => email account or service principal GUID to allow service usage."
+variable "authorized_users" {
+  description = "Map of person name => user account or service principal GUID to allow service usage."
   type        = map(string)
   default     = {}
 }

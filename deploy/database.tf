@@ -39,6 +39,15 @@ resource "azurerm_cosmosdb_sql_container" "cache" {
   partition_key_version = 1
 }
 
+resource "azurerm_cosmosdb_sql_container" "secondary_cache" {
+  name                  = "secondary_cache"
+  resource_group_name   = azurerm_resource_group.rg.name
+  account_name          = azurerm_cosmosdb_account.db.name
+  database_name         = azurerm_cosmosdb_sql_database.db.name
+  partition_key_path    = "/id"
+  partition_key_version = 1
+}
+
 # Create custom role limited to cache data read/write operations.
 resource "azurerm_cosmosdb_sql_role_definition" "cache_role" {
   name                = "cache_role"
@@ -62,7 +71,7 @@ resource "azurerm_cosmosdb_sql_role_definition" "cache_role" {
 
 # Assign the custom role to all authorized users.
 resource "azurerm_cosmosdb_sql_role_assignment" "cache_role_assignment" {
-  for_each            = toset([for user in data.azuread_users.users.users : user.object_id])
+  for_each            = toset([for user in data.azuread_users.authorized_users.users : user.object_id])
   resource_group_name = azurerm_resource_group.rg.name
   account_name        = azurerm_cosmosdb_account.db.name
   role_definition_id  = azurerm_cosmosdb_sql_role_definition.cache_role.id
@@ -74,10 +83,3 @@ output "EVAGG_CONTENT_CACHE_ENDPOINT" {
   description = "The endpoint for the CosmosDB cache."
   value       = azurerm_cosmosdb_account.db.endpoint
 }
-
-output "EVAGG_CONTENT_CACHE_CREDENTIAL" {
-  description = "The primary key for the CosmosDB cache."
-  value       = azurerm_cosmosdb_account.db.primary_key
-  sensitive   = true
-}
-

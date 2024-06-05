@@ -6,6 +6,11 @@ resource "azurerm_resource_group" "rg" {
   }
 }
 
-data "azuread_users" "users" {
-  mail_nicknames = values(var.users)
+data "azuread_users" "authorized_users" {
+  mail_nicknames = values(var.authorized_users)
+}
+
+output "authorized_users" {
+  description = "List of authorized users."
+  value       = [for user in data.azuread_users.authorized_users.users : user.mail]
 }
