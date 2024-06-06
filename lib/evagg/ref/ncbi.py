@@ -1,7 +1,7 @@
 import logging
 import urllib.parse as urlparse
 from abc import ABC
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from defusedxml import ElementTree
 from pydantic import Extra, root_validator
@@ -37,8 +37,10 @@ class NcbiApiSettings(SettingsModel, extra=Extra.forbid):
 
 class NcbiClientBase(ABC):
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
-    EUTILS_FETCH_URL = "/entrez/eutils/efetch.fcgi?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
-    EUTILS_SEARCH_URL = "/entrez/eutils/esearch.fcgi?db={db}&term={term}&sort={sort}&tool=biopython"
+    EUTILS_SEARCH_SITE = "/entrez/eutils/esearch.fcgi"
+    EUTILS_FETCH_SITE = "/entrez/eutils/efetch.fcgi"
+    EUTILS_SEARCH_URL = EUTILS_SEARCH_SITE + "?db={db}&term={term}&sort={sort}&tool=biopython"
+    EUTILS_FETCH_URL = EUTILS_FETCH_SITE + "?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
@@ -244,3 +246,21 @@ def _extract_gene_symbols(reports: List[Dict], symbols: Sequence[str], allow_syn
                 matches[missing_symbol] = int(synonym["gene_id"])
 
     return matches
+
+
+def get_ncbi_response_translator() -> Callable[[str, int, str], Tuple[int, str]]:
+    def translate(url: str, original_status: int, text: str) -> Tuple[int, str]:
+        """Translate the status code of an NCBI search response in case they improperly reported a server error."""
+        if (
+            text
+            and original_status == 200
+            and url.startswith(NcbiClientBase.EUTILS_HOST + NcbiClientBase.EUTILS_SEARCH_SITE)
+            and (error := ElementTree.fromstring(text).find("ERROR")) is not None
+        ):
+            # Extract error code by returning the first occurrence of an integer between 400 and 600 in the error text.
+            status = next((int(s) for s in (error.text or "").split() if s.isnumeric() and 400 <= int(s) < 600), 500)
+            logger.warning(f"NCBI esearch request failed with status {status}: {error.text}")
+            return status, text
+        return original_status, text
+
+    return translate
