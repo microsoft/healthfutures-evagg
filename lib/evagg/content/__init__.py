@@ -1,5 +1,3 @@
-"""Package for interacting with literature sources."""
-
 from .interfaces import IFindObservations, Observation, TextSection
 from .observation import ObservationFinder
 from .prompt_based import PromptBasedContentExtractor
