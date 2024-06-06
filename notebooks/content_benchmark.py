@@ -23,17 +23,29 @@ from sklearn.metrics import confusion_matrix
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
 from lib.evagg.utils import CosmosCachingWebClient, get_azure_credential, get_dotenv_settings
+from lib.evagg.utils.run import get_previous_run
 
 # %% Constants.
 
+RUN_LATEST = True
+
+if RUN_LATEST:
+    # Change this to the name of the pipeline output you wish to evaluate.
+    run = get_previous_run("benchmark_observation")
+    if not run:
+        raise ValueError("No previous run found.")
+    OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", run.path, run.output_file)  # type: ignore
+else:
+    OUTPUT_PATH = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        ".out",
+        "run_benchmark_observation_20240605_193705",
+        "observation_benchmark.tsv",
+    )
+
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "..",
-    ".out",
-    "run_benchmark_observation_20240605_193705",
-    "observation_benchmark.tsv",
-)
+
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
@@ -394,15 +406,14 @@ if precision < 1 or recall < 1:
             "individual_id",
             "hgvs_c_truth",
             "hgvs_p_truth",
-            "hgvs_p_output",
             "hgvs_c_output",
+            "hgvs_p_output",
             "in_truth",
             "in_output",
         ]
     ]
 
-    print(result)
-
+    # result now available to view interactively.
 else:
     print("All observations found. This is likely because the Truthset observation finder was used.")
 
