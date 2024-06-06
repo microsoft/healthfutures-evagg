@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import requests
 from azure.cosmos import ContainerProxy, CosmosClient
@@ -24,6 +24,7 @@ class WebClientSettings(SettingsModel, extra=Extra.forbid):
     retry_codes: List[int] = [429, 500, 502, 503, 504]  # rate-limit exceeded, server errors
     no_raise_codes: List[int] = []  # don't raise exceptions for these codes
     content_type: str = "text"
+    status_code_translator: Optional[Callable[[str, int, str], Tuple[int, str]]] = None
 
     @validator("content_type")
     @classmethod
@@ -39,6 +40,7 @@ class RequestsWebContentClient(IWebContentClient):
     def __init__(self, settings: Optional[Dict[str, Any]] = None) -> None:
         self._settings = WebClientSettings(**settings) if settings else WebClientSettings()
         self._session: Optional[requests.Session] = None
+        self._get_status_code = self._settings.status_code_translator or (lambda _, c, s: (c, s))
 
     def _get_session(self) -> requests.Session:
         """Get the session, initializing it if necessary."""
@@ -75,7 +77,7 @@ class RequestsWebContentClient(IWebContentClient):
     def _get_content(self, url: str) -> Tuple[int, str]:
         """GET the text content at the provided URL."""
         response = self._get_session().get(url)
-        return response.status_code, response.text
+        return self._get_status_code(url, response.status_code, response.text)
 
     def update_settings(self, **kwargs: Any) -> None:
         """Update the default values for the session."""
@@ -120,12 +122,15 @@ class CosmosCachingWebClient(RequestsWebContentClient):
         container = self._get_container()
 
         try:
+            # Attempt to get the item from the cache.
             item = container.read_item(item=cache_key, partition_key=cache_key)
-            logger.debug(f"{item['url']} served from cache.")
+            logger.debug(f"{item['url']} served from {self._cache_settings.database}/{self._cache_settings.container}.")
             code = item.get("status_code", 200)
         except CosmosResourceNotFoundError:
+            # If the item is not in the cache, fetch it from the web.
             code, content = super()._get_content(url + (url_extra or ""))
             item = {"id": cache_key, "url": url, "status_code": code, "content": content}
+            # Don't cache the response if it's a retryable/transient error.
             if code not in self._settings.retry_codes:
                 container.upsert_item(item)
 
