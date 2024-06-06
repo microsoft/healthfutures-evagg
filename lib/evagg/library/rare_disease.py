@@ -25,7 +25,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         paper_client: IPaperLookupClient,
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
-        example_types: Sequence[str] | None = None,
     ) -> None:
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
@@ -33,8 +32,6 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
-            example_types (Sequence[str], optional): The types of examples to use in few shot setting. These can be
-            positive or positive and negative examples. Default is just positive.
         """
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
@@ -46,7 +43,6 @@ class RareDiseaseFileLibrary(IGetPapers):
             raise ValueError(
                 "Allowed categories must be a subset of or equal to the possible categories: 'rare disease' or 'other'."
             )
-        self._example_types = example_types if example_types is not None else ["positive"]
 
     def _get_keyword_category(self, paper: Paper) -> str:
         """Categorize papers based on keywords in the title and abstract."""
@@ -147,15 +143,14 @@ class RareDiseaseFileLibrary(IGetPapers):
         with open("lib/evagg/content/prompts/few_shot_pos_examples_bkup.txt", "r") as filepb:
             pos_file_content_bkup = filepb.read()
 
-        if "negative" in self._example_types:
-            # Negative few shot examples
-            with open("lib/evagg/content/prompts/few_shot_neg_examples.txt", "r") as filen:
-                neg_file_content = filen.read()
+        # Negative few shot examples
+        with open("lib/evagg/content/prompts/few_shot_neg_examples.txt", "r") as filen:
+            neg_file_content = filen.read()
 
-            # Negative few shot examples backup if a gene in this file overlaps with the query paper gene, will pull
-            # another from same cluster
-            with open("lib/evagg/content/prompts/few_shot_neg_examples_bkup.txt", "r") as filenb:
-                neg_file_content_bkup = filenb.read()
+        # Negative few shot examples backup if a gene in this file overlaps with the query paper gene, will pull
+        # another from same cluster
+        with open("lib/evagg/content/prompts/few_shot_neg_examples_bkup.txt", "r") as filenb:
+            neg_file_content_bkup = filenb.read()
 
         few_shot_phrases = (
             "\n\nBelow are several few shot examples of papers that are classified as 'rare disease'. "
@@ -163,12 +158,11 @@ class RareDiseaseFileLibrary(IGetPapers):
             f"{self._replace_cluster_with_gene(pos_file_content, pos_file_content_bkup, gene)}\n"
         )
 
-        if "negative" in self._example_types:
-            few_shot_phrases += (
-                "\nBelow are several few shot examples of papers that are classified as 'other'. "
-                "These are in no particular order:\n"
-                f"{self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n"
-            )
+        few_shot_phrases += (
+            "\nBelow are several few shot examples of papers that are classified as 'other'. "
+            "These are in no particular order:\n"
+            f"{self._replace_cluster_with_gene(neg_file_content, neg_file_content_bkup, gene)}\n"
+        )
 
         # Read in paper_finding_*.txt and append the few shot examples
         prompts_path = path.join(path.dirname(path.dirname(__file__)), "content", "prompts")
