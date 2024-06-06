@@ -27,9 +27,8 @@ class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
         paper_client: IPaperLookupClient,
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
-        example_types: Sequence[str] | None = None,
     ) -> None:
-        super().__init__(paper_client, llm_client, allowed_categories, example_types)
+        super().__init__(paper_client, llm_client, allowed_categories)
         self._cache = ObjectFileCache[Sequence[Paper]](
             "RareDiseaseFileLibrary",
             serializer=RareDiseaseLibraryCached.serialize_paper_sequence,
