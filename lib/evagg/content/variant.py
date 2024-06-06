@@ -1,6 +1,7 @@
 import logging
+import re
 from collections import defaultdict
-from typing import Dict, Sequence, Set
+from typing import Dict, List, Sequence, Set, Tuple
 
 from lib.evagg.ref import INormalizeVariants, IRefSeqLookupClient, IValidateVariants, IVariantLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants
@@ -49,46 +50,9 @@ class HGVSVariantFactory(ICreateVariants):
             logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}")
             return None
 
-    def parse_rsid(self, rsid: str) -> HGVSVariant:
-        """Parse a variant based on an rsid."""
-        hgvs_lookup = self._variant_lookup_client.hgvs_from_rsid(rsid)
-        full_hgvs = None
-        if rsid in hgvs_lookup:
-            if "hgvs_c" in hgvs_lookup[rsid]:
-                full_hgvs = hgvs_lookup[rsid]["hgvs_c"]
-            elif "hgvs_p" in hgvs_lookup[rsid]:
-                full_hgvs = hgvs_lookup[rsid]["hgvs_p"]
-
-        if not full_hgvs:
-            raise ValueError(f"Could not find HGVS for info rsid {rsid}")
-
-        refseq = full_hgvs.split(":")[0]
-        text_desc = full_hgvs.split(":")[1]
-
-        return self.parse(text_desc, None, refseq)
-
-    def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
-        """Attempt to parse a variant based on description and an optional gene symbol and optional refseq.
-
-        `gene_symbol` is required for protein (p.) and coding (c.) variants, but not mitochondrial (m.) or genomic (g.)
-        variants.
-
-        If not provided, `refseq` will be predicted based on the variant description and gene symbol for protein and
-        coding variants. `refseq` is required for genomic (g.) variants.
-
-        Raises a ValueError if the above requirements are not met, or if anything but (g., c., p., m.) is provided as
-        the description prefix.
-
-        Raises a ValueError if the variant description is not syntactically valid according to HGVS nomenclature.
-
-        Raises a ValueError if the refseq and variant description are not compatible (e.g., a protein variant on a
-        transcript refseq).
-        """
-        # TODO: if we're going to infer the chromosomal description from hgvs description and gene symbol, we need
-        # to know the genome build.
-
+    def _clean_refseq(self, refseq: str | None, text_desc: str, gene_symbol: str | None) -> Tuple[str, bool]:
         # If no refseq is provided, we'll try to predict it. If one is provided, we'll make sure it's versioned
-        # correctly.
+        # correctly and complete.
         if not refseq:
             refseq = self._predict_refseq(text_desc, gene_symbol)
             refseq_predicted = True
@@ -118,57 +82,114 @@ class HGVSVariantFactory(ICreateVariants):
                     chrom_refseq = self._refseq_client.genomic_accession_for_symbol(gene_symbol)
                     refseq = f"{chrom_refseq}({refseq})" if chrom_refseq else refseq
 
-        is_valid = self._validator.validate(f"{refseq}:{text_desc}")
+        return refseq, refseq_predicted
 
-        protein_consequence = None
+    def parse_rsid(self, rsid: str) -> HGVSVariant:
+        """Parse a variant based on an rsid."""
+        hgvs_lookup = self._variant_lookup_client.hgvs_from_rsid(rsid)
+        full_hgvs = None
+        if rsid in hgvs_lookup:
+            if "hgvs_c" in hgvs_lookup[rsid]:
+                full_hgvs = hgvs_lookup[rsid]["hgvs_c"]
+            elif "hgvs_p" in hgvs_lookup[rsid]:
+                full_hgvs = hgvs_lookup[rsid]["hgvs_p"]
+
+        if not full_hgvs:
+            raise ValueError(f"Could not find HGVS for info rsid {rsid}")
+
+        refseq = full_hgvs.split(":")[0]
+        text_desc = full_hgvs.split(":")[1]
+
+        return self.parse(text_desc, None, refseq)
+
+    def _normalize_and_create(
+        self, text_desc: str, gene_symbol: str | None, refseq: str, refseq_predicted: bool
+    ) -> HGVSVariant:
+        normalized = self._normalizer.normalize(f"{refseq}:{text_desc}")
+
+        # Normalize the variant description.
+        if "normalized_description" in normalized:
+            normalized_hgvs = normalized["normalized_description"]
+            refseq = normalized_hgvs.split(":")[0]
+            new_text_desc = normalized_hgvs.split(":")[1]
+            if new_text_desc.find("(") >= 0 and new_text_desc.find(")") >= 0:
+                text_desc = new_text_desc.replace("(", "").replace(")", "")
+            else:
+                text_desc = new_text_desc
+            # If this is a protein variant, we only want the NP_ portion of the refseq.
+            if text_desc.startswith("p."):
+                match = re.search(r"NP_\d+\.\d+", refseq)
+                refseq = match.group(0) if match else refseq
+
+        # If this is a genomic variant and there are coding equivalents, make them.
+        coding_equivalents: List[HGVSVariant] = []
         if (
-            is_valid or text_desc.find("fs") >= 0
-        ):  # frame shift variants are not validated by mutalyzer, but they can be normalized.
-            normalized = self._normalizer.normalize(f"{refseq}:{text_desc}")
+            text_desc.startswith("g.")
+            and "equivalent_descriptions" in normalized
+            and "c" in normalized["equivalent_descriptions"]
+        ):
+            for coding_description in normalized["equivalent_descriptions"]["c"]:
+                coding_refseq, coding_text_desc = coding_description["description"].split(":")
+                coding_equivalents.append(
+                    self._normalize_and_create(coding_text_desc, gene_symbol, coding_refseq, refseq_predicted)
+                )
 
-            # Normalize the variant.
-            if "normalized_description" in normalized:
-                normalized_hgvs = normalized["normalized_description"]
-                refseq = normalized_hgvs.split(":")[0]
-                new_text_desc = normalized_hgvs.split(":")[1]
-                if new_text_desc.find("(") >= 0 and new_text_desc.find(")") >= 0:
-                    text_desc = new_text_desc.replace("(", "").replace(")", "")
-                else:
-                    text_desc = new_text_desc
+        # If there's a protein consequence, make it
+        if "protein" in normalized:
+            protein_refseq, protein_text_desc = normalized["protein"]["description"].split(":")
+            protein_consequence = self._normalize_and_create(
+                protein_text_desc, gene_symbol, protein_refseq, refseq_predicted
+            )
+        else:
+            protein_consequence = None
 
-            # If there's a protein consequence, keep it handy.
-            if "protein" in normalized:
-                protein_hgvs = normalized["protein"].get("description", "")
-
-                # Attempt to normalize the protein description, since mutalyzer occasionally returns this description
-                # without normalization.
-                protein_normalized = self._normalizer.normalize(protein_hgvs)
-                if "normalized_description" in protein_normalized:
-                    protein_hgvs = protein_normalized["normalized_description"]
-
-                # protein description should be NM_1234.1(NP_1234.1):p.(Arg123Gly) or NG_ in place of NM, extract the
-                # NP_ and p. parts.
-                if protein_hgvs.find(":") >= 0:
-                    protein_desc = protein_hgvs.split(":")[1].replace("(", "").replace(")", "")
-                    protein_refseq = protein_hgvs.split(":")[0].split("(")[1].split(")")[0]
-
-                    protein_consequence = HGVSVariant(
-                        hgvs_desc=protein_desc,
-                        gene_symbol=gene_symbol,
-                        refseq=protein_refseq,
-                        refseq_predicted=True,
-                        valid=True,
-                        protein_consequence=None,
-                    )
-
+        # Construct and return the resulting variant.
         return HGVSVariant(
             hgvs_desc=text_desc,
             gene_symbol=gene_symbol,
             refseq=refseq,
             refseq_predicted=refseq_predicted,
-            valid=is_valid,
+            valid=True,
             protein_consequence=protein_consequence,
+            coding_equivalents=coding_equivalents,
         )
+
+    def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
+        """Attempt to parse a variant based on description and an optional gene symbol and optional refseq.
+
+        `gene_symbol` is required for protein (p.) and coding (c.) variants, but not mitochondrial (m.) or genomic (g.)
+        variants.
+
+        If not provided, `refseq` will be predicted based on the variant description and gene symbol for protein and
+        coding variants. `refseq` is required for genomic (g.) variants.
+
+        Raises a ValueError if the above requirements are not met, or if anything but (g., c., p., m.) is provided as
+        the description prefix.
+
+        Raises a ValueError if the variant description is not syntactically valid according to HGVS nomenclature.
+
+        Raises a ValueError if the refseq and variant description are not compatible (e.g., a protein variant on a
+        transcript refseq).
+        """
+        refseq, refseq_predicted = self._clean_refseq(refseq, text_desc, gene_symbol)
+        is_valid = self._validator.validate(f"{refseq}:{text_desc}")
+
+        # From here, if the variant is valid (or if it's a frameshift) we make a normalized variant (recursing as
+        # necessary). Otherwise we make a non-normalized variant.
+        if (
+            is_valid or text_desc.find("fs") >= 0
+        ):  # frame shift variants are not validated by mutalyzer, but they can be normalized.
+            return self._normalize_and_create(text_desc, gene_symbol, refseq, refseq_predicted)
+        else:
+            return HGVSVariant(
+                hgvs_desc=text_desc,
+                gene_symbol=gene_symbol,
+                refseq=refseq,
+                refseq_predicted=refseq_predicted,
+                valid=False,
+                protein_consequence=None,
+                coding_equivalents=[],
+            )
 
 
 class HGVSVariantComparator(ICompareVariants):
@@ -294,6 +315,8 @@ class HGVSVariantComparator(ICompareVariants):
         Note that variants are be biologically linked under the following conditions:
         - if they are the same variant
         - if the protein consequence of one is the the same variant as the other
+        - if the coding equivalent of one is the same variant as the other
+        - if the protein consequence of the coding equivalent of one is the same variant as the other
         - they have the same hgvs_description and share at least one refseq accession (regardless of version)
 
         Optionally, one can disregard the refseq entirely.
@@ -324,5 +347,21 @@ class HGVSVariantComparator(ICompareVariants):
         ):
             # Variant1 is DNA, so more complete.
             return variant1
+
+        if variant2.hgvs_desc.startswith("g.") and any(
+            self._fuzzy_compare(variant1, v, disregard_refseq)
+            or (v.protein_consequence and self._fuzzy_compare(variant1, v.protein_consequence, disregard_refseq))
+            for v in variant2.coding_equivalents
+        ):
+            # Variant1 is the coding or protein variant, either of which is more common than the genomic variant.
+            return variant1
+
+        if variant1.hgvs_desc.startswith("g.") and any(
+            self._fuzzy_compare(variant2, v, disregard_refseq)
+            or (v.protein_consequence and self._fuzzy_compare(variant2, v.protein_consequence, disregard_refseq))
+            for v in variant1.coding_equivalents
+        ):
+            # Variant2 is the coding or protein variant, either of which is more common than the genomic variant.
+            return variant2
 
         return None
