@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
-from lib.evagg.ref import INormalizeVariants, IPaperLookupClient
+from lib.evagg.ref import INormalizeVariants
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .fulltext import get_fulltext, get_sections
