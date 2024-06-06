@@ -259,6 +259,7 @@ def get_ncbi_response_translator() -> Callable[[str, int, str], Tuple[int, str]]
         ):
             # Extract error code by returning the first occurrence of an integer between 400 and 600 in the error text.
             status = next((int(s) for s in (error.text or "").split() if s.isnumeric() and 400 <= int(s) < 600), 500)
+            logger.warning(f"NCBI esearch request failed with status {status}: {error.text}")
             return status, text
         return original_status, text
 
