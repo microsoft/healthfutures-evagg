@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, List
 
 
 # TODO dataclass?
@@ -33,7 +33,9 @@ class HGVSVariant:
     refseq: str | None
     refseq_predicted: bool
     valid: bool
+    # TODO, consider subclasses for different variant types.
     protein_consequence: "HGVSVariant | None"
+    coding_equivalents: "List[HGVSVariant]"
 
     def __str__(self) -> str:
         """Obtain a string representation of the variant."""
