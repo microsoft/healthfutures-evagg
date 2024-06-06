@@ -16,9 +16,6 @@ library:
     di_factory: lib/config/objects/llm.yaml
   allowed_categories: 
     - "rare disease"
-  example_types:
-    - positive 
-    - negative
 extractor:
   di_factory: lib.evagg.SimpleContentExtractor
   fields: # Field subset for paper finding benchmarking.

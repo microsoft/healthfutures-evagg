@@ -18,9 +18,6 @@ library:
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "rare disease"
-  example_types:
-    - positive 
-    - negative
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
