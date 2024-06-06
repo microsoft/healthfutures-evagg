@@ -69,6 +69,11 @@ RESTRICT_TRUTH_GENES_TO_OUTPUT = False
 # as there will be a large number of observations from papers that aren't included in the truthset.
 RESTRICT_OUTPUT_PAPERS_TO_TRUTH = False
 
+# SET THIS TO TRUE TO REMOVE REVIEWED OBSERVATIONS FROM OBSERVATION FINDING COMPARISON.
+# If True, do not include reviewed observations in comparison of observation finding.
+RESTRICT_OBSERVATIONS_TO_UNREVIEWED = True
+OBSERVATION_REVIEW_PATH = "data/v1/review_status_observation_train_v1.tsv"
+
 # %% Read in the truth and output tables.
 
 truth_df = pd.read_csv(TRUTH_PATH, sep="\t")
@@ -384,10 +389,39 @@ print("---- Observation finding performance ----")
 print("Overall")
 print(f"  Observation finding precision: {precision:.2f}")
 print(f"  Observation finding recall: {recall:.2f}")
+print()
+
 print("Ignoring truth papers from supplement")
 print(f"  Observation finding precision: {precision_ns:.2f}")
 print(f"  Observation finding recall: {recall_ns:.2f}")
 print()
+
+if RESTRICT_OBSERVATIONS_TO_UNREVIEWED:
+    if OBSERVATION_REVIEW_PATH:
+        review_df = pd.read_csv(OBSERVATION_REVIEW_PATH, sep="\t")
+        reviewed_obs = review_df[merged_df_ns.index.names]
+        # check for extra reviews that aren't in merged_df_ns, treating rows in reviewed_obs as tuples
+        extra_reviews = [t for t in reviewed_obs.itertuples(index=False) if t not in merged_df_ns.index]
+
+        if extra_reviews:
+            print(f"Warning: {len(extra_reviews)} observations were reviewed but not found in the output.")
+            for r in extra_reviews:
+                print(f"  {r}")
+            print()
+
+        # drop the reviewed observations from the merged_df_ns
+        merged_df_ns = merged_df_ns[~merged_df_ns.index.isin(reviewed_obs.set_index(merged_df_ns.index.names).index)]
+
+        precision_ns = merged_df_ns.in_truth[merged_df_ns.in_output == True].mean()
+        recall_ns = merged_df_ns.in_output[merged_df_ns.in_truth == True].mean()
+
+        print("Ignoring truth papers from supplement (unreviewed)")
+        print(f"  Observation finding precision: {precision_ns:.2f}")
+        print(f"  Observation finding recall: {recall_ns:.2f}")
+        print()
+
+    else:
+        print("Warning: OBSERVATION_REVIEW_PATH not set, ignoring restriction to unreviewed observations.")
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
