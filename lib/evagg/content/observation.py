@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import INormalizeVariants
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
+from lib.evagg.utils import PROMPT_DIR
 
 from .fulltext import get_fulltext, get_sections
 from .interfaces import ICompareVariants, IFindObservations, Observation
@@ -19,13 +20,13 @@ logger = logging.getLogger(__name__)
 
 class ObservationFinder(IFindObservations):
     _PROMPTS = {
-        "check_patients": os.path.dirname(__file__) + "/prompts/observation/check_patients.txt",
-        "find_genome_build": os.path.dirname(__file__) + "/prompts/observation/find_genome_build.txt",
-        "find_patients": os.path.dirname(__file__) + "/prompts/observation/find_patients.txt",
-        "find_variants": os.path.dirname(__file__) + "/prompts/observation/find_variants.txt",
-        "link_entities": os.path.dirname(__file__) + "/prompts/observation/link_entities.txt",
-        "split_patients": os.path.dirname(__file__) + "/prompts/observation/split_patients.txt",
-        "split_variants": os.path.dirname(__file__) + "/prompts/observation/split_variants.txt",
+        "check_patients": os.path.join(PROMPT_DIR, "observation", "check_patients.txt"),
+        "find_genome_build": os.path.join(PROMPT_DIR, "observation", "find_genome_build.txt"),
+        "find_patients": os.path.join(PROMPT_DIR, "observation", "find_patients.txt"),
+        "find_variants": os.path.join(PROMPT_DIR, "observation", "find_variants.txt"),
+        "link_entities": os.path.join(PROMPT_DIR, "observation", "link_entities.txt"),
+        "split_patients": os.path.join(PROMPT_DIR, "observation", "split_patients.txt"),
+        "split_variants": os.path.join(PROMPT_DIR, "observation", "split_variants.txt"),
     }
     _SYSTEM_PROMPT = """
 You are an intelligent assistant to a genetic analyst. Their task is to identify the genetic variant or variants that
