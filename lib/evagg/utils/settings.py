@@ -49,18 +49,21 @@ def get_settings(settings: Mapping, filter_prefix: Optional[str] = None) -> Dict
 def get_dotenv_settings(
     dotenv_path: Optional[str] = None, filter_prefix: Optional[str] = None, **additional_settings: Any
 ) -> Dict[str, Any]:
+    """Return dotenv settings matching an optional filter prefix and appending any additional settings."""
     settings = get_settings(dotenv_values(dotenv_path), filter_prefix)
     settings.update(additional_settings)
     return settings
 
 
 def get_env_settings(filter_prefix: Optional[str] = None, **additional_settings: Any) -> Dict[str, str]:
+    """Return OS environment settings matching an optional filter prefix and appending any additional settings."""
     settings = get_settings(os.environ, filter_prefix)
     settings.update(additional_settings)
     return settings
 
 
 def get_azure_credential(cred_type: Optional[str] = "Default", bearer_scope: Optional[str] = None) -> Any:
+    """Return an Azure credential of the given type with an optional bearer scope."""
     cred: Any
     if cred_type == "Default":
         cred = DefaultAzureCredential()
@@ -69,3 +72,8 @@ def get_azure_credential(cred_type: Optional[str] = "Default", bearer_scope: Opt
     else:
         raise ValueError(f"Unsupported credential type: {cred_type}")
     return get_bearer_token_provider(cred, bearer_scope) if bearer_scope else cred
+
+
+def get_settings_dict(**settings: Any) -> Dict[str, Any]:
+    """Return given individual settings as a dictionary."""
+    return settings
