@@ -144,7 +144,6 @@ async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_clie
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
     return {
         "id": paper.id,
-        "evidence": paper.evidence,
         "citation": paper.citation,
         "abstract": paper.abstract,
         "props": paper.props,
