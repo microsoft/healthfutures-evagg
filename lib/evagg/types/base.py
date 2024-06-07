@@ -6,7 +6,6 @@ from typing import Any
 class Paper:
     def __init__(self, **kwargs: Any) -> None:
         self.id = kwargs["id"]  # id is required, DOI
-        self.evidence = kwargs.pop("evidence", {})
         self.citation = kwargs.get("citation")
         self.abstract = kwargs.get("abstract")
         self.props = kwargs
