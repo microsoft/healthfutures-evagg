@@ -111,18 +111,14 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, IExtractFields):
         def _get_field(evidence: Dict[str, str], field: str) -> str:
             """Extract the requested evidence properties from the truthset evidence."""
             if field == "pub_ev_id":
-                variant = self._parse_variant(evidence)
-                # Add a unique identifier for this combination of paper, variant, and individual ID.
-                id = f"{evidence['paper_id']}_{variant.hgvs_desc}_{evidence['individual_id']}".replace(" ", "")
-                value = id.replace(":", "-").replace("/", "-").replace(">", "-")  # Make it URL-safe.
+                # Create a unique identifier for this combination of paper, variant, and individual ID.
+                value = self._parse_variant(evidence).get_unique_id(evidence["paper_id"], evidence["individual_id"])
             elif field in evidence:
                 value = evidence[field]
             elif field in paper.props:
                 value = paper.props[field]
-            elif field == "functional_study":
-                value = "unknown"  # TODO  Not yet in the truthset.
             elif field == "gnomad_frequency":
-                value = "unknown"  # TODO  Not yet in the truthset.
+                value = "TODO"  # TODO  Not yet in the truthset.
             else:
                 raise ValueError(f"Unsupported field: {field}")
             return value

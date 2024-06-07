@@ -17,12 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 class PromptBasedContentExtractor(IExtractFields):
-    _PAPER_FIELDS = ["paper_id", "study_type", "citation"]
-    _STATIC_FIELDS = ["gene", "hgvs_c", "hgvs_p", "transcript", "gnomad_frequency", "valid", "individual_id"]
     _PROMPT_FIELDS = {
+        "phenotype": os.path.join(PROMPT_DIR, "phenotypes_all.txt"),
         "zygosity": os.path.join(PROMPT_DIR, "zygosity.txt"),
         "variant_inheritance": os.path.join(PROMPT_DIR, "variant_inheritance.txt"),
-        "phenotype": os.path.join(PROMPT_DIR, "phenotypes_all.txt"),
         "variant_type": os.path.join(PROMPT_DIR, "variant_type.txt"),
         "engineered_cells": os.path.join(PROMPT_DIR, "functional_study.txt"),
         "patient_cells_tissues": os.path.join(PROMPT_DIR, "functional_study.txt"),
@@ -52,11 +50,6 @@ class PromptBasedContentExtractor(IExtractFields):
         phenotype_fetcher: IFetchHPO,
         prompt_settings: Dict[str, Any] | None = None,
     ) -> None:
-        # Pre-check the list of fields being requested.
-        supported_fields = self._STATIC_FIELDS + self._PAPER_FIELDS + list(self._PROMPT_FIELDS)
-        if any(f not in supported_fields for f in fields):
-            raise ValueError(f"Unsupported field(s): {set(fields) - set(supported_fields)}")
-
         self._fields = fields
         self._llm_client = llm_client
         self._observation_finder = observation_finder
@@ -66,21 +59,42 @@ class PromptBasedContentExtractor(IExtractFields):
             {**self._DEFAULT_PROMPT_SETTINGS, **prompt_settings} if prompt_settings else self._DEFAULT_PROMPT_SETTINGS
         )
 
-    def _excerpt_from_mentions(self, mentions: Sequence[Dict[str, Any]]) -> str:
-        return "\n\n".join([m["text"] for m in mentions])
-
-    def _get_all_paper_fields(self, paper: Paper, fields: Sequence[str]) -> Dict[str, str]:
-        result = {}
-        for field in fields:
-            if field == "paper_id":
-                result[field] = paper.id
-            elif field == "study_type":
-                result[field] = paper.props.get("study_type", "TODO")
-            elif field == "citation":
-                result[field] = paper.citation
+    def _get_lookup_field(self, gene_symbol: str, paper: Paper, ob: Observation, field: str) -> Tuple[str, str]:
+        if field == "pub_ev_id":
+            # Create a unique identifier for this combination of paper, variant, and individual ID.
+            value = ob.variant.get_unique_id(paper.id, ob.individual)
+        elif field == "gene":
+            value = gene_symbol
+        elif field == "paper_id":
+            value = paper.id
+        elif field == "citation":
+            value = paper.props["citation"]
+        elif field == "link":
+            value = paper.props["link"]
+        elif field == "paper_title":
+            value = paper.props["title"]
+        elif field == "hgvs_c":
+            value = ob.variant.hgvs_desc if not ob.variant.hgvs_desc.startswith("p.") else "NA"
+        elif field == "hgvs_p":
+            if ob.variant.protein_consequence:
+                value = ob.variant.protein_consequence.hgvs_desc
             else:
-                raise ValueError(f"Unsupported paper field: {field}")
-        return result
+                value = ob.variant.hgvs_desc if ob.variant.hgvs_desc.startswith("p.") else "NA"
+        elif field == "paper_variant":
+            value = ", ".join(ob.variant_descriptions)
+        elif field == "transcript":
+            value = ob.variant.refseq if ob.variant.refseq else "unknown"
+        elif field == "valid":
+            value = str(ob.variant.valid)
+        elif field == "individual_id":
+            value = ob.individual
+        elif field == "gnomad_frequency":
+            value = "TODO"  # TODO  Not yet implemented
+        elif field == "study_type":
+            value = "TODO"  # TODO  Not yet implemented
+        else:
+            raise ValueError(f"Unsupported field: {field}")
+        return field, value
 
     async def _run_json_prompt(
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
@@ -272,33 +286,11 @@ class PromptBasedContentExtractor(IExtractFields):
         else:
             return await self._generate_basic_field(gene_symbol, observation, field)
 
-    def _get_fixed_field(self, gene_symbol: str, ob: Observation, field: str) -> Tuple[str, str]:
-        if field == "gene":
-            value = gene_symbol
-        elif field == "individual_id":
-            value = ob.individual
-        elif field == "hgvs_c":
-            value = ob.variant.hgvs_desc if not ob.variant.hgvs_desc.startswith("p.") else "NA"
-        elif field == "hgvs_p":
-            if ob.variant.protein_consequence:
-                value = ob.variant.protein_consequence.hgvs_desc
-            else:
-                value = ob.variant.hgvs_desc if ob.variant.hgvs_desc.startswith("p.") else "NA"
-        elif field == "transcript":
-            value = ob.variant.refseq if ob.variant.refseq else "unknown"
-        elif field == "valid":
-            value = str(ob.variant.valid)
-        elif field == "gnomad_frequency":
-            value = "unknown"
-        else:
-            raise ValueError(f"Unsupported field: {field}")
-        return field, value
-
     async def _get_fields(
         self,
         gene_symbol: str,
+        paper: Paper,
         ob: Observation,
-        fields: Dict[str, str],
         cache: Dict[Tuple[HGVSVariant | str, str], asyncio.Task],
     ) -> Dict[str, str]:
 
@@ -322,10 +314,12 @@ class PromptBasedContentExtractor(IExtractFields):
             value = await prompt_task
             return field, value
 
-        # Collect any prompt-based fields and add them to the existing fields dictionary.
-        fields.update(await asyncio.gather(*[_get_prompt_field(f) for f in self._PROMPT_FIELDS if f in self._fields]))
-        # Collect the remaining field values and add them to the existing fields dictionary.
-        fields.update(self._get_fixed_field(gene_symbol, ob, f) for f in self._fields if f not in fields)
+        lookup_fields = [f for f in self._fields if f not in self._PROMPT_FIELDS]
+        prompt_fields = [f for f in self._fields if f in self._PROMPT_FIELDS]
+        # Collect all the non-prompt-based fields field values via lookup on the paper/observation objects.
+        fields = dict(self._get_lookup_field(gene_symbol, paper, ob, f) for f in lookup_fields)
+        # Collect the remaining prompt-based fields with LLM calls in parallel.
+        fields.update(await asyncio.gather(*[_get_prompt_field(f) for f in prompt_fields]))
         return fields
 
     async def _extract_fields(self, paper: Paper, gene_symbol: str, obs: Sequence[Observation]) -> List[Dict[str, str]]:
@@ -335,9 +329,7 @@ class PromptBasedContentExtractor(IExtractFields):
         # the first finding of a variant-level result and use that only. This will not be robust to scenarios where the
         # texts associated with multiple observations of the same variant differ.
         cache: Dict[Tuple[HGVSVariant | str, str], asyncio.Task] = {}
-        # Precompute paper-level fields to include in each set of observation fields.
-        fields = self._get_all_paper_fields(paper, [f for f in self._fields if f in self._PAPER_FIELDS])
-        return await asyncio.gather(*[self._get_fields(gene_symbol, ob, fields.copy(), cache) for ob in obs])
+        return await asyncio.gather(*[self._get_fields(gene_symbol, paper, ob, cache) for ob in obs])
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         if not paper.props.get("can_access", False):

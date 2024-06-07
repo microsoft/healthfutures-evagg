@@ -8,7 +8,7 @@ log:
 truthset_source:
   di_factory: lib/config/objects/truthset.yaml
   fields:
-    di_factory: lib/config/fields/seqr.yaml
+    di_factory: lib/config/fields/evidence_all.yaml
 
 # Application
 di_factory: lib.evagg.PaperQueryApp
