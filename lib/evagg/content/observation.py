@@ -20,13 +20,16 @@ logger = logging.getLogger(__name__)
 
 class ObservationFinder(IFindObservations):
     _PROMPTS = {
-        "check_patients": os.path.dirname(__file__) + "/prompts/observation/check_patients.txt",
-        "find_genome_build": os.path.dirname(__file__) + "/prompts/observation/find_genome_build.txt",
-        "find_patients": os.path.dirname(__file__) + "/prompts/observation/find_patients.txt",
-        "find_variants": os.path.dirname(__file__) + "/prompts/observation/find_variants.txt",
-        "link_entities": os.path.dirname(__file__) + "/prompts/observation/link_entities.txt",
-        "split_patients": os.path.dirname(__file__) + "/prompts/observation/split_patients.txt",
-        "split_variants": os.path.dirname(__file__) + "/prompts/observation/split_variants.txt",
+        k: os.path.dirname(__file__) + f"/prompts/observation/{k}.txt"
+        for k in [
+            "check_patients",
+            "find_genome_build",
+            "find_patients",
+            "find_variants",
+            "link_entities",
+            "split_patients",
+            "split_variants",
+        ]
     }
     _SYSTEM_PROMPT = """
 You are an intelligent assistant to a genetic analyst. Their task is to identify the genetic variant or variants that
@@ -243,7 +246,7 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
             return "", []
 
-        full_text = get_fulltext(paper.props["fulltext_xml"])
+        full_text = get_fulltext(paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"])
         table_sections = list(get_sections(paper.props["fulltext_xml"], include=["TABLE"]))
 
         table_ids = {t.id for t in table_sections}
@@ -379,14 +382,16 @@ uninterrupted sequences of whitespace characters.
             # Determine all of the patients specifically referred to in the paper, if any.
             patients = await self._find_patients(full_text=full_text, focus_texts=table_texts)
             logger.info(f"Found the following patients in {paper}: {patients}")
-            descriptions = list(variants_by_description.keys())
+            variant_descriptions = list(variants_by_description.keys())
 
             # TODO, consider consolidating variants here, before linking with patients.
             if patients:
-                descriptions_by_patient = await self._link_entities(full_text, patients, descriptions, gene_symbol)
+                descriptions_by_patient = await self._link_entities(
+                    full_text, patients, variant_descriptions, gene_symbol
+                )
                 # TODO, consider validating returned patients.
             else:
-                descriptions_by_patient = {"unknown": descriptions}
+                descriptions_by_patient = {"unknown": variant_descriptions}
 
         # Assemble the observations.
         observations: List[Observation] = []
