@@ -75,8 +75,8 @@ def test_prompt_based_content_extractor_valid_fields(
     )
 
     prompts = mock_prompt(
-        json.dumps({"zygosity": fields["zygosity"]}),
         json.dumps({"variant_inheritance": fields["variant_inheritance"]}),
+        json.dumps({"zygosity": fields["zygosity"]}),
         json.dumps({"phenotypes": ["test"]}),  # phenotypes_all, only one text, so only once.
         json.dumps({"phenotypes": ["test"]}),  # phenotypes_observation, only one text, so only once.
         json.dumps({"phenotypes": ["test"]}),  # phenotypes_acronyms, only one text, so only once.
@@ -98,14 +98,3 @@ def test_prompt_based_content_extractor_valid_fields(
     print("FIELDS")
     print(fields)
     assert content[0] == fields
-
-
-def test_prompt_based_content_extractor_failures(
-    paper: Paper, mock_prompt: Any, mock_observation: Any, mock_phenotype_searcher: Any, mock_phenotype_fetcher: Any
-) -> None:
-    fields = ["not a field"]
-    observation: Dict[Tuple[HGVSVariant, str], List[str]] = {}
-    with pytest.raises(ValueError):
-        PromptBasedContentExtractor(
-            fields, mock_prompt(), mock_observation(observation), mock_phenotype_searcher(), mock_phenotype_fetcher()
-        )

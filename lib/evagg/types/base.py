@@ -5,9 +5,7 @@ from typing import Any
 # TODO dataclass?
 class Paper:
     def __init__(self, **kwargs: Any) -> None:
-        self.id = kwargs["id"]  # id is required, DOI
-        self.citation = kwargs.get("citation")
-        self.abstract = kwargs.get("abstract")
+        self.id = kwargs["id"]  # id is required
         self.props = kwargs
 
     def __hash__(self) -> int:
@@ -19,7 +17,7 @@ class Paper:
         return self.id == o.id
 
     def __repr__(self) -> str:
-        text = self.props.get("paper_title") or self.citation or self.abstract or "unknown"
+        text = self.props.get("title") or self.props.get("citation") or self.props.get("abstract") or "unknown"
         return f'id: {self.id} - "{text[:15]}{"..." if len(text) > 15 else ""}"'
 
 
@@ -64,3 +62,8 @@ class HGVSVariant:
         """
         # TODO, consider normalization via mutalyzer
         return self.hgvs_desc.replace("(", "").replace(")", "").replace("Ter", "*")
+
+    def get_unique_id(self, prefix: str, suffix: str) -> str:
+        # Build a unique id and make it URL-safe.
+        id = f"{prefix}_{self.hgvs_desc}_{suffix}".replace(" ", "")
+        return id.replace(":", "-").replace("/", "-").replace(">", "-")
