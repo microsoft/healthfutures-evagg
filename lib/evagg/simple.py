@@ -70,7 +70,7 @@ class SimpleContentExtractor(IExtractFields):
         if field == "variant_inheritance":
             return "AD"
         if field == "citation":
-            return paper.citation or "none"
+            return paper.props["citation"]
         else:
             return "Unknown"
 
