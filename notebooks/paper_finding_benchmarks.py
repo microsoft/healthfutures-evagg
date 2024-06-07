@@ -297,7 +297,9 @@ def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
 
 @cache
 def get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
+    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance(
+        {"di_factory": "lib/config/objects/ncbi_lookup.yaml"}, {}
+    )
     return ncbi_lookup
 
 
@@ -638,9 +640,9 @@ if __name__ == "__main__":
         "-l",
         "--library-config",
         nargs="?",
-        default="lib/config/paper_finding_benchmark.yaml",
+        default="lib/config/benchmark_paper_finding.yaml",
         type=str,
-        help="Default is lib/config/paper_finding_benchmark.yaml",
+        help="Default is lib/config/benchmark_paper_finding.yaml",
     )
     parser.add_argument(
         "-m",
