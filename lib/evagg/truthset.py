@@ -8,7 +8,8 @@ from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .content import IFindObservations, Observation
-from .interfaces import IExtractFields, IGetPapers
+from .interfaces import IGetPapers
+from .simple import PropertyContentExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ TRUTHSET_PAPER_KEYS = ["paper_id", "pmid", "pmcid", "paper_title", "license", "l
 TRUTHSET_PAPER_KEYS_MAPPING = {"paper_id": "id", "paper_title": "title"}
 
 
-class TruthsetFileHandler(IGetPapers, IFindObservations, IExtractFields):
+class TruthsetFileHandler(IGetPapers, IFindObservations, PropertyContentExtractor):
     """A class for retrieving papers from a truthset file."""
 
     def __init__(
@@ -28,13 +29,13 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, IExtractFields):
         paper_client: IPaperLookupClient,
         fields: Optional[Sequence[str]] = None,
     ) -> None:
+        PropertyContentExtractor.__init__(self, fields or [])
         self._file_path = file_path
         self._variant_factory = variant_factory
         self._paper_client = paper_client
-        self._fields = fields or []
 
     @cache
-    def _get_evidence(self) -> Sequence[Dict[str, Any]]:
+    def _get_all_evidence(self) -> Sequence[Dict[str, Any]]:
         """Load the truthset evidence from the file and return it as a list of dictionaries."""
         with open(self._file_path) as tsvfile:
             column_names = [c.strip() for c in tsvfile.readline().split("\t")]
@@ -43,6 +44,17 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, IExtractFields):
         paper_count = len({ev["paper_id"] for ev in evidence})
         logger.info(f"Loaded {len(evidence)} rows with {paper_count} papers from {self._file_path}.")
         return evidence
+
+    def _get_evidence(
+        self, paper_id: Optional[str] = None, gene_symbol: Optional[str] = None
+    ) -> Sequence[Dict[str, Any]]:
+        """Return the evidence rows that match the paper_id and gene_symbol."""
+        return [
+            evidence
+            for evidence in self._get_all_evidence()
+            if (paper_id is None or evidence["paper_id"] == paper_id)
+            and (gene_symbol is None or evidence["gene"] == gene_symbol)
+        ]
 
     def _parse_variant(self, ev: Dict[str, str]) -> HGVSVariant:
         """Parse the variant from the HGVS c. or p. description."""
@@ -60,13 +72,14 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, IExtractFields):
 
         papers: List[Paper] = []
         # Loop over all paper ids for evidence rows that match the gene symbol.
-        for paper_id in {ev["paper_id"] for ev in self._get_evidence() if ev["gene"] == gene_symbol}:
+        for paper_id in {ev["paper_id"] for ev in self._get_evidence(gene_symbol=gene_symbol)}:
             # Fetch a Paper object with the extracted fields based on the PMID.
             assert paper_id.startswith("pmid:"), f"Paper ID {paper_id} does not start with 'pmid:'."
             if not (paper := self._paper_client.fetch(paper_id[len("pmid:") :], include_fulltext=True)):
                 raise ValueError(f"Failed to fetch paper with ID {paper_id}.")
-            # Validate the truthset rows have the same values as the Paper for all paper-specific keys.
-            for row in [ev for ev in self._get_evidence() if ev["paper_id"] == paper_id]:
+            # Validate the truthset rows have the same values
+            # as the Paper for all paper-specific keys.
+            for row in self._get_evidence(paper_id=paper_id):
                 for row_key in TRUTHSET_PAPER_KEYS:
                     k = TRUTHSET_PAPER_KEYS_MAPPING.get(row_key, row_key)
                     if paper.props[k] != row[row_key]:
@@ -95,37 +108,20 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, IExtractFields):
                 variant_descriptions |= {variant.protein_consequence.hgvs_desc}
             return Observation(variant, individual, list(variant_descriptions), [individual], texts)
 
-        observations = [
-            _get_observation(evidence)
-            for evidence in self._get_evidence()
-            if evidence["paper_id"] == paper.id and evidence["gene"] == gene_symbol
-        ]
-        return observations
+        return [_get_observation(evidence) for evidence in self._get_evidence(paper.id, gene_symbol)]
 
-    # IExtractFields
-    def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
-        """Extract properties from the evidence bags populated on the truthset Paper object."""
-        if not self._fields:
-            raise ValueError("TruthsetFileHandler not configured for field extraction.")
+    # PropertyContentExtractor/IExtractFields
+    def get_evidence(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
+        def _add_fields(ev: Dict[str, str]) -> Dict[str, str]:
+            """Add a unique identifier for the evidence."""
+            if "pub_ev_id" in self._fields:
+                ev["pub_ev_id"] = self._parse_variant(ev).get_unique_id(ev["paper_id"], ev["individual_id"])
+            if "citation" in self._fields:
+                ev["citation"] = paper.props["citation"]
+            if "link" in self._fields:
+                ev["link"] = paper.props["link"]
+            if "gnomad_frequency" in self._fields:
+                ev["gnomad_frequency"] = "TODO"
+            return ev
 
-        def _get_field(evidence: Dict[str, str], field: str) -> str:
-            """Extract the requested evidence properties from the truthset evidence."""
-            if field == "pub_ev_id":
-                # Create a unique identifier for this combination of paper, variant, and individual ID.
-                value = self._parse_variant(evidence).get_unique_id(evidence["paper_id"], evidence["individual_id"])
-            elif field in evidence:
-                value = evidence[field]
-            elif field in paper.props:
-                value = paper.props[field]
-            elif field == "gnomad_frequency":
-                value = "TODO"  # TODO  Not yet in the truthset.
-            else:
-                raise ValueError(f"Unsupported field: {field}")
-            return value
-
-        extracted_fields = [
-            {field: _get_field(evidence, field) for field in self._fields}
-            for evidence in self._get_evidence()
-            if evidence["paper_id"] == paper.id and evidence["gene"] == gene_symbol
-        ]
-        return extracted_fields
+        return [_add_fields(ev) for ev in self._get_evidence(paper.id, gene_symbol)]
