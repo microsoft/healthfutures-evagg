@@ -154,8 +154,8 @@ As a simple test of script execution, run the following specific commands from t
 
 ```bash
 python test/make_local_library.py
-run_evagg_app lib/config/simple_config.yaml
-# equivalently: run_evagg_app simple_config
+run_evagg_app lib/config/sample_config.yaml
+# equivalently: run_evagg_app sample_config
 ```
 
 This will create a fake local library of papers, extract content from those papers using a dummy implementation, and
@@ -167,7 +167,7 @@ the `-o` argument followed by one or more dictionary `key:value` specifications 
 command overrides the default log level and outputs the run results to a named file in the `.out` directory:
 
 ```bash
-run_evagg_app simple_config -o writer.tsv_name:simple_test log.level:DEBUG
+run_evagg_app sample_config -o writer.tsv_name:sample_test log.level:DEBUG
 ```
 
 ### Configuration and secrets

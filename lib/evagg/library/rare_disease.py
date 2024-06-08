@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import re
@@ -114,6 +115,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # If the keyword and LLM categories agree, just return that category.
         if keyword_cat == llm_cat:
             paper.props["disease_category"] = keyword_cat
+            paper.props["disease_categorizations"] = "{}"
             return keyword_cat
 
         counts: Dict[str, int] = {}
@@ -129,8 +131,8 @@ class RareDiseaseFileLibrary(IGetPapers):
         if counts[best_category] < 3:
             best_category = "conflicting"
 
-        paper.props["disease_categorizations"] = counts
         paper.props["disease_category"] = best_category
+        paper.props["disease_categorizations"] = json.dumps(counts)
         return best_category
 
     async def _get_all_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
