@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Tuple
 
 import pytest
 
-from lib.evagg import PromptBasedContentExtractor, SimpleContentExtractor
+from lib.evagg import PromptBasedContentExtractor
 from lib.evagg.content import IFindObservations, Observation, TextSection
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IFetchHPO, ISearchHPO
@@ -41,17 +41,6 @@ def paper() -> Paper:
     )
 
 
-def test_simple_content_extractor(paper: Paper) -> None:
-    fields = ["gene", "hgvs_p", "variant_inheritance", "phenotype"]
-    extractor = SimpleContentExtractor(fields)
-    result = extractor.extract(paper, "CHI3L1")
-    assert len(result) == 1
-    assert result[0]["gene"] == "CHI3L1"
-    assert result[0]["hgvs_p"] == "p.Y34C"
-    assert result[0]["variant_inheritance"] == "AD"
-    assert result[0]["phenotype"] == "Long face (HP:0000276)"
-
-
 def test_prompt_based_content_extractor_valid_fields(
     paper: Paper, mock_prompt: Any, mock_observation: Any, mock_phenotype_searcher: Any, mock_phenotype_fetcher: Any
 ) -> None:
@@ -75,8 +64,8 @@ def test_prompt_based_content_extractor_valid_fields(
     )
 
     prompts = mock_prompt(
-        json.dumps({"variant_inheritance": fields["variant_inheritance"]}),
         json.dumps({"zygosity": fields["zygosity"]}),
+        json.dumps({"variant_inheritance": fields["variant_inheritance"]}),
         json.dumps({"phenotypes": ["test"]}),  # phenotypes_all, only one text, so only once.
         json.dumps({"phenotypes": ["test"]}),  # phenotypes_observation, only one text, so only once.
         json.dumps({"phenotypes": ["test"]}),  # phenotypes_acronyms, only one text, so only once.
