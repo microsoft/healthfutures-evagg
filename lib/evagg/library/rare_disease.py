@@ -9,12 +9,20 @@ from lib.evagg.interfaces import IGetPapers
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
-from lib.evagg.utils import PROMPT_DIR
 
-from .disease_keywords import INCLUSION_KEYWORDS
-from .few_shot_examples import NEGATIVE_EXAMPLES, POSITIVE_EXAMPLES
+from .disease_categorization import (
+    INCLUSION_KEYWORDS,
+    NEGATIVE_EXAMPLES,
+    NEGATIVE_EXAMPLES_INTRO,
+    POSITIVE_EXAMPLES,
+    POSITIVE_EXAMPLES_INTRO,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _get_prompt_file_path(name: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "prompts", f"{name}.txt")
 
 
 class RareDiseaseFileLibrary(IGetPapers):
@@ -27,6 +35,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         paper_client: IPaperLookupClient,
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
+        include_negative_examples: bool = True,
     ) -> None:
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
@@ -34,12 +43,14 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper_client (IPaperLookupClient): A class for searching and fetching papers.
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
+            include_negative_examples (bool, optional): Whether to include negative examples in the LLM prompt.
         """
         # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
         # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
         self._allowed_categories = allowed_categories if allowed_categories else ["rare disease"]
+        self.include_negative_examples = include_negative_examples
         # Allowed categories must be a subset of or equal to possible CATEGORIES.
         if not set(self._allowed_categories).issubset(set(self.CATEGORIES)):
             raise ValueError(f"Invalid category set: {self._allowed_categories}")
@@ -77,20 +88,22 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     async def _get_llm_category(self, paper: Paper, gene: str) -> str:
         """Categorize papers based on LLM prompts."""
+        positive_examples = [POSITIVE_EXAMPLES_INTRO]
+        negative_examples = [NEGATIVE_EXAMPLES_INTRO]
         # Build a list of examples using the text of whichever example in each pair doesn't match the current gene.
-        positive_examples = [e[0].text if e[0].gene != gene else e[1].text for e in POSITIVE_EXAMPLES]
-        negative_examples = [e[0].text if e[0].gene != gene else e[1].text for e in NEGATIVE_EXAMPLES]
+        positive_examples += [e[0].text if e[0].gene != gene else e[1].text for e in POSITIVE_EXAMPLES]
+        negative_examples += [e[0].text if e[0].gene != gene else e[1].text for e in NEGATIVE_EXAMPLES]
 
         parameters = {
             "abstract": paper.props.get("abstract") or "no abstract",
             "title": paper.props.get("title") or "no title",
             "positive_examples": "".join(positive_examples),
-            "negative_examples": "".join(negative_examples),
+            "negative_examples": "".join(negative_examples) if self.include_negative_examples else "",
         }
 
         # Few shot examples embedded into paper finding classification prompt
         response = await self._llm_client.prompt_file(
-            user_prompt_file=os.path.join(PROMPT_DIR, "paper_category.txt"),
+            user_prompt_file=_get_prompt_file_path("paper_category"),
             system_prompt="Extract field",
             params=parameters,
             prompt_settings={"prompt_tag": "paper_category", "temperature": 0.8},

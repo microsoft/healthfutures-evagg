@@ -29,5 +29,5 @@ per-file-ignores =
     sandbox/*: F401,E800,W291,E501
 
     # Prompt content helpers can have long strings.
-    lib/evagg/library/few_shot_examples.py:E501
+    lib/evagg/library/disease_categorization.py:E501
 
