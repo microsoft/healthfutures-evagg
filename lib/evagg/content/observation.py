@@ -373,7 +373,7 @@ uninterrupted sequences of whitespace characters.
         if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
             patients = await self._find_patients(full_text=full_text, focus_texts=table_texts)
-            logger.info(f"Found the following patients in {paper}: {patients}")
+            logger.debug(f"Found the following patients in {paper}: {patients}")
             variant_descriptions = list(variants_by_description.keys())
 
             # TODO, consider consolidating variants here, before linking with patients.
