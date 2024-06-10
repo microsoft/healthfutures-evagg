@@ -1,0 +1,29 @@
+gene	hgvs_desc	individual_id	hgvs_c	hgvs_p	paper_id	review_notes
+DNAJC7	c.631G>A	inferred proband	c.631G>A	p.Asp211Asn	pmid:33193563	Referenced variant
+DNAJC7	c.646C>T	inferred proband	c.646C>T	p.Arg216Ter	pmid:33193563	Referenced variant
+DNAJC7	p.Arg156Ter	inferred proband		p.Arg156Ter	pmid:33193563	Referenced variant
+EMC1	c.430G>A	inferred proband	c.430G>A	p.Ala144Thr	pmid:29271071	Referenced variant
+EMC1	p.Arg401Trp	inferred proband		p.Arg401Trp	pmid:29271071	Truthset miss, this variant wasn't listed in the truth set
+EMC1	p.Gly471Arg	inferred proband		p.Gly471Arg	pmid:29271071	Referenced variant
+EMC1	p.Gly868Arg	inferred proband		p.Gly868Arg	pmid:29271071	Referenced variant
+EMC1	p.Pro874fs	inferred proband		p.Pro874fs	pmid:29271071	Referenced variant
+EMC1	p.Thr82Met	inferred proband		p.Thr82Met	pmid:29271071	Referenced variant
+EMC1	c.765_c.777delinsATTCTACTT	sister	c.765_c.777delinsATTCTACTT	p.Leu256fs	pmid:37187958	Paper typo
+EMC1	c.765_c.777delinsATTCTACTT	proband	c.765_c.777delinsATTCTACTT	p.Leu256fs	pmid:37187958	Paper typo
+EMC1	c.765_c.777delinsATTCTACTT	mother	c.765_c.777delinsATTCTACTT	p.Leu256fs	pmid:37187958	Paper typo
+EMC1	c.765_777delinsATTCTACTT	mother	c.765_777delinsATTCTACTT	p.Leu256fs	pmid:37187958	Truthset miss, mother is a carrier
+EMC1	c.2736G>A	father	c.2736G>A	p.Val792=	pmid:37187958	Truthset miss, father is a carrier
+EMC1	p.Val792fs	father		p.Val792fs	pmid:37187958	Truthset miss, this is the updated consequence
+EMC1	p.Val792fs	sister		p.Val792fs	pmid:37187958	Truthset miss, this is the updated consequence
+EMC1	p.Val792fs	proband		p.Val792fs	pmid:37187958	Truthset miss, this is the updated consequence
+FBN2	c.3344A>T	iii8	c.3344A>T	p.Asp1115Val	pmid:33638605	Truthset miss
+GRXCR2	p.Ile85fs	inferred proband		p.Ile85fs	pmid:33528103	Paper bug, reference allele in c. description is invalid, fails validation
+GRXCR2	p.Arg84fs	inferred proband		p.Arg84fs	pmid:33528103	Paper bug, this protein consequence doesn't correspond to the actual variant
+SLFN14	p.Arg223Trp	inferred proband		p.Arg223Trp	pmid:29678925	Referenced variant
+SLFN14	p.Arg223Trp	inferred proband		p.Arg223Trp	pmid:37041648	Referenced variant
+SLFN14	p.Lys218Glu	inferred proband		p.Lys218Glu	pmid:37041648	Referenced variant
+SLFN14	p.Lys219Asn	inferred proband		p.Lys219Asn	pmid:37041648	Referenced variant
+SLFN14	p.Val220Asp	inferred proband		p.Val220Asp	pmid:37041648	Referenced variant
+TOP2B	c.187C>T	lam et al.	c.187C>T	p.His63Tyr	pmid:31953910	Additional referenced variant in the same paper
+ZNF423	p.Arg398Trp	inferred proband		p.Arg398Trp	pmid:33531950	Paper bug, this isn't the protein consequence for the coding variant
+ZNF423	p.Pro91Leu	inferred proband		p.Pro91Leu	pmid:33531950	Paper bug, this isn't the protein consequence for the coding variant
