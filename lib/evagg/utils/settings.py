@@ -72,8 +72,3 @@ def get_azure_credential(cred_type: Optional[str] = "Default", bearer_scope: Opt
     else:
         raise ValueError(f"Unsupported credential type: {cred_type}")
     return get_bearer_token_provider(cred, bearer_scope) if bearer_scope else cred
-
-
-def get_settings_dict(**settings: Any) -> Dict[str, Any]:
-    """Return given individual settings as a dictionary."""
-    return settings

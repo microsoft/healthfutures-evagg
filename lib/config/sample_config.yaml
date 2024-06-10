@@ -11,13 +11,15 @@ library:
   collections: 
     - data/sample
 extractor:
-  di_factory: lib.evagg.SimpleContentExtractor
+  di_factory: lib.evagg.SampleContentExtractor
   fields:
     - paper_id
+    - pub_year
+    - first_author
     - gene
     - hgvs_c
+    - individual_id
     - zygosity
     - phenotype
-    - citation
 writer:
   di_factory: lib.evagg.TableOutputWriter

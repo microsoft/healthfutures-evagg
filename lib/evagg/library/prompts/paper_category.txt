@@ -14,3 +14,8 @@ Abstract: {{$abstract}}
 Provide your response as a single string: "rare disease" or "other" based on your classification. The only valid values in your output response should be "rare disease" or "other". 
  
 When considering the provided criteria, remember to focus on the content of the title and abstract without overfitting to specific examples. The goal is to ensure high precision and recall for identifying rare disease papers in general.
+
+{{$positive_examples}}
+
+
+{{$negative_examples}}

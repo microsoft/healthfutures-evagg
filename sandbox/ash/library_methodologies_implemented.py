@@ -111,7 +111,7 @@ class TruthsetFileHandler(IGetPapers):
             # Create an evidence dictionary from the variant/patient-specific columns.
             evidence = {key: row.get(key, "") for key in TRUTHSET_EVIDENCE_KEYS}
             # Add a unique identifier for this combination of paper, variant, and individual ID.
-            evidence["pub_ev_id"] = f"{paper.id}:{variant.hgvs_desc}:{row['individual_id']}".replace(" ", "")
+            evidence["evidence_id"] = f"{paper.id}:{variant.hgvs_desc}:{row['individual_id']}".replace(" ", "")
             paper.evidence[(variant, row["individual_id"])] = evidence
 
         return paper
@@ -133,7 +133,7 @@ class TruthsetFileHandler(IGetPapers):
         # Process each paper row group into a Paper object with truthset evidence filled in.
         papers = {self._process_paper(paper_id, rows) for paper_id, rows in paper_groups.items()}
         # Make sure that each evidence truthset row is unique across the truthset.
-        assert len({ev["pub_ev_id"] for p in papers for ev in p.evidence.values()}) == row_count
+        assert len({ev["evidence_id"] for p in papers for ev in p.evidence.values()}) == row_count
         return papers
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
