@@ -346,10 +346,11 @@ def main(args):
 
     # Read in the corresponding pipeline output.
     pipeline_df = pd.read_csv(args.pipeline_output, sep="\t", skiprows=1)
-    if "paper_disease_category" not in pipeline_df.columns:
-        pipeline_df["paper_disease_category"] = "rare disease"
-    if "paper_disease_categorizations" not in pipeline_df.columns:
-        pipeline_df["paper_disease_categorizations"] = "{}"
+    if "disease_category" not in pipeline_df.columns:
+        print("No disease_category column found in pipeline output. Adding 'rare disease' to all papers.")
+        pipeline_df["disease_category"] = "rare disease"
+    if "disease_categorizations" not in pipeline_df.columns:
+        pipeline_df["disease_categorizations"] = "{}"
 
     # We only need one of each paper/gene pair, so we drop duplicates.
     pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
@@ -397,15 +398,15 @@ def main(args):
             len(pub_overall_true_positives), len(pub_overall_false_negatives), len(pub_overall_false_positives)
         )
 
-    # Check that pipeline .tsv is from pipeline run. Thus, only paper_disease_category category should be 'rare disease'
+    # Check that pipeline .tsv is from pipeline run. Thus, only disease_category category should be 'rare disease'
     else:
-        if not all(x == "rare disease" for x in pipeline_df["paper_disease_category"]):
+        if not all(x == "rare disease" for x in pipeline_df["disease_category"]):
             raise ValueError(
                 "All papers in pipeline .tsv must be classified as 'rare disease', or run in --isolated-run=True mode."
             )
 
     # Calculate the number of correct, missed, and irrelevant papers for the Evidence Aggregator tool
-    rare_disease_df = pipeline_df[pipeline_df["paper_disease_category"] == "rare disease"]
+    rare_disease_df = pipeline_df[pipeline_df["disease_category"] == "rare disease"]
     rare_disease_pmids = set(rare_disease_df["paper_id"].str.lstrip("pmid:").astype(int))
 
     # Calculate the number of correct, missed, and irrelevant papers for the Evidence Aggregator tool
@@ -528,17 +529,15 @@ def main(args):
 
             # Get pmids from pipeline output for this gene.
             rare_disease_ids = (
-                gene_df[gene_df["paper_disease_category"] == "rare disease"]["paper_id"].str.lstrip("pmid:").tolist()
+                gene_df[gene_df["disease_category"] == "rare disease"]["paper_id"].str.lstrip("pmid:").tolist()
             )
-            other_ids = gene_df[gene_df["paper_disease_category"] == "other"]["paper_id"].str.lstrip("pmid:").tolist()
+            other_ids = gene_df[gene_df["disease_category"] == "other"]["paper_id"].str.lstrip("pmid:").tolist()
             conflicting_ids = (
-                gene_df[gene_df["paper_disease_category"] == "conflicting"]["paper_id"].str.lstrip("pmid:").tolist()
+                gene_df[gene_df["disease_category"] == "conflicting"]["paper_id"].str.lstrip("pmid:").tolist()
             )
             conflicting_counts = [
                 json.loads(x)
-                for x in gene_df[gene_df["paper_disease_category"] == "conflicting"][
-                    "paper_disease_categorizations"
-                ].tolist()
+                for x in gene_df[gene_df["disease_category"] == "conflicting"]["disease_categorizations"].tolist()
             ]
 
             # Get all of the PMIDs from evidence aggregator output, for given gene

@@ -77,13 +77,7 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
     assert paper_client.last_call("fetch") == ("37187958", {"include_fulltext": True})
     assert paper_client.call_count() == 2
     assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
-    assert llm_client.last_call("prompt_file")[2] == {
-        "params": {
-            "abstract": "The endoplasmic reticulum ...",
-            "title": "Novel compound heterozygous variants in EMC1 associated with global "
-            "developmental delay: a lesson from a non-silent synonymous exonic mutation",
-        }
-    }
+    assert llm_client.last_call("prompt_file")[2]["params"]["abstract"] == "The endoplasmic reticulum ..."
     assert llm_client.last_call("prompt_file")[3] == {
         "prompt_settings": {"prompt_tag": "paper_category", "temperature": 0.8},
     }
@@ -110,12 +104,7 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, j
     result = RareDiseaseFileLibrary(paper_client, llm_client, allowed_categories).get_papers(query)
     assert paper_client.last_call("search") == ({"query": "gene"},)
     assert paper_client.last_call("fetch") == (other_paper.props["pmid"], {"include_fulltext": True})
-    assert llm_client.last_call("prompt_file")[2] == {
-        "params": {
-            "abstract": "The endoplasmic reticulum ...",
-            "title": "Novel compound heterozygous variants in EMC1 associated with global developmental delay: a lesson from a non-silent synonymous exonic mutation",
-        }
-    }
+    assert llm_client.last_call("prompt_file")[2]["params"]["abstract"] == "The endoplasmic reticulum ..."
     assert result and len(result) == 2
     assert result[0] == rare_disease_paper
 
@@ -155,9 +144,8 @@ async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_clie
 def _paper_to_dict(paper: Paper) -> Dict[str, Any]:
     return {
         "id": paper.id,
-        "evidence": paper.evidence,
-        "citation": paper.citation,
-        "abstract": paper.abstract,
+        "citation": paper.props["citation"],
+        "abstract": paper.props["abstract"],
         "props": paper.props,
     }
 

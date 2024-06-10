@@ -18,19 +18,11 @@ PatientVariant = Tuple[HGVSVariant, str]
 logger = logging.getLogger(__name__)
 
 
+def _get_prompt_file_path(name: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "prompts", "observation", f"{name}.txt")
+
+
 class ObservationFinder(IFindObservations):
-    _PROMPTS = {
-        k: os.path.dirname(__file__) + f"/prompts/observation/{k}.txt"
-        for k in [
-            "check_patients",
-            "find_genome_build",
-            "find_patients",
-            "find_variants",
-            "link_entities",
-            "split_patients",
-            "split_variants",
-        ]
-    }
     _SYSTEM_PROMPT = """
 You are an intelligent assistant to a genetic analyst. Their task is to identify the genetic variant or variants that
 are causing a patient's disease. One approach they use to solve this problem is to seek out evidence from the academic
@@ -88,7 +80,7 @@ uninterrupted sequences of whitespace characters.
         async def check_patient(patient: str) -> None:
             for text in texts_to_check:
                 validation_response = await self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["check_patients"],
+                    prompt_filepath=_get_prompt_file_path("check_patients"),
                     params={"text": text, "patient": patient},
                     prompt_settings={"prompt_tag": "observation__check_patients"},
                 )
@@ -104,7 +96,7 @@ uninterrupted sequences of whitespace characters.
     async def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
         full_text_response = await self._run_json_prompt(
-            prompt_filepath=self._PROMPTS["find_patients"],
+            prompt_filepath=_get_prompt_file_path("find_patients"),
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_patients"},
         )
@@ -116,7 +108,7 @@ uninterrupted sequences of whitespace characters.
 
         async def check_focus_text(focus_text: str) -> None:
             focus_response = await self._run_json_prompt(
-                prompt_filepath=self._PROMPTS["find_patients"],
+                prompt_filepath=_get_prompt_file_path("find_patients"),
                 params={"text": focus_text},
                 prompt_settings={"prompt_tag": "observation__find_patients"},
             )
@@ -135,7 +127,7 @@ uninterrupted sequences of whitespace characters.
         async def split_patient(patient: str) -> None:
             if any(term in patient for term in [" and ", " or "]):
                 split_response = await self._run_json_prompt(
-                    prompt_filepath=self._PROMPTS["split_patients"],
+                    prompt_filepath=_get_prompt_file_path("split_patients"),
                     params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
                     prompt_settings={"prompt_tag": "observation__split_patients"},
                 )
@@ -171,7 +163,7 @@ uninterrupted sequences of whitespace characters.
         # Create prompts to find all the unique variants mentioned in the full text and focus texts.
         prompt_runs = [
             self._run_json_prompt(
-                prompt_filepath=self._PROMPTS["find_variants"],
+                prompt_filepath=_get_prompt_file_path("find_variants"),
                 params={"text": text, "gene_symbol": gene_symbol},
                 prompt_settings={"prompt_tag": "observation__find_variants"},
             )
@@ -198,7 +190,7 @@ uninterrupted sequences of whitespace characters.
             if "p." in candidates[i] and "c." in candidates[i]:
                 split_prompt_runs.append(
                     self._run_json_prompt(
-                        prompt_filepath=self._PROMPTS["split_variants"],
+                        prompt_filepath=_get_prompt_file_path("split_variants"),
                         params={"variant_list": f'"{candidates[i]}"'},  # Encase in double-quotes for bulk calling.
                         prompt_settings={"prompt_tag": "observation__split_variants"},
                     )
@@ -213,7 +205,7 @@ uninterrupted sequences of whitespace characters.
     async def _find_genome_build(self, full_text: str) -> str | None:
         """Identify the genome build used in the paper."""
         response = await self._run_json_prompt(
-            prompt_filepath=self._PROMPTS["find_genome_build"],
+            prompt_filepath=_get_prompt_file_path("find_genome_build"),
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_genome_build"},
         )
@@ -230,7 +222,7 @@ uninterrupted sequences of whitespace characters.
             "gene_symbol": gene_symbol,
         }
         response = await self._run_json_prompt(
-            prompt_filepath=self._PROMPTS["link_entities"],
+            prompt_filepath=_get_prompt_file_path("link_entities"),
             params=params,
             prompt_settings={"prompt_tag": "observation__link_entities"},
         )
@@ -350,7 +342,7 @@ uninterrupted sequences of whitespace characters.
         variant_descriptions = await self._find_variant_descriptions(
             full_text=full_text, focus_texts=table_texts, gene_symbol=gene_symbol
         )
-        logger.info(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
+        logger.debug(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
         # If necessary, determine the genome build most likely used for those variants.
         # TODO: consider doing this on a per-variant bases.
@@ -381,10 +373,9 @@ uninterrupted sequences of whitespace characters.
         if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
             patients = await self._find_patients(full_text=full_text, focus_texts=table_texts)
-            logger.info(f"Found the following patients in {paper}: {patients}")
+            logger.debug(f"Found the following patients in {paper}: {patients}")
             variant_descriptions = list(variants_by_description.keys())
 
-            # TODO, consider consolidating variants here, before linking with patients.
             if patients:
                 descriptions_by_patient = await self._link_entities(
                     full_text, patients, variant_descriptions, gene_symbol
