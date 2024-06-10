@@ -18,13 +18,10 @@ library:
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "rare disease"
-  example_types:
-    - positive 
-    - negative
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
-    di_factory: lib/config/fields/content_subset.yaml
+    di_factory: lib/config/fields/evidence_all.yaml
   llm_client:
     di_factory: lib/config/objects/llm_cache.yaml
   phenotype_searcher:

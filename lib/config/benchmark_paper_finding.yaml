@@ -16,22 +16,14 @@ library:
     di_factory: lib/config/objects/llm.yaml
   allowed_categories: 
     - "rare disease"
-  example_types:
-    - positive 
-    - negative
 extractor:
-  di_factory: lib.evagg.SimpleContentExtractor
-  fields: # Field subset for paper finding benchmarking.
+  di_factory: lib.evagg.PropertyContentExtractor
+  fields:
     - gene
     - paper_id
-    - paper_disease_category
-    - paper_disease_categorizations
-    - hgvs_c
-    - hgvs_p
-    - individual_id
-    - phenotype
-    - zygosity
-    - variant_inheritance
+    - disease_category
+    - disease_categorizations
+
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: library_benchmark

@@ -129,7 +129,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             if err_code == "idIsNotOpenAccess":
                 props["license"] = "not_open_access"
             elif err_code:
-                logger.warning(f"Unexpected PMC OA error code: {err_code}")
+                logger.warning(f"Unexpected PMC OA error for PMCID {pmcid}: {err_code}")
         else:
             props["can_access"] = True
             props["license"] = license = record.attrib.get("license", "unknown")
