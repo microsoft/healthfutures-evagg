@@ -60,7 +60,7 @@ class PromptBasedContentExtractor(IExtractFields):
         )
 
     def _get_lookup_field(self, gene_symbol: str, paper: Paper, ob: Observation, field: str) -> Tuple[str, str]:
-        if field == "pub_ev_id":
+        if field == "evidence_id":
             # Create a unique identifier for this combination of paper, variant, and individual ID.
             value = ob.variant.get_unique_id(paper.id, ob.individual)
         elif field == "gene":
