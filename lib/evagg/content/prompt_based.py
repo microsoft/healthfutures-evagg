@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Sequence, Tuple
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IFetchHPO, ISearchHPO
 from lib.evagg.types import HGVSVariant, Paper
-from lib.evagg.utils import PROMPT_DIR
 
 from ..interfaces import IExtractFields
 from .interfaces import IFindObservations, Observation
@@ -16,22 +15,26 @@ from .interfaces import IFindObservations, Observation
 logger = logging.getLogger(__name__)
 
 
+def _get_prompt_file_path(name: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "prompts", f"{name}.txt")
+
+
 class PromptBasedContentExtractor(IExtractFields):
     _PROMPT_FIELDS = {
-        "phenotype": os.path.join(PROMPT_DIR, "phenotypes_all.txt"),
-        "zygosity": os.path.join(PROMPT_DIR, "zygosity.txt"),
-        "variant_inheritance": os.path.join(PROMPT_DIR, "variant_inheritance.txt"),
-        "variant_type": os.path.join(PROMPT_DIR, "variant_type.txt"),
-        "engineered_cells": os.path.join(PROMPT_DIR, "functional_study.txt"),
-        "patient_cells_tissues": os.path.join(PROMPT_DIR, "functional_study.txt"),
-        "animal_model": os.path.join(PROMPT_DIR, "functional_study.txt"),
+        "phenotype": _get_prompt_file_path("phenotypes_all"),
+        "zygosity": _get_prompt_file_path("zygosity"),
+        "variant_inheritance": _get_prompt_file_path("variant_inheritance"),
+        "variant_type": _get_prompt_file_path("variant_type"),
+        "engineered_cells": _get_prompt_file_path("functional_study"),
+        "patient_cells_tissues": _get_prompt_file_path("functional_study"),
+        "animal_model": _get_prompt_file_path("functional_study"),
     }
     # These are the expensive prompt fields we should cache per paper.
     _CACHE_VARIANT_FIELDS = ["variant_type", "functional_study"]
     _CACHE_INDIVIDUAL_FIELDS = ["phenotype"]
 
     # Read the system prompt from file
-    _SYSTEM_PROMPT = open(os.path.join(PROMPT_DIR, "system.txt")).read()
+    _SYSTEM_PROMPT = open(_get_prompt_file_path("system")).read()
 
     _DEFAULT_PROMPT_SETTINGS = {
         "max_tokens": 2048,
@@ -146,7 +149,7 @@ class PromptBasedContentExtractor(IExtractFields):
 
             if candidates:
                 response = await self._run_json_prompt(
-                    os.path.join(PROMPT_DIR, "phenotypes_candidates.txt"),
+                    _get_prompt_file_path("phenotypes_candidates"),
                     params={"term": term, "candidates": "\n".join(candidates)},
                     prompt_settings={"prompt_tag": "phenotypes_candidates"},
                 )
@@ -165,7 +168,7 @@ class PromptBasedContentExtractor(IExtractFields):
         # Before we give up, try again with a simplified version of the term.
         for term in phenotype.copy():
             response = await self._run_json_prompt(
-                os.path.join(PROMPT_DIR, "phenotypes_simplify.txt"),
+                _get_prompt_file_path("phenotypes_simplify"),
                 params={"term": term},
                 prompt_settings={"prompt_tag": "phenotypes_simplify"},
             )
@@ -204,7 +207,7 @@ class PromptBasedContentExtractor(IExtractFields):
             "candidates": ", ".join(all_phenotypes),
         }
         observation_phenotypes_result = await self._run_json_prompt(
-            os.path.join(PROMPT_DIR, "phenotypes_observation.txt"),
+            _get_prompt_file_path("phenotypes_observation"),
             observation_phenotypes_params,
             {"prompt_tag": "phenotypes_observation"},
         )
@@ -212,7 +215,7 @@ class PromptBasedContentExtractor(IExtractFields):
             return []
 
         observation_acronymns_result = await self._run_json_prompt(
-            os.path.join(PROMPT_DIR, "phenotypes_acronyms.txt"),
+            _get_prompt_file_path("phenotypes_acronyms"),
             {"passage": text, "phenotypes": ", ".join(observation_phenotypes)},
             {"prompt_tag": "phenotypes_acronyms"},
         )
