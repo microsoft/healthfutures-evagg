@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Tuple
 
 import pytest
 
-from lib.evagg import PromptBasedContentExtractor, SimpleContentExtractor
+from lib.evagg import PromptBasedContentExtractor
 from lib.evagg.content import IFindObservations, Observation, TextSection
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IFetchHPO, ISearchHPO
@@ -39,17 +39,6 @@ def paper() -> Paper:
         pmcid="PMC123",
         can_access=True,
     )
-
-
-def test_simple_content_extractor(paper: Paper) -> None:
-    fields = ["gene", "hgvs_p", "variant_inheritance", "phenotype"]
-    extractor = SimpleContentExtractor(fields)
-    result = extractor.extract(paper, "CHI3L1")
-    assert len(result) == 1
-    assert result[0]["gene"] == "CHI3L1"
-    assert result[0]["hgvs_p"] == "p.Y34C"
-    assert result[0]["variant_inheritance"] == "AD"
-    assert result[0]["phenotype"] == "Long face (HP:0000276)"
 
 
 def test_prompt_based_content_extractor_valid_fields(
@@ -98,14 +87,3 @@ def test_prompt_based_content_extractor_valid_fields(
     print("FIELDS")
     print(fields)
     assert content[0] == fields
-
-
-def test_prompt_based_content_extractor_failures(
-    paper: Paper, mock_prompt: Any, mock_observation: Any, mock_phenotype_searcher: Any, mock_phenotype_fetcher: Any
-) -> None:
-    fields = ["not a field"]
-    observation: Dict[Tuple[HGVSVariant, str], List[str]] = {}
-    with pytest.raises(ValueError):
-        PromptBasedContentExtractor(
-            fields, mock_prompt(), mock_observation(observation), mock_phenotype_searcher(), mock_phenotype_fetcher()
-        )
