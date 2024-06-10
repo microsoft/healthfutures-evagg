@@ -8,8 +8,8 @@ class Example:
     text: str
 
 
-# Each pair of examples is a positive example followed
-# by a backup positive example of a different gene.
+POSITIVE_EXAMPLES_INTRO = "Below are several few shot examples of papers that are classified as 'rare disease'. These are in no particular order:\n"
+# Each pair of examples is a positive example followed by a backup positive example of a different gene.
 POSITIVE_EXAMPLES: List[Tuple[Example, Example]] = [
     (
         Example(
@@ -86,8 +86,8 @@ Abstract: This study sought to study the role of junctophilin-2 (JPH2) in atrial
 ]
 
 
-# Each pair of examples is a negative example followed
-# by a backup negative example of a different gene.
+NEGATIVE_EXAMPLES_INTRO = "Below are several few shot examples of papers that are classified as 'other'. These are in no particular order:\n"  # noqa: E501
+# Each pair of examples is a negative example followed by a backup negative example of a different gene.
 NEGATIVE_EXAMPLES: List[Tuple[Example, Example]] = [
     (
         Example(
@@ -161,4 +161,69 @@ Abstract: Large amounts of low copy number repeats in the 15q11.2q13.3 chromosom
 """,
         ),
     ),
+]
+
+# Keywords
+INCLUSION_KEYWORDS = [
+    "variant",
+    "variants",
+    "rare disease",
+    "rare diseases",
+    "rare variant",
+    "rare variants",
+    "disorder",
+    "disorders",
+    "syndrome",
+    "syndromes",
+    "-emia",
+    "-emias",
+    "-cardia",
+    "-cardias",
+    "-phagia",
+    "-phagias",
+    "pathogenic",
+    "pathogenics",
+    "benign",
+    "benigns",
+    "inherited cancer",
+    "inherited cancers",
+    "germline",
+    "germlines",
+    "-lepsy",
+    "-lepsies",
+    "-pathy",
+    "-pathies",
+    "-osis",
+    "-oses",
+    "variant of unknown significance",
+    "variants of unknown significance",
+    "variant of uncertain significance",
+    "variants of uncertain significance",
+    "mendelian",
+    "monogenic",
+    "monogenicity",
+    "monoallelic",
+    "syndromic",
+    "inherited",
+    "hereditary",
+    "dominant",
+    "recessive",
+    "de novo",
+    "VUS",
+    "disease causing",
+]
+
+EXCLUSION_KEYWORDS = [
+    "digenic",
+    "structural variant",
+    "structural variants",
+    "somatic",
+    "somatic cancer",
+    "somatic cancers",
+    "cancer",
+    "cancers",
+    "CNV",
+    "CNVs",
+    "copy number variant",
+    "copy number variants",
 ]
