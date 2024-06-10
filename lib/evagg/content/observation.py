@@ -376,7 +376,6 @@ uninterrupted sequences of whitespace characters.
             logger.debug(f"Found the following patients in {paper}: {patients}")
             variant_descriptions = list(variants_by_description.keys())
 
-            # TODO, consider consolidating variants here, before linking with patients.
             if patients:
                 descriptions_by_patient = await self._link_entities(
                     full_text, patients, variant_descriptions, gene_symbol
