@@ -4,7 +4,6 @@ log:
   level: INFO
 
 # Imported objects.
-# Configure truthset source to use seqr fields.
 truthset_source:
   di_factory: lib/config/objects/truthset.yaml
   fields:
