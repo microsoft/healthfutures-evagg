@@ -15,9 +15,7 @@ Provide your response as a single string: "rare disease" or "other" based on you
  
 When considering the provided criteria, remember to focus on the content of the title and abstract without overfitting to specific examples. The goal is to ensure high precision and recall for identifying rare disease papers in general.
 
-Below are several few shot examples of papers that are classified as 'rare disease'. These are in no particular order:
 {{$positive_examples}}
 
 
-Below are several few shot examples of papers that are classified as 'other'. These are in no particular order:
 {{$negative_examples}}
