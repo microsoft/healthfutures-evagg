@@ -68,6 +68,9 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
             response_dict["normalized_description"] = response["normalized_description"]
         if "protein" in response and "description" in response["protein"]:
             response_dict["protein"] = {"description": response["protein"]["description"]}
+        if "equivalent_descriptions" in response:
+            response_dict["equivalent_descriptions"] = response["equivalent_descriptions"]
+
         return response_dict
 
     @cache
