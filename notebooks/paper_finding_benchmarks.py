@@ -146,7 +146,6 @@ def plot_benchmarking_results(
     num_correct, num_missed, num_irrelevant, num_pub_correct, num_pub_missed, num_pub_irrelevant
 ):
     """Plot the benchmarking results from the  set in a barplot."""
-
     # Create a DataFrame from the input data
     results_to_plot = pd.DataFrame(
         {
@@ -330,7 +329,7 @@ def main(args):
 
     # Filter to only papers where the "has_fulltext" column is True
     if args.mgt_full_text_only:
-        mgt_df = mgt_df[mgt_df["has_fulltext"] == True]
+        mgt_df = mgt_df[mgt_df["has_fulltext"] is True]
         print("Only considering full text papers pmids: ", mgt_df.shape[0] - 1)
 
     # Get the query/ies from .yaml file so we know the list of genes processed.
@@ -384,7 +383,7 @@ def main(args):
         shutil.move(file, args.outdir)
 
     # Compute overall precision and recall prior to gene-specific analysis
-    truth_pmids = set(mgt_df[mgt_df["has_fulltext"] == True].pmid)
+    truth_pmids = set(mgt_df[mgt_df["has_fulltext"] is True].pmid)
     pipeline_pmids = set(pipeline_df["paper_id"].str.lstrip("pmid:").astype(int))
 
     # If isolated run, compute overall PubMed correct, missed, and irrelevant papers
@@ -480,17 +479,17 @@ def main(args):
         f.write(f"\nE.A. # false positives: {len(ea_overall_false_positives)}\n")
 
         # Write out the true positives
-        f.write(f"\nE.A. true positives\n")
+        f.write("\nE.A. true positives\n")
         for i, p in enumerate(ea_overall_true_positives):
             f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
         # Write out the false negatives
-        f.write(f"\nE.A. false negatives:\n")
+        f.write("\nE.A. false negatives:\n")
         for i, p in enumerate(ea_overall_false_negatives):
             f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
         # Write out the false positives
-        f.write(f"\nE.A. false positives:\n")
+        f.write("\nE.A. false positives:\n")
         for i, p in enumerate(ea_overall_false_positives):
             f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
@@ -504,17 +503,17 @@ def main(args):
             f.write(f"\nPubMed # false positives: {len(pub_overall_false_positives)}\n")
 
             # Write out the true positives
-            f.write(f"\nPubMed true positives\n")
+            f.write("\nPubMed true positives\n")
             for i, p in enumerate(pub_overall_true_positives):
                 f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
             # Write out the false negatives
-            f.write(f"\nPubMed false negatives:\n")
+            f.write("\nPubMed false negatives:\n")
             for i, p in enumerate(pub_overall_false_negatives):
                 f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
             # Write out the false positives
-            f.write(f"\nPubMed false positives:\n")
+            f.write("\nPubMed false positives:\n")
             for i, p in enumerate(pub_overall_false_positives):
                 f.write(f"* {i + 1} * {p} * {get_paper_titles({p})[p]}\n")
 
@@ -689,7 +688,7 @@ if __name__ == "__main__":
         "--outdir",
         default=f".out/paper_finding_results_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}",
         type=str,
-        help=("Results output directory. Default is " f".out/paper_finding_results_<YYYY-MM-DD>_<GIT_COMMIT_HASH>/"),
+        help=("Results output directory. Default is .out/paper_finding_results_<YYYY-MM-DD>_<GIT_COMMIT_HASH>/"),
     )
     args = parser.parse_args()
 
@@ -700,7 +699,9 @@ if __name__ == "__main__":
     if args.isolated_run:
         print("\n")
         print(
-            "NOTE: Ensure that your pipeline resultant .tsv (e.g. library_benchmark.yaml) contains results across all classification categories considered (e.g. rare disease and other). Running isolated paper finding benchmarks..."
+            "NOTE: Ensure that your pipeline resultant .tsv (e.g. library_benchmark.yaml) contains "
+            + "results across all classification categories considered (e.g. rare disease and other). "
+            + "Running isolated paper finding benchmarks..."
         )
 
     print("\n")
