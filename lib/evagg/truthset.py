@@ -114,8 +114,8 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, PropertyContentExtracto
     def get_evidence(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         def _add_fields(ev: Dict[str, str]) -> Dict[str, str]:
             """Add a unique identifier for the evidence."""
-            if "pub_ev_id" in self._fields:
-                ev["pub_ev_id"] = self._parse_variant(ev).get_unique_id(ev["paper_id"], ev["individual_id"])
+            if "evidence_id" in self._fields:
+                ev["evidence_id"] = self._parse_variant(ev).get_unique_id(ev["paper_id"], ev["individual_id"])
             if "citation" in self._fields:
                 ev["citation"] = paper.props["citation"]
             if "link" in self._fields:
