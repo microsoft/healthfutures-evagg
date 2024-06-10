@@ -1,7 +1,7 @@
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import yaml
 
@@ -62,27 +62,27 @@ class DiContainer:
         return instance
 
     def create_instance(self, spec: Dict[str, Any], resources: Dict[str, object]) -> Any:
-        """Create an instance of an object using the provided factory spec."""
+        """Parse a dictionary for instantiable objects at the top level or recursively within sub-dictionaries."""
+        # If this is instantiable, items before the factory definition are resources and the spec defines
+        # a parameterized object. Otherwise it's a simple dictionary (potentially with objects inside it).
+        values: Dict[str, object] = resources if FACTORY_TAG in spec else {}
         parameters: Dict[str, object] = {}
-        values: Dict[str, object] = resources
-
-        if FACTORY_TAG not in spec:
-            raise ValueError(f"Missing '{FACTORY_TAG}' in instance spec.")
-        factory: str = spec[FACTORY_TAG]
+        factory: Optional[str] = None
 
         # Process initializer spec in order - resources, then parameters.
         for key, value in spec.items():
             if key in values:
-                raise ValueError(f"Duplicate definition of '{key}' in spec.")
+                raise ValueError(f"Duplicate definition of resource '{key}' in spec.")
 
-            # When we reach the factory definition, switch from
+            # If/when we reach the factory definition, switch from
             # accumulating resources to accumulating parameters.
             if key == FACTORY_TAG:
+                factory = spec[FACTORY_TAG]
                 values = parameters
                 continue
 
-            # Look for nested factories to replace with instances.
-            if isinstance(value, dict) and FACTORY_TAG in value:
+            # Parse sub-dictionaries.
+            if isinstance(value, dict):
                 values[key] = self.create_instance(value, resources.copy())
             # Look for parameters that are resources and replace them with the resource instance.
             elif isinstance(value, str) and value.startswith("{{") and value.endswith("}}"):
@@ -93,7 +93,9 @@ class DiContainer:
             else:
                 values[key] = value
 
-        if factory.endswith(".yaml"):
+        if factory is None:
+            instance = values
+        elif factory.endswith(".yaml"):
             instance = self._instance_from_yaml(factory, parameters, resources)
         else:
             instance = self._instance_from_module(factory, parameters)
