@@ -22,14 +22,30 @@ from sklearn.metrics import confusion_matrix
 
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
-from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
+from lib.evagg.utils import CosmosCachingWebClient, get_azure_credential, get_dotenv_settings
+from lib.evagg.utils.run import get_previous_run
 
 # %% Constants.
 
+RUN_LATEST = True
+
+if RUN_LATEST:
+    # Change this to the name of the pipeline output you wish to evaluate.
+    run = get_previous_run("benchmark_observation")
+    if not run:
+        raise ValueError("No previous run found.")
+    OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", run.path, run.output_file)  # type: ignore
+else:
+    OUTPUT_PATH = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        ".out",
+        "run_benchmark_observation_20240605_193705",
+        "observation_benchmark.tsv",
+    )
+
 TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
-OUTPUT_PATH = os.path.join(
-    os.path.dirname(__file__), "..", ".out", "run_benchmark_content_20240530_172939", "content_benchmark.tsv"
-)
+
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
@@ -45,13 +61,18 @@ EXTRA_COLUMNS = {"gene", "in_supplement"}
 # will be a large number of genes missing from the pipeline output entirely if the pipeline wasn't configured to find
 # them. This can lead to falsely high recall scores if zero observations were found for a gene that was actually
 # processed.
-RESTRICT_TRUTH_GENES_TO_OUTPUT = True
+RESTRICT_TRUTH_GENES_TO_OUTPUT = False
 
 # SET THIS TO TRUE FOR END TO END PIPELINE RUNS.
 # If True, only consider papers from the output set that are in the truth set.
 # This is necessary to get an accurate assessment of precision for observation finding for full pipeline runs
 # as there will be a large number of observations from papers that aren't included in the truthset.
 RESTRICT_OUTPUT_PAPERS_TO_TRUTH = False
+
+# SET THIS TO TRUE TO REMOVE REVIEWED OBSERVATIONS FROM OBSERVATION FINDING COMPARISON.
+# If True, do not include reviewed observations in comparison of observation finding.
+RESTRICT_OBSERVATIONS_TO_UNREVIEWED = True
+OBSERVATION_REVIEW_PATH = "data/v1/review_status_observation_train_v1.tsv"
 
 # %% Read in the truth and output tables.
 
@@ -154,8 +175,12 @@ if not output_df.set_index(list(INDEX_COLUMNS)).index.is_unique:
 
 # TODO, consider normalizing truthset variants during generation of the truthset?
 
+cache_settings = get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_")
+cache_settings.update({"credential": get_azure_credential(cred_type="AzureCli")})
+
 web_client = CosmosCachingWebClient(
-    get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"no_raise_codes": [422]}
+    cache_settings=cache_settings,
+    web_settings={"no_raise_codes": [422]},
 )
 mutalyzer_client = MutalyzerClient(web_client)
 ncbi_client = NcbiLookupClient(web_client)
@@ -364,10 +389,39 @@ print("---- Observation finding performance ----")
 print("Overall")
 print(f"  Observation finding precision: {precision:.2f}")
 print(f"  Observation finding recall: {recall:.2f}")
+print()
+
 print("Ignoring truth papers from supplement")
 print(f"  Observation finding precision: {precision_ns:.2f}")
 print(f"  Observation finding recall: {recall_ns:.2f}")
 print()
+
+if RESTRICT_OBSERVATIONS_TO_UNREVIEWED:
+    if OBSERVATION_REVIEW_PATH:
+        review_df = pd.read_csv(OBSERVATION_REVIEW_PATH, sep="\t")
+        reviewed_obs = review_df[merged_df_ns.index.names]
+        # check for extra reviews that aren't in merged_df_ns, treating rows in reviewed_obs as tuples
+        extra_reviews = [t for t in reviewed_obs.itertuples(index=False) if t not in merged_df_ns.index]
+
+        if extra_reviews:
+            print(f"Warning: {len(extra_reviews)} observations were reviewed but not found in the output.")
+            for r in extra_reviews:
+                print(f"  {r}")
+            print()
+
+        # drop the reviewed observations from the merged_df_ns
+        merged_df_ns = merged_df_ns[~merged_df_ns.index.isin(reviewed_obs.set_index(merged_df_ns.index.names).index)]
+
+        precision_ns = merged_df_ns.in_truth[merged_df_ns.in_output == True].mean()
+        recall_ns = merged_df_ns.in_output[merged_df_ns.in_truth == True].mean()
+
+        print("Ignoring truth papers from supplement (unreviewed)")
+        print(f"  Observation finding precision: {precision_ns:.2f}")
+        print(f"  Observation finding recall: {recall_ns:.2f}")
+        print()
+
+    else:
+        print("Warning: OBSERVATION_REVIEW_PATH not set, ignoring restriction to unreviewed observations.")
 
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
@@ -381,19 +435,19 @@ if precision < 1 or recall < 1:
     )[
         [
             "hgvs_desc",
+            "gene",
             "paper_id",
             "individual_id",
             "hgvs_c_truth",
             "hgvs_p_truth",
-            "hgvs_p_output",
             "hgvs_c_output",
+            "hgvs_p_output",
             "in_truth",
             "in_output",
         ]
     ]
 
-    print(result)
-
+    # result now available to view interactively.
 else:
     print("All observations found. This is likely because the Truthset observation finder was used.")
 
