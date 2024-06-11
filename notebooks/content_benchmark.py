@@ -128,10 +128,6 @@ if "variant_inheritance" in CONTENT_COLUMNS:
     for df in [truth_df, output_df]:
         df["variant_inheritance"] = df["variant_inheritance"].apply(lambda x: "inherited" if x in orig else x)
 
-# if "study_type" in CONTENT_COLUMNS:
-#     # For both dataframes, recode "review" to "cohort analysis"
-#     for df in [truth_df, output_df]:
-#         df["study_type"] = df["study_type"].apply(lambda x: "cohort analysis" if x == "review" else x)
 
 # %% Restrict the truth set to the genes in the output set.
 if RESTRICT_TRUTH_GENES_TO_OUTPUT:
