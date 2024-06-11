@@ -31,7 +31,7 @@ RUN_LATEST = True
 
 if RUN_LATEST:
     # Change this to the name of the pipeline output you wish to evaluate.
-    run = get_previous_run("benchmark_observation")
+    run = get_previous_run("benchmark_content")
     if not run:
         raise ValueError("No previous run found.")
     OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", run.path, run.output_file)  # type: ignore
@@ -71,7 +71,7 @@ RESTRICT_OUTPUT_PAPERS_TO_TRUTH = False
 
 # SET THIS TO TRUE TO REMOVE REVIEWED OBSERVATIONS FROM OBSERVATION FINDING COMPARISON.
 # If True, do not include reviewed observations in comparison of observation finding.
-RESTRICT_OBSERVATIONS_TO_UNREVIEWED = True
+RESTRICT_OBSERVATIONS_TO_UNREVIEWED = False
 OBSERVATION_REVIEW_PATH = "data/v1/review_status_observation_train_v1.tsv"
 
 # %% Read in the truth and output tables.
@@ -127,6 +127,11 @@ if "variant_inheritance" in CONTENT_COLUMNS:
     orig = ["maternally inherited", "paternally inherited", "maternally and paternally inherited homozygous"]
     for df in [truth_df, output_df]:
         df["variant_inheritance"] = df["variant_inheritance"].apply(lambda x: "inherited" if x in orig else x)
+
+# if "study_type" in CONTENT_COLUMNS:
+#     # For both dataframes, recode "review" to "cohort analysis"
+#     for df in [truth_df, output_df]:
+#         df["study_type"] = df["study_type"].apply(lambda x: "cohort analysis" if x == "review" else x)
 
 # %% Restrict the truth set to the genes in the output set.
 if RESTRICT_TRUTH_GENES_TO_OUTPUT:
@@ -543,7 +548,28 @@ def _match_hpo_sets(hpo_left, hpo_right) -> Tuple[list[str], list[str], list[str
     return matches, matches, list(left_gen - right_gen), list(right_gen - left_gen)
 
 
-# %%
+def plot_confusion_matrix(truth, output, labels, column):
+    """
+    Plots a confusion matrix heatmap for two categorical series.
+    """
+    truth[truth.isin(labels) == False] = "other"
+    output[output.isin(labels) == False] = "other"
+
+    if any(truth == "other") or any(output == "other"):
+        labels.append("other")
+
+    cm = confusion_matrix(truth, output, labels=labels)
+    cm_df = pd.DataFrame(cm, index=labels, columns=labels)
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm_df, annot=True, fmt="d", cmap="Blues", cbar=False)
+    plt.xlabel("Output")
+    plt.ylabel("Truth")
+    plt.title(f"Confusion matrix for {column}")
+    plt.show()
+
+
+# %% Compare per-observation content extraction performance.
 
 do_plots = True
 plot_config = {
@@ -582,29 +608,6 @@ plot_config = {
     },
 }
 
-
-def plot_confusion_matrix(truth, output, labels, column):
-    """
-    Plots a confusion matrix heatmap for two categorical series.
-    """
-    truth[truth.isin(labels) == False] = "other"
-    output[output.isin(labels) == False] = "other"
-
-    if any(truth == "other") or any(output == "other"):
-        labels.append("other")
-
-    cm = confusion_matrix(truth, output, labels=labels)
-    cm_df = pd.DataFrame(cm, index=labels, columns=labels)
-
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cm_df, annot=True, fmt="d", cmap="Blues", cbar=False)
-    plt.xlabel("Output")
-    plt.ylabel("Truth")
-    plt.title(f"Confusion matrix for {column}")
-    plt.show()
-
-
-# %%
 if CONTENT_COLUMNS:
     shared_df = merged_df_ns[merged_df_ns.in_truth & merged_df_ns.in_output]
 
@@ -650,6 +653,40 @@ if CONTENT_COLUMNS:
                 plot_confusion_matrix(
                     shared_df[f"{column}_truth"].copy(),
                     shared_df[f"{column}_output"].copy(),
+                    plot_config[column]["options"].copy(),
+                    column,
+                )
+# %% Compare per-paper content extraction performance.
+
+do_plots = True
+plot_config = {
+    "study_type": {
+        "options": ["case report", "case series", "cohort analysis", "review", "other"],
+    },
+}
+
+if CONTENT_COLUMNS:
+    shared_df = merged_df_ns[merged_df_ns.in_truth & merged_df_ns.in_output]
+
+    print("---- Per paper content extraction performance ----")
+
+    # Drop duplicated papers, keeping the first
+    paper_df = shared_df.reset_index().drop_duplicates(subset=["paper_id"], keep="first").set_index("paper_id")
+
+    for column in CONTENT_COLUMNS:
+        if column not in ["study_type"]:
+            continue
+
+        # # Currently other content columns are just string compares.
+        match = paper_df[f"{column}_truth"].str.lower() == paper_df[f"{column}_output"].str.lower()
+        print(f"Content extraction accuracy for {column}: {match.mean():.3f} (of N={match.count()})")
+
+    if do_plots:
+        for column in CONTENT_COLUMNS:
+            if column in plot_config:
+                plot_confusion_matrix(
+                    paper_df[f"{column}_truth"].copy(),
+                    paper_df[f"{column}_output"].copy(),
                     plot_config[column]["options"].copy(),
                     column,
                 )
