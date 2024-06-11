@@ -1,0 +1,26 @@
+Below is the text from an academic paper.
+
+I would like you to classify this paper into one of the following categories: case report, case series, cohort analysis, review, or other.
+
+case report: A case report is a detailed description of disease occurrence in a single person.
+
+case series: A case series is a description of disease occurrence in between 2 and 10 people.
+
+cohort analysis: A cohort analysis is a description of disease occurrence in 11 or more people.
+
+other: A category reserved for papers that do not fit into any of the above categories. This should be relatively rare.
+
+-- Output format --
+
+Provide your response as a valid JSON object, using the following format.
+{
+  "study_type": "case report" | "case series" | "cohort analysis" | "review" | "other"
+}
+
+Your response should ALWAYS be a valid json object with the key "study_type" and a value that is one of 
+"case report", "case series", "cohort analysis", "review", or "other".
+
+-- Begin paper text --
+
+{{$passage}}
+
