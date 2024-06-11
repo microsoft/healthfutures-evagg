@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IFetchHPO, ISearchHPO
-from lib.evagg.types import HGVSVariant, Paper
+from lib.evagg.types import Paper
 
 from ..interfaces import IExtractFields
 from .interfaces import IFindObservations, Observation
@@ -28,10 +28,12 @@ class PromptBasedContentExtractor(IExtractFields):
         "engineered_cells": _get_prompt_file_path("functional_study"),
         "patient_cells_tissues": _get_prompt_file_path("functional_study"),
         "animal_model": _get_prompt_file_path("functional_study"),
+        "study_type": _get_prompt_file_path("study_type"),
     }
     # These are the expensive prompt fields we should cache per paper.
     _CACHE_VARIANT_FIELDS = ["variant_type", "functional_study"]
     _CACHE_INDIVIDUAL_FIELDS = ["phenotype"]
+    _CACHE_PAPER_FIELDS = ["study_type"]
 
     # Read the system prompt from file
     _SYSTEM_PROMPT = open(_get_prompt_file_path("system")).read()
@@ -92,8 +94,6 @@ class PromptBasedContentExtractor(IExtractFields):
         elif field == "individual_id":
             value = ob.individual
         elif field == "gnomad_frequency":
-            value = "TODO"  # TODO  Not yet implemented
-        elif field == "study_type":
             value = "TODO"  # TODO  Not yet implemented
         else:
             raise ValueError(f"Unsupported field: {field}")
@@ -294,25 +294,32 @@ class PromptBasedContentExtractor(IExtractFields):
         gene_symbol: str,
         paper: Paper,
         ob: Observation,
-        cache: Dict[Tuple[HGVSVariant | str, str], asyncio.Task],
+        cache: Dict[Any, asyncio.Task],
     ) -> Dict[str, str]:
+
+        def _get_key(ob: Observation, field: str) -> Any:
+            if field in self._CACHE_VARIANT_FIELDS:
+                return (ob.variant, field)
+            elif field in self._CACHE_INDIVIDUAL_FIELDS and ob.individual != "unknown":
+                return (ob.individual, field)
+            elif field in self._CACHE_PAPER_FIELDS:
+                # Paper instance is implicit.
+                return field
+            return None
 
         async def _get_prompt_field(field: str) -> Tuple[str, str]:
             # Use a cached task for variant fields if available.
-            if (ob.variant, field) in cache:
-                prompt_task = cache[(ob.variant, field)]
-                logger.info(f"Using cached task for {ob.variant} {field}")
-            elif (ob.individual, field) in cache:
-                prompt_task = cache[(ob.individual, field)]
-                logger.info(f"Using cached task for {ob.individual} {field}")
+            key = _get_key(ob, field)
+            if key and key in cache:
+                prompt_task = cache[key]
+                logger.info(f"Using cached task for {key}")
             else:
                 # Create and schedule a prompt task to get the prompt field.
                 prompt_task = asyncio.create_task(self._generate_prompt_field(gene_symbol, ob, field))
-            # See if we should cache it for next time.
-            if field in self._CACHE_VARIANT_FIELDS:
-                cache[(ob.variant, field)] = prompt_task
-            elif ob.individual != "unknown" and field in self._CACHE_INDIVIDUAL_FIELDS:
-                cache[(ob.individual, field)] = prompt_task
+
+                if key:
+                    cache[key] = prompt_task
+
             # Get the value from the completed task.
             value = await prompt_task
             return field, value
@@ -331,7 +338,7 @@ class PromptBasedContentExtractor(IExtractFields):
         # with all observations of the same variant (but different individuals). As a temporary solution, we'll cache
         # the first finding of a variant-level result and use that only. This will not be robust to scenarios where the
         # texts associated with multiple observations of the same variant differ.
-        cache: Dict[Tuple[HGVSVariant | str, str], asyncio.Task] = {}
+        cache: Dict[Any, asyncio.Task] = {}
         return await asyncio.gather(*[self._get_fields(gene_symbol, paper, ob, cache) for ob in obs])
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
