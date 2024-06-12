@@ -12,7 +12,7 @@ di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttrain_subset.yaml
 library:
-  di_factory: lib.evagg.RareDiseaseFileLibrary
+  di_factory: lib.evagg.RareDiseaseLibraryCached
   paper_client:
     di_factory: lib/config/objects/ncbi.yaml
   llm_client: "{{llm_client}}"
