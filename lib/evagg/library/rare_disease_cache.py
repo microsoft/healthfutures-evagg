@@ -1,8 +1,6 @@
 import logging
 from typing import Any, Dict, List, Sequence
 
-from lib.evagg.llm import IPromptClient
-from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
 from lib.evagg.utils.cache import ObjectFileCache
 
@@ -22,19 +20,15 @@ class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
     def deserialize_paper_sequence(cls, data: List[Dict[str, Any]]) -> Sequence[Paper]:
         return [Paper(**paper) for paper in data]
 
-    def __init__(
-        self,
-        paper_client: IPaperLookupClient,
-        llm_client: IPromptClient,
-        allowed_categories: Sequence[str] | None = None,
-        include_negative_examples: bool = True,
-    ) -> None:
-        super().__init__(paper_client, llm_client, allowed_categories, include_negative_examples)
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        use_previous_cache = kwargs.pop("use_previous_cache", None)
         self._cache = ObjectFileCache[Sequence[Paper]](
             "RareDiseaseFileLibrary",
             serializer=RareDiseaseLibraryCached.serialize_paper_sequence,
             deserializer=RareDiseaseLibraryCached.deserialize_paper_sequence,
+            use_previous_cache=use_previous_cache,
         )
+        super().__init__(*args, **kwargs)
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
         cache_key = f"get_papers_{query['gene_symbol']}"
