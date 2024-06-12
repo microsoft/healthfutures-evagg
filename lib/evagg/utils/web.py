@@ -24,6 +24,7 @@ class WebClientSettings(SettingsModel, extra=Extra.forbid):
     retry_codes: List[int] = [429, 500, 502, 503, 504]  # rate-limit exceeded, server errors
     no_raise_codes: List[int] = []  # don't raise exceptions for these codes
     content_type: str = "text"
+    timeout: float = 15.0  # seconds
     status_code_translator: Optional[Callable[[str, int, str], Tuple[int, str]]] = None
 
     @validator("content_type")
@@ -76,7 +77,7 @@ class RequestsWebContentClient(IWebContentClient):
 
     def _get_content(self, url: str) -> Tuple[int, str]:
         """GET the text content at the provided URL."""
-        response = self._get_session().get(url)
+        response = self._get_session().get(url, timeout=self._settings.timeout)
         return self._get_status_code(url, response.status_code, response.text)
 
     def update_settings(self, **kwargs: Any) -> None:
