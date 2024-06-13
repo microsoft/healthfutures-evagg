@@ -32,9 +32,14 @@ class ObjectFileCache(Generic[T]):
 
         # If use_previous_cache is not specifically set to False, check for a previous cache to copy over.
         if use_previous_cache is not False and (run := get_previous_run(sub_path=sub_path)):
-            prompt = f"\x1b[32mFound existing {run.name} cache started on {run.start}. Use this cache? [y/n]: \x1b[0m"
+            prompt = (
+                f"\x1b[32mFound existing {run.name}/{name} cache started on {run.start}. Use this cache? [y/n]: \x1b[0m"
+            )
             if use_previous_cache is True or input(prompt).lower() == "y":
                 logger.warning(f"Copying existing {name} cache from {run.dir_name} to current run.")
+                logger.warning(
+                    ["cp", "-r", os.path.join(str(run.path), sub_path), os.path.join(get_run_path(), CACHE_DIR)]
+                )
                 subprocess.run(
                     ["cp", "-r", os.path.join(str(run.path), sub_path), os.path.join(get_run_path(), CACHE_DIR)],
                     check=True,
@@ -50,7 +55,7 @@ class ObjectFileCache(Generic[T]):
 
     def set(self, key: str, value: T) -> None:
         assert all(c not in key for c in "/\\:"), f"Invalid key '{key}' for file cache."
-        assert not os.path.exists(os.path.join(self._cache_dir, f"{key}.json"))
+        assert not os.path.exists(os.path.join(self._cache_dir, f"{key}.json")), f"Cache key '{key}' already exists."
         cache_path = os.path.join(self._cache_dir, f"{key}.json")
         with open(cache_path, "w") as f:
             json.dump(self._serializer(value), f, indent=4)
