@@ -2,7 +2,6 @@ import logging
 import logging.config
 import os
 import sys
-from datetime import datetime
 from typing import Callable, Dict, List, Optional, Set
 
 from .run import get_run_path, set_output_root
@@ -57,13 +56,15 @@ def init_module_filter(exclude_modules: Set[str], include_modules: Set[str]) -> 
 
 def _format_prompt(record: logging.LogRecord) -> str:
     prompt_tag = record.__dict__.get("prompt_tag", "(no tag)")
-    prompt_model = record.__dict__.get("prompt_model", "(no model)")
+    metadata = record.__dict__.get("prompt_metadata", {})
     settings = record.__dict__.get("prompt_settings", {})
     prompt = record.__dict__.get("prompt_text", "")
     response = record.__dict__.get("prompt_response", "")
-    header = f"{prompt_tag} {prompt_model} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     return (
-        f"#{'/' * 80}\n#{(' ' + header + ' ').ljust(80, '/')}\n"
+        f"#{'#' * 80}\n"
+        + f"#{' METADATA '.ljust(80, '#')}\n"
+        + f"{'prompt_tag':<16}: {prompt_tag}\n"
+        + f"{'\n'.join(f'{k:<16}: {v}' for k, v in metadata.items())}\n"
         + f"#{' SETTINGS '.ljust(80, '#')}\n"
         + f"{'\n'.join(f'{k}: {v}' for k, v in settings.items())}\n"
         + f"#{' PROMPT '.ljust(80, '#')}\n"
