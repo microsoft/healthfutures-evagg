@@ -106,7 +106,7 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, PropertyContentExtracto
             variant_descriptions = {variant.hgvs_desc, evidence["paper_variant"]}
             if variant.protein_consequence:
                 variant_descriptions |= {variant.protein_consequence.hgvs_desc}
-            return Observation(variant, individual, list(variant_descriptions), [individual], texts)
+            return Observation(variant, individual, list(variant_descriptions), [individual], texts, paper.id)
 
         return [_get_observation(evidence) for evidence in self._get_evidence(paper.id, gene_symbol)]
 
