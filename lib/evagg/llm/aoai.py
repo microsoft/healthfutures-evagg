@@ -64,7 +64,10 @@ class OpenAIClient(IPromptClient):
 
     @lru_cache
     def _get_client_instance(self) -> AsyncOpenAI:
-        logger.info(f"Using AOAI API at {self._config.endpoint} (max_parallel={self._config.max_parallel_requests}).")
+        logger.info(
+            f"Using AOAI API {self._config.api_version} at {self._config.endpoint}"
+            + f" (max_parallel={self._config.max_parallel_requests})."
+        )
         if self._config.token_provider:
             return AsyncAzureOpenAI(
                 azure_endpoint=self._config.endpoint,
@@ -89,6 +92,7 @@ class OpenAIClient(IPromptClient):
 
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         prompt_tag = settings.pop("prompt_tag", "prompt")
+        prompt_metadata = settings.pop("prompt_metadata", {})
         connection_errors = 0
 
         while True:
@@ -115,9 +119,12 @@ class OpenAIClient(IPromptClient):
                 connection_errors += 1
                 await asyncio.sleep(1)
 
+        prompt_metadata["returned_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        prompt_metadata["elapsed_time"] = f"{elapsed:.1f} seconds"
+
         prompt_log = {
             "prompt_tag": prompt_tag,
-            "prompt_model": f"{settings.get('model')} {self._config.api_version}",
+            "prompt_metadata": prompt_metadata,
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m.get("content")) for m in messages.to_list()]),
             "prompt_response": response,

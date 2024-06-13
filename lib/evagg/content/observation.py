@@ -93,12 +93,14 @@ uninterrupted sequences of whitespace characters.
         await asyncio.gather(*[check_patient(patient) for patient in patient_candidates])
         return checked_patients
 
-    async def _find_patients(self, full_text: str, focus_texts: Sequence[str] | None) -> Sequence[str]:
+    async def _find_patients(
+        self, full_text: str, focus_texts: Sequence[str] | None, metadata: Dict[str, str]
+    ) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
         full_text_response = await self._run_json_prompt(
             prompt_filepath=_get_prompt_file_path("find_patients"),
             params={"text": full_text},
-            prompt_settings={"prompt_tag": "observation__find_patients"},
+            prompt_settings={"prompt_tag": "observation__find_patients", "prompt_metadata": metadata},
         )
 
         unique_patients = set(full_text_response.get("patients", []))
@@ -110,7 +112,7 @@ uninterrupted sequences of whitespace characters.
             focus_response = await self._run_json_prompt(
                 prompt_filepath=_get_prompt_file_path("find_patients"),
                 params={"text": focus_text},
-                prompt_settings={"prompt_tag": "observation__find_patients"},
+                prompt_settings={"prompt_tag": "observation__find_patients", "prompt_metadata": metadata},
             )
             unique_patients.update(focus_response.get("patients", []))
 
@@ -129,7 +131,7 @@ uninterrupted sequences of whitespace characters.
                 split_response = await self._run_json_prompt(
                     prompt_filepath=_get_prompt_file_path("split_patients"),
                     params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
-                    prompt_settings={"prompt_tag": "observation__split_patients"},
+                    prompt_settings={"prompt_tag": "observation__split_patients", "prompt_metadata": metadata},
                 )
                 patients_after_splitting.extend(split_response.get("patients", []))
             else:
@@ -153,7 +155,7 @@ uninterrupted sequences of whitespace characters.
         return checked_patients
 
     async def _find_variant_descriptions(
-        self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str
+        self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str, metadata: Dict[str, str]
     ) -> Sequence[str]:
         """Identify the genetic variants relevant to the gene_symbol described in the full text of the paper.
 
@@ -165,7 +167,7 @@ uninterrupted sequences of whitespace characters.
             self._run_json_prompt(
                 prompt_filepath=_get_prompt_file_path("find_variants"),
                 params={"text": text, "gene_symbol": gene_symbol},
-                prompt_settings={"prompt_tag": "observation__find_variants"},
+                prompt_settings={"prompt_tag": "observation__find_variants", "prompt_metadata": metadata},
             )
             for text in [full_text] + list(focus_texts or [])
         ]
@@ -192,7 +194,7 @@ uninterrupted sequences of whitespace characters.
                     self._run_json_prompt(
                         prompt_filepath=_get_prompt_file_path("split_variants"),
                         params={"variant_list": f'"{candidates[i]}"'},  # Encase in double-quotes for bulk calling.
-                        prompt_settings={"prompt_tag": "observation__split_variants"},
+                        prompt_settings={"prompt_tag": "observation__split_variants", "prompt_metadata": metadata},
                     )
                 )
                 del candidates[i]
@@ -202,29 +204,29 @@ uninterrupted sequences of whitespace characters.
         candidates.extend(v for r in split_responses for v in r.get("variants", []))
         return candidates
 
-    async def _find_genome_build(self, full_text: str) -> str | None:
+    async def _find_genome_build(self, full_text: str, metadata: Dict[str, str]) -> str | None:
         """Identify the genome build used in the paper."""
         response = await self._run_json_prompt(
             prompt_filepath=_get_prompt_file_path("find_genome_build"),
             params={"text": full_text},
-            prompt_settings={"prompt_tag": "observation__find_genome_build"},
+            prompt_settings={"prompt_tag": "observation__find_genome_build", "prompt_metadata": metadata},
         )
 
         return response.get("genome_build", "unknown")
 
     async def _link_entities(
-        self, full_text: str, patients: Sequence[str], variants: Sequence[str], gene_symbol: str
+        self, full_text: str, patients: Sequence[str], variants: Sequence[str], metadata: Dict[str, str]
     ) -> Dict[str, List[str]]:
         params = {
             "text": full_text,
             "patients": ", ".join(patients),
             "variants": ", ".join(variants),
-            "gene_symbol": gene_symbol,
+            "gene_symbol": metadata["gene_symbol"],
         }
         response = await self._run_json_prompt(
             prompt_filepath=_get_prompt_file_path("link_entities"),
             params=params,
-            prompt_settings={"prompt_tag": "observation__link_entities"},
+            prompt_settings={"prompt_tag": "observation__link_entities", "prompt_metadata": metadata},
         )
 
         # TODO, consider validating the links.
@@ -337,17 +339,18 @@ uninterrupted sequences of whitespace characters.
         """
         # Get the full text of the paper and any focus texts (e.g., tables).
         full_text, table_texts = self._get_text_sections(paper)
+        metadata = {"gene_symbol": gene_symbol, "paper_id": paper.id}
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
-            full_text=full_text, focus_texts=table_texts, gene_symbol=gene_symbol
+            full_text=full_text, focus_texts=table_texts, gene_symbol=gene_symbol, metadata=metadata
         )
         logger.debug(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
         # If necessary, determine the genome build most likely used for those variants.
         # TODO: consider doing this on a per-variant bases.
         if any("chr" in v or "g." in v for v in variant_descriptions):
-            genome_build = await self._find_genome_build(full_text=full_text)
+            genome_build = await self._find_genome_build(full_text=full_text, metadata=metadata)
             logger.info(f"Found the following genome build in {paper}: {genome_build}")
         else:
             genome_build = None
@@ -372,14 +375,12 @@ uninterrupted sequences of whitespace characters.
         # if there are no variants (regardless of patients), then there are no observations to report.
         if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
-            patients = await self._find_patients(full_text=full_text, focus_texts=table_texts)
+            patients = await self._find_patients(full_text=full_text, focus_texts=table_texts, metadata=metadata)
             logger.debug(f"Found the following patients in {paper}: {patients}")
             variant_descriptions = list(variants_by_description.keys())
 
             if patients:
-                descriptions_by_patient = await self._link_entities(
-                    full_text, patients, variant_descriptions, gene_symbol
-                )
+                descriptions_by_patient = await self._link_entities(full_text, patients, variant_descriptions, metadata)
                 # TODO, consider validating returned patients.
             else:
                 descriptions_by_patient = {"unknown": variant_descriptions}
@@ -424,6 +425,7 @@ uninterrupted sequences of whitespace characters.
                         # Recreate the generator each time.
                         # TODO, consider filtering to relevant sections.
                         texts=list(get_sections(paper.props["fulltext_xml"])),
+                        paper_id=paper.id,
                     )
                 )
 
