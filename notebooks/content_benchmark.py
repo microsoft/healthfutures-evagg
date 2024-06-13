@@ -31,7 +31,7 @@ RUN_LATEST = True
 
 if RUN_LATEST:
     # Change this to the name of the pipeline output you wish to evaluate.
-    run = get_previous_run("benchmark_content")
+    run = get_previous_run("evagg_pipeline")
     if not run:
         raise ValueError("No previous run found.")
     OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", run.path, run.output_file)  # type: ignore
@@ -49,9 +49,17 @@ TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "eviden
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
 # alternatively set CONTENT_COLUMNS to set()  # when CONTENT_COLUMNS is empty we're just comparing observation-finding
-CONTENT_COLUMNS = set()
-# CONTENT_COLUMNS = {"variant_inheritance"}
-# CONTENT_COLUMNS = {"phenotype, variant_inheritance, zygosity"}
+# CONTENT_COLUMNS = set()
+CONTENT_COLUMNS = {
+    "phenotype",
+    "zygosity",
+    "variant_inheritance",
+    "variant_type",
+    "study_type",
+    "engineered_cells",
+    "patient_cells_tissues",
+    "animal_model",
+}
 INDEX_COLUMNS = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
 EXTRA_COLUMNS = {"gene", "in_supplement"}
 
@@ -67,7 +75,7 @@ RESTRICT_TRUTH_GENES_TO_OUTPUT = False
 # If True, only consider papers from the output set that are in the truth set.
 # This is necessary to get an accurate assessment of precision for observation finding for full pipeline runs
 # as there will be a large number of observations from papers that aren't included in the truthset.
-RESTRICT_OUTPUT_PAPERS_TO_TRUTH = False
+RESTRICT_OUTPUT_PAPERS_TO_TRUTH = True
 
 # SET THIS TO TRUE TO REMOVE REVIEWED OBSERVATIONS FROM OBSERVATION FINDING COMPARISON.
 # If True, do not include reviewed observations in comparison of observation finding.
@@ -262,6 +270,8 @@ def _normalize_hgvs_p(row: pd.Series) -> str:
 
 # %% Apply the normalization to the truth dataframes.
 
+print("Normalizing HGVS representation in the truth dataframe.")
+
 if "hgvs_c" in truth_df.columns:
     truth_df["hgvs_c_orig"] = truth_df["hgvs_c"]
     truth_df["hgvs_c"] = truth_df.apply(_normalize_hgvs_c, axis=1)
@@ -277,6 +287,8 @@ if "hgvs_p" in truth_df.columns:
 
 # TODO: this is a hack, we should have fallback normalization in the pipeline and that truth set should be normalized
 # during generation.
+
+print("Normalizing HGVS representation in the output dataframe.")
 
 if "hgvs_p" in output_df.columns:
     output_df["hgvs_p_orig"] = output_df["hgvs_p"]

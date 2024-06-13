@@ -327,9 +327,9 @@ def main(args):
     mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
     print("Number of manual ground truth pmids: ", mgt_df.shape[0] - 1)
 
-    # Filter to only papers where the "has_fulltext" column is True
+    # Filter to only papers where the "can_access" column is True
     if args.mgt_full_text_only:
-        mgt_df = mgt_df[mgt_df["has_fulltext"] is True]
+        mgt_df = mgt_df[mgt_df["can_access"] == True]
         print("Only considering full text papers pmids: ", mgt_df.shape[0] - 1)
 
     # Get the query/ies from .yaml file so we know the list of genes processed.
@@ -367,23 +367,8 @@ def main(args):
     # Save pipeline/library output table (Evidence Aggregator .tsv) to the same output directory
     shutil.copy(args.pipeline_output, args.outdir)
 
-    # Move the paper finding directions, process, and/or few shot prompts into the benchmarking directory
-    # TODO: consider removing the files that match methodologies that I ruled out. Still useful if comparing methods.
-    directions_files = glob.glob("lib/evagg/content/prompts/paper_finding_directions_*.txt")
-    for file in directions_files:
-        shutil.move(file, args.outdir)
-    process_files = glob.glob("lib/evagg/content/prompts/paper_finding_process_*.txt")
-    for file in process_files:
-        shutil.move(file, args.outdir)
-    few_shot_files = glob.glob("lib/evagg/content/prompts/paper_finding_few_shot_*.txt")
-    for file in few_shot_files:
-        shutil.move(file, args.outdir)
-    full_text__files = glob.glob("lib/evagg/content/prompts/paper_finding_full_text_directions_*.txt")
-    for file in full_text__files:
-        shutil.move(file, args.outdir)
-
     # Compute overall precision and recall prior to gene-specific analysis
-    truth_pmids = set(mgt_df[mgt_df["has_fulltext"] is True].pmid)
+    truth_pmids = set(mgt_df[mgt_df["can_access"] == True].pmid)  # noqa
     pipeline_pmids = set(pipeline_df["paper_id"].str.lstrip("pmid:").astype(int))
 
     # If isolated run, compute overall PubMed correct, missed, and irrelevant papers
