@@ -94,6 +94,7 @@ class OpenAIClient(IPromptClient):
         prompt_tag = settings.pop("prompt_tag", "prompt")
         prompt_metadata = settings.pop("prompt_metadata", {})
         connection_errors = 0
+        rate_limit_errors = 0
 
         while True:
             try:
@@ -108,14 +109,18 @@ class OpenAIClient(IPromptClient):
                 elapsed = time.time() - start_ts
                 break
             except (openai.RateLimitError, openai.InternalServerError) as e:
-                logger.warning(f"Rate limit error on {prompt_tag}: {e}")
+                # Only report the first rate limit error not from the proxy unless it's constant.
+                if rate_limit_errors > 10 or (rate_limit_errors == 0 and not e.message.startswith("No good endpoints")):
+                    logger.warning(f"Rate limit error on {prompt_tag}: {e}")
+                rate_limit_errors += 1
                 await asyncio.sleep(1)
             except (openai.APIConnectionError, openai.APITimeoutError):
                 if connection_errors > 2:
                     if self._config.endpoint.startswith("http://localhost"):
                         logger.error("Azure OpenAI API unreachable - have you started the proxy?")
                     raise
-                logger.warning(f"Connectivity error on {prompt_tag}, retrying...")
+                if connection_errors == 0:
+                    logger.warning(f"Connectivity error on {prompt_tag}, retrying...")
                 connection_errors += 1
                 await asyncio.sleep(1)
 
