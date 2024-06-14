@@ -188,28 +188,27 @@ class PromptBasedContentExtractor(IExtractFields):
         return list(set(all_values))
 
     async def _observation_phenotypes_for_text(
-        self, text: str, observation_description: str, gene_symbol: str
+        self, text: str, description: str, metadata: Dict[str, str]
     ) -> List[str]:
-
         all_phenotypes_result = await self._run_json_prompt(
             self._PROMPT_FIELDS["phenotype"],
             {"passage": text},
-            {"prompt_tag": "phenotypes_all", "max_tokens": 4096},
+            {"prompt_tag": "phenotypes_all", "max_tokens": 4096, "prompt_metadata": metadata},
         )
         if (all_phenotypes := all_phenotypes_result.get("phenotypes", [])) == []:
             return []
 
         # TODO: consider linked observations like comp-hets?
         observation_phenotypes_params = {
-            "gene": gene_symbol,
+            "gene": metadata["gene_symbol"],
             "passage": text,
-            "observation": observation_description,
+            "observation": description,
             "candidates": ", ".join(all_phenotypes),
         }
         observation_phenotypes_result = await self._run_json_prompt(
             _get_prompt_file_path("phenotypes_observation"),
             observation_phenotypes_params,
-            {"prompt_tag": "phenotypes_observation"},
+            {"prompt_tag": "phenotypes_observation", "prompt_metadata": metadata},
         )
         if (observation_phenotypes := observation_phenotypes_result.get("phenotypes", [])) == []:
             return []
@@ -217,7 +216,7 @@ class PromptBasedContentExtractor(IExtractFields):
         observation_acronymns_result = await self._run_json_prompt(
             _get_prompt_file_path("phenotypes_acronyms"),
             {"passage": text, "phenotypes": ", ".join(observation_phenotypes)},
-            {"prompt_tag": "phenotypes_acronyms"},
+            {"prompt_tag": "phenotypes_acronyms", "prompt_metadata": metadata},
         )
 
         return observation_acronymns_result.get("phenotypes", [])
@@ -240,7 +239,8 @@ class PromptBasedContentExtractor(IExtractFields):
         texts = [fulltext]
         if table_texts != "":
             texts.append(table_texts)
-        result = await asyncio.gather(*[self._observation_phenotypes_for_text(t, obs_desc, gene_symbol) for t in texts])
+        metadata = {"gene_symbol": gene_symbol, "paper_id": observation.paper_id}
+        result = await asyncio.gather(*[self._observation_phenotypes_for_text(t, obs_desc, metadata) for t in texts])
         observation_phenotypes = list({item.lower() for sublist in result for item in sublist})
 
         # Now convert this phenotype list to OMIM/HPO ids.
@@ -257,7 +257,11 @@ class PromptBasedContentExtractor(IExtractFields):
             "patient_descriptions": ", ".join(observation.patient_descriptions),
             "gene": gene_symbol,
         }
-        return await self._run_json_prompt(self._PROMPT_FIELDS[field], params, {"prompt_tag": field})
+        prompt_settings = {
+            "prompt_tag": field,
+            "prompt_metadata": {"gene_symbol": gene_symbol, "paper_id": observation.paper_id},
+        }
+        return await self._run_json_prompt(self._PROMPT_FIELDS[field], params, prompt_settings)
 
     async def _generate_basic_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
         result = (await self._run_field_prompt(gene_symbol, observation, field)).get(field, "failed")

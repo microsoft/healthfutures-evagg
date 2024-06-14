@@ -79,7 +79,11 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
     assert llm_client.last_call("prompt_file")[1] == {"system_prompt": "Extract field"}
     assert llm_client.last_call("prompt_file")[2]["params"]["abstract"] == "The endoplasmic reticulum ..."
     assert llm_client.last_call("prompt_file")[3] == {
-        "prompt_settings": {"prompt_tag": "paper_category", "temperature": 0.8},
+        "prompt_settings": {
+            "prompt_metadata": {"gene_symbol": "gene", "paper_id": "37187958"},
+            "prompt_tag": "paper_category",
+            "temperature": 0.8,
+        },
     }
     assert llm_client.call_count() == 3
     assert len(result) == 1
