@@ -61,6 +61,7 @@ def test_prompt_based_content_extractor_valid_fields(
         texts=[TextSection("TEST", "test", 0, "Here is the observation text.", "unknown")],
         variant_descriptions=["c.1234A>G"],
         patient_descriptions=["unknown"],
+        paper_id=fields["paper_id"],
     )
 
     prompts = mock_prompt(
