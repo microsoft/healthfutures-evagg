@@ -64,7 +64,10 @@ class OpenAIClient(IPromptClient):
 
     @lru_cache
     def _get_client_instance(self) -> AsyncOpenAI:
-        logger.info(f"Using AOAI API at {self._config.endpoint} (max_parallel={self._config.max_parallel_requests}).")
+        logger.info(
+            f"Using AOAI API {self._config.api_version} at {self._config.endpoint}"
+            + f" (max_parallel={self._config.max_parallel_requests})."
+        )
         if self._config.token_provider:
             return AsyncAzureOpenAI(
                 azure_endpoint=self._config.endpoint,
@@ -89,7 +92,9 @@ class OpenAIClient(IPromptClient):
 
     async def _generate_completion(self, messages: ChatMessages, settings: Dict[str, Any]) -> str:
         prompt_tag = settings.pop("prompt_tag", "prompt")
+        prompt_metadata = settings.pop("prompt_metadata", {})
         connection_errors = 0
+        rate_limit_errors = 0
 
         while True:
             try:
@@ -104,20 +109,27 @@ class OpenAIClient(IPromptClient):
                 elapsed = time.time() - start_ts
                 break
             except (openai.RateLimitError, openai.InternalServerError) as e:
-                logger.warning(f"Rate limit error on {prompt_tag}: {e}")
+                # Only report the first rate limit error not from the proxy unless it's constant.
+                if rate_limit_errors > 10 or (rate_limit_errors == 0 and not e.message.startswith("No good endpoints")):
+                    logger.warning(f"Rate limit error on {prompt_tag}: {e}")
+                rate_limit_errors += 1
                 await asyncio.sleep(1)
             except (openai.APIConnectionError, openai.APITimeoutError):
                 if connection_errors > 2:
                     if self._config.endpoint.startswith("http://localhost"):
                         logger.error("Azure OpenAI API unreachable - have you started the proxy?")
                     raise
-                logger.warning(f"Connectivity error on {prompt_tag}, retrying...")
+                if connection_errors == 0:
+                    logger.warning(f"Connectivity error on {prompt_tag}, retrying...")
                 connection_errors += 1
                 await asyncio.sleep(1)
 
+        prompt_metadata["returned_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        prompt_metadata["elapsed_time"] = f"{elapsed:.1f} seconds"
+
         prompt_log = {
             "prompt_tag": prompt_tag,
-            "prompt_model": f"{settings.get('model')} {self._config.api_version}",
+            "prompt_metadata": prompt_metadata,
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m.get("content")) for m in messages.to_list()]),
             "prompt_response": response,
