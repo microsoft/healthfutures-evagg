@@ -32,7 +32,7 @@ class RareDiseaseLibraryCached(RareDiseaseFileLibrary):
 
     def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
         cache_key = f"get_papers_{query['gene_symbol']}"
-        if papers := self._cache.get(cache_key):
+        if (papers := self._cache.get(cache_key)) is not None:
             logger.info(f"Retrieved {len(papers)} papers from cache for {query['gene_symbol']}.")
             return papers
         papers = super().get_papers(query)
