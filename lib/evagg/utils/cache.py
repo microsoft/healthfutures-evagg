@@ -37,9 +37,6 @@ class ObjectFileCache(Generic[T]):
             )
             if use_previous_cache is True or input(prompt).lower() == "y":
                 logger.warning(f"Copying existing {name} cache from {run.dir_name} to current run.")
-                logger.warning(
-                    ["cp", "-r", os.path.join(str(run.path), sub_path), os.path.join(get_run_path(), CACHE_DIR)]
-                )
                 subprocess.run(
                     ["cp", "-r", os.path.join(str(run.path), sub_path), os.path.join(get_run_path(), CACHE_DIR)],
                     check=True,
