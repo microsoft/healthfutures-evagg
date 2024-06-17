@@ -117,13 +117,13 @@ class OpenAIClient(IPromptClient):
                     logger.warning(f"Rate limit error on {prompt_tag}: {e}")
                 rate_limit_errors += 1
                 await asyncio.sleep(1)
-            except (openai.APIConnectionError, openai.APITimeoutError):
+            except (openai.APIConnectionError, openai.APITimeoutError) as e:
                 if connection_errors > 2:
                     if self._config.endpoint.startswith("http://localhost"):
                         logger.error("Azure OpenAI API unreachable - have you started the proxy?")
                     raise
                 if connection_errors == 0:
-                    logger.warning(f"Connectivity error on {prompt_tag}, retrying...")
+                    logger.warning(f"Connectivity error on {prompt_tag}: {e.message}")
                 connection_errors += 1
                 await asyncio.sleep(1)
 
