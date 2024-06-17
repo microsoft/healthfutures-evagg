@@ -27,3 +27,5 @@ services:
   # - endpoint: https://hf-lab-openai-southcentralus.openai.azure.com
   # gpt-4-0125-preview, 0125, 80k
   # - endpoint: https://hf-lab-openai-northcentralus.openai.azure.com
+  # gpt-4-1106-preview, 1106, 150k
+  - endpoint: https://bmcaoai-swedencentral.openai.azure.com
