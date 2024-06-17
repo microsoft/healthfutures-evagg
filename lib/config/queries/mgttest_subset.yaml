@@ -1,0 +1,51 @@
+- "gene_symbol": "DECR1" # No known
+  "min_date": "2021/01/01"
+  "retmax": 27
+
+- "gene_symbol": "TDO2" # Limited
+  "min_date": "2017/01/01"
+  "retmax": 173
+
+- "gene_symbol": "FOXE3" # Moderate
+  "min_date": "2016a/01/01"
+  "retmax": 51
+
+- "gene_symbol": "MIB1" # No known
+  "min_date": "2020/01/01"
+  "retmax": 282
+
+- "gene_symbol": "PEX11G" # No known
+  "min_date": "2005/01/01"
+  "retmax": 7
+
+- "gene_symbol": "KIF1B" # No known
+  "min_date": "2001/01/01"
+  "retmax": 188
+
+- "gene_symbol": "NDUFA2" # Moderate
+  "min_date": "2008/01/01"
+  "retmax": 36
+
+- "gene_symbol": "PRPH" # Limited
+  "min_date": "2004/01/01"
+  "retmax": 223
+
+- "gene_symbol": "PTCD3" # Limited
+  "min_date": "2019/01/01"
+  "retmax": 10
+
+- "gene_symbol": "HYKK" # No known
+  "min_date": "2023/01/01"
+  "retmax": 2
+
+- "gene_symbol": "AHCY" # Moderate
+  "min_date": "2004/01/01"
+  "retmax": 153
+
+- "gene_symbol": "NLGN3" # Moderate
+  "min_date": "2003/01/01"
+  "retmax": 146
+
+- "gene_symbol": "MPST" # No known
+  "min_date": "2023/01/01"
+  "retmax": 15

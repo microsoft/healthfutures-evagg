@@ -12,14 +12,14 @@ di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttrain_subset.yaml
 library:
-  di_factory: lib.evagg.RareDiseaseFileLibrary
+  di_factory: lib.evagg.RareDiseaseLibraryCached
   paper_client:
     di_factory: lib/config/objects/ncbi.yaml
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "rare disease"
 extractor:
-  di_factory: lib.evagg.PromptBasedContentExtractor
+  di_factory: lib.evagg.PromptBasedContentExtractorCached
   fields:
     di_factory: lib/config/fields/evidence_all.yaml
   llm_client:
