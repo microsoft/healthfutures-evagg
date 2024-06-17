@@ -91,7 +91,7 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, PropertyContentExtracto
 
     async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`."""
-        if not (paper.props.get("fulltext_xml")):
+        if not (paper.props.get("can_access")):
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
             return []
 

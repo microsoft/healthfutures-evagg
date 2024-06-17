@@ -232,8 +232,13 @@ def _extract_hgvs_from_xml(root: Any, uid: str) -> Dict[str, str]:
     props = {k: v for k, v in (kvp.split("=") for kvp in (node.text or "").split("|") if "=" in kvp) if k and v}
     # Extract all values from the HGVS property of the form 'HGVS=value1,value2...'.
     hgvs = props.get("HGVS", "").split(",")
-    # Return a dict with the first occurrence of each value that starts with 'NP_' (hgvs_p) or 'NM_' (hgvs_c).
-    types = {"hgvs_p": lambda x: x.startswith("NP_"), "hgvs_c": lambda x: x.startswith("NM_")}
+    # Return a dict with the first occurrence of each value that starts with 'NP_' (hgvs_p), 'NM_' (hgvs_c), or 'NC_'
+    # (genomic reference sequences / non-coding variants).
+    types = {
+        "hgvs_p": lambda x: x.startswith("NP_"),
+        "hgvs_c": lambda x: x.startswith("NM_"),
+        "hgvs_g": lambda x: x.startswith("NC_"),
+    }
     return {k: next(filter(match, hgvs)) for k, match in types.items() if (any(map(match, hgvs)))}
 
 

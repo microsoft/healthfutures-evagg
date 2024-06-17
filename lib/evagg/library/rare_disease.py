@@ -185,7 +185,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper
             for paper_id in paper_ids
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
-            and paper.props["fulltext_xml"] is not None
+            and paper.props["can_access"] is True
         ]
         logger.info(f"Categorizing {len(papers)} papers with full text for {query['gene_symbol']}.")
 
