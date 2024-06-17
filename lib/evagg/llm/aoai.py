@@ -50,6 +50,7 @@ class OpenAIConfig(SettingsModel):
     api_version: str
     max_parallel_requests: int = 0
     token_provider: Any = None
+    timeout: int = 15
 
 
 class OpenAIClient(IPromptClient):
@@ -73,11 +74,13 @@ class OpenAIClient(IPromptClient):
                 azure_endpoint=self._config.endpoint,
                 azure_ad_token_provider=self._config.token_provider,
                 api_version=self._config.api_version,
+                timeout=self._config.timeout,
             )
         return AsyncAzureOpenAI(
             azure_endpoint=self._config.endpoint,
             api_key=self._config.api_key,
             api_version=self._config.api_version,
+            timeout=self._config.timeout,
         )
 
     @lru_cache
