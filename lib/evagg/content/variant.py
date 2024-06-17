@@ -93,6 +93,8 @@ class HGVSVariantFactory(ICreateVariants):
                 full_hgvs = hgvs_lookup[rsid]["hgvs_c"]
             elif "hgvs_p" in hgvs_lookup[rsid]:
                 full_hgvs = hgvs_lookup[rsid]["hgvs_p"]
+            elif "hgvs_g" in hgvs_lookup[rsid]:
+                full_hgvs = hgvs_lookup[rsid]["hgvs_g"]
 
         if not full_hgvs:
             raise ValueError(f"Could not find HGVS for info rsid {rsid}")
