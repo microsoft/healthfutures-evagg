@@ -17,6 +17,15 @@ def _parse_args(args: Sequence[str] | None = None) -> Namespace:
     # Accept a path to a config file (required).
     parser.add_argument("config", help="Path to config file for an IEvAggApp object.")
 
+    # Accept an optional count of how many times to retry the app if it fails. Default is 0.
+    parser.add_argument(
+        "-r",
+        "--retries",
+        type=int,
+        default=0,
+        help="Number of times to retry the app if it throws an exception. -1 for infinite retries. Default is 0.",
+    )
+
     # Accept an optional list of key/value pairs to override or add to config dictionary.
     parser.add_argument(
         "-o",
@@ -78,26 +87,34 @@ def run_evagg_app() -> None:
     spec = {"di_factory": config_yaml, **_parse_override_args(args.override)}
     app: IEvAggApp = DiContainer().create_instance(spec, {})
 
-    try:
-        app.execute()
-    except KeyboardInterrupt as e:
-        # Less verbose KeyboardInterrupt handling.
-        if tb := e.__traceback__:
-            while tb.tb_next:
-                if "site-packages" in tb.tb_next.tb_frame.f_code.co_filename:
-                    break
-                tb = tb.tb_next
+    while True:
 
-            # Print only the stack frame immediately before the site-packages level.
-            file_ref = f"{tb.tb_frame.f_code.co_filename}::{tb.tb_frame.f_code.co_name}"
-            print(f" KeyboardInterrupt in {file_ref} at line {tb.tb_lineno}")
-            # And then the innermost traceback.
-            traceback.print_tb(tb, limit=-1)
-    except Exception as e:
-        logger.error(f"Error executing app: {e}")
-        # log the stack trace using logger.error
-        logger.error(traceback.format_exc())
-        exit(1)
+        try:
+            app.execute()
+            break
+        except KeyboardInterrupt as e:
+            # Less verbose KeyboardInterrupt handling.
+            if tb := e.__traceback__:
+                while tb.tb_next:
+                    if "site-packages" in tb.tb_next.tb_frame.f_code.co_filename:
+                        break
+                    tb = tb.tb_next
+
+                # Print only the stack frame immediately before the site-packages level.
+                file_ref = f"{tb.tb_frame.f_code.co_filename}::{tb.tb_frame.f_code.co_name}"
+                print(f" KeyboardInterrupt in {file_ref} at line {tb.tb_lineno}")
+                # And then the innermost traceback.
+                traceback.print_tb(tb, limit=-1)
+                break
+        except Exception as e:
+            logger.error(f"Error executing app: {e}")
+            # log the stack trace using logger.error
+            logger.error(traceback.format_exc())
+            # Check if we should retry the app run.
+            if args.retries == 0:
+                exit(1)
+            if args.retries > 0:
+                args.retries -= 1
 
 
 if __name__ == "__main__":
