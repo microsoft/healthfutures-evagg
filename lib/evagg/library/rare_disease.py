@@ -172,10 +172,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         if "min_date" in query:
             params["mindate"] = query["min_date"]
             params["date_type"] = query.get("date_type", "pdat")
-        if "max_date" in query:
-            params["maxdate"] = query["max_date"]
-        elif "min_date" in query:
-            params["maxdate"] = datetime.datetime.now().strftime("%Y/%m/%d")
+            params["maxdate"] = query.get("max_date", datetime.datetime.now().strftime("%Y/%m/%d"))
         if "retmax" in query:
             params["retmax"] = query["retmax"]
 
