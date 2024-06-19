@@ -56,7 +56,7 @@
 - "gene_symbol": "NLGN3" # Moderate
   "min_date": "2003/01/01"
   "max_date": "2024/06/01"
-  "retmax": 146
+  "retmax": 149
 
 - "gene_symbol": "MPST" # No known
   "min_date": "2023/01/01"
