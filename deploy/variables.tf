@@ -31,3 +31,9 @@ variable "authorized_users" {
   type        = map(string)
   default     = {}
 }
+
+variable "aoai_deployments" {
+  description = "Map of cognitive service account name => resource group name."
+  type        = map(string)
+  default     = {}
+}
