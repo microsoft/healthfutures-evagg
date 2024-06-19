@@ -39,12 +39,11 @@ total_missing = 0
 total_to_process = 0
 
 for query in queries:
-    retmax = query.get("retmax")
+    retmax = 1000
     params = {
         "query": query["gene_symbol"],
         "mindate": query.get("min_date"),
         "maxdate": query.get("max_date"),
-        # "retmax": query.get("retmax"),
         "retmax": retmax,
     }
     ncbi_pmids = ncbi_client.search(**params)

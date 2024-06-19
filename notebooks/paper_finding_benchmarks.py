@@ -332,6 +332,13 @@ def main(args):
         mgt_df = mgt_df[mgt_df["can_access"] == True]
         print("Only considering full text papers pmids: ", mgt_df.shape[0] - 1)
 
+    # Filter to exclude skipped_pmids
+    if args.skipped_pmids:
+        with open(args.skipped_pmids, "r") as file:
+            skipped_pmids = [line.strip() for line in file.readlines()]
+        mgt_df = mgt_df[~mgt_df.pmid.astype(str).isin(skipped_pmids)]
+        print("Not considering skipped pmids: ", mgt_df.shape[0] - 1)
+
     # Get the query/ies from .yaml file so we know the list of genes processed.
     if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
         with open(yaml_data["queries"]["di_factory"], "r") as file:
@@ -634,6 +641,14 @@ if __name__ == "__main__":
         default="data/v1/papers_train_v1.tsv",
         type=str,
         help="Default is data/v1/papers_train_v1.tsv",
+    )
+    parser.add_argument(
+        "-s",
+        "--skipped-pmids",
+        nargs="?",
+        default="notebooks/paper_finding_benchmarks_skipped_pmids.txt",
+        type=str,
+        help="Default is notebooks/paper_finding_benchmarks_skipped_pmids.txt",
     )
     parser.add_argument(
         "-p",
