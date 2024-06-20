@@ -73,8 +73,9 @@ class WebHPOClient(ISearchHPO):
     def _clean_query(self, query: str) -> str:
         # urllib.parse.quote doesn't get everything, so we'll manually fix the rest.
         # Forward slashes generate 500 errors even when encoded, replace with spaces.
-        # Tilde's cause 500 errors only when they're at the end of a string, even when encoded, replace with spaces.
-        return urllib.parse.quote(query).replace("/", " ").replace("~", " ")
+        # Tildes cause 500 errors only when they're at the end of a string, even when encoded, replace with spaces.
+        # Parentheses cause 500 errors even when encoded, replace with spaces.
+        return urllib.parse.quote(query.replace("/", " ").replace("~", " ").replace("(", " ").replace(")", " ").strip())
 
     def search(self, query: str, retmax: int = 1) -> Sequence[Dict[str, str]]:
         query = self._clean_query(query)
