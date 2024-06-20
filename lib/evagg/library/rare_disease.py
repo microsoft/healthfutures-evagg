@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import json
 import logging
 import os
@@ -169,10 +170,9 @@ class RareDiseaseFileLibrary(IGetPapers):
         if ("max_date" in query or "date_type" in query) and "min_date" not in query:
             raise ValueError("A min_date is required when max_date or date_type is provided.")
         if "min_date" in query:
-            params["min_date"] = query["min_date"]
+            params["mindate"] = query["min_date"]
             params["date_type"] = query.get("date_type", "pdat")
-        if "max_date" in query:
-            params["max_date"] = query["max_date"]
+            params["maxdate"] = query.get("max_date", datetime.datetime.now().strftime("%Y/%m/%d"))
         if "retmax" in query:
             params["retmax"] = query["retmax"]
 
