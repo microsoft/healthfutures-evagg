@@ -50,7 +50,7 @@ class OpenAIConfig(SettingsModel):
     api_version: str
     max_parallel_requests: int = 0
     token_provider: Any = None
-    timeout: int = 15
+    timeout: int = 60
 
 
 class OpenAIClient(IPromptClient):
