@@ -29,7 +29,7 @@ def _get_prompt_file_path(name: str) -> str:
 class RareDiseaseFileLibrary(IGetPapers):
     """A class for fetching and categorizing disease papers from PubMed."""
 
-    CATEGORIES = ["rare disease", "other"]
+    CATEGORIES = ["genetic disease", "other"]
 
     def __init__(
         self,
@@ -50,7 +50,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
-        self._allowed_categories = allowed_categories if allowed_categories else ["rare disease"]
+        self._allowed_categories = allowed_categories if allowed_categories else ["genetic disease"]
         self.include_negative_examples = include_negative_examples
         # Allowed categories must be a subset of or equal to possible CATEGORIES.
         if not set(self._allowed_categories).issubset(set(self.CATEGORIES)):
@@ -81,9 +81,9 @@ class RareDiseaseFileLibrary(IGetPapers):
                         return True
             return False
 
-        # Check if the paper should be included in the rare disease category.
+        # Check if the paper should be included in the genetic disease category.
         if _has_keywords(title, INCLUSION_KEYWORDS) or _has_keywords(abstract, INCLUSION_KEYWORDS):
-            return "rare disease"
+            return "genetic disease"
         # If the paper doesn't fit in the other categories, add it to the other category.
         return "other"
 
@@ -111,14 +111,12 @@ class RareDiseaseFileLibrary(IGetPapers):
             prompt_settings={"prompt_tag": "paper_category", "prompt_metadata": prompt_metadata, "temperature": 0.8},
         )
 
-        if isinstance(response, str):
-            result = response
-        else:
-            logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
+        result = response.strip('"')
 
         if result in self.CATEGORIES:
             return result
 
+        logger.warning(f"LLM returned an invalid categorization for {paper.id}: {result}")
         return "other"
 
     async def _get_paper_categorizations(self, paper: Paper, gene: str) -> str:
