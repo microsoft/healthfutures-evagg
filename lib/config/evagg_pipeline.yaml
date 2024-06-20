@@ -40,7 +40,7 @@ extractor:
       di_factory: lib.evagg.content.HGVSVariantComparator
     normalizer: 
       di_factory: lib/config/objects/mutalyzer.yaml
-    use_previous_cache: false
+  use_previous_cache: false
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark
