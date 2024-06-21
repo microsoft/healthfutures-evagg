@@ -186,7 +186,8 @@ uninterrupted sequences of whitespace characters.
         candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
         # Seems like this should be unnecessary, but remove the example variants from the list of candidates.
-        example_variants = ["c.1234A>T", "NM_000123.1:c.2345del", "NP_000123.1:p.K34T", "K34T"]
+        example_variants = ["c.1234A>T", "c.*1234A>T" "NM_000123.1:c.2345del", "NP_000123.1:p.K34T", "K34T", "p.K34T"]
+
         candidates = [c for c in candidates if c not in example_variants]
 
         # If the variant is reported with both coding and protein-level
