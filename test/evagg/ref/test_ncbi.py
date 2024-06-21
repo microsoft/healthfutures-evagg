@@ -58,7 +58,13 @@ def test_variant(mock_web_client):
     web_client = mock_web_client(*(["efetch_snp_single_variant.xml"] * 3))
 
     result = NcbiLookupClient(web_client).hgvs_from_rsid("rs146010120")
-    assert result == {"rs146010120": {"hgvs_c": "NM_001276.4:c.104G>A", "hgvs_p": "NP_001267.2:p.Arg35Gln"}}
+    assert result == {
+        "rs146010120": {
+            "hgvs_c": "NM_001276.4:c.104G>A",
+            "hgvs_p": "NP_001267.2:p.Arg35Gln",
+            "hgvs_g": "NC_000001.11:g.203185337C>T",
+        }
+    }
 
 
 def test_multi_variant(mock_web_client):
@@ -66,8 +72,16 @@ def test_multi_variant(mock_web_client):
 
     result = NcbiLookupClient(web_client).hgvs_from_rsid("rs146010120", "rs113488022")
     assert result == {
-        "rs113488022": {"hgvs_p": "NP_004324.2:p.Val600Gly", "hgvs_c": "NM_004333.6:c.1799T>G"},
-        "rs146010120": {"hgvs_p": "NP_001267.2:p.Arg35Gln", "hgvs_c": "NM_001276.4:c.104G>A"},
+        "rs113488022": {
+            "hgvs_p": "NP_004324.2:p.Val600Gly",
+            "hgvs_c": "NM_004333.6:c.1799T>G",
+            "hgvs_g": "NC_000007.14:g.140753336A>C",
+        },
+        "rs146010120": {
+            "hgvs_p": "NP_001267.2:p.Arg35Gln",
+            "hgvs_c": "NM_001276.4:c.104G>A",
+            "hgvs_g": "NC_000001.11:g.203185337C>T",
+        },
     }
 
 
