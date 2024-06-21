@@ -91,6 +91,8 @@ class PromptBasedContentExtractor(IExtractFields):
             value = ob.variant.refseq if ob.variant.refseq else "unknown"
         elif field == "valid":
             value = str(ob.variant.valid)
+        elif field == "validation_error":
+            value = ob.variant.validation_error or "None"
         elif field == "individual_id":
             value = ob.individual
         elif field == "gnomad_frequency":

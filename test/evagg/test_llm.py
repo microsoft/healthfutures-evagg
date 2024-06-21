@@ -45,7 +45,6 @@ async def test_openai_client_embeddings(mock_openai) -> None:
     response = await client.embeddings(inputs)
     mock_openai.assert_called_once_with(azure_endpoint="https://ai", api_key="test", api_version="test")
     mock_openai.return_value.embeddings.create.assert_has_calls(
-        [call(input=[input], encoding_format='float', model="text-embedding-ada-002-v2") for input in inputs]
+        [call(input=[input], encoding_format="float", model="text-embedding-ada-002-v2") for input in inputs]
     )
     assert response == {input: [0.4, 0.5, 0.6] for input in inputs}
-    
