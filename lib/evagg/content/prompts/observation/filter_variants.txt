@@ -1,0 +1,21 @@
+Below is some text from a paper describing genetic variants and a list of variants found in that text. I want you to
+filter the list of provided variants by returning only the variants specifically associated with the gene {{$gene_symbol}}
+in the provided text. 
+
+Your response should be a json-formatted object following the example below that includes only variants drawn from the list
+of variants provided. Do not add any additional variants, just filter the provided list by removing variants that are not
+associated with the gene {{$gene_symbol}}.
+
+Here is the list of variants to filter: 
+
+{{$variants}}
+
+Provide your response as a json object in the following format:
+{
+    "variants": ["variant 1", "variant 2", "variant 4"]
+}
+
+Here is the text from which to determine variant-to-gene associations.
+
+{{$text}}
+
