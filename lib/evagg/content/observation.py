@@ -185,9 +185,13 @@ uninterrupted sequences of whitespace characters.
         # TODO: evaluate tasking the LLM to return an empty list instead of "unknown" when no variants are found.
         candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
-        split_prompt_runs = []
+        # Seems like this should be unnecessary, but remove the example variants from the list of candidates.
+        example_variants = ["c.1234A>T", "NM_000123.1:c.2345del", "NP_000123.1:p.K34T", "K34T"]
+        candidates = [c for c in candidates if c not in example_variants]
+
         # If the variant is reported with both coding and protein-level
         # descriptions, split these into two with another prompt.
+        split_prompt_runs = []
         for i in reversed(range(len(candidates))):
             if "p." in candidates[i] and "c." in candidates[i]:
                 split_prompt_runs.append(
@@ -202,7 +206,23 @@ uninterrupted sequences of whitespace characters.
         split_responses = await asyncio.gather(*split_prompt_runs)
         # Add the split variants back in to the candidates list.
         candidates.extend(v for r in split_responses for v in r.get("variants", []))
-        return candidates
+
+        # It's not uncommon to find variants that are not actually relevant to the gene_symbol.
+        # Attempt to filter.
+        if candidates:
+            filter_response = await self._run_json_prompt(
+                prompt_filepath=_get_prompt_file_path("filter_variants"),
+                params={"variants": ", ".join(candidates), "gene_symbol": gene_symbol, "text": full_text},
+                prompt_settings={"prompt_tag": "observation__filter_variants", "prompt_metadata": metadata},
+            )
+            filtered_candidates = filter_response.get("variants", [])
+            if extra := (set(filtered_candidates) - set(candidates)):
+                logger.warning(f"Removing filtered variants was not present in the candidate list: {extra}.")
+                filtered_candidates = [c for c in filtered_candidates if c in candidates]
+        else:
+            filtered_candidates = candidates
+
+        return filtered_candidates
 
     async def _find_genome_build(self, full_text: str, metadata: Dict[str, str]) -> str | None:
         """Identify the genome build used in the paper."""
