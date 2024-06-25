@@ -185,9 +185,14 @@ uninterrupted sequences of whitespace characters.
         # TODO: evaluate tasking the LLM to return an empty list instead of "unknown" when no variants are found.
         candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
-        split_prompt_runs = []
+        # Seems like this should be unnecessary, but remove the example variants from the list of candidates.
+        example_variants = ["c.1234A>T", "c.*1234A>T" "NM_000123.1:c.2345del", "NP_000123.1:p.K34T", "K34T", "p.K34T"]
+
+        candidates = [c for c in candidates if c not in example_variants]
+
         # If the variant is reported with both coding and protein-level
         # descriptions, split these into two with another prompt.
+        split_prompt_runs = []
         for i in reversed(range(len(candidates))):
             if "p." in candidates[i] and "c." in candidates[i]:
                 split_prompt_runs.append(
@@ -202,6 +207,7 @@ uninterrupted sequences of whitespace characters.
         split_responses = await asyncio.gather(*split_prompt_runs)
         # Add the split variants back in to the candidates list.
         candidates.extend(v for r in split_responses for v in r.get("variants", []))
+
         return candidates
 
     async def _find_genome_build(self, full_text: str, metadata: Dict[str, str]) -> str | None:
@@ -234,7 +240,7 @@ uninterrupted sequences of whitespace characters.
 
         return response
 
-    def _get_text_sections(self, paper: Paper) -> Tuple[str, List[str]]:
+    def _get_fulltext_sections(self, paper: Paper) -> Tuple[str, List[str]]:
         # Get paper texts.
         if not paper.props.get("fulltext_xml"):
             logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
@@ -249,6 +255,12 @@ uninterrupted sequences of whitespace characters.
             table_texts.append("\n\n".join([sec.text for sec in table_sections if sec.id == id]))
 
         return full_text, table_texts
+
+    def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str]) -> str:
+        sections = get_sections(paper.props["fulltext_xml"])
+        return "\n\n".join(
+            [section.text for section in sections if any(variant in section.text for variant in variant_descriptions)]
+        )
 
     def _create_variant_from_text(
         self, variant_str: str, gene_symbol: str, genome_build: str | None
@@ -338,7 +350,7 @@ uninterrupted sequences of whitespace characters.
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
         # Get the full text of the paper and any focus texts (e.g., tables).
-        full_text, table_texts = self._get_text_sections(paper)
+        full_text, table_texts = self._get_fulltext_sections(paper)
         metadata = {"gene_symbol": gene_symbol, "paper_id": paper.id}
 
         # Determine the candidate genetic variants matching `gene_symbol`
@@ -364,9 +376,38 @@ uninterrupted sequences of whitespace characters.
 
         # Consolidate the variant objects.
         cons_map = self._variant_comparator.consolidate(list(variants_by_description.values()), disregard_refseq=True)
-        rev_cons_map = {value: key for key, values in cons_map.items() for value in values}
+
+        # Assess the validity of the relationship between each consolidated variant and the query gene.
+        # Do this using the consolidated list of variants to reduce the number of AOAI calls.
+        async def _check_variant_gene_relationship(consolidated_variant: HGVSVariant) -> None:
+            descriptions = [d for d, v in variants_by_description.items() if v in cons_map[consolidated_variant]]
+            mentioning_text = self._get_text_mentioning_variant(paper, descriptions)
+            if mentioning_text:
+                response = await self._run_json_prompt(
+                    prompt_filepath=_get_prompt_file_path("check_variant"),
+                    params={
+                        "variant_descriptions": ", ".join(descriptions),
+                        "gene_symbol": gene_symbol,
+                        "text": mentioning_text,
+                    },
+                    prompt_settings={
+                        "prompt_tag": "observation__check_variant_gene_relationship",
+                        "prompt_metadata": metadata,
+                    },
+                )
+                if response.get("related", False) is False:
+                    for description in descriptions:
+                        logger.info(f"Removing {description} from the list of variants.")
+                        variants_by_description.pop(description)
+            else:
+                logger.info(
+                    f"No text found mentioning {consolidated_variant} in {paper.id}, not removing during variant check."
+                )
+
+        await asyncio.gather(*[_check_variant_gene_relationship(v) for v in cons_map])
 
         # Replace variant objects with their consolidated versions.
+        rev_cons_map = {value: key for key, values in cons_map.items() for value in values}
         variants_by_description = {d: rev_cons_map.get(v, v) for d, v in variants_by_description.items()}
 
         descriptions_by_patient = {}

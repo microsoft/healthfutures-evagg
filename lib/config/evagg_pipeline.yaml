@@ -17,7 +17,7 @@ library:
     di_factory: lib/config/objects/ncbi.yaml
   llm_client: "{{llm_client}}"
   allowed_categories:
-    - "rare disease"
+    - "genetic disease"
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractorCached
   fields:
