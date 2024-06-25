@@ -15,7 +15,7 @@ library:
   llm_client:
     di_factory: lib/config/objects/llm.yaml
   allowed_categories: 
-    - "rare disease"
+    - "genetic disease"
 extractor:
   di_factory: lib.evagg.PropertyContentExtractor
   fields:

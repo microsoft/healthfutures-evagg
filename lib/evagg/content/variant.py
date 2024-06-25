@@ -151,7 +151,8 @@ class HGVSVariantFactory(ICreateVariants):
             gene_symbol=gene_symbol,
             refseq=refseq,
             refseq_predicted=refseq_predicted,
-            valid=True,
+            valid=normalized.get("error_message", None) is None,
+            validation_error=normalized.get("error_message", None),
             protein_consequence=protein_consequence,
             coding_equivalents=coding_equivalents,
         )
@@ -174,7 +175,7 @@ class HGVSVariantFactory(ICreateVariants):
         transcript refseq).
         """
         refseq, refseq_predicted = self._clean_refseq(refseq, text_desc, gene_symbol)
-        is_valid = self._validator.validate(f"{refseq}:{text_desc}")
+        (is_valid, validation_error) = self._validator.validate(f"{refseq}:{text_desc}")
 
         # From here, if the variant is valid (or if it's a frameshift) we make a normalized variant (recursing as
         # necessary). Otherwise we make a non-normalized variant.
@@ -189,6 +190,7 @@ class HGVSVariantFactory(ICreateVariants):
                 refseq=refseq,
                 refseq_predicted=refseq_predicted,
                 valid=False,
+                validation_error=validation_error,
                 protein_consequence=None,
                 coding_equivalents=[],
             )
