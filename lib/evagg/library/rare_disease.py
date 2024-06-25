@@ -178,6 +178,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         paper_ids = self._paper_client.search(**params)
         logger.info(f"Fetching {len(paper_ids)} papers for {query['gene_symbol']}.")
 
+        if "retmax" in params and len(paper_ids) == params["retmax"]:
+            logger.warning(f"Reached the maximum number of papers for {query['gene_symbol']}. Skipping gene.")
+            return []
+
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = [
             paper
