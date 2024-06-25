@@ -31,12 +31,11 @@ from typing import Any, List, Tuple
 import openpyxl
 import pandas as pd
 
-from lib.evagg.ref import NcbiLookupClient
-from lib.evagg.utils import CosmosCachingWebClient, get_dotenv_settings
+from lib.di import DiContainer
 
 # %% Constants.
 
-TRUTH_XLSX = "./.tmp/Manual Ground Truth - 2024.03.27.xlsx"
+TRUTH_XLSX = "./.tmp/Manual Ground Truth - 2024.06.25.xlsx"
 GROUP_ASSIGNMENT_CSV = "./data/v1/group_assignments.tsv"
 OUTPUT_ROOT = "./data/v1"
 
@@ -386,11 +385,7 @@ evidence_df = evidence_df[["gene"] + [col for col in evidence_df.columns if col 
 # Add a paper_id column right after pmid that is formatted as "pmid:{pmid}".
 evidence_df["paper_id"] = "pmid:" + evidence_df["pmid"].astype(str)
 
-# Helper function for getting paper titles.
-ncbi_client = NcbiLookupClient(
-    CosmosCachingWebClient(get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_")),
-    get_dotenv_settings(filter_prefix="NCBI_EUTILS_"),
-)
+ncbi_client = DiContainer().create_instance(spec={"di_factory": "lib/config/objects/ncbi.yaml"}, resources={})
 
 
 @cache
