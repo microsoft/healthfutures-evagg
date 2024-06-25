@@ -180,7 +180,7 @@ plt.xlabel("Year of first publication")
 
 # %% Make a config yaml for the study genes.
 
-gene_config = [{"gene_symbol": gene, "min_date": "01/01/2001", "max_date": "06/25/2024", "retmax": 1000} for gene in study_set_genes if gene not in TROUBLE_GENES and gene.startswith("HLA-") == False]
+gene_config = [{"gene_symbol": gene, "min_date": "2001/01/01", "max_date": "2024/06/25", "retmax": 1000} for gene in study_set_genes if gene not in TROUBLE_GENES and gene.startswith("HLA-") == False]
 
 yaml.safe_dump(gene_config, open("lib/config/queries/study_set.yaml", "w"))
     
