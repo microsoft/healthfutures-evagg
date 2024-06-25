@@ -4,15 +4,70 @@ import pandas as pd
 
 from lib.di import DiContainer
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import yaml
+
+
 # %% Constants.
 
 GENE_PATH = "./sandbox/miah/study_set_genes.txt"
+
+TROUBLE_GENES = [
+    "ABR", # tons of papers, corresponds to a journal acronym
+    "AC009061.2",
+    "AC011322.1", 
+    "AC026740.3", 
+    "AC084121.13", 
+    "AC090983.2", 
+    "AC099489.1", 
+    "AC119396.1", 
+    "AC126323.1", 
+    "AC233976.1", 
+    "AC245452.1",
+    "ACE2", # Zillions of papers, covid gene
+    "AF241726.2",
+    "AL365214.2",
+    "APOBEC3B-AS1", # tons of papers 
+    "BCR", # tons of papers, corresponds to a journal acronym 
+    "BX664727.3",
+    "C21orf59-TCP10L",
+    "CR381670.2",
+    "CT47B1",
+    "FAM160A2",
+    "GOLGA8K",
+    "GOLGA8S",
+    "HLA-A", # Overly common, don't process?
+    "HLA-DRB1",
+    "KRTAP10-7",
+    "KRTAP2-2",
+    "KRTAP4-8",
+    "LINC01967",
+    "MIR4527HG",
+    "PARP1",
+    "PML",
+    "PNMA6F",
+    "PRAMEF14",
+    "SDR42E2",
+    "TAF11L11",
+    "TAF11L12",
+    "UBALD2"
+]
+
+# non-coding genes, we'll leave out
+# 
+
+# Other interesting genes
+# BCL6 - 618 open access papers, this is a known oncogene and well studied.
+# FASN - 847 papers. Well studied metabolic gene. No gene-disease curations in gencc
+# HLA-* - all HLA prefixed genes?
 
 # %% Load in the study set genes.
 # Study set genes are just a text file with one gene per line. Read this into a list.
 with open(GENE_PATH, "r") as f:
     study_set_genes = [line.strip() for line in f.readlines()]
 
+study_set_genes.sort()
 
 # %% Make an NCBI client
 
@@ -32,8 +87,6 @@ ncbi_client = DiContainer().create_instance(spec={"di_factory": "lib/config/obje
 # if "retmax" in query:
 #     params["retmax"] = query["retmax"]
 
-from time import sleep
-
 retmax = 1000
 
 all_papers = {}
@@ -44,7 +97,7 @@ for index, gene in enumerate(study_set_genes):
     #    sleep(0.1)
 
     if len(paper_ids) == retmax:
-        print(f"Warning: Reached retmax for {gene}. This probably means we have a bogus result, skipping.")
+        print(f""{gene}", ")
         continue
 
     print(f"{index} of {len(study_set_genes)}: Fetching {len(paper_ids)} papers for {gene}.")
@@ -94,9 +147,6 @@ for g in missing_genes:
 
 # %%
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 # Make a histogram that shows how many genes have [0, 10), [10, 20), [20, 30), etc. papers.
 plt.figure(figsize=(12, 6))
 sns.histplot(data=paper_df.groupby("gene").size(), bins=range(0, 100, 5), kde=False)
@@ -127,5 +177,12 @@ sns.histplot(data=paper_df.groupby("gene")["year"].min(), bins=range(1975, 2025,
 plt.ylabel("Number of genes")
 plt.xlabel("Year of first publication")
 
+
+# %% Make a config yaml for the study genes.
+
+gene_config = [{"gene_symbol": gene, "min_date": "01/01/2001", "max_date": "06/25/2024", "retmax": 1000} for gene in study_set_genes if gene not in TROUBLE_GENES and gene.startswith("HLA-") == False]
+
+yaml.safe_dump(gene_config, open("lib/config/queries/study_set.yaml", "w"))
+    
 
 # %%

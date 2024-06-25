@@ -163,7 +163,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         if not query.get("gene_symbol"):
             raise ValueError("Minimum requirement to search is to input a gene symbol.")
 
-        params = {"query": query["gene_symbol"]}
+        params = {"query": f"Gene {query['gene_symbol']} pubmed pmc open access[filter]"}
         # Rationalize the optional parameters.
         if ("max_date" in query or "date_type" in query) and "min_date" not in query:
             raise ValueError("A min_date is required when max_date or date_type is provided.")
