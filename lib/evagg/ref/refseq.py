@@ -54,6 +54,55 @@ class NcbiReferenceLookupClient(NcbiClientBase, IRefSeqLookupClient):
             "RNA": "NM_005651.4",
             "Protein": "NP_005642.1",
         },
+        "ADGRD1": {
+            "GeneID": "283383",
+            "Symbol": "ADGRD1",
+            "RSG": "NC_000012.12",
+            "RNA": "NM_198827.5",
+            "Protein": "NP_942122.2",
+        },
+        "ALPK2": {
+            "GeneID": "115701",
+            "Symbol": "ALPK2",
+            "RSG": "NC_000018.10",
+            "RNA": "NM_052947.4",
+            "Protein": "NP_443179.3",
+        },
+        "ANKS3": {
+            "GeneID": "124401",
+            "Symbol": "ANKS3",
+            "RSG": "NC_000016.10",
+            "RNA": "NM_133450.4",
+            "Protein": "NP_597707.1",
+        },
+        "BAHCC1": {
+            "GeneID": "57597",
+            "Symbol": "BAHCC1",
+            "RSG": "NC_000017.11",
+            "RNA": "NM_001377448.1",
+            "Protein": "NP_001364377.1",
+        },
+        "BOD1": {
+            "GeneID": "91272",
+            "Symbol": "BOD1",
+            "RSG": "NC_000005.10",
+            "RNA": "NM_138369.3",
+            "Protein": "NP_612378.1",
+        },
+        "CARF": {  # No RefSeqGene accession, thus not in reference table. Using chromosomal genomic reference.
+            "GeneID": "79800",
+            "Symbol": "CARF",
+            "RSG": "NC_000002.12",
+            "RNA": "NM_024744.17",
+            "Protein": "NP_079020.13",
+        },
+        "CASZ1": {
+            "GeneID": "54897",
+            "Symbol": "CASZ1",
+            "RSG": "NC_000001.11",
+            "RNA": "NM_001079843.3",
+            "Protein": "NP_001073312.1",
+        },
     }
 
     def __init__(
