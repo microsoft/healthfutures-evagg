@@ -128,7 +128,7 @@ TOP2B	37068767	True	False	unknown	train
 TOP2B	32128574	True	False	not_open_access	train
 SLFN14	30431218	True	False	unknown	train
 SLFN14	31378119	True	True	CC BY	train
-SLFN14	37140956	True	False	unknown	train
+SLFN14	37140956	True	False	not_open_access	train
 SLFN14	36790527	True	False	CC BY-NC-ND	train
 SLFN14	26280575	True	False	not_open_access	train
 SLFN14	33496736	True	False	not_open_access	train
@@ -229,7 +229,7 @@ GRXCR2	32048449	True	True	CC BY	train
 GRXCR2	30157177	True	True	CC0	train
 GRXCR2	33528103	True	True	CC BY	train
 GRXCR2	35454363	True	True	CC BY	train
-EMC1	36799557	True	False	unknown	train
+EMC1	36799557	True	False	not_open_access	train
 EMC1	35234901	True	False	not_open_access	train
 EMC1	37187958	True	True	CC BY	train
 EMC1	26942288	True	False	not_open_access	train
