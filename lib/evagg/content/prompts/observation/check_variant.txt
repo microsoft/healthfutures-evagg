@@ -1,9 +1,9 @@
 Below you will find one or more descriptions of a genetic variant, and a gene of interest. I want you to search the 
-subsequent test to assess whether the variant of interest is in the gene of interest, or whether there isn't evidence
+subsequent text to assess whether the variant of interest is in the gene of interest, or whether there isn't evidence
 to support this conclusion.
 
-Provide your response as a json object with the following format, do not provide any text in your response other than
-the follwoing json object:
+Provide your response as a json object with the following format; do not provide any text in your response other than
+the following json object:
 
 {
     "related": true | false

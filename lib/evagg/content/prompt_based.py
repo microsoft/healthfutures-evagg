@@ -92,7 +92,7 @@ class PromptBasedContentExtractor(IExtractFields):
         elif field == "valid":
             value = str(ob.variant.valid)
         elif field == "validation_error":
-            value = ob.variant.validation_error or "None"
+            value = ob.variant.validation_error or ""
         elif field == "individual_id":
             value = ob.individual
         elif field == "gnomad_frequency":
