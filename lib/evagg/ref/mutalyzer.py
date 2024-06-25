@@ -1,7 +1,7 @@
 import logging
 import re
 from functools import cache
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Sequence, Tuple
 
 from Bio.SeqUtils import IUPACData
 from requests.exceptions import HTTPError
@@ -53,14 +53,15 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         except HTTPError as e:
             logger.debug(f"{url} returned an error: {e}")
             if e.response.status_code == 500:
-                return {}
+                return {"error_message": "Mutalyzer system error"}
             raise e
 
         if "errors" in response or ("custom" in response and "errors" in response["custom"]):
-            logger.debug(
-                f"Unable to normalize variant. Mutalyzer returned an error for {hgvs}: {response['custom']['errors']}"
-            )
-            return {}
+            error_dict = response.get("errors") or response["custom"]["errors"]
+            error_message = error_dict[0].get("code", "Unknown error")
+
+            logger.debug(f"Unable to normalize variant. Mutalyzer returned an error for {hgvs}: {error_message}")
+            return {"error_message": error_message}
 
         # Only return a subset of the fields in the response.
         response_dict = {}
@@ -114,12 +115,14 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
 
         return self._cached_normalize(hgvs)
 
-    def validate(self, hgvs: str) -> bool:
+    def validate(self, hgvs: str) -> Tuple[bool, str | None]:
         """Validate an HGVS description using Mutalyzer."""
         # Mutalyzer doesn't currently support normalizing frame shift variants, so we can't validate them.
         # TODO, consider tweaking to be a stop gain and normalizing that.
         if hgvs.split(":")[1].find("fs") != -1:
             logger.debug(f"Skipping validation of frame shift variant {hgvs}")
-            return False
+            return (False, "Frameshift validation not supported")
 
-        return bool(self.normalize(hgvs))
+        normalization_result = self.normalize(hgvs)
+        error_message = normalization_result.pop("error_message", None)
+        return (bool(normalization_result), error_message)
