@@ -64,13 +64,13 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
     llm_client = mock_llm_client()
     llm_client._responses = iter(
         [
-            json.dumps({"disease_category": "rare disease"}),
-            json.dumps({"disease_category": "rare disease"}),
-            json.dumps({"disease_category": "rare disease"}),
+            json.dumps({"disease_category": "genetic disease"}),
+            json.dumps({"disease_category": "genetic disease"}),
+            json.dumps({"disease_category": "genetic disease"}),
         ]
     )
     query = {"gene_symbol": "gene"}
-    allowed_categories = ["rare disease", "other"]
+    allowed_categories = ["genetic disease", "other"]
     result = RareDiseaseFileLibrary(paper_client, llm_client, allowed_categories).get_papers(query)
     print("result", result)
     assert paper_client.last_call("search") == ({"query": "gene"},)
@@ -95,11 +95,11 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, j
     other_paper = Paper(**json_load("other_paper.json"))
     ids = [rare_disease_paper.props["pmid"], other_paper.props["pmid"]]
     paper_client = mock_paper_client(ids, rare_disease_paper, other_paper)
-    allowed_categories = ["rare disease", "other"]
+    allowed_categories = ["genetic disease", "other"]
     llm_client = mock_llm_client(
-        json.dumps({"paper_category": "rare disease"}),
-        json.dumps({"paper_category": "rare disease"}),
-        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "genetic disease"}),
+        json.dumps({"paper_category": "genetic disease"}),
+        json.dumps({"paper_category": "genetic disease"}),
         json.dumps({"paper_category": "other"}),
         json.dumps({"paper_category": "other"}),
         json.dumps({"paper_category": "other"}),
@@ -124,9 +124,9 @@ async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_clie
     ids = [rare_disease_paper.props["pmid"], other_paper.props["pmid"]]
     paper_client = mock_paper_client(ids, rare_disease_paper, other_paper)
     llm_client = mock_llm_client(
-        json.dumps({"paper_category": "rare disease"}),
-        json.dumps({"paper_category": "rare disease"}),
-        json.dumps({"paper_category": "rare disease"}),
+        json.dumps({"paper_category": "genetic disease"}),
+        json.dumps({"paper_category": "genetic disease"}),
+        json.dumps({"paper_category": "genetic disease"}),
         json.dumps({"paper_category": "other"}),
         json.dumps({"paper_category": "other"}),
         json.dumps({"paper_category": "other"}),
