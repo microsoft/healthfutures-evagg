@@ -21,7 +21,7 @@ from pyhpo import Ontology
 from sklearn.metrics import confusion_matrix
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, RefSeqGeneLookupClient
 from lib.evagg.utils import CosmosCachingWebClient, get_azure_credential, get_dotenv_settings
 from lib.evagg.utils.run import get_previous_run
 
@@ -193,7 +193,7 @@ web_client = CosmosCachingWebClient(
 )
 mutalyzer_client = MutalyzerClient(web_client)
 ncbi_client = NcbiLookupClient(web_client)
-refseq_client = NcbiReferenceLookupClient(web_client)
+refseq_client = RefSeqGeneLookupClient(web_client)
 variant_factory = HGVSVariantFactory(
     validator=mutalyzer_client,
     normalizer=mutalyzer_client,
