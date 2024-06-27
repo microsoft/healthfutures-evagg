@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from lib.evagg.ref import IRefSeqLookupClient, NcbiReferenceLookupClient
+from lib.evagg.ref import IRefSeqLookupClient, RefSeqGeneLookupClient
 from lib.evagg.utils import IWebContentClient
 
 
@@ -15,7 +15,7 @@ def mock_web_client(mock_client: Any) -> Any:
 
 @pytest.fixture
 def client(mock_web_client: Any) -> IRefSeqLookupClient:
-    return NcbiReferenceLookupClient(reference_dir="test/resources", web_client=mock_web_client())
+    return RefSeqGeneLookupClient(reference_dir="test/resources", web_client=mock_web_client())
 
 
 def test_transcript_accession_found(client: IRefSeqLookupClient) -> None:
@@ -60,7 +60,7 @@ def test_resource_caching(mock_web_client: Any) -> None:
         # First, remove the actual temp_dir so that we're forced to create it.
         os.rmdir(temp_dir)
 
-        client = NcbiReferenceLookupClient(reference_dir=temp_dir, web_client=web_client)
+        client = RefSeqGeneLookupClient(reference_dir=temp_dir, web_client=web_client)
 
         # Shouldn't exist yet.
         assert not os.path.exists(os.path.join(temp_dir, "LRG_RefSeqGene.tsv"))

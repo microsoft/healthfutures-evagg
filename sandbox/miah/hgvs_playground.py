@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Sequence, Set
 import requests
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, RefSeqGeneLookupClient
 from lib.evagg.types import Paper
 from lib.evagg.utils import CosmosCachingWebClient, RequestsWebContentClient, get_dotenv_settings
 
@@ -131,7 +131,7 @@ web_client = CosmosCachingWebClient(
     get_dotenv_settings(filter_prefix="EVAGG_CONTENT_CACHE_"), web_settings={"max_retries": 0, "retry_codes": []}
 )
 
-ref_seq_lookup_client = NcbiReferenceLookupClient(web_client)
+ref_seq_lookup_client = RefSeqGeneLookupClient(web_client)
 
 #   web_client:
 #     # di_factory: lib.evagg.utils.RequestsWebContentClient
