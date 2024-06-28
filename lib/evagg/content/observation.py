@@ -186,7 +186,14 @@ uninterrupted sequences of whitespace characters.
         candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
         # Seems like this should be unnecessary, but remove the example variants from the list of candidates.
-        example_variants = ["c.1234A>T", "c.*1234A>T" "NM_000123.1:c.2345del", "NP_000123.1:p.K34T", "K34T", "p.K34T"]
+        example_variants = [
+            "c.1234A>T",
+            "c.*1234A>T" "NM_000123.1:c.2345del",
+            "NP_000123.1:p.K34T",
+            "K34T",
+            "p.K34T",
+            "rs123456789",
+        ]
 
         candidates = [c for c in candidates if c not in example_variants]
 
@@ -301,6 +308,11 @@ uninterrupted sequences of whitespace characters.
             refseq = None
             variant_str = variant_str.strip()
 
+        # If the variant string looks nothing like a variant description, give up.
+        if not re.search(r"[A-Za-z]", variant_str):
+            logger.warning(f"Variant string '{variant_str}' appears unparsable.")
+            return None
+
         # If the refseq looks like a chromosome designation, we've got to figure out the corresponding refseq, which
         # will depend on the genome build.
         if refseq and refseq.find("chr") >= 0:
@@ -308,11 +320,21 @@ uninterrupted sequences of whitespace characters.
 
         # Occassionally, protein level descriptions do not include the p. prefix, add it if it's missing.
         # This will only currently handle fairly simple protein level descriptions.
-        if re.search(r"^[A-Za-z]+\d+[A-Za-z]", variant_str):
+        if re.search(r"^[A-Za-z]+\d+[A-Za-z]+$", variant_str):
             variant_str = "p." + variant_str
 
-        # Single-letter protein level descriptions should use * for a stop codon, not X.
+        # Occassionally, coding level descriptions do not include the c. prefix, add it if it's missing.
+        # This will only currently handle fairly simple coding level descriptions.
+        if re.search(r"^\d+[ACGT]>[ACGT]$", variant_str):
+            variant_str = "c." + variant_str
+        if re.search(r"^\d+(_\d+)?del[ACGT]*$", variant_str):
+            variant_str = "c." + variant_str
+        if re.search(r"^\d+ins[ACGT]*$", variant_str):
+            variant_str = "c." + variant_str
+
+        # Single-letter protein level descriptions should use * for a stop codon, not X or stop.
         variant_str = re.sub(r"(p\.[A-Z]\d+)X", r"\1*", variant_str)
+        variant_str = re.sub(r"(p\.[A-Z]\d+)stop", r"\1*", variant_str)
 
         # Fix c. descriptions that are erroneously written as c.{ref}{pos}{alt} instead of c.{pos}{ref}>{alt}.
         variant_str = re.sub(r"c\.([ACTG])(\d+)([A-Z]+)", r"c.\2\1>\3", variant_str)
@@ -330,7 +352,7 @@ uninterrupted sequences of whitespace characters.
         variant_str = re.sub(r"(?<!\d)-(?!\d)", "", variant_str)
 
         # Remove everything after the first occurrence of "fs" if it occurs,
-        # HGVS nomenclature gets fairly in these cases.
+        # HGVS nomenclature gets variable in these cases in practice.
         if "fs" in variant_str:
             variant_str = variant_str.split("fs")[0] + "fs"
 
@@ -401,7 +423,7 @@ uninterrupted sequences of whitespace characters.
                         variants_by_description.pop(description)
             else:
                 logger.info(
-                    f"No text found mentioning {consolidated_variant} in {paper.id}, not removing during variant check."
+                    f"No text found mentioning {consolidated_variant} in {paper.id} (checked {descriptions}), not removing during variant check."
                 )
 
         await asyncio.gather(*[_check_variant_gene_relationship(v) for v in cons_map])
