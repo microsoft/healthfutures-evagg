@@ -355,9 +355,9 @@ class PromptBasedContentExtractor(IExtractFields):
         # Find all the observations in the paper relating to the query.
         observations = asyncio.run(self._observation_finder.find_observations(gene_symbol, paper))
         if not observations:
-            logger.warning(f"No observations found in {paper.id}")
+            logger.info(f"No observations found in {paper.id} for {gene_symbol}")
             return []
 
         # Extract all the requested fields from the observations.
-        logger.info(f"Found {len(observations)} observations in {paper.id}")
+        logger.info(f"Found {len(observations)} observations in {paper.id} for {gene_symbol}")
         return asyncio.run(self._extract_fields(paper, gene_symbol, observations))
