@@ -423,7 +423,8 @@ uninterrupted sequences of whitespace characters.
                         variants_by_description.pop(description)
             else:
                 logger.info(
-                    f"No text found mentioning {consolidated_variant} in {paper.id} (checked {descriptions}), not removing during variant check."
+                    f"No text found mentioning {consolidated_variant} in {paper.id} (checked {descriptions}), "
+                    "not removing during variant check."
                 )
 
         await asyncio.gather(*[_check_variant_gene_relationship(v) for v in cons_map])
