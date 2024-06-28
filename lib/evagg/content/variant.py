@@ -47,7 +47,7 @@ class HGVSVariantFactory(ICreateVariants):
         elif text_desc.startswith("g."):
             raise ValueError(f"Genomic (g. prefixed) variants must have a RefSeq. None was provided for {text_desc}")
         else:
-            logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}")
+            logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}. Can't predict refseq.")
             return None
 
     def _clean_refseq(self, refseq: str | None, text_desc: str, gene_symbol: str | None) -> Tuple[str, bool]:
@@ -216,7 +216,10 @@ class HGVSVariantComparator(ICompareVariants):
 
     def _parse_refseq_parts(self, refseq: str) -> Dict[str, int]:
         """Parse a refseq accession string into a dictionary of accessions and versions."""
-        return {tok.rstrip(")").split(".")[0]: int(tok.rstrip(")").split(".")[1]) for tok in refseq.split("(")}
+        return {
+            tok.rstrip(")").split(".")[0]: (int(tok.rstrip(")").split(".")[1]) if "." in tok else -1)
+            for tok in refseq.split("(")
+        }
 
     def _more_complete_by_refseq(
         self, variant1: HGVSVariant, variant2: HGVSVariant, allow_mismatch: bool = False
