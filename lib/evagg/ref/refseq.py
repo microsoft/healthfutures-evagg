@@ -78,7 +78,7 @@ class BaseLookupClient(NcbiClientBase, IRefSeqLookupClient):
 class RefSeqLookupClient(BaseLookupClient):
     """Determine RefSeq 'Mane Select' and 'RefSeq Select' accessions for genes using the NCBI RefSeq database."""
 
-    _NCBI_REFSEQ_URL = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/all_assembly_versions/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
+    _NCBI_REFSEQ_URL = "https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/all_assembly_versions/GCF_000001405.39_GRCh38.p13/GCF_000001405.39_GRCh38.p13_genomic.gff.gz"  # noqa: E501
     _RAW_FILENAME = "GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
     _PROCESSED_FILEPATH = "refseq_processed.json"
 
@@ -345,12 +345,5 @@ class RefSeqGeneLookupClient(BaseLookupClient):
             reference_dict[gene_symbol] = {
                 field_mapping.get(k, k): v for k, v in zip(header, fields) if k in kept_fields
             }
-
-        # # The reference has known missing genes. I hate to do this, but we're going to manually add them in here.
-        # for k, v in self._MANUAL_ADDITIONS.items():
-        #     if k in reference_dict:
-        #         # If the gene is already in the reference table, don't overwrite it.
-        #         continue
-        #     reference_dict[k] = v
 
         return reference_dict
