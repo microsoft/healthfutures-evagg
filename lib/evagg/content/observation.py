@@ -191,20 +191,30 @@ uninterrupted sequences of whitespace characters.
                 return x[len(gene_symbol) :].lstrip(":")
             return x
 
-        # TODO: evaluate tasking the LLM to return an empty list instead of "unknown" when no variants are found.
         candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
         # Seems like this should be unnecessary, but remove the example variants from the list of candidates.
-        example_variants = [
-            "c.1234A>T",
-            "c.*1234A>T" "NM_000123.1:c.2345del",
-            "NP_000123.1:p.K34T",
+        example_variant_subs = [
+            "1234A>T",
+            "2345del",
             "K34T",
-            "p.K34T",
             "rs123456789",
+            "A55T",
+            "Ala55Lys",
+            "K412T",
+            "Ser195Gly",
+            "T65I",
+            "1234G>T",
+            "4321A>G",
+            "1234567A>T",
         ]
 
-        candidates = [c for c in candidates if c not in example_variants]
+        if any(ex in ca for ex in example_variant_subs for ca in candidates):
+            candidates_from_examples = [ca for ca in candidates if any(ex in ca for ex in example_variant_subs)]
+            logger.warning(
+                f"Removing example variants found in candidates for {gene_symbol}: {candidates_from_examples}"
+            )
+            candidates = [ca for ca in candidates if ca not in candidates_from_examples]
 
         # If the variant is reported with both coding and protein-level
         # descriptions, split these into two with another prompt.
