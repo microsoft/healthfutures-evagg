@@ -12,3 +12,5 @@ OR
 }
 
 {{$text}}
+
+As a reminder, please tell me whether the text above contains mentions of specific genetic variants in the gene {{$gene}}. 
