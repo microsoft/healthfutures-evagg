@@ -362,6 +362,15 @@ uninterrupted sequences of whitespace characters.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
+    async def _sanity_check_paper(self, full_text: str, gene_symbol: str) -> bool:
+        result = await self._run_json_prompt(
+            prompt_filepath=_get_prompt_file_path("sanity_check"),
+            params={"text": full_text, "gene": gene_symbol},
+            prompt_settings={"prompt_tag": "observation__sanity_check"},
+        )
+
+        return result.get("relevant", True)  # Default to including the paper.
+
     async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
@@ -374,6 +383,11 @@ uninterrupted sequences of whitespace characters.
         # Get the full text of the paper and any focus texts (e.g., tables).
         full_text, table_texts = self._get_fulltext_sections(paper)
         metadata = {"gene_symbol": gene_symbol, "paper_id": paper.id}
+
+        # First, sanity check the paper for mention of genetic variants of interest.
+        if not await self._sanity_check_paper(full_text, gene_symbol):
+            logger.info(f"Skipping {paper.id} as it doesn't pass initial check for relevance.")
+            return []
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
