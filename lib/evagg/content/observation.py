@@ -392,9 +392,6 @@ uninterrupted sequences of whitespace characters.
         if not await self._sanity_check_paper(full_text, gene_symbol, metadata):
             logger.info(f"Skipping {paper.id} as it doesn't pass initial check for relevance.")
             return []
-        else:
-            logger.info(f"Paper {paper.id} passed initial check for relevance.")
-            return []
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
