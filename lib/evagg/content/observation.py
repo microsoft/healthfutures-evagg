@@ -139,7 +139,16 @@ uninterrupted sequences of whitespace characters.
 
         await asyncio.gather(*[split_patient(patient) for patient in patient_candidates])
 
-        # If more than 5 (TODO parameterize?) patients are identified, risk of false positives is increased.
+        # For any numeric patient descriptions, check to see whether the description is a substring of another
+        # (non-numeric) patient description. If it is, remove it.
+        numeric_patients = [p for p in patients_after_splitting if p.isnumeric()]
+        non_numeric_patients = [p for p in patients_after_splitting if not p.isnumeric()]
+        for numeric_patient in numeric_patients:
+            if any(numeric_patient in non_numeric_patient for non_numeric_patient in non_numeric_patients):
+                logger.info(f"Removing {numeric_patient} from list of patients as it is a substring of another.")
+                patients_after_splitting.remove(numeric_patient)
+
+        # If more than 5 patients are identified, risk of false positives is increased.
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
         if len(patients_after_splitting) >= 5:
