@@ -75,7 +75,11 @@ class PromptBasedContentExtractor(IExtractFields):
         elif field == "citation":
             value = paper.props["citation"]
         elif field == "link":
-            value = paper.props["link"]
+            value = (
+                "https://www.ncbi.nlm.nih.gov/pmc/articles/" + paper.props["pmcid"]
+                if "pmcid" in paper.props
+                else paper.props["link"]
+            )
         elif field == "paper_title":
             value = paper.props["title"]
         elif field == "hgvs_c":
