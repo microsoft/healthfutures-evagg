@@ -343,6 +343,13 @@ uninterrupted sequences of whitespace characters.
         # will depend on the genome build.
         if refseq and refseq.find("chr") >= 0:
             refseq = f"{genome_build}({refseq})"
+        # Otherwise, it should begin with NM_, NP_, or NC_, otherwise we'll ignore it.
+        elif refseq and not re.match(r"(NM_|NP_|NC_)", refseq):
+            logger.info(f"Ignoring potentially invalid refseq: {refseq}")
+            refseq = None
+
+        # Remove any parentheses.
+        variant_str = variant_str.replace("(", "").replace(")", "")
 
         # Occassionally, protein level descriptions do not include the p. prefix, add it if it's missing.
         # This will only currently handle fairly simple protein level descriptions.
