@@ -88,6 +88,8 @@ class HGVSVariantFactory(ICreateVariants):
         """Parse a variant based on an rsid."""
         hgvs_lookup = self._variant_lookup_client.hgvs_from_rsid(rsid)
         full_hgvs = None
+        gene_symbol = None
+
         if rsid in hgvs_lookup:
             if "hgvs_c" in hgvs_lookup[rsid]:
                 full_hgvs = hgvs_lookup[rsid]["hgvs_c"]
@@ -95,6 +97,7 @@ class HGVSVariantFactory(ICreateVariants):
                 full_hgvs = hgvs_lookup[rsid]["hgvs_p"]
             elif "hgvs_g" in hgvs_lookup[rsid]:
                 full_hgvs = hgvs_lookup[rsid]["hgvs_g"]
+            gene_symbol = hgvs_lookup[rsid].get("gene")
 
         if not full_hgvs:
             raise ValueError(f"Could not find HGVS for info rsid {rsid}")
@@ -102,7 +105,7 @@ class HGVSVariantFactory(ICreateVariants):
         refseq = full_hgvs.split(":")[0]
         text_desc = full_hgvs.split(":")[1]
 
-        return self.parse(text_desc, None, refseq)
+        return self.parse(text_desc, gene_symbol, refseq)
 
     def _normalize_and_create(
         self, text_desc: str, gene_symbol: str | None, refseq: str, refseq_predicted: bool
