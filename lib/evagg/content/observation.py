@@ -148,6 +148,9 @@ uninterrupted sequences of whitespace characters.
                 logger.info(f"Removing {numeric_patient} from list of patients as it is a substring of another.")
                 patients_after_splitting.remove(numeric_patient)
 
+        # Deduplicate patients that are case-insensitive matches.
+        patients_after_splitting = list({patient.lower() for patient in patients_after_splitting})
+
         # If more than 5 patients are identified, risk of false positives is increased.
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
@@ -524,12 +527,7 @@ uninterrupted sequences of whitespace characters.
                 if any(o.variant == variant and o.individual == individual for o in observations):
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
-                # Only keep variants associated with the "unmatched_variants"
-                # individual if they're not also associated with a "real" individual, if they are, they'll already be
-                # an observation.
                 if individual == "unmatched_variants":
-                    if any(o.variant == variant for o in observations):
-                        continue
                     individual = "unknown"
                 observations.append(
                     Observation(
@@ -538,7 +536,6 @@ uninterrupted sequences of whitespace characters.
                         variant_descriptions=list(set(descriptions)),
                         patient_descriptions=[individual],
                         # Recreate the generator each time.
-                        # TODO, consider filtering to relevant sections.
                         texts=list(
                             get_sections(
                                 paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"]
@@ -547,5 +544,20 @@ uninterrupted sequences of whitespace characters.
                         paper_id=paper.id,
                     )
                 )
+
+        # One last check to remove redundant observations. This feels unnecessary given the code above, but let's try it.
+        observations_to_remove = []
+        for observation in observations:
+            if observation.individual != "unknown":
+                continue
+            if any(
+                observation.variant == other_observation.variant
+                for other_observation in observations
+                if other_observation.individual != "unknown"
+            ):
+                logger.info(f"Removing redundant observation {observation.individual}, {observation.variant}.")
+                observations_to_remove.append(observation)
+        for observation in observations_to_remove:
+            observations.remove(observation)
 
         return observations
