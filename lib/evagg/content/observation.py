@@ -298,9 +298,16 @@ uninterrupted sequences of whitespace characters.
         standardized representations to `self._variant_factory` for parsing.
         """
         # If the variant_str contains a dbsnp rsid, parse it and return the variant.
-        if matched := re.match(r"(rs\d+)", variant_str):
+        if matched := re.match(r".*?:?(rs\d+).*?", variant_str):
             try:
-                return self._variant_factory.parse_rsid(matched.group(1))
+                variant = self._variant_factory.parse_rsid(matched.group(1))
+                if variant and variant.gene_symbol == gene_symbol:
+                    return variant
+                else:
+                    logger.info(
+                        f"dbSNP variant {matched.group(1)} is associated with {variant.gene_symbol}, not {gene_symbol}."
+                    )
+                    return None
             except Exception as e:
                 logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
                 return None
