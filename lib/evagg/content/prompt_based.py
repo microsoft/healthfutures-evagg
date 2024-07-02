@@ -253,7 +253,7 @@ class PromptBasedContentExtractor(IExtractFields):
         structured_phenotypes = await self._convert_phenotype_to_hpo(observation_phenotypes)
 
         # Duplicates are conceivable, get unique set again.
-        return ", ".join(set(structured_phenotypes))
+        return "; ".join(set(structured_phenotypes))
 
     async def _run_field_prompt(self, gene_symbol: str, observation: Observation, field: str) -> Dict[str, Any]:
         params = {
