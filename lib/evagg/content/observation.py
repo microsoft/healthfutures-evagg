@@ -351,8 +351,15 @@ uninterrupted sequences of whitespace characters.
             logger.info(f"Ignoring potentially invalid refseq: {refseq}")
             refseq = None
 
-        # Remove any parentheses.
+        # Remove any parentheses and brackets.
         variant_str = variant_str.replace("(", "").replace(")", "")
+        variant_str = variant_str.replace("[", "").replace("]", "")
+
+        # To handle variants where splitting failed, remove everything before the first semicolon.
+        variant_str = variant_str.split(";")[0]
+
+        # To handle previxes that weren't removed, remove everything up through the last colon.
+        variant_str = variant_str.split(":")[-1]
 
         # Occassionally, protein level descriptions do not include the p. prefix, add it if it's missing.
         # This will only currently handle fairly simple protein level descriptions.
