@@ -539,7 +539,11 @@ uninterrupted sequences of whitespace characters.
                         patient_descriptions=[individual],
                         # Recreate the generator each time.
                         # TODO, consider filtering to relevant sections.
-                        texts=list(get_sections(paper.props["fulltext_xml"])),
+                        texts=list(
+                            get_sections(
+                                paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"]
+                            )
+                        ),
                         paper_id=paper.id,
                     )
                 )
