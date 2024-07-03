@@ -2,6 +2,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: ABCB9
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: ABCC11
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -35,6 +39,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: AGPAT5
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: AGRP
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -98,6 +106,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: ARHGEF9
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: ARMCX4
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -126,6 +138,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: BARHL1
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: BCAN
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -147,6 +163,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: BOK
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: BSG
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -243,6 +263,14 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: CLEC18B
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: CLEC18C
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: CLN5
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -362,7 +390,15 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: DNAH10
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: DNAH2
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: DNASE1
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -414,7 +450,19 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: EXOC3L2
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: EXOC5
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: FAAH2
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: FAM120C
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -443,6 +491,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: FAM81B
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: FAM9A
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -479,6 +531,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: FHAD1
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: FICD
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -542,6 +598,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: GET4
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: GOLGA8A
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -578,6 +638,14 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: HRNR
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: ICE1
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: IER5L
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -591,6 +659,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: IGSF10
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: IKZF2
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -658,6 +730,14 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: KLHL4
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: KLK2
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: KRBA2
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -718,6 +798,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: LILRB3
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: LIN52
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -738,6 +822,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: LRRC37A3
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: LRRC4B
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -754,11 +842,19 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: LY6K
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: LY75
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: LYNX1
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: MAGEB1
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -815,6 +911,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: MON2
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: MPC1L
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -882,6 +982,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: MYO1D
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: NACA
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -911,6 +1015,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: NBPF9
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: NCAM1
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1014,6 +1122,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: OGT
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: OLFM3
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1094,6 +1206,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: PDPR
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: PDZD2
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1115,6 +1231,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: PGM5
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: PIFO
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1143,6 +1263,14 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: PLPP4
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: PLXNA3
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: PNMA3
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1190,6 +1318,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: PRAMEF12
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: PRAMEF2
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1211,6 +1343,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: PRKCE
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: PRKX
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1239,6 +1375,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: PWWP2B
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: PWWP3B
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1282,6 +1422,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: RFLNA
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: RFX8
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1291,6 +1435,14 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: RGS9
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: RIMBP3
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: RNF128
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1378,6 +1530,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: SLC25A5
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: SLC36A2
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1442,6 +1598,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: SPIN4
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: SRRM3
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1474,6 +1634,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: SYTL4
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: TAB3
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1498,7 +1662,19 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: TAS2R31
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: TBC1D8B
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: TBC1D8B
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: TBL1X
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1510,11 +1686,19 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: TCEAL3
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: TCHH
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: TDG
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: TENM1
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1543,6 +1727,10 @@
   min_date: 2001/01/01
   retmax: 1000
 - gene_symbol: TMPRSS11B
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: TNIK
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
@@ -1614,6 +1802,10 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: URB1
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: UROC1
   max_date: 2024/06/25
   min_date: 2001/01/01
@@ -1654,7 +1846,19 @@
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
+- gene_symbol: XPO6
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: ZBTB40
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
 - gene_symbol: ZDHHC11
+  max_date: 2024/06/25
+  min_date: 2001/01/01
+  retmax: 1000
+- gene_symbol: ZDHHC22
   max_date: 2024/06/25
   min_date: 2001/01/01
   retmax: 1000
