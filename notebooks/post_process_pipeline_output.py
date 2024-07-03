@@ -1,10 +1,18 @@
-"""Post process pipeline output in preparation for seqr load."""
+"""Post process pipeline output in preparation for seqr load.
+
+Execution of this post-processing script requires manually executing batch validation with the variantvalidator
+website to obtain HGVS->VCF mappings. Running this script with an incomplete set of mappings will cause the required
+mappings to be printed out and no allele frequencies will be obtained. If no required mappings are missing, then the
+script will call the gnomAD web service to obtain AFs.
+
+Because of this, this script will likely need to be run twice for any given output file. Once to obtain the list of 
+missing HGVS->VCF mappings and another time to obtain the allele frequencies.
+"""
 
 # %% Imports.
 
 import os
 import time
-import urllib.parse
 from functools import cache
 from typing import Any, Dict
 
@@ -14,50 +22,12 @@ from lib.di import DiContainer
 
 # %% Constants.
 
-PIPELINE_OUTPUT = ".out/run_evagg_pipeline_20240701_025327/pipeline_benchmark.tsv"
+PIPELINE_OUTPUT = ".out/run_evagg_pipeline_20240703_150649/pipeline_benchmark.tsv"
 VCF_VARIANT_FORMAT_MAPPING_DIR = "notebooks/post_processing_vcf/"
 
-# %% Load pipeline output.
+DROP_VALIDATION_ERRORS = True
 
-df = pd.read_csv(PIPELINE_OUTPUT, sep="\t", header=1)
-df.set_index("evidence_id", inplace=True)
-
-# %% Handle nans in output
-
-df.fillna({"hgvs_c": "", "hgvs_p": "", "validation_error": ""}, inplace=True)
-
-# %% Handle validation errors.
-
-droppable_errors = ["ESYNTAXUC", "EOUTOFBOUNDARY"]
-
-df = df[~df["validation_error"].isin(droppable_errors)]
-
-# Recode the validation error column with the following string replacements.
-# "ESEQUENCEMISMATCH" -> "ESEQUENCEMISMATCH: Reference base mismatch."
-# "EAMINOACIDMISMATCH" -> "EAMINOACIDMISMATCH: Reference amino acid mismatch."
-# "EOUTOFBOUNDARY" -> "EOUTOFBOUNDARY: supplied position outside of sequence boundary."
-# "ESYNTAXUC" -> "ESYNTAXUC: Syntax error in hgvs description."
-# "ESYNTAXUEOF -> "ESYNTAXUEOF: Syntax error in hgvs description."
-# "ERETR" -> "ERETR: Mismatch in supplied transcript."
-#
-# Additionally, replace any other validation errors with "Other validation error."
-replacements = {
-    "ESEQUENCEMISMATCH": "ESEQUENCEMISMATCH: Reference base mismatch.",
-    "EAMINOACIDMISMATCH": "EAMINOACIDMISMATCH: Reference amino acid mismatch.",
-    "EOUTOFBOUNDARY": "EOUTOFBOUNDARY: supplied position outside of sequence boundary.",
-    "ESYNTAXUC": "ESYNTAXUC: Syntax error in hgvs description.",
-    "ESYNTAXUEOF": "ESYNTAXUEOF: Syntax error in hgvs description.",
-    "ERETR": "ERETR: Mismatch in supplied transcript.",
-}
-
-others = set(df["validation_error"].unique()) - set(replacements.keys())
-others -= {""}
-
-replacements.update({other: "Other validation error." for other in others})
-
-df["validation_error"] = df["validation_error"].replace(replacements)
-
-# %% Determine gnomad allele frequencies for each variant.
+# %% Helper functions
 
 web_client = DiContainer().create_instance(
     spec={"di_factory": "lib/config/objects/web_cache.yaml", "web_settings": {"max_retries": 0}}, resources={}
@@ -93,21 +63,6 @@ def hgvs_to_vcf(hgvs: str) -> Dict[str, str] | None:
         "ref": row["GRCh38_REF"],
         "alt": row["GRCh38_ALT"],
     }
-
-
-# @cache
-# def hgvs_to_vcf(hgvs: str) -> Dict[str, str] | None:
-#     encoded = urllib.parse.quote(hgvs)
-#     # 2 queries per second max.
-#     url = f"https://rest.variantvalidator.org/VariantValidator/variantvalidator/GRCh38/{encoded}/select/?content-type=application/json"
-#     data = web_client.get(url, content_type="json")
-
-#     assert len(data) == 3, f"Unexpected number of keys in VV response: {url}"
-
-#     variant_info = data[next(key for key in data.keys() if key not in ["metadata", "flag"])]
-
-#     return variant_info.get("primary_assembly_loci", {}).get("grch38", {}).get("vcf", {})
-#     # TODO handle status code 429
 
 
 def joint_popmax_faf95(vcf: Dict[str, str]) -> float | None:
@@ -158,38 +113,106 @@ query GnomadVariant($variantId: String!, $datasetId: DatasetId!) {
     # HTTP POST request
     return web_client.post(url, data={"query": query, "variables": variables}, content_type="json")
 
-    # TODO, handle
-    # {'alt': 'T', 'chr': '5', 'pos': '128338938', 'ref': 'C'}
-    # {'errors': [{'message': 'Variant not found'}], 'data': {'variant': None}} - status code 200
 
+# %% Load pipeline output.
 
-# %%
+df = pd.read_csv(PIPELINE_OUTPUT, sep="\t", header=1)
+df.set_index("evidence_id", inplace=True)
+
+# %% Handle nans in output
+
+df.fillna({"hgvs_c": "", "hgvs_p": "", "validation_error": ""}, inplace=True)
+
+# %% Check to see whether all the hgvs_c values of interest are in the mapping file.
+
+missing_variants = []
+found_variants = []
+vcf_mapping_df = get_mapping_df()
+
 for _, row in df.iterrows():
-    loop_start = time.time()
     if not row.hgvs_c or not row.transcript or row.validation_error:
-        row.gnomad_frequency = ""
         continue
 
-    print(f"Obtaining gnomAD allele frequency for: {row.transcript}:{row.hgvs_c}")
-    # print(f"Converting HGVS to VCF: {row.transcript}:{row.hgvs_c}")
-    vcf = hgvs_to_vcf(f"{row.transcript}:{row.hgvs_c}")
-    # print(f"  {vcf['chr']}-{vcf['pos']}-{vcf['ref']}-{vcf['alt']}")
-    if vcf is None:
-        row.gnomad_frequency = ""
-        continue
-    start = time.time()
-    # print(f"Extracting gnomAD allele frequency: {vcf}")
-    freq = joint_popmax_faf95(vcf)
-    if not freq:
-        row.gnomad_frequency = "0"
+    var_str = f"{row.transcript}:{row.hgvs_c}"
+    if not any(vcf_mapping_df.Input == var_str):
+        missing_variants.append(var_str)
     else:
-        row.gnomad_frequency = f"{freq:.3g}"
+        found_variants.append(var_str)
 
-    # print(f"  {freq}")
-    wait_triggered = (call_elapsed := time.time() - start) > 0.05
-    if wait_triggered:
-        print(f"wait triggered: {vcf}")
-        while time.time() - loop_start < 6:
-            time.sleep(0.2)
+if missing_variants:
+    print(
+        """
+The following variants were missing from the vcf mapping file. Update this file using
+the variant validator service and rerun this script.
+"""
+    )
+    for mv in missing_variants:
+        print(mv)
 
-# %%
+# %% Determine gnomad allele frequencies for each variant.
+
+if not missing_variants:
+    for _, row in df.iterrows():
+        loop_start = time.time()
+        if not row.hgvs_c or not row.transcript or row.validation_error:
+            row.gnomad_frequency = ""
+            continue
+
+        print(f"Obtaining gnomAD allele frequency for: {row.transcript}:{row.hgvs_c}")
+        vcf = hgvs_to_vcf(f"{row.transcript}:{row.hgvs_c}")
+        if vcf is None:
+            row.gnomad_frequency = ""
+            continue
+        start = time.time()
+        freq = joint_popmax_faf95(vcf)
+        if not freq:
+            row.gnomad_frequency = "0"
+        else:
+            row.gnomad_frequency = f"{freq:.3g}"
+
+        # Make a best guess as to whether the underlying API was called or the result was served from the cosmos cache.
+        # Better to be conservative here (assuming we called the API when we didn't) than to be too optimistic.
+        wait_triggered = (call_elapsed := time.time() - start) > 0.05
+        if wait_triggered:
+            print(f"Waiting to recall gnomAD API: {vcf}")
+            while time.time() - loop_start < 6:
+                time.sleep(0.2)
+else:
+    print("WARNING: not obtaining gnomad frequencies due to missing variants.")
+
+# %% Handle validation errors.
+
+if DROP_VALIDATION_ERRORS:
+    droppable_errors = ["ESYNTAXUC", "EOUTOFBOUNDARY"]
+    print("Dropping validation errors:", droppable_errors)
+    df = df[~df["validation_error"].isin(droppable_errors)]
+
+# Recode the validation error column with the following string replacements.
+# "ESEQUENCEMISMATCH" -> "ESEQUENCEMISMATCH: Reference base mismatch."
+# "EAMINOACIDMISMATCH" -> "EAMINOACIDMISMATCH: Reference amino acid mismatch."
+# "EOUTOFBOUNDARY" -> "EOUTOFBOUNDARY: supplied position outside of sequence boundary."
+# "ESYNTAXUC" -> "ESYNTAXUC: Syntax error in hgvs description."
+# "ESYNTAXUEOF -> "ESYNTAXUEOF: Syntax error in hgvs description."
+# "ERETR" -> "ERETR: Mismatch in supplied transcript."
+#
+# Additionally, replace any other validation errors with "Other validation error."
+replacements = {
+    "ESEQUENCEMISMATCH": "ESEQUENCEMISMATCH: Reference base mismatch.",
+    "EAMINOACIDMISMATCH": "EAMINOACIDMISMATCH: Reference amino acid mismatch.",
+    "EOUTOFBOUNDARY": "EOUTOFBOUNDARY: supplied position outside of sequence boundary.",
+    "ESYNTAXUC": "ESYNTAXUC: Syntax error in hgvs description.",
+    "ESYNTAXUEOF": "ESYNTAXUEOF: Syntax error in hgvs description.",
+    "ERETR": "ERETR: Mismatch in supplied transcript.",
+}
+
+others = set(df["validation_error"].unique()) - set(replacements.keys())
+others -= {""}
+
+replacements.update({other: "Other validation error." for other in others})
+
+df["validation_error"] = df["validation_error"].replace(replacements)
+
+# %% Save the output.
+
+post_processed_file = PIPELINE_OUTPUT.replace(".tsv", "_post_processed.tsv")
+df.to_csv(post_processed_file, sep="\t")
