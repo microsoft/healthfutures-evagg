@@ -409,16 +409,29 @@ uninterrupted sequences of whitespace characters.
             return None
 
     async def _sanity_check_paper(self, full_text: str, gene_symbol: str, metadata: Dict[str, str]) -> bool:
-        result = await self._run_json_prompt(
-            prompt_filepath=_get_prompt_file_path("sanity_check"),
-            params={"text": full_text, "gene": gene_symbol},
-            prompt_settings={
-                "prompt_tag": "observation__sanity_check",
-                "temperature": 0.5,
-                "prompt_metadata": metadata,
-            },
-        )
+        try:
+            result = await self._run_json_prompt(
+                prompt_filepath=_get_prompt_file_path("sanity_check"),
+                params={"text": full_text, "gene": gene_symbol},
+                prompt_settings={
+                    "prompt_tag": "observation__sanity_check",
+                    "temperature": 0.5,
+                    "prompt_metadata": metadata,
+                },
+            )
+        except Exception as e:
+            # This is a total hack, but better handling of content length errors would be a more invasive change that
+            # we can save for later.
+            import openai
 
+            if (
+                isinstance(e, openai.BadRequestError)
+                and isinstance(e.body, dict)
+                and e.body.get("code", "") == "context_length_exceeded"
+            ):
+                logger.warning(f"Context length exceeded for {metadata['paper_id']}. Skipping.")
+                return False
+            raise e
         return result.get("relevant", True)  # Default to including the paper.
 
     async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
@@ -469,7 +482,7 @@ uninterrupted sequences of whitespace characters.
             descriptions = [d for d, v in variants_by_description.items() if v in cons_map[consolidated_variant]]
             mentioning_text = self._get_text_mentioning_variant(paper, descriptions, consolidated_variant.valid)
             warning_text = """
-Note that this variant failed validation when considered as part of the gene of interest, so it's likely that the 
+Note that this variant failed validation when considered as part of the gene of interest, so it's likely that the
 variant isn't actually associated with the gene. But the possibility of previous error exists, so please check again.
 """
             if mentioning_text:
@@ -560,7 +573,7 @@ variant isn't actually associated with the gene. But the possibility of previous
                     )
                 )
 
-        # One last check to remove redundant observations. This feels unnecessary given the code above, but let's try it.
+        # Remove redundant observations.
         observations_to_remove = []
         for observation in observations:
             if observation.individual != "unknown":
