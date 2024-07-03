@@ -30,7 +30,7 @@ DROP_VALIDATION_ERRORS = True
 # %% Helper functions
 
 web_client = DiContainer().create_instance(
-    spec={"di_factory": "lib/config/objects/web_cache.yaml", "web_settings": {"max_retries": 0}}, resources={}
+    spec={"di_factory": "lib/config/objects/web_cache.yaml", "web_settings": {"max_retries": 5}}, resources={}
 )
 
 
@@ -151,14 +151,18 @@ the variant validator service and rerun this script.
 
 # %% Determine gnomad allele frequencies for each variant.
 
+n_rows = df.shape[0]
+counter = 0
+
 if not missing_variants:
     for _, row in df.iterrows():
+        counter += 1
         loop_start = time.time()
         if not row.hgvs_c or not row.transcript or row.validation_error:
             row.gnomad_frequency = ""
             continue
 
-        print(f"Obtaining gnomAD allele frequency for: {row.transcript}:{row.hgvs_c}")
+        print(f"{counter} of {n_rows} - Obtaining gnomAD allele frequency for: {row.transcript}:{row.hgvs_c}")
         vcf = hgvs_to_vcf(f"{row.transcript}:{row.hgvs_c}")
         if vcf is None:
             row.gnomad_frequency = ""
@@ -174,7 +178,7 @@ if not missing_variants:
         # Better to be conservative here (assuming we called the API when we didn't) than to be too optimistic.
         wait_triggered = (call_elapsed := time.time() - start) > 0.05
         if wait_triggered:
-            print(f"Waiting to recall gnomAD API: {vcf}")
+            print(f"Waiting to recall gnomAD API: {vcf} [call_elapsed = {call_elapsed}]")
             while time.time() - loop_start < 6:
                 time.sleep(0.2)
 else:
