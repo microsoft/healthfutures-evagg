@@ -285,11 +285,14 @@ uninterrupted sequences of whitespace characters.
 
         return full_text, table_texts
 
-    def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str]) -> str:
+    def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str], allow_empty: bool) -> str:
         sections = get_sections(paper.props["fulltext_xml"])
-        return "\n\n".join(
+        filtered_text = "\n\n".join(
             [section.text for section in sections if any(variant in section.text for variant in variant_descriptions)]
         )
+        if not filtered_text and not allow_empty:
+            return "\n\n".join([section.text for section in sections])
+        return filtered_text
 
     def _create_variant_from_text(
         self, variant_str: str, gene_symbol: str, genome_build: str | None
@@ -464,7 +467,11 @@ uninterrupted sequences of whitespace characters.
         # Do this using the consolidated list of variants to reduce the number of AOAI calls.
         async def _check_variant_gene_relationship(consolidated_variant: HGVSVariant) -> None:
             descriptions = [d for d, v in variants_by_description.items() if v in cons_map[consolidated_variant]]
-            mentioning_text = self._get_text_mentioning_variant(paper, descriptions)
+            mentioning_text = self._get_text_mentioning_variant(paper, descriptions, consolidated_variant.valid)
+            warning_text = """
+Note that this variant failed validation when considered as part of the gene of interest, so it's likely that the 
+variant isn't actually associated with the gene. But the possibility of previous error exists, so please check again.
+"""
             if mentioning_text:
                 response = await self._run_json_prompt(
                     prompt_filepath=_get_prompt_file_path("check_variant"),
@@ -472,6 +479,7 @@ uninterrupted sequences of whitespace characters.
                         "variant_descriptions": ", ".join(descriptions),
                         "gene_symbol": gene_symbol,
                         "text": mentioning_text,
+                        "warning": "" if consolidated_variant.valid else warning_text,
                     },
                     prompt_settings={
                         "prompt_tag": "observation__check_variant_gene_relationship",
