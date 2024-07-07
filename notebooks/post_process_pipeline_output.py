@@ -22,7 +22,7 @@ from lib.di import DiContainer
 
 # %% Constants.
 
-PIPELINE_OUTPUT = ".out/run_evagg_pipeline_20240703_150649/pipeline_benchmark.tsv"
+PIPELINE_OUTPUT = ".out/run_evagg_pipeline_20240703_194329/pipeline_benchmark.tsv"
 VCF_VARIANT_FORMAT_MAPPING_DIR = "notebooks/post_processing_vcf/"
 
 DROP_VALIDATION_ERRORS = True
@@ -119,6 +119,13 @@ query GnomadVariant($variantId: String!, $datasetId: DatasetId!) {
 df = pd.read_csv(PIPELINE_OUTPUT, sep="\t", header=1)
 df.set_index("evidence_id", inplace=True)
 
+# %% Drop entirely duplicated rows.
+
+# Check for duplicaes, if they exist issue a warning and drop.
+if df.duplicated().any():
+    print("WARNING: Duplicates found. Dropping duplicates.")
+    df.drop_duplicates(inplace=True)
+
 # %% Handle nans in output
 
 df.fillna({"hgvs_c": "", "hgvs_p": "", "validation_error": ""}, inplace=True)
@@ -159,20 +166,20 @@ if not missing_variants:
         counter += 1
         loop_start = time.time()
         if not row.hgvs_c or not row.transcript or row.validation_error:
-            row.gnomad_frequency = ""
+            df.loc[row.name, "gnomad_frequency"] = ""
             continue
 
         print(f"{counter} of {n_rows} - Obtaining gnomAD allele frequency for: {row.transcript}:{row.hgvs_c}")
         vcf = hgvs_to_vcf(f"{row.transcript}:{row.hgvs_c}")
         if vcf is None:
-            row.gnomad_frequency = ""
+            df.loc[row.name, "gnomad_frequency"] = ""
             continue
         start = time.time()
         freq = joint_popmax_faf95(vcf)
         if not freq:
-            row.gnomad_frequency = "0"
+            df.loc[row.name, "gnomad_frequency"] = "0"
         else:
-            row.gnomad_frequency = f"{freq:.3g}"
+            df.loc[row.name, "gnomad_frequency"] = f"{freq:.3g}"
 
         # Make a best guess as to whether the underlying API was called or the result was served from the cosmos cache.
         # Better to be conservative here (assuming we called the API when we didn't) than to be too optimistic.
