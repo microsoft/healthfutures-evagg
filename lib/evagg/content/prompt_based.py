@@ -75,7 +75,12 @@ class PromptBasedContentExtractor(IExtractFields):
         elif field == "citation":
             value = paper.props["citation"]
         elif field == "link":
-            value = paper.props["link"]
+            # TODO: fix in paper props generation
+            value = (
+                "https://www.ncbi.nlm.nih.gov/pmc/articles/" + paper.props["pmcid"]
+                if "pmcid" in paper.props
+                else paper.props["link"]
+            )
         elif field == "paper_title":
             value = paper.props["title"]
         elif field == "hgvs_c":
@@ -249,7 +254,7 @@ class PromptBasedContentExtractor(IExtractFields):
         structured_phenotypes = await self._convert_phenotype_to_hpo(observation_phenotypes)
 
         # Duplicates are conceivable, get unique set again.
-        return ", ".join(set(structured_phenotypes))
+        return "; ".join(set(structured_phenotypes))
 
     async def _run_field_prompt(self, gene_symbol: str, observation: Observation, field: str) -> Dict[str, Any]:
         params = {
@@ -355,9 +360,9 @@ class PromptBasedContentExtractor(IExtractFields):
         # Find all the observations in the paper relating to the query.
         observations = asyncio.run(self._observation_finder.find_observations(gene_symbol, paper))
         if not observations:
-            logger.warning(f"No observations found in {paper.id}")
+            logger.info(f"No observations found in {paper.id} for {gene_symbol}")
             return []
 
         # Extract all the requested fields from the observations.
-        logger.info(f"Found {len(observations)} observations in {paper.id}")
+        logger.info(f"Found {len(observations)} observations in {paper.id} for {gene_symbol}")
         return asyncio.run(self._extract_fields(paper, gene_symbol, observations))
