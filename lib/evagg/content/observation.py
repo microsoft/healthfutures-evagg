@@ -197,6 +197,7 @@ uninterrupted sequences of whitespace characters.
         candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
         # Seems like this should be unnecessary, but remove the example variants from the list of candidates.
+        # TODO use set intersections to test for and remove these.
         example_variant_subs = [
             "1234A>T",
             "2345del",
