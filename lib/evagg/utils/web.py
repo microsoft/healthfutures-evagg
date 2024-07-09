@@ -98,6 +98,7 @@ class RequestsWebContentClient(IWebContentClient):
         self._raise_for_status(code)
         return self._transform_content(content, content_type)
 
+    # TODO integrate with `get` method
     def post(
         self, url: str, data: Dict[str, Any], content_type: Optional[str] = None, url_extra: Optional[str] = None
     ) -> Any:
