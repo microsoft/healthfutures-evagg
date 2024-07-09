@@ -2,6 +2,8 @@ Below you will find one or more descriptions of a genetic variant, and a gene of
 subsequent text to assess whether the variant of interest is in the gene of interest, or whether there isn't evidence
 to support this conclusion.
 
+{{$warning}}
+
 Provide your response as a json object with the following format; do not provide any text in your response other than
 the following json object:
 
