@@ -58,7 +58,6 @@ def test_variant(mock_web_client):
     web_client = mock_web_client(*(["efetch_snp_single_variant.xml"] * 3))
 
     result = NcbiLookupClient(web_client).hgvs_from_rsid("rs146010120")
-    print(result)
     assert result == {
         "rs146010120": {
             "hgvs_c": "NM_001276.4:c.104G>A",
