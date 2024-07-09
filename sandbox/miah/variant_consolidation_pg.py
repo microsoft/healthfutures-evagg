@@ -2,7 +2,7 @@
 
 from lib.evagg.content import HGVSVariantComparator, HGVSVariantFactory, ObservationFinder
 from lib.evagg.llm import OpenAIClient
-from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, NcbiReferenceLookupClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, RefSeqGeneLookupClient
 from lib.evagg.svc import RequestsWebContentClient, get_dotenv_settings
 from lib.evagg.types import HGVSVariant
 
@@ -33,7 +33,7 @@ from lib.evagg.types import HGVSVariant
 #       filter_prefix: "EVAGG_CONTENT_CACHE_"
 
 # refseq_client:
-#   di_factory: lib.evagg.ref.NcbiReferenceLookupClient
+#   di_factory: lib.evagg.ref.RefSeqGeneLookupClient
 #   web_client:
 #     di_factory: lib.evagg.svc.RequestsWebContentClient
 
@@ -51,7 +51,7 @@ ncbi_client = NcbiLookupClient(
 
 mutalyzer_client = MutalyzerClient(web_client=RequestsWebContentClient(settings={"no_raise_codes": [422]}))
 
-refseq_client = NcbiReferenceLookupClient(web_client=RequestsWebContentClient())
+refseq_client = RefSeqGeneLookupClient(web_client=RequestsWebContentClient())
 variant_factory = HGVSVariantFactory(
     validator=mutalyzer_client,
     normalizer=mutalyzer_client,
