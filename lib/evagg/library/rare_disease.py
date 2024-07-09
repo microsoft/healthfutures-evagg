@@ -163,7 +163,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         if not query.get("gene_symbol"):
             raise ValueError("Minimum requirement to search is to input a gene symbol.")
 
-        params = {"query": query["gene_symbol"]}
+        params: dict[str, Any] = {"query": f"Gene {query['gene_symbol']} pubmed pmc open access[filter]"}
         # Rationalize the optional parameters.
         if ("max_date" in query or "date_type" in query) and "min_date" not in query:
             raise ValueError("A min_date is required when max_date or date_type is provided.")
@@ -177,6 +177,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Perform the search for papers
         paper_ids = self._paper_client.search(**params)
         logger.info(f"Fetching {len(paper_ids)} papers for {query['gene_symbol']}.")
+
+        if "retmax" in params and len(paper_ids) == params["retmax"]:
+            logger.warning(f"Reached the maximum number of papers for {query['gene_symbol']}. Skipping gene.")
+            return []
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = [

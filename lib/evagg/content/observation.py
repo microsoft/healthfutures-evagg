@@ -139,7 +139,19 @@ uninterrupted sequences of whitespace characters.
 
         await asyncio.gather(*[split_patient(patient) for patient in patient_candidates])
 
-        # If more than 5 (TODO parameterize?) patients are identified, risk of false positives is increased.
+        # For any numeric patient descriptions, check to see whether the description is a substring of another
+        # (non-numeric) patient description. If it is, remove it.
+        numeric_patients = [p for p in patients_after_splitting if p.isnumeric()]
+        non_numeric_patients = [p for p in patients_after_splitting if not p.isnumeric()]
+        for numeric_patient in numeric_patients:
+            if any(numeric_patient in non_numeric_patient for non_numeric_patient in non_numeric_patients):
+                logger.info(f"Removing {numeric_patient} from list of patients as it is a substring of another.")
+                patients_after_splitting.remove(numeric_patient)
+
+        # Deduplicate patients that are case-insensitive matches.
+        patients_after_splitting = list({patient.lower() for patient in patients_after_splitting})
+
+        # If more than 5 patients are identified, risk of false positives is increased.
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
         if len(patients_after_splitting) >= 5:
@@ -182,13 +194,31 @@ uninterrupted sequences of whitespace characters.
                 return x[len(gene_symbol) :].lstrip(":")
             return x
 
-        # TODO: evaluate tasking the LLM to return an empty list instead of "unknown" when no variants are found.
         candidates = list({_strip_gene_symbol(v) for r in responses for v in r.get("variants", []) if v != "unknown"})
 
         # Seems like this should be unnecessary, but remove the example variants from the list of candidates.
-        example_variants = ["c.1234A>T", "c.*1234A>T" "NM_000123.1:c.2345del", "NP_000123.1:p.K34T", "K34T", "p.K34T"]
+        # TODO use set intersections to test for and remove these.
+        example_variant_subs = [
+            "1234A>T",
+            "2345del",
+            "K34T",
+            "rs123456789",
+            "A55T",
+            "Ala55Lys",
+            "K412T",
+            "Ser195Gly",
+            "T65I",
+            "1234G>T",
+            "4321A>G",
+            "1234567A>T",
+        ]
 
-        candidates = [c for c in candidates if c not in example_variants]
+        if any(ex in ca for ex in example_variant_subs for ca in candidates):
+            candidates_from_examples = [ca for ca in candidates if any(ex in ca for ex in example_variant_subs)]
+            logger.warning(
+                f"Removing example variants found in candidates for {gene_symbol}: {candidates_from_examples}"
+            )
+            candidates = [ca for ca in candidates if ca not in candidates_from_examples]
 
         # If the variant is reported with both coding and protein-level
         # descriptions, split these into two with another prompt.
@@ -256,11 +286,14 @@ uninterrupted sequences of whitespace characters.
 
         return full_text, table_texts
 
-    def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str]) -> str:
+    def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str], allow_empty: bool) -> str:
         sections = get_sections(paper.props["fulltext_xml"])
-        return "\n\n".join(
+        filtered_text = "\n\n".join(
             [section.text for section in sections if any(variant in section.text for variant in variant_descriptions)]
         )
+        if not filtered_text and not allow_empty:
+            return "\n\n".join([section.text for section in sections])
+        return filtered_text
 
     def _create_variant_from_text(
         self, variant_str: str, gene_symbol: str, genome_build: str | None
@@ -272,9 +305,16 @@ uninterrupted sequences of whitespace characters.
         standardized representations to `self._variant_factory` for parsing.
         """
         # If the variant_str contains a dbsnp rsid, parse it and return the variant.
-        if matched := re.match(r"(rs\d+)", variant_str):
+        if matched := re.match(r".*?:?(rs\d+).*?", variant_str):
             try:
-                return self._variant_factory.parse_rsid(matched.group(1))
+                variant = self._variant_factory.parse_rsid(matched.group(1))
+                if variant and variant.gene_symbol == gene_symbol:
+                    return variant
+                else:
+                    logger.info(
+                        f"dbSNP variant {matched.group(1)} is associated with {variant.gene_symbol}, not {gene_symbol}."
+                    )
+                    return None
             except Exception as e:
                 logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
                 return None
@@ -301,27 +341,57 @@ uninterrupted sequences of whitespace characters.
             refseq = None
             variant_str = variant_str.strip()
 
+        # If the variant string looks nothing like a variant description, give up.
+        if not re.search(r"[A-Za-z]", variant_str):
+            logger.warning(f"Variant string '{variant_str}' appears unparsable.")
+            return None
+
         # If the refseq looks like a chromosome designation, we've got to figure out the corresponding refseq, which
         # will depend on the genome build.
         if refseq and refseq.find("chr") >= 0:
             refseq = f"{genome_build}({refseq})"
+        # Otherwise, it should begin with NM_, NP_, or NC_, otherwise we'll ignore it.
+        elif refseq and not re.match(r"(NM_|NP_|NC_)", refseq):
+            logger.info(f"Ignoring potentially invalid refseq: {refseq}")
+            refseq = None
+
+        # Remove any parentheses and brackets.
+        variant_str = variant_str.replace("(", "").replace(")", "")
+        variant_str = variant_str.replace("[", "").replace("]", "")
+
+        # To handle variants where splitting failed, remove everything before the first semicolon.
+        variant_str = variant_str.split(";")[0]
+
+        # To handle previxes that weren't removed, remove everything up through the last colon.
+        variant_str = variant_str.split(":")[-1]
 
         # Occassionally, protein level descriptions do not include the p. prefix, add it if it's missing.
         # This will only currently handle fairly simple protein level descriptions.
-        if re.search(r"^[A-Za-z]+\d+[A-Za-z]", variant_str):
+        if re.search(r"^[A-Za-z]+\d+[A-Za-z]+$", variant_str):
             variant_str = "p." + variant_str
 
-        # Single-letter protein level descriptions should use * for a stop codon, not X.
+        # Occassionally, coding level descriptions do not include the c. prefix, add it if it's missing.
+        # This will only currently handle fairly simple coding level descriptions.
+        if re.search(r"^\d+[ACGT]>[ACGT]$", variant_str):
+            variant_str = "c." + variant_str
+        if re.search(r"^\d+(_\d+)?del[ACGT]*$", variant_str):
+            variant_str = "c." + variant_str
+        if re.search(r"^\d+ins[ACGT]*$", variant_str):
+            variant_str = "c." + variant_str
+
+        # Single-letter protein level descriptions should use * for a stop codon, not X or stop.
         variant_str = re.sub(r"(p\.[A-Z]\d+)X", r"\1*", variant_str)
+        variant_str = re.sub(r"(p\.[A-Z]\d+)stop", r"\1*", variant_str)
 
         # Fix c. descriptions that are erroneously written as c.{ref}{pos}{alt} instead of c.{pos}{ref}>{alt}.
         variant_str = re.sub(r"c\.([ACTG])(\d+)([A-Z]+)", r"c.\2\1>\3", variant_str)
 
         # Fix three-letter p. descriptions that don't follow the capitalization convention.
         # For now, only handle reference AAs and single missense alternate AAs.
-        if match := re.match(r"p\.([A-za-z][a-z]{2})(\d+)([A-za-z][a-z]{2})*(.*?)$", variant_str):
-            ref_aa, pos, alt_aa, extra = match.groups()
-            variant_str = f"p.{ref_aa.capitalize()}{pos}{alt_aa.capitalize() if alt_aa else ''}{extra}"
+        if "del" not in variant_str:
+            if match := re.match(r"p\.([A-za-z][a-z]{2})(\d+)([A-za-z][a-z]{2})*(.*?)$", variant_str):
+                ref_aa, pos, alt_aa, extra = match.groups()
+                variant_str = f"p.{ref_aa.capitalize()}{pos}{alt_aa.capitalize() if alt_aa else ''}{extra}"
 
         # Frameshift should be designated with fs, not frameshift
         variant_str = variant_str.replace("frameshift", "fs")
@@ -330,7 +400,7 @@ uninterrupted sequences of whitespace characters.
         variant_str = re.sub(r"(?<!\d)-(?!\d)", "", variant_str)
 
         # Remove everything after the first occurrence of "fs" if it occurs,
-        # HGVS nomenclature gets fairly in these cases.
+        # HGVS nomenclature gets variable in these cases in practice.
         if "fs" in variant_str:
             variant_str = variant_str.split("fs")[0] + "fs"
 
@@ -339,6 +409,32 @@ uninterrupted sequences of whitespace characters.
         except Exception as e:
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
+
+    async def _sanity_check_paper(self, full_text: str, gene_symbol: str, metadata: Dict[str, str]) -> bool:
+        try:
+            result = await self._run_json_prompt(
+                prompt_filepath=_get_prompt_file_path("sanity_check"),
+                params={"text": full_text, "gene": gene_symbol},
+                prompt_settings={
+                    "prompt_tag": "observation__sanity_check",
+                    "temperature": 0.5,
+                    "prompt_metadata": metadata,
+                },
+            )
+        except Exception as e:
+            # This is a total hack, but better handling of content length errors would be a more invasive change that
+            # we can save for later.
+            import openai
+
+            if (
+                isinstance(e, openai.BadRequestError)
+                and isinstance(e.body, dict)
+                and e.body.get("code", "") == "context_length_exceeded"
+            ):
+                logger.warning(f"Context length exceeded for {metadata['paper_id']}. Skipping.")
+                return False
+            raise e
+        return result.get("relevant", True)  # Default to including the paper.
 
     async def find_observations(self, gene_symbol: str, paper: Paper) -> Sequence[Observation]:
         """Identify all observations relevant to `gene_symbol` in `paper`.
@@ -352,6 +448,11 @@ uninterrupted sequences of whitespace characters.
         # Get the full text of the paper and any focus texts (e.g., tables).
         full_text, table_texts = self._get_fulltext_sections(paper)
         metadata = {"gene_symbol": gene_symbol, "paper_id": paper.id}
+
+        # First, sanity check the paper for mention of genetic variants of interest.
+        if not await self._sanity_check_paper(full_text, gene_symbol, metadata):
+            logger.info(f"Skipping {paper.id} as it doesn't pass initial check for relevance.")
+            return []
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
@@ -381,7 +482,11 @@ uninterrupted sequences of whitespace characters.
         # Do this using the consolidated list of variants to reduce the number of AOAI calls.
         async def _check_variant_gene_relationship(consolidated_variant: HGVSVariant) -> None:
             descriptions = [d for d, v in variants_by_description.items() if v in cons_map[consolidated_variant]]
-            mentioning_text = self._get_text_mentioning_variant(paper, descriptions)
+            mentioning_text = self._get_text_mentioning_variant(paper, descriptions, consolidated_variant.valid)
+            warning_text = """
+Note that this variant failed validation when considered as part of the gene of interest, so it's likely that the
+variant isn't actually associated with the gene. But the possibility of previous error exists, so please check again.
+"""
             if mentioning_text:
                 response = await self._run_json_prompt(
                     prompt_filepath=_get_prompt_file_path("check_variant"),
@@ -389,6 +494,7 @@ uninterrupted sequences of whitespace characters.
                         "variant_descriptions": ", ".join(descriptions),
                         "gene_symbol": gene_symbol,
                         "text": mentioning_text,
+                        "warning": "" if consolidated_variant.valid else warning_text,
                     },
                     prompt_settings={
                         "prompt_tag": "observation__check_variant_gene_relationship",
@@ -401,7 +507,8 @@ uninterrupted sequences of whitespace characters.
                         variants_by_description.pop(description)
             else:
                 logger.info(
-                    f"No text found mentioning {consolidated_variant} in {paper.id}, not removing during variant check."
+                    f"No text found mentioning {consolidated_variant} in {paper.id} (checked {descriptions}), "
+                    "not removing during variant check."
                 )
 
         await asyncio.gather(*[_check_variant_gene_relationship(v) for v in cons_map])
@@ -450,12 +557,7 @@ uninterrupted sequences of whitespace characters.
                 if any(o.variant == variant and o.individual == individual for o in observations):
                     logger.warning(f"Duplicate observation for {variant} and {individual} in {paper.id}. Skipping.")
                     continue
-                # Only keep variants associated with the "unmatched_variants"
-                # individual if they're not also associated with a "real" individual, if they are, they'll already be
-                # an observation.
                 if individual == "unmatched_variants":
-                    if any(o.variant == variant for o in observations):
-                        continue
                     individual = "unknown"
                 observations.append(
                     Observation(
@@ -464,10 +566,28 @@ uninterrupted sequences of whitespace characters.
                         variant_descriptions=list(set(descriptions)),
                         patient_descriptions=[individual],
                         # Recreate the generator each time.
-                        # TODO, consider filtering to relevant sections.
-                        texts=list(get_sections(paper.props["fulltext_xml"])),
+                        texts=list(
+                            get_sections(
+                                paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"]
+                            )
+                        ),
                         paper_id=paper.id,
                     )
                 )
+
+        # Remove redundant observations.
+        observations_to_remove = []
+        for observation in observations:
+            if observation.individual != "unknown":
+                continue
+            if any(
+                observation.variant == other_observation.variant
+                for other_observation in observations
+                if other_observation.individual != "unknown"
+            ):
+                logger.info(f"Removing redundant observation {observation.individual}, {observation.variant}.")
+                observations_to_remove.append(observation)
+        for observation in observations_to_remove:
+            observations.remove(observation)
 
         return observations
