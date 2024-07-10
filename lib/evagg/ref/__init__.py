@@ -17,7 +17,7 @@ from .interfaces import (
 from .litvar import LitVarReference
 from .mutalyzer import MutalyzerClient
 from .ncbi import NcbiLookupClient
-from .refseq import NcbiReferenceLookupClient
+from .refseq import RefSeqGeneLookupClient, RefSeqLookupClient
 
 __all__ = [
     # Litvar.
@@ -36,7 +36,8 @@ __all__ = [
     "ISearchHPO",
     # NCBI.
     "NcbiLookupClient",
-    "NcbiReferenceLookupClient",
+    "RefSeqGeneLookupClient",
+    "RefSeqLookupClient",
     # Mutalyzer.
     "MutalyzerClient",
     # HPO.
