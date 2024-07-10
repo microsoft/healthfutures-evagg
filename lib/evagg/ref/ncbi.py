@@ -232,6 +232,8 @@ def _extract_hgvs_from_xml(root: Any, uid: str) -> Dict[str, str]:
     props = {k: v for k, v in (kvp.split("=") for kvp in (node.text or "").split("|") if "=" in kvp) if k and v}
     # Extract all values from the HGVS property of the form 'HGVS=value1,value2...'.
     hgvs = props.get("HGVS", "").split(",")
+    gene = props.get("GENE", "").split(":")[0]
+
     # Return a dict with the first occurrence of each value that starts with 'NP_' (hgvs_p), 'NM_' (hgvs_c), or 'NC_'
     # (genomic reference sequences / non-coding variants).
     types = {
@@ -239,7 +241,9 @@ def _extract_hgvs_from_xml(root: Any, uid: str) -> Dict[str, str]:
         "hgvs_c": lambda x: x.startswith("NM_"),
         "hgvs_g": lambda x: x.startswith("NC_"),
     }
-    return {k: next(filter(match, hgvs)) for k, match in types.items() if (any(map(match, hgvs)))}
+    ret_dict = {k: next(filter(match, hgvs)) for k, match in types.items() if (any(map(match, hgvs)))}
+    ret_dict["gene"] = gene
+    return ret_dict
 
 
 def _extract_gene_symbols(reports: List[Dict], symbols: Sequence[str], allow_synonyms: bool) -> Dict[str, int]:

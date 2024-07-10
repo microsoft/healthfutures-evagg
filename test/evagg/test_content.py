@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import pytest
 
@@ -56,7 +56,7 @@ def test_prompt_based_content_extractor_valid_fields(
     }
 
     observation = Observation(
-        variant=HGVSVariant(fields["hgvs_c"], fields["gene"], "transcript", True, True, None, []),
+        variant=HGVSVariant(fields["hgvs_c"], fields["gene"], "transcript", True, True, None, None, []),
         individual="unknown",
         texts=[TextSection("TEST", "test", 0, "Here is the observation text.", "unknown")],
         variant_descriptions=["c.1234A>G"],
