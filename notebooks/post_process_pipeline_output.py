@@ -111,7 +111,7 @@ query GnomadVariant($variantId: String!, $datasetId: DatasetId!) {
     variables = {"variantId": variant_id, "datasetId": dataset_id}
 
     # HTTP POST request
-    return web_client.post(url, data={"query": query, "variables": variables}, content_type="json")
+    return web_client.get(url, data={"query": query, "variables": variables}, content_type="json")
 
 
 # %% Load pipeline output.

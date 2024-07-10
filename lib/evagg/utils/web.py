@@ -76,14 +76,12 @@ class RequestsWebContentClient(IWebContentClient):
         else:
             raise ValueError(f"Invalid content type: {content_type}")
 
-    def _get_content(self, url: str) -> Tuple[int, str]:
-        """GET the text content at the provided URL."""
-        response = self._get_session().get(url, timeout=self._settings.timeout)
-        return self._get_status_code(url, response.status_code, response.text)
-
-    def _post_content(self, url: str, data: Dict[str, Any]) -> Tuple[int, str]:
-        """POST the data to the provided URL."""
-        response = self._get_session().post(url, json=data, timeout=self._settings.timeout)
+    def _get_content(self, url: str, data: Optional[Dict[str, Any]] = None) -> Tuple[int, str]:
+        """GET (or POST) the text content at the provided URL."""
+        if data is not None:
+            response = self._get_session().post(url, json=data, timeout=self._settings.timeout)
+        else:
+            response = self._get_session().get(url, timeout=self._settings.timeout)
         return self._get_status_code(url, response.status_code, response.text)
 
     def update_settings(self, **kwargs: Any) -> None:
@@ -92,18 +90,15 @@ class RequestsWebContentClient(IWebContentClient):
         self._settings = WebClientSettings(**updated_settings)
         self._session = None  # reset the session to apply the new settings
 
-    def get(self, url: str, content_type: Optional[str] = None, url_extra: Optional[str] = None) -> Any:
-        """GET the content at the provided URL."""
-        code, content = self._get_content(url + (url_extra or ""))
-        self._raise_for_status(code)
-        return self._transform_content(content, content_type)
-
-    # TODO integrate with `get` method
-    def post(
-        self, url: str, data: Dict[str, Any], content_type: Optional[str] = None, url_extra: Optional[str] = None
+    def get(
+        self,
+        url: str,
+        data: Optional[Dict[str, Any]] = None,
+        content_type: Optional[str] = None,
+        url_extra: Optional[str] = None,
     ) -> Any:
-        """POST the data to the provided URL."""
-        code, content = self._post_content(url + (url_extra or ""), data)
+        """GET (or POST) the content at the provided URL."""
+        code, content = self._get_content(url + (url_extra or ""), data)
         self._raise_for_status(code)
         return self._transform_content(content, content_type)
 
@@ -131,10 +126,18 @@ class CosmosCachingWebClient(RequestsWebContentClient):
         self._container = database.get_container_client(self._cache_settings.container)
         return self._container
 
-    def get(self, url: str, content_type: Optional[str] = None, url_extra: Optional[str] = None) -> Any:
-        """GET the content at the provided URL, using the cache if available."""
+    def get(
+        self,
+        url: str,
+        data: Optional[Dict[str, Any]] = None,
+        content_type: Optional[str] = None,
+        url_extra: Optional[str] = None,
+    ) -> Any:
+        """GET (or POST) the content at the provided URL, using the cache if available."""
         cache_key = url.removeprefix("http://").removeprefix("https://")
         cache_key = cache_key.replace(":", "|").replace("/", "|").replace("?", "|").replace("#", "|")
+        if data is not None:
+            cache_key += f"&POST={self._invariant_hash(json.dumps(data))}"
         container = self._get_container()
 
         try:
@@ -144,7 +147,7 @@ class CosmosCachingWebClient(RequestsWebContentClient):
             code = item.get("status_code", 200)
         except CosmosResourceNotFoundError:
             # If the item is not in the cache, fetch it from the web.
-            code, content = super()._get_content(url + (url_extra or ""))
+            code, content = super()._get_content(url + (url_extra or ""), data)
             item = {"id": cache_key, "url": url, "status_code": code, "content": content}
             # Don't cache the response if it's a retryable/transient error.
             if code not in self._settings.retry_codes:
@@ -155,29 +158,3 @@ class CosmosCachingWebClient(RequestsWebContentClient):
 
     def _invariant_hash(self, input: str) -> str:
         return hashlib.sha256(input.encode("utf-8")).hexdigest()
-
-    def post(
-        self, url: str, data: Dict[str, Any], content_type: Optional[str] = None, url_extra: Optional[str] = None
-    ) -> Any:
-        """Post the content at the provided URL, using the cache if available."""
-        cache_key = url.removeprefix("http://").removeprefix("https://")
-        cache_key = cache_key.replace(":", "|").replace("/", "|").replace("?", "|").replace("#", "|")
-        cache_key += f"POST={self._invariant_hash(json.dumps(data))}"
-
-        container = self._get_container()
-
-        try:
-            # Attempt to get the item from the cache.
-            item = container.read_item(item=cache_key, partition_key=cache_key)
-            logger.debug(f"{item['url']} served from {self._cache_settings.database}/{self._cache_settings.container}.")
-            code = item.get("status_code", 200)
-        except CosmosResourceNotFoundError:
-            # If the item is not in the cache, fetch it from the web.
-            code, content = super()._post_content(url + (url_extra or ""), data)
-            item = {"id": cache_key, "url": url, "status_code": code, "content": content}
-            # Don't cache the response if it's a retryable/transient error.
-            if code not in self._settings.retry_codes:
-                container.upsert_item(item)
-
-        self._raise_for_status(code)
-        return super()._transform_content(item["content"], content_type)
