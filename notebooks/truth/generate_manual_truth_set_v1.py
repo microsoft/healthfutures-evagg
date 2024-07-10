@@ -382,11 +382,13 @@ for gene_tuple in genes:
 # Move the "gene" column to the front.
 evidence_df = evidence_df[["gene"] + [col for col in evidence_df.columns if col != "gene"]]
 
+# Add a blank `validation_error` column to indicate that no validation errors were found.
+evidence_df["validation_error"] = ""
+
 # Add a paper_id column right after pmid that is formatted as "pmid:{pmid}".
 evidence_df["paper_id"] = "pmid:" + evidence_df["pmid"].astype(str)
 
 ncbi_client = DiContainer().create_instance(spec={"di_factory": "lib/config/objects/ncbi.yaml"}, resources={})
-
 
 @cache
 def get_paper(pmid: str) -> Any:
