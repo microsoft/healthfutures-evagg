@@ -30,6 +30,7 @@ class HGVSVariant:
     refseq: str | None
     refseq_predicted: bool
     valid: bool
+    validation_error: str | None
     # TODO, consider subclasses for different variant types.
     protein_consequence: "HGVSVariant | None"
     coding_equivalents: "List[HGVSVariant]"

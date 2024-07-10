@@ -42,7 +42,7 @@ def test_normalize_success(mock_web_client: Any) -> None:
 def test_normalize_failure(mock_web_client: Any) -> None:
     web_client = mock_web_client("mutalyzer_normalize_fail.json")
     result = MutalyzerClient(web_client).normalize("NP_001267.2:FOO")
-    assert not result
+    assert result.get("error_message") == "ESYNTAXUC"
 
 
 def test_normalize_caching(mock_web_client: Any) -> None:

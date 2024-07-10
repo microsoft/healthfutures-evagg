@@ -47,7 +47,7 @@ class HGVSVariantFactory(ICreateVariants):
         elif text_desc.startswith("g."):
             raise ValueError(f"Genomic (g. prefixed) variants must have a RefSeq. None was provided for {text_desc}")
         else:
-            logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}")
+            logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}. Can't predict refseq.")
             return None
 
     def _clean_refseq(self, refseq: str | None, text_desc: str, gene_symbol: str | None) -> Tuple[str, bool]:
@@ -88,6 +88,8 @@ class HGVSVariantFactory(ICreateVariants):
         """Parse a variant based on an rsid."""
         hgvs_lookup = self._variant_lookup_client.hgvs_from_rsid(rsid)
         full_hgvs = None
+        gene_symbol = None
+
         if rsid in hgvs_lookup:
             if "hgvs_c" in hgvs_lookup[rsid]:
                 full_hgvs = hgvs_lookup[rsid]["hgvs_c"]
@@ -95,6 +97,7 @@ class HGVSVariantFactory(ICreateVariants):
                 full_hgvs = hgvs_lookup[rsid]["hgvs_p"]
             elif "hgvs_g" in hgvs_lookup[rsid]:
                 full_hgvs = hgvs_lookup[rsid]["hgvs_g"]
+            gene_symbol = hgvs_lookup[rsid].get("gene")
 
         if not full_hgvs:
             raise ValueError(f"Could not find HGVS for info rsid {rsid}")
@@ -102,7 +105,7 @@ class HGVSVariantFactory(ICreateVariants):
         refseq = full_hgvs.split(":")[0]
         text_desc = full_hgvs.split(":")[1]
 
-        return self.parse(text_desc, None, refseq)
+        return self.parse(text_desc, gene_symbol, refseq)
 
     def _normalize_and_create(
         self, text_desc: str, gene_symbol: str | None, refseq: str, refseq_predicted: bool
@@ -151,7 +154,8 @@ class HGVSVariantFactory(ICreateVariants):
             gene_symbol=gene_symbol,
             refseq=refseq,
             refseq_predicted=refseq_predicted,
-            valid=True,
+            valid=normalized.get("error_message", None) is None,
+            validation_error=normalized.get("error_message", None),
             protein_consequence=protein_consequence,
             coding_equivalents=coding_equivalents,
         )
@@ -174,7 +178,7 @@ class HGVSVariantFactory(ICreateVariants):
         transcript refseq).
         """
         refseq, refseq_predicted = self._clean_refseq(refseq, text_desc, gene_symbol)
-        is_valid = self._validator.validate(f"{refseq}:{text_desc}")
+        (is_valid, validation_error) = self._validator.validate(f"{refseq}:{text_desc}")
 
         # From here, if the variant is valid (or if it's a frameshift) we make a normalized variant (recursing as
         # necessary). Otherwise we make a non-normalized variant.
@@ -189,6 +193,7 @@ class HGVSVariantFactory(ICreateVariants):
                 refseq=refseq,
                 refseq_predicted=refseq_predicted,
                 valid=False,
+                validation_error=validation_error,
                 protein_consequence=None,
                 coding_equivalents=[],
             )
@@ -214,7 +219,10 @@ class HGVSVariantComparator(ICompareVariants):
 
     def _parse_refseq_parts(self, refseq: str) -> Dict[str, int]:
         """Parse a refseq accession string into a dictionary of accessions and versions."""
-        return {tok.rstrip(")").split(".")[0]: int(tok.rstrip(")").split(".")[1]) for tok in refseq.split("(")}
+        return {
+            tok.rstrip(")").split(".")[0]: (int(tok.rstrip(")").split(".")[1]) if "." in tok else -1)
+            for tok in refseq.split("(")
+        }
 
     def _more_complete_by_refseq(
         self, variant1: HGVSVariant, variant2: HGVSVariant, allow_mismatch: bool = False
