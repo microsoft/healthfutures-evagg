@@ -1,4 +1,3 @@
-# TODO: This YAML is used only by notebooks and sandbox code. Refactor into one of those subdirectories.
 log:
   di_factory: lib.evagg.utils.init_logger
   level: INFO
