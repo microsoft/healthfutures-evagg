@@ -29,7 +29,7 @@ def _get_prompt_file_path(name: str) -> str:
 class RareDiseaseFileLibrary(IGetPapers):
     """A class for fetching and categorizing disease papers from PubMed."""
 
-    CATEGORIES = ["rare disease", "other"]
+    CATEGORIES = ["genetic disease", "other"]
 
     def __init__(
         self,
@@ -50,7 +50,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
-        self._allowed_categories = allowed_categories if allowed_categories else ["rare disease"]
+        self._allowed_categories = allowed_categories if allowed_categories else ["genetic disease"]
         self.include_negative_examples = include_negative_examples
         # Allowed categories must be a subset of or equal to possible CATEGORIES.
         if not set(self._allowed_categories).issubset(set(self.CATEGORIES)):
@@ -81,9 +81,9 @@ class RareDiseaseFileLibrary(IGetPapers):
                         return True
             return False
 
-        # Check if the paper should be included in the rare disease category.
+        # Check if the paper should be included in the genetic disease category.
         if _has_keywords(title, INCLUSION_KEYWORDS) or _has_keywords(abstract, INCLUSION_KEYWORDS):
-            return "rare disease"
+            return "genetic disease"
         # If the paper doesn't fit in the other categories, add it to the other category.
         return "other"
 
@@ -111,14 +111,12 @@ class RareDiseaseFileLibrary(IGetPapers):
             prompt_settings={"prompt_tag": "paper_category", "prompt_metadata": prompt_metadata, "temperature": 0.8},
         )
 
-        if isinstance(response, str):
-            result = response
-        else:
-            logger.warning(f"LLM failed to return a valid categorization response for {paper.id}: {response}")
+        result = response.strip('"')
 
         if result in self.CATEGORIES:
             return result
 
+        logger.warning(f"LLM returned an invalid categorization for {paper.id}: {result}")
         return "other"
 
     async def _get_paper_categorizations(self, paper: Paper, gene: str) -> str:
@@ -165,7 +163,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         if not query.get("gene_symbol"):
             raise ValueError("Minimum requirement to search is to input a gene symbol.")
 
-        params = {"query": query["gene_symbol"]}
+        params: dict[str, Any] = {"query": f"Gene {query['gene_symbol']} pubmed pmc open access[filter]"}
         # Rationalize the optional parameters.
         if ("max_date" in query or "date_type" in query) and "min_date" not in query:
             raise ValueError("A min_date is required when max_date or date_type is provided.")
@@ -179,6 +177,10 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Perform the search for papers
         paper_ids = self._paper_client.search(**params)
         logger.info(f"Fetching {len(paper_ids)} papers for {query['gene_symbol']}.")
+
+        if "retmax" in params and len(paper_ids) == params["retmax"]:
+            logger.warning(f"Reached the maximum number of papers for {query['gene_symbol']}. Skipping gene.")
+            return []
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
         papers = [

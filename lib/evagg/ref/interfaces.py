@@ -65,7 +65,7 @@ class IBackTranslateVariants(Protocol):
 
 
 class IValidateVariants(Protocol):
-    def validate(self, hgvs: str) -> bool:
+    def validate(self, hgvs: str) -> Tuple[bool, str | None]:
         """Validate the provided variant."""
         ...  # pragma: no cover
 
