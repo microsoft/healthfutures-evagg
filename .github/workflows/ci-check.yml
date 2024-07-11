@@ -31,3 +31,11 @@ jobs:
     - name: Run make ci
       shell: bash -l {0}
       run: make ci
+
+    - name: Publish Test Coverage Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: coverage.xml
+
+      
