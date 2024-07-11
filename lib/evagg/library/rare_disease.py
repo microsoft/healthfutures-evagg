@@ -46,8 +46,6 @@ class RareDiseaseFileLibrary(IGetPapers):
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
             include_negative_examples (bool, optional): Whether to include negative examples in the LLM prompt.
         """
-        # TODO: go back and incorporate the idea of paper_types that can be passed into RareDiseaseFileLibrary,
-        # so that the user of this class can specify which types of papers they want to filter for.
         self._paper_client = paper_client
         self._llm_client = llm_client
         self._allowed_categories = allowed_categories if allowed_categories else ["genetic disease"]
@@ -60,9 +58,6 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Categorize papers based on keywords in the title and abstract."""
         title = paper.props.get("title") or ""
         abstract = paper.props.get("abstract") or ""
-
-        # TODO: Exclude papers that are not written in English by scanning the title or abstract
-        # TODO: Exclude papers that only describe animal models and do not have human data
 
         def _has_keywords(text: str, keywords: List[str]) -> bool:
             """Check if a text contains any of the keywords."""
