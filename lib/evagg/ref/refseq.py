@@ -83,7 +83,7 @@ class RefSeqLookupClient(BaseLookupClient):
     _PROCESSED_FILEPATH = "refseq_processed.json"
 
     def _download_binary_reference(self, url: str, target: str) -> None:
-        response = requests.get(url)
+        response = requests.get(url, timeout=60)
         response.raise_for_status()
 
         with open(target, "wb") as f:
