@@ -1,0 +1,29 @@
+name: Run Continuous Integration Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: '3.12'
+        environment-file: environment.yml
+        activate-environment: evagg
+        use-mamba: true
+
+    - name: Install make
+      run: sudo apt-get update && sudo apt-get install -y make
+
+    - name: Run make ci
+      shell: bash -l {0}
+      run: make ci
