@@ -33,10 +33,24 @@ jobs:
       shell: bash -l {0}
       run: make ci
 
-    - name: Publish Test Coverage Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: coverage-report
-        path: coverage.xml
+    # - name: Publish Test Coverage Artifact
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: coverage-report
+    #     path: coverage.xml
 
-      
+    - name: Code Coverage Report
+      uses: irongut/CodeCoverageSummary@v1.3.0
+      with:
+        filename: coverage.xml
+        badge: true
+        fail_below_min: true
+        format: markdown
+        hide_branch_rate: true
+        hide_complexity: false
+        indicators: true
+        output: file
+
+    - name: Write Code Coverage to Job Summary
+      run: cat code-coverage-results.md >> $GITHUB_STEP_SUMMARY
+  
