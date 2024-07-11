@@ -19,7 +19,7 @@ Local Machine
 
 Ubuntu 20.04/22.04 VM/WSL
 
-- [Python](https://www.python.org/downloads/) 3.8 and above
+- [Python](https://www.python.org/downloads/) 3.12 and above
 - azcopy (install script)
 - azure cli (install script)
 - git (install script)
