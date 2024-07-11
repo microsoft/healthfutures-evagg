@@ -82,7 +82,7 @@ class WebHPOClient(ISearchHPO):
     def search(self, query: str, retmax: int = 1) -> Sequence[Dict[str, str]]:
         query = self._clean_query(query)
         url = f"https://ontology.jax.org/api/hp/search?q={query}&limit={retmax}"
-        response = self._web_client.get(url, "json")
+        response = self._web_client.get(url, content_type="json")
 
         if not response["terms"]:
             return []

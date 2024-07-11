@@ -26,7 +26,7 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         hgvsp: The protein variant description to back translate. Must conform to HGVS nomenclature.
         """
         url = f"https://mutalyzer.nl/api/back_translate/{hgvsp}"
-        return self._web_client.get(url, "json")
+        return self._web_client.get(url, content_type="json")
 
     def back_translate(self, hgvsp: str) -> Sequence[str]:
         # Mutalyzer doesn't currently support normalizing frame shift variants, so we can't back-translate them.
@@ -49,7 +49,7 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         # is an internal server error). For now we interpret this as an unresolvable entity and return an empty dict.
         url = f"https://mutalyzer.nl/api/normalize/{hgvs}"
         try:
-            response = self._web_client.get(url, "json")
+            response = self._web_client.get(url, content_type="json")
         except HTTPError as e:
             logger.debug(f"{url} returned an error: {e}")
             if e.response.status_code == 500:
