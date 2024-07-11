@@ -42,12 +42,12 @@ def test_get_content_types(mock_request):
         RequestsWebContentClient(settings={"content_type": "binary"})
 
     web_client = RequestsWebContentClient()
-    assert web_client.get("https://any.url/testing", "text", url_extra="&extra") == "test"
+    assert web_client.get("https://any.url/testing", content_type="text", url_extra="&extra") == "test"
     assert mock_request.call_args.args[1] == "https://any.url/testing&extra"
-    assert web_client.get("https://any.url/testing", "xml").tag == "test"  # type: ignore
-    assert web_client.get("https://any.url/testing", "json") == {"test": 1}
+    assert web_client.get("https://any.url/testing", content_type="xml").tag == "test"  # type: ignore
+    assert web_client.get("https://any.url/testing", content_type="json") == {"test": 1}
     with raises(ValueError):
-        web_client.get("https://any.url/testing", "invalid")
+        web_client.get("https://any.url/testing", content_type="invalid")
 
 
 @patch("urllib3.connectionpool.HTTPConnectionPool._get_conn")

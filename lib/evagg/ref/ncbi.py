@@ -88,7 +88,6 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
     PUBTATOR_GET_URL = (
         "https://www.ncbi.nlm.nih.gov/research/pubtator3-api/publications/pmc_export/bioc{fmt}?pmcids={id}"
     )
-    # TODO: consider unicode encoding for the BioC response.
     BIOC_GET_URL = "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_xml/{pmcid}/ascii"
 
     def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
@@ -134,7 +133,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             props["can_access"] = True
             props["license"] = license = record.attrib.get("license", "unknown")
             if "-ND" in license:
-                # TODO if it has a "no derivatives" license, then we don't consider it open access.
+                # If it has a "no derivatives" license, then we don't consider it open access.
                 logger.debug(f"PMC OA record found for {pmcid} but has a no-derivatives license: {license}")
                 props["can_access"] = False
 

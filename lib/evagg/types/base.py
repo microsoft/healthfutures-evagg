@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Any, List
 
 
-# TODO dataclass?
 class Paper:
     def __init__(self, **kwargs: Any) -> None:
         self.id = kwargs["id"]  # id is required

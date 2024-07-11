@@ -29,7 +29,7 @@ lint: lint-flake8 type
 
 .PHONY: test
 test:
-	@pytest $(PY_DIRS_TEST) --cov=$(PY_DIRS_MAIN) --cov-report=term-missing
+	@pytest $(PY_DIRS_TEST) --cov=$(PY_DIRS_MAIN) --cov-report=term-missing --cov-report=xml
 
 .PHONY: lint-flake8
 lint-flake8:
