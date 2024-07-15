@@ -1,0 +1,7 @@
+log:
+  level: INFO
+resource:
+  di_factory: test/resources/test_dict.yaml
+
+di_factory: lib.evagg.app.TestApp
+test_value: "{{resource}}"
