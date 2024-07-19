@@ -71,8 +71,8 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, PropertyContentExtracto
             return []
 
         papers: List[Paper] = []
-        # Loop over all paper ids for evidence rows that match the gene symbol.
-        for paper_id in {ev["paper_id"] for ev in self._get_evidence(gene_symbol=gene_symbol)}:
+        # Loop over all paper ids for evidence rows that match the gene symbol in order of paper_id.
+        for paper_id in sorted({ev["paper_id"] for ev in self._get_evidence(gene_symbol=gene_symbol)}):
             # Fetch a Paper object with the extracted fields based on the PMID.
             assert paper_id.startswith("pmid:"), f"Paper ID {paper_id} does not start with 'pmid:'."
             if not (paper := self._paper_client.fetch(paper_id[len("pmid:") :], include_fulltext=True)):

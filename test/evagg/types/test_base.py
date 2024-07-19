@@ -24,6 +24,7 @@ def test_i_create_variants() -> None:
     assert variant.valid is True
     assert variant.protein_consequence is None
     assert variant.coding_equivalents == []
+    assert variant.get_unique_id("pre fix", "suf:f/ix") == "prefix_var_suf-f-ix"
 
 
 def test_paper_from_dict() -> None:
@@ -49,6 +50,7 @@ def test_paper_equality() -> None:
     assert paper == same_paper
     assert paper != different_paper
     assert paper != "not a paper"
+    assert len({paper, same_paper, different_paper}) == 2
 
 
 def test_paper_repr() -> None:
