@@ -61,7 +61,7 @@ async def test_get_observations(mock_paper_client: Any, mock_variant: Any, test_
     assert len(obs1[0].texts) == 145
 
 
-def test_get_evidence(mock_paper_client: Any, mock_variant:Any, test_resources_path):
+def test_get_evidence(mock_paper_client: Any, mock_variant: Any, test_resources_path):
     path = os.path.join(test_resources_path, "truthset.tsv")
     paper = Paper(id="pmid:33531950", citation="Test Citation", link="Test Link")
     paper_client = mock_paper_client(paper, paper)
