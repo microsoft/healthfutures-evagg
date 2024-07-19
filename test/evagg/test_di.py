@@ -7,6 +7,7 @@ import pytest
 from lib.di import DiContainer
 from lib.evagg import IExtractFields, IGetPapers, IWriteOutput
 from lib.evagg.types import Paper
+from lib.evagg.utils.run import _current_run
 from lib.execute import run_evagg_app
 
 LOGGER = logging.getLogger(__name__)
@@ -74,6 +75,11 @@ def test_run_evagg_app_override(caplog):
     assert "Test app executed with value: overridden_arg" in caplog.text
 
 
+def test_sample_config():
+    with patch("sys.argv", ["test", "sample_config"]):
+        run_evagg_app()
+
+
 @pytest.fixture
 def mock_library(mock_client: type) -> IGetPapers:
     return mock_client(IGetPapers)
@@ -103,6 +109,7 @@ def test_evagg_paper_query_app(json_load, mock_library: Any, mock_extractor: Any
         "mock_extractor": mock_extractor([{"evidence": "value"}]),
         "mock_writer": mock_writer(None),
     }
+    _current_run.elapsed_secs = None  # Reset elapsed_secs to avoid error on multiple runs in the same test.
     DiContainer().create_instance(spec, resources).execute()
 
     # Test missing query gene_symbol.
