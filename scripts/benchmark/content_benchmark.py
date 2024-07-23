@@ -34,17 +34,18 @@ if RUN_LATEST:
     run = get_previous_run("evagg_pipeline")
     if not run:
         raise ValueError("No previous run found.")
-    OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", run.path, run.output_file)  # type: ignore
+    OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "..", run.path, run.output_file)  # type: ignore
 else:
     OUTPUT_PATH = os.path.join(
         os.path.dirname(__file__),
+        "..",
         "..",
         ".out",
         "run_benchmark_observation_20240605_193705",
         "observation_benchmark.tsv",
     )
 
-TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "v1", "evidence_train_v1.tsv")
+TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "v1", "evidence_train_v1.tsv")
 
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
