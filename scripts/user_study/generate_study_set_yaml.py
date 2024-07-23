@@ -1,3 +1,9 @@
+"""Generation of config yaml for user study pipeline execution.
+
+The following script is intended to be run interactively. If run as a python script, generated figures will not be
+written to disk.
+"""
+
 # %% Imports.
 
 from time import sleep
@@ -12,7 +18,7 @@ from lib.di import DiContainer
 # %% Constants.
 
 # This is a list of genes that were extracted from the specific cases used in the user study. The process for how
-# these genes were selected is described in the user study protocol. 
+# these genes were selected is described in the user study protocol.
 GENE_PATH = "./scripts/user_study/study_set_genes.txt"
 
 # These are genes from the above that we are opting to exclude from the user study.
@@ -81,7 +87,7 @@ all_papers = {}
 for index, gene in enumerate(study_set_genes):
     params = {"query": f"Gene {gene} pubmed pmc open access[filter]", "retmax": retmax}
     paper_ids = ncbi_client.search(**params)
-
+    sleep(0.1)  # See issues/93
     if len(paper_ids) == retmax:
         # If the number of papers returned is equal to retmax, there are likely more than retmax papers, which puts
         # this gene out of scope for the user study.
@@ -89,6 +95,12 @@ for index, gene in enumerate(study_set_genes):
         continue
 
     print(f"{index} of {len(study_set_genes)}: Fetching {len(paper_ids)} papers for {gene}.")
+    for paper_id in paper_ids:
+        try:
+            all_papers[paper_id] = (gene, ncbi_client.fetch(paper_id, include_fulltext=True))
+            sleep(0.1)  # See issues/93
+        except Exception as e:
+            print(f"Error fetching paper {paper_id}: {e}")
 
 
 # %% Convert all_papers to a dataframe with the following columns
@@ -131,7 +143,7 @@ for g in missing_genes:
 
 # Make a histogram that shows how many genes have [0, 10), [10, 20), [20, 30), etc. papers.
 plt.figure(figsize=(12, 6))
-sns.histplot(data=paper_df.groupby("gene").size(), bins=range(0, 100, 5), kde=False) # type: ignore
+sns.histplot(data=paper_df.groupby("gene").size(), bins=range(0, 100, 5), kde=False)  # type: ignore
 
 # x-axis label should be "Number of papers"
 plt.xlabel("Number of OA/non-ND papers")
@@ -154,7 +166,7 @@ plt.xticks(rotation=45)
 # %% Plot a histogram showing the distribution of the year of the first publication for each gene.
 # This is a histogram of the minimum year for each gene.
 plt.figure(figsize=(12, 6))
-sns.histplot(data=paper_df.groupby("gene")["year"].min(), bins=range(1975, 2025, 1), kde=False) # type: ignore
+sns.histplot(data=paper_df.groupby("gene")["year"].min(), bins=range(1975, 2025, 1), kde=False)  # type: ignore
 
 plt.ylabel("Number of genes")
 plt.xlabel("Year of first publication")
