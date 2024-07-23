@@ -38,13 +38,13 @@ run_pipeline() {
 
 run_benchmarks() {
     echo -e "\n--> Running benchmarks ..."
-    python notebooks/paper_finding_benchmarks.py -l $DEFAULT_YAML
+    python scripts/benchmark/paper_finding_benchmarks.py -l $DEFAULT_YAML
 }
 
 run_prompt_assistant() {
     echo -e "\n-->Running Copilot^2 assistant ..."
     set -a; source .env; set +a;
-    python notebooks/copilot_squared_assistant.py
+    python scripts/prompt_engineering/copilot_squared_assistant.py
 }
 
 save_pipeline_output_extract_precision_recall() {
