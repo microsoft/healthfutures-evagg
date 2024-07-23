@@ -11,13 +11,6 @@ downloaded and uploaded to Azure blob storage before processing.
 
 Note: because this is a the spreadsheet contains multiple sheets, it will be necessary to download it as an xlsx file,
 not a csv or tsv file.
-
-TODO (2/21/2024) -
-- We're not currently validating whether any of the variants specified in the truth set are syntatically or biologically
-    correct.
-- Along similar lines, the validators don't currently handle p. or c. notation.
-- Probably not necessary, but we don't validate the HPO or OMIM terms to make sure they exist.
-
 """
 
 # %% Imports.
