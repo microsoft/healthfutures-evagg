@@ -42,7 +42,7 @@ class IRefSeqLookupClient(Protocol):
 
     def genomic_accession_for_symbol(self, symbol: str) -> str | None:
         """Get 'Reference Standard' RefSeq genomic accession ID for the given gene symbol."""
-        ...
+        ...  # pragma: no cover
 
     def accession_autocomplete(self, accession: str) -> Optional[str]:
         """Get the latest RefSeq version for a versionless accession."""
@@ -123,7 +123,7 @@ class IFetchHPO(Protocol):
             "name": "Abnormality of the eye"
         }
         """
-        ...
+        ...  # pragma: no cover
 
     def exists(self, query: str) -> bool:
         """Check if an HPO term exists based on a query.
@@ -133,4 +133,4 @@ class IFetchHPO(Protocol):
 
         Returns True if the term exists, False otherwise.
         """
-        ...
+        ...  # pragma: no cover
