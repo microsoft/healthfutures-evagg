@@ -42,3 +42,11 @@ class PaperQueryApp(IEvAggApp):
         # Write out the results.
         output_file = self._writer.write(output_fieldsets)
         set_run_complete(output_file)
+
+
+class TestApp(IEvAggApp):
+    def __init__(self, test_value: Any) -> None:
+        self._test_value = test_value
+
+    def execute(self) -> None:
+        logger.info(f"Test app executed with value: {self._test_value}")
