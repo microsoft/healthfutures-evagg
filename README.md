@@ -150,17 +150,16 @@ method on it. For convenience you may omit the the `lib/config/` prefix or the `
 **Note:** A yaml spec may define any instantiable object, but `run_evagg_app` requires a spec defining a top-level
 object that implements `IEvAggApp`.
 
-As a simple test of script execution, run the following specific commands from the repo root:
+As a simple test of script execution, run the following command from the repo root:
 
 ```bash
-python test/make_local_library.py
 run_evagg_app lib/config/sample_config.yaml
 # equivalently: run_evagg_app sample_config
 ```
 
-This will create a fake local library of papers, extract content from those papers using a dummy implementation, and
-print the results of these operations to `stdout`. While this doesn't actually do anything useful, it's a good way to
-verify that the pipeline and dependencies are configured correctly.
+This extracts content from a local sample library of fake papers using a dummy implementation and prints the resulting
+evidence table to `stdout`. While this doesn't actually do anything useful, it's a good way to verify that the
+pipeline and its dependencies are configured correctly.
 
 You can optionally add or override any leaf value within an app spec dictionary (or sub-dictionary) using
 the `-o` argument followed by one or more dictionary `key:value` specifications separated by spaces. The following
@@ -177,8 +176,8 @@ configuration and/or secrets passed in as constructor arguments in order to secu
 done via settings dictionaries that are instantiated with an appropriate factory specified in the app spec yaml.
 The most common built in factory is `lib.evagg.utils.get_dotenv_settings`, which reads all settings with a given
 prefix (e.g. `AZURE_OPENAI_`) from a `.env` file in the repo root and parses them into a corresponding settings
-dictionary. A template file `template.env` documenting known component settings is offered at the repo root - to get
-started, copy this file , rename to `.env`, and fill it in with actual secrets as needed.
+dictionary. A template file `template.env` documenting known component settings is offered at the repo root. To get
+started, copy this file, rename it to `.env`, and fill it in with actual values as needed.
 
 For development on this repo from within [Codespaces](#codespaces-setup),
 make use of the analogous factory `lib.evagg.utils.get_env_settings` in the app spec, which reads
