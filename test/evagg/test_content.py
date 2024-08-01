@@ -5,6 +5,7 @@ import pytest
 
 from lib.evagg import PromptBasedContentExtractor
 from lib.evagg.content import IFindObservations, Observation, TextSection
+from lib.evagg.content.fulltext import get_fulltext
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IFetchHPO, ISearchHPO
 from lib.evagg.types import HGVSVariant, Paper
@@ -88,3 +89,54 @@ def test_prompt_based_content_extractor_valid_fields(
     print("FIELDS")
     print(fields)
     assert content[0] == fields
+
+
+xmldoc = """
+    <document>
+        <id>7933980</id>
+        {content}
+    </document>
+"""
+
+
+def test_fulltext():
+    xml1 = """
+        <passage>
+            <infon key="section_type">TITLE</infon>
+            <infon key="type">front</infon>
+            <offset>0</offset>
+            <text>test
+                title</text>
+        </passage>
+"""
+    assert get_fulltext(None) == ""
+    assert get_fulltext(xmldoc.format(content=xml1), include=["TITLE"]) == "test title"
+    assert get_fulltext(xmldoc.format(content=xml1), exclude=["TITLE"]) == ""
+    assert get_fulltext(xmldoc.format(content=xml1), include=["TITLE"], exclude=["TITLE"]) == ""
+
+
+def test_fulltext_missing():
+    xml1 = """
+        <passage>
+        </passage>
+"""
+    xml2 = """
+        <passage>
+            <infon key="section_type">TITLE</infon>
+        </passage>
+"""
+    xml3 = """
+        <passage>
+            <infon key="section_type">TITLE</infon>
+            <infon key="type">front</infon>
+        </passage>
+"""
+    with pytest.raises(ValueError) as e:
+        get_fulltext(xmldoc.format(content=xml1))
+    assert str(e.value) == "Missing 'section_type' infon element in passage for document 7933980"
+    with pytest.raises(ValueError) as e:
+        get_fulltext(xmldoc.format(content=xml2))
+    assert str(e.value) == "Missing 'type' infon element in passage for document 7933980"
+    with pytest.raises(ValueError) as e:
+        get_fulltext(xmldoc.format(content=xml3))
+    assert str(e.value) == "Missing 'offset' infon element in TITLE passage for document 7933980"
