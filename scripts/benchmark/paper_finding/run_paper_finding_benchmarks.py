@@ -15,7 +15,8 @@ other categories
 
 # Libraries
 import argparse
-import glob
+
+# import glob
 import json
 import os
 import shutil
@@ -31,73 +32,15 @@ import yaml
 
 from lib.di import DiContainer
 from lib.evagg.ref import IPaperLookupClient
-
-
-def get_git_commit_hash():
-    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
-
-
-def read_queries(yaml_data):
-    query_list_yaml = []
-    for query in yaml_data:
-        # Extract the values, or use an empty string if they're missing
-        gene_symbol = query.get("gene_symbol", None)
-        min_date = query.get("min_date", "")
-        max_date = query.get("max_date", "")
-        date_type = query.get("date_type", "")
-        retmax = query.get("retmax", "")  # default retmax (i.e. max_papers) is 20
-
-        # Create a new dictionary with the gene_symbol and the values, '' in places where .yaml does not show a value
-        new_dict = {
-            "gene_symbol": gene_symbol,
-            "min_date": min_date,
-            "max_date": max_date,
-            "date_type": date_type,
-            "retmax": retmax,
-        }
-
-        # Add the new dictionary to the list
-        query_list_yaml.append(new_dict)
-    return query_list_yaml
-
-
-def get_ground_truth_pmids(gene, mgt_gene_pmids_dict):
-    """Get the manual ground truth (MGT)  data PMIDs for a gene.
-
-    Return the PMIDs for the gene if it is in the ground truth  data, otherwise return None.
-    """
-    if gene in mgt_gene_pmids_dict.keys():
-        return mgt_gene_pmids_dict[gene]
-    else:
-        return None
-
-
-def compare_pmid_lists(input_pmids, truth_pmids):
-    """Compare the PMIDs that were found either by ev. agg. or competing tool (e.g. PubMed) to the MGT PMIDs.
-
-    Args:
-        input_pmids (list): the ids of papers that were found
-        truth_pmids (list): the ids of papers from the MGT data
-
-    Returns:
-        correct_pmids (list): the PMIDs of the papers that were found that match the MGT data papers
-        missed_pmids (list): the PMIDs of the papers that are in the MGT data papers but not in the
-        papers that were found
-        irrelevant_pmids (list): the PMIDs of the papers that are in the papers that were found but not in
-        the MGT data papers
-    """
-    correct_pmids = list(set(input_pmids).intersection(set(truth_pmids)))
-    missed_pmids = list(set(truth_pmids).difference(set(input_pmids)))
-    irrelevant_pmids = list(set(input_pmids).difference(set(truth_pmids)))
-
-    return correct_pmids, missed_pmids, irrelevant_pmids
+from lib.evagg.utils.run import get_previous_run
 
 
 def plot_benchmarking_results_tool_only(
-    num_correct,
-    num_missed,
-    num_irrelevant,
-):  # TODO: consider merging this function with plot_benchmarking_results, given the code similarity
+    output_dir: str,
+    num_correct: int,
+    num_missed: int,
+    num_irrelevant: int,
+):
     """Plot the benchmarking results from the  set in a barplot."""
     # List of categories
     ea_categories = ["E.A. Correct", "E.A. Missed", "E.A. Irrelevant"]
@@ -139,11 +82,11 @@ def plot_benchmarking_results_tool_only(
     plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
 
     # Save barplot
-    plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train.png")
+    plt.savefig(output_dir + "/benchmarking_paper_finding_results_train.png")
 
 
 def plot_benchmarking_results(
-    num_correct, num_missed, num_irrelevant, num_pub_correct, num_pub_missed, num_pub_irrelevant
+    output_dir: str, num_correct, num_missed, num_irrelevant, num_pub_correct, num_pub_missed, num_pub_irrelevant
 ):
     """Plot the benchmarking results from the  set in a barplot."""
     # Create a DataFrame from the input data
@@ -225,11 +168,11 @@ def plot_benchmarking_results(
     plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
 
     # Save barplot
-    plt.savefig(args.outdir + "/benchmarking_paper_finding_results_train_EA_vs_PubMed.png")
+    plt.savefig(output_dir + "/benchmarking_paper_finding_results_train_EA_vs_PubMed.png")
 
 
 # Plot the filtereds into paper 4 categories
-def plot_filtered_categories(class_results):
+def plot_filtered_categories(output_dir, class_results):
     """Plot the filtered results (2 categories: rare disease, other) in a barplot."""
     # Calculate averages
     averages = [np.mean(values) for values in zip(*class_results.values())]
@@ -276,7 +219,67 @@ def plot_filtered_categories(class_results):
     # Call the function for each barplot
     add_labels(bars)
 
-    plt.savefig(args.outdir + "/filtering_paper_finding_results_train.png")
+    plt.savefig(output_dir + "/filtering_paper_finding_results_train.png")
+
+
+def get_git_commit_hash():
+    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
+
+
+def read_queries(yaml_data):
+    query_list_yaml = []
+    for query in yaml_data:
+        # Extract the values, or use an empty string if they're missing
+        gene_symbol = query.get("gene_symbol", None)
+        min_date = query.get("min_date", "")
+        max_date = query.get("max_date", "")
+        date_type = query.get("date_type", "")
+        retmax = query.get("retmax", "")  # default retmax (i.e. max_papers) is 20
+
+        # Create a new dictionary with the gene_symbol and the values, '' in places where .yaml does not show a value
+        new_dict = {
+            "gene_symbol": gene_symbol,
+            "min_date": min_date,
+            "max_date": max_date,
+            "date_type": date_type,
+            "retmax": retmax,
+        }
+
+        # Add the new dictionary to the list
+        query_list_yaml.append(new_dict)
+    return query_list_yaml
+
+
+def get_ground_truth_pmids(gene, mgt_gene_pmids_dict):
+    """Get the manual ground truth (MGT)  data PMIDs for a gene.
+
+    Return the PMIDs for the gene if it is in the ground truth  data, otherwise return None.
+    """
+    if gene in mgt_gene_pmids_dict.keys():
+        return mgt_gene_pmids_dict[gene]
+    else:
+        return None
+
+
+def compare_pmid_lists(input_pmids, truth_pmids):
+    """Compare the PMIDs that were found either by ev. agg. or competing tool (e.g. PubMed) to the MGT PMIDs.
+
+    Args:
+        input_pmids (list): the ids of papers that were found
+        truth_pmids (list): the ids of papers from the MGT data
+
+    Returns:
+        correct_pmids (list): the PMIDs of the papers that were found that match the MGT data papers
+        missed_pmids (list): the PMIDs of the papers that are in the MGT data papers but not in the
+        papers that were found
+        irrelevant_pmids (list): the PMIDs of the papers that are in the papers that were found but not in
+        the MGT data papers
+    """
+    correct_pmids = list(set(input_pmids).intersection(set(truth_pmids)))
+    missed_pmids = list(set(truth_pmids).difference(set(input_pmids)))
+    irrelevant_pmids = list(set(input_pmids).difference(set(truth_pmids)))
+
+    return correct_pmids, missed_pmids, irrelevant_pmids
 
 
 def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
@@ -317,12 +320,7 @@ def get_paper_titles(pmids: Set[str]) -> Dict[str, str]:
     return titles
 
 
-def main(args):
-
-    # Open and load the .yaml file
-    with open(args.library_config, "r") as file:
-        yaml_data = yaml.safe_load(file)
-
+def get_mgt(args: argparse.Namespace) -> pd.DataFrame:
     # Read the intermediate manual ground truth (MGT) data file from the TSV file
     mgt_df = pd.read_csv(args.mgt_train_test_path, sep="\t")
     print("Number of manual ground truth pmids: ", mgt_df.shape[0] - 1)
@@ -339,20 +337,23 @@ def main(args):
         mgt_df = mgt_df[~mgt_df.pmid.astype(str).isin(skipped_pmids)]
         print("Not considering skipped pmids: ", mgt_df.shape[0] - 1)
 
-    # Get the query/ies from .yaml file so we know the list of genes processed.
-    if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
-        with open(yaml_data["queries"]["di_factory"], "r") as file:
-            yaml_data = yaml.safe_load(file)
-            query_list_yaml = read_queries(yaml_data)
-    elif yaml_data["queries"] is not None:
-        query_list_yaml = read_queries(yaml_data["queries"])
+    return mgt_df
+
+
+def get_pipeline_output(args: argparse.Namespace) -> pd.DataFrame:
+
+    if args.pipeline_output:
+        run_record = get_previous_run("evagg_pipeline", name_includes=args.pipeline_output)
     else:
-        raise ValueError("No queries found in the .yaml file.")
+        run_record = get_previous_run("evagg_pipeline")
 
-    yaml_genes = [query["gene_symbol"] for query in query_list_yaml]
+    if not run_record or not run_record.path or not run_record.output_file:
+        raise ValueError("No pipeline output found.")
 
-    # Read in the corresponding pipeline output.
-    pipeline_df = pd.read_csv(args.pipeline_output, sep="\t", skiprows=1)
+    # Read in the corresponding pipeline output. Assume we're running from repo root.
+    pipeline_df = pd.read_csv(os.path.join(run_record.path, run_record.output_file), sep="\t", skiprows=1)
+
+    # Check if the pipeline output has the necessary columns.
     if "disease_category" not in pipeline_df.columns:
         print("No disease_category column found in pipeline output. Adding 'rare disease' to all papers.")
         pipeline_df["disease_category"] = "rare disease"
@@ -362,9 +363,50 @@ def main(args):
     # We only need one of each paper/gene pair, so we drop duplicates.
     pipeline_df = pipeline_df.drop_duplicates(subset=["gene", "paper_id"])
 
+    # Get the query/ies from config file so we know the list of genes that were processed.
+    # If there is an override for queries on the command line, we'll need to respect that.
+    override_strings = [
+        run_record.args[i + 1] for i, arg in enumerate(run_record.args) if arg == "--override" or arg == "-o"
+    ]
+
+    if _ := next((s for s in override_strings if s.startswith("queries:")), None):
+        raise NotImplementedError("queries: override not yet implemented.")
+    elif query_yaml := next((s for s in override_strings if s.startswith("queries.di_factory:")), None):
+        with open(query_yaml.split(":")[1], "r") as file:
+            yaml_data = yaml.safe_load(file)
+            query_list_yaml = read_queries(yaml_data)
+    else:
+        # No override for queries, so we'll use what we find in the pipeline output
+        with open(run_record.args[0], "r") as file:
+            yaml_data = yaml.safe_load(file)
+
+        if ".yaml" in str(yaml_data["queries"]):  # leading to query .yaml
+            with open(yaml_data["queries"]["di_factory"], "r") as file:
+                yaml_data = yaml.safe_load(file)
+                query_list_yaml = read_queries(yaml_data)
+        elif yaml_data["queries"] is not None:
+            query_list_yaml = read_queries(yaml_data["queries"])
+        else:
+            raise ValueError("No queries found in the .yaml file.")
+
+    yaml_genes = [query["gene_symbol"] for query in query_list_yaml]
+
     if any(x not in yaml_genes for x in pipeline_df.gene.unique().tolist()):
         raise ValueError("Gene(s) in pipeline output .tsv not found in the .yaml file.")
 
+    return pipeline_df
+
+
+def main(args: argparse.Namespace) -> None:
+
+    import pdb
+
+    pdb.set_trace()
+    mgt_df = get_mgt(args)
+
+    pipeline_df = get_pipeline_output(args)
+
+    return
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
     if os.path.isdir(args.outdir):
@@ -428,6 +470,7 @@ def main(args):
     # Plot benchmarking results
     if args.isolated_run:
         plot_benchmarking_results(
+            args.outdir,
             len(ea_overall_true_positives),  # correct Evidence Aggregator papers
             len(ea_overall_false_negatives),  # missed Evidence Aggregator papers
             len(ea_overall_false_positives),  # irrelevant Evidence Aggregator papers
@@ -437,6 +480,7 @@ def main(args):
         )
     else:
         plot_benchmarking_results_tool_only(
+            args.outdir,
             len(ea_overall_true_positives),  # correct Evidence Aggregator papers
             len(ea_overall_false_negatives),  # missed Evidence Aggregator papers
             len(ea_overall_false_positives),  # irrelevant Evidence Aggregator papers
@@ -621,18 +665,19 @@ def main(args):
                     f.write(f"* {i + 1} * {p} * {titles[p]}\n")  # PMID and title output
 
     # Plot filtering results
-    plot_filtered_categories(class_results)
+    plot_filtered_categories(args.outdir, class_results)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evidence Aggregator Paper Finding Benchmarks")
     parser.add_argument(
-        "-l",
-        "--library-config",
+        "-p",
+        "--pipeline-output",
         nargs="?",
-        default="lib/config/benchmark_paper_finding.yaml",
+        default="",
         type=str,
-        help="Default is lib/config/benchmark_paper_finding.yaml",
+        help="Path to the output directory corresponding to the pipeline run. "
+        + "If none is provided, the most recent output for 'run_evagg_pipeline' will be used.",
     )
     parser.add_argument(
         "-m",
@@ -646,25 +691,18 @@ if __name__ == "__main__":
         "-s",
         "--skipped-pmids",
         nargs="?",
-        default="notebooks/paper_finding_benchmarks_skipped_pmids.txt",
+        default="",
         type=str,
-        help="Default is notebooks/paper_finding_benchmarks_skipped_pmids.txt",
-    )
-    parser.add_argument(
-        "-p",
-        "--pipeline-output",
-        nargs="?",
-        default=".out/library_benchmark.tsv",
-        type=str,
-        help="Default is .out/library_benchmark.tsv",
+        help="Path to file containing pmids that should be removed from the truth set before running benchmarks. "
+        + "If none is provided then all pmids will be considered.",
     )
     parser.add_argument(
         "-f",
         "--mgt-full-text-only",
         nargs="?",
-        default=False,
+        default=True,
         type=bool,
-        help="Default is False",
+        help="Flag to subset mgt papers under consideration to only those will full text available. Default is True",
     )
     parser.add_argument(
         "-t",
