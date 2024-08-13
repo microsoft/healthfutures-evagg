@@ -87,7 +87,9 @@ def set_run_complete(output_file: Optional[str]) -> None:
     logger.info(f"Run complete in {_current_run.elapsed_secs} secs on branch {repo.branch} ({repo.commit[:7]})")
 
 
-def get_previous_run(name: Optional[str] = None, sub_path: Optional[str] = None) -> Optional[RunRecord]:
+def get_previous_run(
+    name: Optional[str] = None, sub_path: Optional[str] = None, name_includes: Optional[str] = None
+) -> Optional[RunRecord]:
     global _current_run, _output_root
 
     def _is_match(dir: str) -> bool:
@@ -96,6 +98,7 @@ def get_previous_run(name: Optional[str] = None, sub_path: Optional[str] = None)
             and dir.startswith(f"run_{name or _current_run.name}_")
             and os.path.exists(os.path.join(_output_root, dir, "run.json"))
             and (sub_path is None or os.path.exists(os.path.join(_output_root, dir, sub_path)))
+            and (name_includes is None or name_includes in dir)
         )
 
     # Find the most recent matching prior run, if any.
