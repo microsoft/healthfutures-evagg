@@ -1,6 +1,6 @@
 # Truthset
 
-This directory contains scripts relevant to generation, evaluation, and abritration of truthsets used in benchmarking.
+This directory contains scripts relevant to generation, evaluation, and arbitration of truthsets used in benchmarking.
 
 ## Truthset generation
 
