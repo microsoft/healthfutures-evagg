@@ -388,7 +388,7 @@ uninterrupted sequences of whitespace characters.
         # Fix three-letter p. descriptions that don't follow the capitalization convention.
         # For now, only handle reference AAs and single missense alternate AAs.
         if "del" not in variant_str:
-            if match := re.match(r"p\.([A-za-z][a-z]{2})(\d+)([A-za-z][a-z]{2})*(.*?)$", variant_str):
+            if match := re.match(r"p\.([A-Za-z][a-z]{2})(\d+)([A-Za-z][a-z]{2})*(.*?)$", variant_str):
                 ref_aa, pos, alt_aa, extra = match.groups()
                 variant_str = f"p.{ref_aa.capitalize()}{pos}{alt_aa.capitalize() if alt_aa else ''}{extra}"
 
