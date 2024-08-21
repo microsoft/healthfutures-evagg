@@ -23,7 +23,7 @@ from lib.di import DiContainer
 # %% Constants.
 
 PIPELINE_OUTPUT = ".out/run_evagg_pipeline_20240703_194329/pipeline_benchmark.tsv"
-VCF_VARIANT_FORMAT_MAPPING_DIR = "notebooks/post_processing_vcf/"
+VCF_VARIANT_FORMAT_MAPPING_DIR = "scripts/post_processing/"
 
 DROP_VALIDATION_ERRORS = True
 
@@ -166,23 +166,24 @@ if not missing_variants:
         counter += 1
         loop_start = time.time()
         if not row.hgvs_c or not row.transcript or row.validation_error:
-            df.loc[row.name, "gnomad_frequency"] = ""
+            df.loc[row.name, "gnomad_frequency"] = ""  # type: ignore
             continue
 
         print(f"{counter} of {n_rows} - Obtaining gnomAD allele frequency for: {row.transcript}:{row.hgvs_c}")
         vcf = hgvs_to_vcf(f"{row.transcript}:{row.hgvs_c}")
         if vcf is None:
-            df.loc[row.name, "gnomad_frequency"] = ""
+            df.loc[row.name, "gnomad_frequency"] = ""  # type: ignore
             continue
         start = time.time()
         freq = joint_popmax_faf95(vcf)
         if not freq:
-            df.loc[row.name, "gnomad_frequency"] = "0"
+            df.loc[row.name, "gnomad_frequency"] = "0"  # type: ignore
         else:
-            df.loc[row.name, "gnomad_frequency"] = f"{freq:.3g}"
+            df.loc[row.name, "gnomad_frequency"] = f"{freq:.3g}"  # type: ignore
 
         # Make a best guess as to whether the underlying API was called or the result was served from the cosmos cache.
         # Better to be conservative here (assuming we called the API when we didn't) than to be too optimistic.
+        # See issues/93.
         wait_triggered = (call_elapsed := time.time() - start) > 0.05
         if wait_triggered:
             print(f"Waiting to recall gnomAD API: {vcf} [call_elapsed = {call_elapsed}]")
