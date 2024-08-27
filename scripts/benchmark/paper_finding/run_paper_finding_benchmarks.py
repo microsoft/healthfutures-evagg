@@ -399,14 +399,10 @@ def get_pipeline_output(args: argparse.Namespace) -> pd.DataFrame:
 
 def main(args: argparse.Namespace) -> None:
 
-    import pdb
-
-    pdb.set_trace()
     mgt_df = get_mgt(args)
 
     pipeline_df = get_pipeline_output(args)
 
-    return
     # For each query, get papers, compare ev. agg. papers to MGT data papers,
     # compare PubMed papers to MGT data papers. Write results to benchmarking against MGT file.
     if os.path.isdir(args.outdir):
