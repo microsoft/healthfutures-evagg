@@ -154,4 +154,15 @@ print(f"Total missing papers from query and filter approach: {total_missing_quer
 all_pmid_df.query("in_truth_set == True").query("in_query_only != in_query_and_filter")
 
 
+# %% Check to see whether the keyword "gene" is present in the fulltext of the papers.
+
+for pmid in all_pmid_df.query("in_truth_set == True").query("in_query_only != in_query_and_filter").pmid:
+    paper = ncbi_client.fetch(str(pmid), include_fulltext=True)
+
+    xml = paper.props["fulltext_xml"]
+    if any(kwd in xml for kwd in [" gene ", " Gene ", " genes ", " Genes "]):
+        print(f"Keyword found in {pmid}")
+    else:
+        print(f"!! Keyword not found in {pmid}")
+
 # %%
