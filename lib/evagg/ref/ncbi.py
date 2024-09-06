@@ -69,6 +69,7 @@ PAPER_BASE_PROPS = {
     "doi",
     "pmcid",
     "citation",
+    "OA",
     "can_access",
     "license",
     "link",
@@ -113,7 +114,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
     def _get_license_props(self, pmcid: str) -> Dict[str, str | bool]:
         """Get the access status for a paper from the PMC OA API."""
-        props: Dict[str, str | bool] = {"can_access": False, "license": "unknown"}
+        props: Dict[str, str | bool] = {"can_access": False, "license": "unknown", "OA": False}
         if not pmcid:
             return props
 
@@ -132,6 +133,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         else:
             props["can_access"] = True
             props["license"] = license = record.attrib.get("license", "unknown")
+            props["OA"] = True
             if "-ND" in license:
                 # If it has a "no derivatives" license, then we don't consider it open access.
                 logger.debug(f"PMC OA record found for {pmcid} but has a no-derivatives license: {license}")
