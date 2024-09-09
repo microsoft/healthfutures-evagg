@@ -112,7 +112,7 @@ class OpenAIClient(IPromptClient):
                 elapsed = time.time() - start_ts
                 break
             except (openai.RateLimitError, openai.InternalServerError) as e:
-                # Only report the first rate limit error not from the proxy unless it's constant.
+                # Only report the first rate limit error not from a proxy unless it's constant.
                 if rate_limit_errors > 10 or (rate_limit_errors == 0 and not e.message.startswith("No good endpoints")):
                     logger.warning(f"Rate limit error on {prompt_tag}: {e}")
                 rate_limit_errors += 1
@@ -120,7 +120,7 @@ class OpenAIClient(IPromptClient):
             except (openai.APIConnectionError, openai.APITimeoutError) as e:
                 if connection_errors > 2:
                     if self._config.endpoint.startswith("http://localhost"):
-                        logger.error("Azure OpenAI API unreachable - have you started the proxy?")
+                        logger.error("Azure OpenAI API unreachable - have failed to start a local proxy?")
                     raise
                 if connection_errors == 0:
                     logger.warning(f"Connectivity error on {prompt_tag}: {e.message}")
@@ -199,7 +199,7 @@ class OpenAIClient(IPromptClient):
                 except (openai.APIConnectionError, openai.APITimeoutError):
                     if connection_errors > 2:
                         if self._config.endpoint.startswith("http://localhost"):
-                            logger.error("Azure OpenAI API unreachable - have you started the proxy?")
+                            logger.error("Azure OpenAI API unreachable - have failed to start a local proxy?")
                         raise
                     logger.warning("Connectivity error on embeddings, retrying...")
                     connection_errors += 1
