@@ -16,8 +16,8 @@ TRAIN_RUNS = [
     "20240909_165847",
     "20240909_210652",
     "20240910_044027",
-    # "20240910_134659",
-    # ""
+    "20240910_134659",
+    "20240910_191020",
 ]
 
 TEST_RUNS = [
@@ -37,14 +37,7 @@ def load_run(run_id: str) -> pd.DataFrame | None:
         return None
 
     run_data = pd.read_csv(run_file)
-    # run_data["run_id"] = run_id
     return run_data
-
-
-# def load_runs(run_ids):
-#     """Load the data from multiple runs."""
-
-#     # Separate runs will have overlap in the (gene, pmid) columns. We need to merge the data from these multiple runs.
 
 
 # %% Generate stats for each run.
@@ -125,7 +118,7 @@ g.title.set_text("Paper finding benchmark results (train) - dumb way to display"
 
 # %% Print them instead.
 
-print(run_stats[["run_id", "n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]])
+print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]])
 
 print()
 print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]].aggregate(["mean", "std"]))
