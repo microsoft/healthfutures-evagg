@@ -21,7 +21,11 @@ TRAIN_RUNS = [
 ]
 
 TEST_RUNS = [
-    # "",
+    "20240911_165451",
+    "20240911_194240",
+    "20240911_223218",
+    "20240912_145606",
+    "20240912_181121",
 ]
 
 # %% Function definitions.
@@ -42,11 +46,14 @@ def load_run(run_id: str) -> pd.DataFrame | None:
 
 # %% Generate stats for each run.
 
-runs = [load_run(id) for id in TRAIN_RUNS]
+train_runs = [load_run(id) for id in TEST_RUNS]
 
-run_stats_dicts: List[Dict[str, Any]] = []
+train_run_stats_dicts: List[Dict[str, Any]] = []
 
-for run_id, run in zip(TRAIN_RUNS, runs):
+for run_id, run in zip(TEST_RUNS, train_runs):
+    if run is None:
+        continue
+
     n_correct = run.query("in_truth == True and in_pipeline == True").shape[0]
     missed = run.query("in_truth == True and in_pipeline == False")
     n_missed = missed.shape[0]
@@ -55,7 +62,7 @@ for run_id, run in zip(TRAIN_RUNS, runs):
     n_irrelevant = irrelevant.shape[0]
     irrelevant_queries = set(irrelevant["pmid_with_query"].unique())
 
-    run_stats_dicts.append(
+    train_run_stats_dicts.append(
         {
             "run_id": run_id,
             "n_correct": n_correct,
@@ -67,21 +74,30 @@ for run_id, run in zip(TRAIN_RUNS, runs):
     )
 
 # Make a dataframe out of run_counts_dicts.
-run_stats = pd.DataFrame(run_stats_dicts)
+train_run_stats = pd.DataFrame(train_run_stats_dicts)
 
 # Add derived stats.
-run_stats["precision"] = run_stats["n_correct"] / (run_stats["n_correct"] + run_stats["n_irrelevant"])
-run_stats["recall"] = run_stats["n_correct"] / (run_stats["n_correct"] + run_stats["n_missed"])
-run_stats["f1"] = 2 * run_stats["precision"] * run_stats["recall"] / (run_stats["precision"] + run_stats["recall"])
+train_run_stats["precision"] = train_run_stats["n_correct"] / (
+    train_run_stats["n_correct"] + train_run_stats["n_irrelevant"]
+)
+train_run_stats["recall"] = train_run_stats["n_correct"] / (train_run_stats["n_correct"] + train_run_stats["n_missed"])
+train_run_stats["f1"] = (
+    2
+    * train_run_stats["precision"]
+    * train_run_stats["recall"]
+    / (train_run_stats["precision"] + train_run_stats["recall"])
+)
 
 # Reorder columns, putting missed and irrelevant at the end.
-run_stats = run_stats[list(run_stats.columns.drop(["missed", "irrelevant"])) + ["missed", "irrelevant"]]
+train_run_stats = train_run_stats[
+    list(train_run_stats.columns.drop(["missed", "irrelevant"])) + ["missed", "irrelevant"]
+]
 
 # %% Make the counts performance barplot.
 sns.set_theme(style="whitegrid")
 
 # Convert this dataframe to have the columns: run_id, count_type, and count_value.
-run_counts_melted = run_stats[["run_id", "n_correct", "n_missed", "n_irrelevant"]].melt(
+run_counts_melted = train_run_stats[["run_id", "n_correct", "n_missed", "n_irrelevant"]].melt(
     id_vars="run_id", var_name="count_type", value_name="count_value"
 )
 
@@ -100,7 +116,7 @@ g.title.set_text("Paper finding benchmark results (train)")
 sns.set_theme(style="whitegrid")
 
 # Convert this dataframe to have the columns: run_id, count_type, and count_value.
-run_stats_melted = run_stats[["run_id", "precision", "recall", "f1"]].melt(
+run_stats_melted = train_run_stats[["run_id", "precision", "recall", "f1"]].melt(
     id_vars="run_id", var_name="stat_type", value_name="stat_value"
 )
 
@@ -118,10 +134,12 @@ g.title.set_text("Paper finding benchmark results (train) - dumb way to display"
 
 # %% Print them instead.
 
-print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]])
+print(train_run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]])
 
 print()
-print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]].aggregate(["mean", "std"]))
+print(
+    train_run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]].aggregate(["mean", "std"])
+)
 
 
 # %%
