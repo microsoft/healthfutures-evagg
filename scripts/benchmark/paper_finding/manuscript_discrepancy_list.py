@@ -119,7 +119,7 @@ discrepancies = papers.query("discrepancy == True")
 
 with open(os.path.join(OUTPUT_DIR, "discrepancies.txt"), "w") as f:
     count = 0
-    for gene, pmid in discrepancies.sample(frac=0.1, random_state=1).index.values:
+    for gene, pmid in discrepancies.sample(frac=1, random_state=1).index.values:
         count += 1
         paper = get_paper(pmid)
 
@@ -132,7 +132,7 @@ with open(os.path.join(OUTPUT_DIR, "discrepancies.txt"), "w") as f:
 
         f.write(
             f'{count}. The paper "{title}" ({link}) '
-            f"discusses one or more human genetic variants in the gene {gene}.\n\n"
+            f"discusses one or more human genetic variants in the gene {gene}.\n"
         )
         f.write("A. True\n")
         f.write("B. False\n\n\n")
