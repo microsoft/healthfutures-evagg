@@ -21,7 +21,7 @@ from pyhpo import Ontology
 from sklearn.metrics import confusion_matrix
 
 from lib.evagg.content import HGVSVariantFactory
-from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, RefSeqGeneLookupClient
+from lib.evagg.ref import MutalyzerClient, NcbiLookupClient, RefSeqLookupClient
 from lib.evagg.utils import CosmosCachingWebClient, get_azure_credential, get_dotenv_settings
 from lib.evagg.utils.run import get_previous_run
 
@@ -45,7 +45,7 @@ else:
         "observation_benchmark.tsv",
     )
 
-TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "v1", "evidence_train_v1.tsv")
+TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "v1", "evidence_test_v1.tsv")
 
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
@@ -194,7 +194,7 @@ web_client = CosmosCachingWebClient(
 )
 mutalyzer_client = MutalyzerClient(web_client)
 ncbi_client = NcbiLookupClient(web_client)
-refseq_client = RefSeqGeneLookupClient(web_client)
+refseq_client = RefSeqLookupClient(web_client)
 variant_factory = HGVSVariantFactory(
     validator=mutalyzer_client,
     normalizer=mutalyzer_client,
