@@ -43,7 +43,7 @@ def load_run(run_id: str) -> pd.DataFrame | None:
     return run_data
 
 
-# %% Generate sta
+# %% Generate run stats.
 
 all_run_stats: Dict[str, pd.DataFrame] = {}
 
