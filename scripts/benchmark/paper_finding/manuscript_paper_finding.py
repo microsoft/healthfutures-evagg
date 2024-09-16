@@ -5,12 +5,11 @@ Inputs
 - .yaml of queries
 
 Outputs:
-- benchmarking_paper_finding_results_train.txt: comparison of the papers that were found to the MGT data
+- benchmarking_paper_finding_results.txt: comparison of the papers that were found to the MGT data
 papers
-- benchmarking_paper_finding_results_train.png: barplot of average number of correct, missed, and irrelevant papers
-for the Evidence Aggregator tool and PubMed
-- filtering_paper_finding_results_train.png: barplot of average number of papers filtered into rare and
-other categories
+- benchmarking_paper_finding_results.png: barplot of average number of correct, missed, and irrelevant papers
+for the Evidence Aggregator tool
+- pipeline_mgt_comparison.csv: table comparing the pipeline output to the MGT data
 """
 
 # Libraries
@@ -95,7 +94,7 @@ def plot_benchmarking_results(
     plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
 
     # Save barplot
-    plt.savefig(output_dir + "/benchmarking_paper_finding_results_train.png")
+    plt.savefig(output_dir + "/benchmarking_paper_finding_results.png")
 
 
 def build_individual_result_summary(
@@ -137,7 +136,7 @@ def write_output_summary(
     ea_precision, ea_recall, ea_f1_score = calculate_metrics(ea_tp.shape[0], ea_fn.shape[0], ea_fp.shape[0])
 
     # Compile and save the benchmarking results to a file
-    with open(os.path.join(output_dir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
+    with open(os.path.join(output_dir, "benchmarking_paper_finding_results.txt"), "w") as f:
         f.write("Evidence Aggregator Paper Finding Benchmarks Key: \n")
         f.write(
             "- Search 'E.A. overall precision' to see 1) overall Evidence Aggregator precision, recall, F1, and 2) "
