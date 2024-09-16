@@ -110,17 +110,17 @@ def build_individual_result_summary(
 
     summary += f"{prefix} true positives:\n"
     for index, row in tp.reset_index().iterrows():
-        summary += f"* {index+1} * {row[row_id]} * {row.paper_title}\n"
+        summary += f"* {index} * {row[row_id]} * {row.paper_title}\n"
     summary += "\n"
 
     summary += f"{prefix} false negatives:\n"
     for index, row in fn.reset_index().iterrows():
-        summary += f"* {index+1} * {row[row_id]} * {row.paper_title}\n"
+        summary += f"* {index} * {row[row_id]} * {row.paper_title}\n"
     summary += "\n"
 
     summary += f"{prefix} false positives:\n"
     for index, row in fp.reset_index().iterrows():
-        summary += f"* {index+1} * {row[row_id]} * {row.paper_title}\n"
+        summary += f"* {index} * {row[row_id]} * {row.paper_title}\n"
     summary += "\n"
 
     return summary
