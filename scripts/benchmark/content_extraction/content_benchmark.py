@@ -27,7 +27,7 @@ from lib.evagg.utils.run import get_previous_run
 
 # %% Constants.
 
-RUN_LATEST = True
+RUN_LATEST = False
 
 if RUN_LATEST:
     # Change this to the name of the pipeline output you wish to evaluate.
@@ -40,12 +40,13 @@ else:
         os.path.dirname(__file__),
         "..",
         "..",
+        "..",
         ".out",
-        "run_benchmark_observation_20240605_193705",
-        "observation_benchmark.tsv",
+        "run_evagg_pipeline_20240912_145606",
+        "pipeline_benchmark.tsv",
     )
 
-TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "v1", "evidence_test_v1.tsv")
+TRUTH_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "v1", "evidence_test_v1.tsv")
 
 
 # TODO: after we rethink variant nomenclature, figure out whether we need to check the hgvs nomenclatures for agreement.
