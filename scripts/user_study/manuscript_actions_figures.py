@@ -11,6 +11,9 @@ from typing import List
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
+# test imports
+import statsmodels.api as sm
 from statsmodels.formula.api import mixedlm
 
 # %% Constants.
@@ -58,6 +61,13 @@ for _, row in action_files_df.iterrows():
     action_data["session_id"] = row.session_id
     action_data["case_group_id"] = row.case_group_id
 
+    # De-duplicate "publication reading" actions based on the notes field.
+    action_data = action_data[
+        ~(
+            (action_data.notes.str.startswith("PMID") | action_data.notes.str.startswith("pmid"))
+            & action_data.notes.duplicated(keep="first")
+        )
+    ]
     actions_list.append(action_data)
 
 # Concatenate the action data.
@@ -121,7 +131,8 @@ def duration_for_actions(start_actions: List[str], end_actions: List[str]) -> pd
             elif row.action in end_actions and start_row is None:
                 print(f"Warning: found end action while not in window: {id} / {i}")
 
-            # If we're not in a window (could be the same action where we just closed a window), and we can open one, do so.
+            # If we're not in a window (could be the same action where we just closed a window), and we can open one,
+            # do so.
             if row.action in start_actions and start_row is None:
                 start_row = row
             # If we're in a window and we try to open one, warn.
@@ -133,7 +144,8 @@ def duration_for_actions(start_actions: List[str], end_actions: List[str]) -> pd
 
         durations_map[id] = duration_list
 
-    # Convert the durations_map into a dataframe, with the columns "participant_id", "session_id", and "duration". One row for every duration in the list.
+    # Convert the durations_map into a dataframe, with the columns "participant_id", "session_id", and "duration". One
+    # row for every duration in the list.
     durations_list = []
     for id, durations in durations_map.items():
         for duration in durations:
@@ -194,21 +206,21 @@ case_review_durations["minutes"] = case_review_durations["seconds"] / 60
 
 plt.figure()
 
-sns.barplot(data=case_review_durations, x="session_id", y="minutes", errorbar="sd", hue="case_group_id")
+sns.stripplot(data=case_review_durations, x="session_id", y="minutes", hue="case_group_id", jitter=True)
 plt.ylabel("Time spent on each case (minutes)")
 
 plt.figure()
-sns.barplot(data=case_review_durations, y="minutes", x="participant_id", hue="session_id", palette="pastel")
+sns.stripplot(data=case_review_durations, y="minutes", x="participant_id", hue="session_id", jitter=True)
 plt.ylabel("Time spent on each case (minutes)")
 
 variant_review_durations["minutes"] = variant_review_durations["seconds"] / 60
 
 plt.figure()
-sns.barplot(data=variant_review_durations, x="session_id", y="minutes", errorbar="sd", hue="case_group_id")
+sns.barplot(data=variant_review_durations, hue="session_id", x="session_id", y="minutes")
 plt.ylabel("Time spent on each variant (minutes)")
 
 plt.figure()
-sns.barplot(data=variant_review_durations, y="minutes", x="participant_id", hue="session_id", palette="pastel")
+sns.boxplot(data=variant_review_durations, y="minutes", x="participant_id", hue="session_id")
 plt.ylabel("Time spent on each variant (minutes)")
 
 # %% Perform statistical analyses of the counts.
@@ -236,4 +248,36 @@ model = mixedlm(
 result = model.fit()
 print(result.summary())
 
-# %% Intentionally empty.
+# %% Make a scatterplot correlating table interactions with papers read, stratified by session.
+dupe_action_counts = action_counts.copy()
+# Copy the S2 values for table_use to S1.
+dupe_action_counts.loc[dupe_action_counts["session_id"] == "S1", "table_use"] = action_counts.query(
+    "session_id == 'S2'"
+)["table_use"].values
+
+for factor in ["pub_read", "variant_review"]:
+    plt.figure()
+    sns.scatterplot(data=dupe_action_counts, x="table_use", y=factor, hue="session_id", alpha=0.5)
+
+    unique_sessions = dupe_action_counts["session_id"].unique()
+    colors = sns.color_palette(n_colors=len(unique_sessions))
+
+    i = 0
+    for session, subset in dupe_action_counts.groupby("session_id"):
+        X = sm.add_constant(subset["table_use"])
+        y = subset[factor]
+        model = sm.OLS(y, X).fit()
+        r_squared = model.rsquared
+        plt.plot(
+            subset["table_use"],
+            model.predict(X),
+            linestyle="--",
+            color=colors[i],
+            label=f"{session} (R²={r_squared:.2f}, p={model.pvalues['table_use']:.2f})",
+        )
+        i += 1
+
+    plt.legend()
+
+
+# %%
