@@ -1,1 +1,1 @@
-"""ev-agg-exp Library code."""
+"""evagg Library code."""
