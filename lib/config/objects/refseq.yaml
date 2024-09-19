@@ -1,4 +1,6 @@
 di_factory: lib.evagg.ref.RefSeqLookupClient
-# Dedicated web-client without caching, TODO: don't cache large files and use a shared client.
 web_client:
-  di_factory: lib.evagg.utils.RequestsWebContentClient
+  di_factory: lib/config/objects/web_cache.yaml
+  web_settings:
+    status_code_translator:
+      di_factory: lib.evagg.ref.ncbi.get_ncbi_response_translator

@@ -162,7 +162,10 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
         # Find and return the specific document.
         if (doc := root.find(f"./document[id='{pmcid.upper().lstrip('PMC')}']")) is None:
-            logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
+            # Some BioC do not have the prefix stripped, so try again with the original pmcid.
+            if (doc := root.find(f"./document[id='{pmcid.upper()}']")) is None:
+                logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
+                return ""
         return ElementTree.tostring(doc, encoding="unicode")
 
     # IPaperLookupClient
