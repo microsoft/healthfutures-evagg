@@ -1,3 +1,0 @@
-# Docs
-
-Additional docs above and beyond the top-level README.md will go here.

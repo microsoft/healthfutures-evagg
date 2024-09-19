@@ -457,7 +457,7 @@ if __name__ == "__main__":
         "--benchmark-file",
         type=str,
         help=("Benchmark output file (benchmark_paper_finding_results... .txt). No default."),
-    )  # e.g. /home/azureuser/ev-agg-exp/.out/binary_classes_paper_finding_results_2024-04-24/
+    )  # e.g. /home/azureuser/ev-agg/.out/binary_classes_paper_finding_results_2024-04-24/
     #         benchmarking_paper_finding_results_train.txt
     parser.add_argument(
         "-o",
