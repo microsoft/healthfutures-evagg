@@ -61,7 +61,8 @@ class HGVSVariantFactory(ICreateVariants):
             if refseq_replacement:
                 refseq = refseq_replacement
                 refseq_predicted = True
-            refseq_predicted = False
+            else:
+                refseq_predicted = False
         else:
             refseq_predicted = False
 
