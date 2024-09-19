@@ -1,31 +1,32 @@
-# Evidence Aggregation Experimentation Sandbox
+# Evidence Aggregator
 
-This is an environment for experimentation on LLM prompts and related application code relevant to evidence aggregation for molecular diagnosis of mendelian disease.
+This repo contains the code and deployment instructions for the Evidence Aggregator, a collaboration between the
+[Broad Institute](https://www.broadinstitute.org/) and [Microsoft Research Health Futures](https://www.microsoft.com/en-us/research/lab/microsoft-health-futures/).
+This project aims to support genomic analysts in diagnosis of potential Mendelian disease by using Large Language Models to review external public literature databases (i.e. PubMed) and summarize the rare disease-relevant information for a given case. The code implements a set of Python modules configurable into a pipeline for running experiments using Azure OpenAI endpoints and producing output tables with clinically-relevant aggregated publication evidence for input gene or genes of interest.
 
-## Manual setup
+## Setup
 
-The following sections walk through the manual setup of a Linux development environment, either a virtual machine or WSL2 install.
+The following sections walk through the setup of a Linux development environment on a virtual machine or within WSL2.
+Alternatively, there is a `.devcontainer` defined at the repo root for use with
+[GitHub Codespaces](https://docs.github.com/en/codespaces/developing-in-a-codespace/creating-a-codespace-for-a-repository).
 
 ### Pre-requisites
 
-**Note: this environment has only been tested on Ubuntu 20.04/22.04 in WSL and an Azure VM. Behavior on other operating systems may vary. If you run into issues, please submit them on Github.**
-
-The intended model for interacting with this environment is using VSCode. Many of the descriptions and instructions below will be specific to users of VSCode. Some of the command line functionality will work directly in the terminal.
+**Note: this environment has been tested on Ubuntu 20.04/22.04 in WSL2 and Azure VMs.**
 
 Local Machine
 
 - [Visual Studio Code](https://code.visualstudio.com/download)
 - The Remote Development Extension Pack for VSCode.
 
-Ubuntu 20.04/22.04 VM/WSL
+Ubuntu 20.04/22.04 (VM/WSL2)
 
 - [Python](https://www.python.org/downloads/) 3.12 and above
-- azcopy (install script)
-- azure cli (install script)
-- git (install script)
-- make (install script)
-- docker (install script, only necessary if you're going to develop with devcontainers/codespaces)
-- miniconda
+- azcopy
+- azure cli
+- git
+- make
+- miniconda:
 
     ```bash
     curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
@@ -37,13 +38,11 @@ Ubuntu 20.04/22.04 VM/WSL
     conda config --set solver libmamba
     ```
 
-Open visual studio code on your local machine and connect to the VM using `Remote-SSH: Connect to Host`. This will initiate a connection to your VM within VSCode. Alternatively, if you're using WSL connect using `WSL: Connect to WSL`.
-
-Next, clone this repository with `git clone https://github.com/jeremiahwander/ev-agg-exp`.
-
-Open this newly cloned repository in VSCode with **File -> Open Folder**
-
-You will be prompted to install recommended extensions for this repository; accept these recommendations.
+Open VSCode on your local machine and connect to the VM using `Remote-SSH: Connect to Host`. This will initiate a
+connectionto your VM within VSCode. Alternatively, if you're using WSL connect using `WSL: Connect to WSL`. Next,
+clone this repository with `git clone https://github.com/microsoft/healthfutures-evagg`. Open the newly-cloned
+repository in VSCode with `File -> Open Folder`. You will be prompted to install recommended extensions for this
+repository; accept these recommendations.
 
 ### Configuring an environment
 
@@ -54,59 +53,31 @@ conda env create -f environment.yml
 conda activate evagg
 ```
 
-Now use poetry to install the local library and register scripts.
+Use poetry to install the local library and register pipeline run endpoint.
 
 ```bash
 poetry install
 ```
 
-Test script installation of by running the following command:
+Test endpoint installation by running the following command:
 
 ```bash
 run_evagg_app -h
 ```
 
-You should see a help message displayed providing usage for the `run_evagg_app` script.
+You should see a help message displayed providing usage for the `run_evagg_app` endpoint.
 
-## Codespaces setup
+## Running the pipeline
 
-The following sections walk through the setup of a GitHub Codespaces-based development environment. In order to do this
-you will need a GitHub account.
+The library code consists of a variety of independent pipeline components for querying, filtering, and aggregating genetic
+variant publication evidence. These components are designed to be assembled in various ways into a pipeline "app"
+that can be run via the `run_evagg_app` entrypoint to generate some sort of concrete analysis or output.
 
-### Starting an environment
+### Defining pipeline apps
 
-Open [the evagg repository](https://github.com/jeremiahwander/ev-agg-exp) in a web browser and use these instructions to
-[create a new codespace with options](https://docs.github.com/en/codespaces/developing-in-a-codespace/creating-a-codespace-for-a-repository).
-
-When selecting options, you should choose a suitable branch from the repository (likely `main`), and a region where you
-want to do your work. As currently architected, the evagg pipeline doesn't directly interact with region-specific cloud
-resources, but this may change in the future. A 2-core machine is currently suitable for pipeline execution. You will want
-to select `evagg` as your devcontainer configuration.
-
-Initial build of the codespaces environment can take a few minutes.
-
-### Stopping an environment
-
-By default, codespaces environments will stop automatically after 30 minutes of inactivity. If you want to manually stop
-a codespace navigate to [codespaces management](https://github.com/codespaces) and manually stop the instance.
-
-### Managing costs
-
-See this document on [codespaces costs](https://docs.github.com/en/billing/managing-billing-for-github-codespaces/about-billing-for-github-codespaces)
-for how to manage costs and billing for github codespaces usage. This repository is currently set up for user payment for
-codespaces. Github personal free accounts include 120 core hours and 15 GiB per month.
-
-## Running experiments
-
-The library code consists of a variety of independent components for querying, filtering, and aggregating genetic
-variant publication evidence. These components are designed to be assembled in various ways into an experiment "app"
-that can be run via the `run_evagg_app` entrypoint to perform some sort of concrete analysis.
-
-### Defining experiment apps
-
-An "app" is any Python class that implements the `lib.evagg.IEvAggApp` protocol (essentially just an `execute` method).
+An "app" is any Python class that implements the `lib.evagg.IEvAggApp` protocol (effectively an `execute` method).
 An app is defined in a yaml specification file as an ordered dictionary of key/value pairs describing the full
-class/parameter hierarchy to be instantiated before `execute` is called. The abstract format of a yaml spec
+class/parameter component hierarchy to be instantiated before `execute` is called. The abstract format of a yaml spec
 is as follows:
 
 ```yaml
@@ -126,18 +97,18 @@ The `lib.di` module is responsible for parsing, instantiating, and returning an 
 For a given spec, it first collects, in order, the top-level name/value pairs - "resources" are entries occurring
 before the `di_factory` key, and "parameters" are those occurring after. It then resolves any string value in the
 parameter collection of the form `"{{resource_name}}"` by looking `resource_name` up in the "resources" collection -
-this allows one to define a set of singleton objects earlier in the spec that may be reused at multiple places later
-in the spec. Finally, the `di` module instantiates and returns the top-level object represented by the spec by invoking
+this allows instantiation of singleton objects earlier in the spec that may be reused at multiple places later
+in the spec. Finally, the `di` module instantiates and returns the top-level app object represented by the spec by invoking
 the `di_factory:` entrypoint value, passing in the resolved/collected parameters as named keyword arguments. If any
 resource or parameter value in the spec consists of a sub-dictionary with its own `di_factory` key, that value is first
 resolved to a runtime object, recursively, following the same mechanism just described for the top-level spec. Object
 hierarchies of this sort may be arbitrarily deep.
 
-A library of existing app specs for defining various experiments can be found in `lib/config/`.
+A library of existing app and sub-object specs for defining various pipelines can be found in `lib/config/`.
 
-### Executing experiment apps
+### Executing pipeline apps
 
-The script `run_evagg_app` is used to execute an experiment app. It has one required argument - a pointer to a yaml
+The script `run_evagg_app` is used to execute a pipeline app. It has one required argument - a pointer to a yaml
 app spec - and is invoked as follows:
 
 ```bash
@@ -153,8 +124,8 @@ object that implements `IEvAggApp`.
 As a simple test of script execution, run the following command from the repo root:
 
 ```bash
-run_evagg_app lib/config/sample_config.yaml
 # equivalently: run_evagg_app sample_config
+run_evagg_app lib/config/sample_config.yaml
 ```
 
 This extracts content from a local sample library of fake papers using a dummy implementation and prints the resulting
@@ -183,7 +154,7 @@ For development on this repo from within [Codespaces](#codespaces-setup),
 make use of the analogous factory `lib.evagg.utils.get_env_settings` in the app spec, which reads
 settings in from environment variables. Create the required GitHub secrets and settings by following
 [these instructions](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-secrets-for-your-codespaces)
-and granting the ev-agg-exp repo access to those secrets.
+and granting the repo access to those secrets.
 
 ## Contributing
 
@@ -193,14 +164,39 @@ The repository contains the following subdirectories:
 
 ```text
 root
-|-- deploy: infrastructure as code for the deployment and management of necessary cloud resources.
-|-- docs: additional documentation beyond what is in scope for this README.
-|-- lib: source code for scripts and core libraries.
-|-- notebooks: shared notebooks for interactive development.
-|-- sandbox: scratch area for developers.
-|-- test: unit tests for core libraries.
+|-- deploy: infrastructure as code for the deployment and management of necessary cloud resources
+|-- lib: source code for scripts and core libraries
+|-- notebooks: shared notebooks for interactive development
+|-- test: unit tests for core libraries
 ```
 
 ## Trademarks
 
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow Microsoft's Trademark & Brand Guidelines. Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party’s policies.
+
+## Responsible AI Transparency Documentation 
+
+### Use of this code 
+The Evidence Aggregator is intended to be one tool within a genomic analyst’s toolkit to review literature related to a variant of interest. It is the user's responsibility to verify the accuracy of the information returned by the Evidence Aggregator. The Evidence Aggregator is for research use only. Users must adhere to the [Microsoft Generative AI Services Code of Conduct](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct) in good faith. 
+
+The Evidence Aggregator is not designed, intended, or made available for use in the diagnosis, prevention, mitigation, or treatment of a disease or medical condition nor to perform any medical function and the performance of the Evidence Aggregator for such purposes has not been established. You bear sole responsibility for any use of the Evidence Aggregator, including incorporation into any product intended for a medical purpose. 
+
+### Limitations 
+The Evidence Aggregator literature discovery is limited to open-access publications with permissive licenses from the [PubMed Central (PMC) Open Access Subset of journal articles](https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/). Information returned by the Evidence aggregator should not be considered exhaustive. 
+
+Performance was not optimized for genes with extensive evidence for definitive gene-disease relationships, but for genes with moderate, limited, or no known gene-disease relationship as annotated by ClinGen (Clinical Genome Resource) https://clinicalgenome.org [July 2024]. 
+
+The Evidence Aggregator uses the capabilities of generative AI for both publication foraging and information summarization. Performance of the Evidence Aggregator is limited to the capabilities of the underlying model.  
+
+The design and assessment of the Evidence Aggregator were conducted in English. At present, the Evidence Aggregator is limited to processing inputs and generating outputs in the English language. 
+
+### Attributions 
+National Center for Biotechnology Information (NCBI)[Internet]. Bethesda (MD): National Library of Medicine (US), National Center for Biotechnology Information; [1988] – [cited September 2024]. Available from: https://www.ncbi.nlm.nih.gov/ 
+
+Harrison et al., **Ensembl 2024**, Nucleic Acids Research, 2024, 52(D1):D891–D899. PMID: 37953337. https://doi.org/10.1093/nar/gkad1049 
+
+The Evidence Aggregator uses the Human Phenotype Ontology (HPO version dependent on user environment build and pipeline execution date/time). Find out more at http://www.human-phenotype-ontology.org  
+
+The Evidence Aggregator team thanks the Gene Curation Coalition (GenCC) for providing curated content referenced during development. GenCC’s curated content was obtained at www.thegencc.org [July 2024] and includes contributions from the following organizations: ClinGen, Ambry Genetics, Franklin by Genoox, G2P, Genomics England PanelApp, Illumina, Invitae, King Faisal Specialist Hospital and Research Center, Laboratory for Molecular Medicine, Myriad Women’s Health, Orphanet, PanelApp Australia. 
+
+Environment dependencies may be found in environment.yml.  
