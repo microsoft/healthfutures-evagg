@@ -339,6 +339,7 @@ def write_observation_finding_summary(merged_df: pd.DataFrame, output_filepath: 
     # Print the results to an output text file.
     with open(output_filepath, "w") as f:
         f.write("-- Observation finding summary performance --\n")
+        f.write(f"  Observation finding N: {merged_df.shape[0]}\n")
         f.write(f"  Observation finding precision: {precision:.2f}\n")
         f.write(f"  Observation finding recall: {recall:.2f}\n")
 
@@ -447,8 +448,12 @@ def evaluate_content_extraction(df: pd.DataFrame, columns_of_interest: Set[str])
     """
 
     def _col_to_result_type(col: str) -> str:
-        all_indiv_columns = {"phenotype"}
-        all_indiv_cross_variant_columns = {"zygosity", "variant_inheritance"}
+        all_indiv_columns = {}
+        # Phenotype belongs here only because we collapse "unknown" individual IDs to "inferred proband", but all of the
+        # unknown IDs for a particular paper won't necessarily have the same phenotype, so they shouldn't really be
+        # collapsed. This means that patients with multiple variants will be counted more than once unfortunately.
+        # It would be a substantial refactor to change this, so we'll leave it like this for now.
+        all_indiv_cross_variant_columns = {"zygosity", "variant_inheritance", "phenotype"}
         all_paper_columns = {"study_type"}
         all_variant_columns = {"variant_type", "engineered_cells", "patient_cells_tissues", "animal_model"}
 
