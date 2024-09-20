@@ -30,6 +30,11 @@ TEST_RUNS = [
     "20240912_181121",
 ]
 
+# The number of times a discrepancy must appear in order to be included in the output.
+# By setting MIN_RECURRENCE to 3, with 5 each TRAIN and TEST runs, we're looking for discrepancies that appear in more
+# than half the runs.
+MIN_RECURRENCE = 3
+
 OUTPUT_DIR = ".out/manuscript_paper_finding"
 
 # %% Function definitions.
@@ -99,9 +104,13 @@ papers = pd.DataFrame(papers_dict).T
 
 # %% Annotate the dataframe.
 
-# Each row in the dataframe where truth_count is not equal to pipeline_count is a discrepancy.
-papers["discrepancy"] = papers["truth_count"] != papers["pipeline_count"]
+# For a given (gene, paper) the value of `in_truth` is consistent across all runs, thus we don't need to bother with
+# finding the discrepancy counts on a per run basis. Instead we can determine the number of discrepancies by taking the
+# absolute value of the difference between truth_count and pipeline_count.
 
+# Each row in the dataframe where truth_count is not equal to pipeline_count is a discrepancy.
+papers["discrepancy"] = abs(papers["truth_count"] - papers["pipeline_count"]) >= MIN_RECURRENCE
+print(f"Found {papers['discrepancy'].sum()} discrepancies.")
 
 # %% Write the dataframe to a CSV file.
 if not os.path.exists(OUTPUT_DIR):
