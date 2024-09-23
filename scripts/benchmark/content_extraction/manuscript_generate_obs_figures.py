@@ -11,21 +11,36 @@ from matplotlib import pyplot as plt
 
 # %% Constants.
 
-TRAIN_RUNS = [
-    "20240909_165847",
-    "20240909_210652",
-    "20240910_044027",
-    "20240910_134659",
-    "20240910_191020",
-]
+# TRAIN_RUNS = [
+#     "20240909_165847",
+#     "20240909_210652",
+#     "20240910_044027",
+#     "20240910_134659",
+#     "20240910_191020",
+# ]
 
-TEST_RUNS = [
-    "20240911_165451",
-    "20240911_194240",
-    "20240911_223218",
-    "20240912_145606",
-    "20240912_181121",
-]
+# TEST_RUNS = [
+#     "20240911_165451",
+#     "20240911_194240",
+#     "20240911_223218",
+#     "20240912_145606",
+#     "20240912_181121",
+# ]
+
+# # GPT-4o runs
+# TRAIN_RUNS = ["20240920_080739", "20240920_085154", "20240920_093425", "20240920_101905", "20240920_110151"]
+# TEST_RUNS = ["20240920_055848", "20240920_062457", "20240920_064935", "20240920_071554", "20240920_074218"]
+# MODEL = "GPT-4o"
+
+# GPT-4o-mini runs
+TRAIN_RUNS = ["20240920_165153", "20240920_173754", "20240920_181707", "20240920_185736", "20240920_223702"]
+TEST_RUNS = ["20240920_144637", "20240920_151008", "20240920_153649", "20240920_160020", "20240920_162832"]
+MODEL = "GPT-4o-mini"
+
+if MODEL:
+    model_name = f" - {MODEL}"
+else:
+    model_name = ""
 
 # %% Function definitions.
 
@@ -115,7 +130,7 @@ for run_type in ["train", "test"]:
     )
     g.xaxis.set_label_text("")
     g.yaxis.set_label_text("Performance")
-    g.title.set_text(f"Observation finding benchmark results ({run_type}; N={run_stats.shape[0]})")
+    g.title.set_text(f"Observation finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_name}")
 
     var_perf_melted = run_stats[["run_id", "precision_variant", "recall_variant"]].melt(
         id_vars="run_id", var_name="metric", value_name="result"
@@ -135,7 +150,7 @@ for run_type in ["train", "test"]:
     )
     g.xaxis.set_label_text("")
     g.yaxis.set_label_text("Performance")
-    g.title.set_text(f"Variant finding benchmark results ({run_type}; N={run_stats.shape[0]})")
+    g.title.set_text(f"Variant finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_name}")
 
 
 # %% Print them instead.
