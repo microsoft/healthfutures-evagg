@@ -13,27 +13,27 @@ from matplotlib import pyplot as plt
 
 OUTPUT_DIR = ".out/manuscript_content_extraction"
 
-# TRAIN_RUNS = [
-#     "20240909_165847",
-#     "20240909_210652",
-#     "20240910_044027",
-#     "20240910_134659",
-#     "20240910_191020",
-# ]
+TRAIN_RUNS = [
+    "20240909_165847",
+    "20240909_210652",
+    "20240910_044027",
+    "20240910_134659",
+    "20240910_191020",
+]
 
-# TEST_RUNS = [
-#     "20240911_165451",
-#     "20240911_194240",
-#     "20240911_223218",
-#     "20240912_145606",
-#     "20240912_181121",
-# ]
-# MODEL = "GPT-4-Turbo"
+TEST_RUNS = [
+    "20240911_165451",
+    "20240911_194240",
+    "20240911_223218",
+    "20240912_145606",
+    "20240912_181121",
+]
+MODEL = "GPT-4-Turbo"
 
-# GPT-4o runs
-TRAIN_RUNS = ["20240920_080739", "20240920_085154", "20240920_093425", "20240920_101905", "20240920_110151"]
-TEST_RUNS = ["20240920_055848", "20240920_062457", "20240920_064935", "20240920_071554", "20240920_074218"]
-MODEL = "GPT-4o"
+# # GPT-4o runs
+# TRAIN_RUNS = ["20240920_080739", "20240920_085154", "20240920_093425", "20240920_101905", "20240920_110151"]
+# TEST_RUNS = ["20240920_055848", "20240920_062457", "20240920_064935", "20240920_071554", "20240920_074218"]
+# MODEL = "GPT-4o"
 
 # # GPT-4o-mini runs
 # TRAIN_RUNS = ["20240920_165153", "20240920_173754", "20240920_181707", "20240920_185736", "20240920_223702"]
@@ -156,6 +156,37 @@ for run_type in ["train", "test"]:
     g.yaxis.set_label_text("Performance")
     g.title.set_text(f"Variant finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_suffix}")
 
+
+# %% Make another version of the performance barplot where both train and test are shown together.
+
+sns.set_theme(style="whitegrid")
+
+all_obs_run_stats_labeled = []
+for run_type in ["train", "test"]:
+    run_stats_labeled = all_obs_run_stats[run_type].copy()
+    run_stats_labeled["split"] = run_type
+    all_obs_run_stats_labeled.append(run_stats_labeled)
+
+obs_run_stats_labeled = pd.concat(all_obs_run_stats_labeled)
+
+obs_run_stats_labeled_melted = obs_run_stats_labeled[
+    ["split", "run_id", "precision", "recall", "precision_variant", "recall_variant"]
+].melt(id_vars=["split", "run_id"], var_name="metric", value_name="result")
+
+plt.figure()
+
+g = sns.barplot(
+    data=obs_run_stats_labeled_melted,
+    x="metric",
+    y="result",
+    errorbar="sd",
+    hue="split",
+    alpha=0.6,
+)
+g.xaxis.set_label_text("")
+g.yaxis.set_label_text("Performance")
+g.title.set_text(f"Observation finding benchmark results{model_suffix}")
+plt.ylim(0, 1)
 
 # %% Print them instead.
 
