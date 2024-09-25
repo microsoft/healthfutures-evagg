@@ -154,6 +154,39 @@ for run_type in ["train", "test"]:
     g.yaxis.set_label_text("Performance metric")
     g.title.set_text(f"Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_name}")
 
+# %% Make another barplot that shows train and test performance together.
+
+sns.set_theme(style="whitegrid")
+
+all_run_stats_labeled = []
+for run_type in ["train", "test"]:
+    run_stats_labeled = all_run_stats[run_type].copy()
+    run_stats_labeled["split"] = run_type
+    all_run_stats_labeled.append(run_stats_labeled)
+
+run_stats_labeled = pd.concat(all_run_stats_labeled)
+
+run_stats_labeled_melted = run_stats_labeled[["split", "run_id", "precision", "recall"]].melt(
+    id_vars=["split", "run_id"], var_name="stat_type", value_name="stat_value"
+)
+
+plt.figure()
+
+g = sns.barplot(
+    data=run_stats_labeled_melted,
+    x="stat_type",
+    y="stat_value",
+    errorbar="sd",
+    alpha=0.6,
+    hue="split",
+)
+
+g.xaxis.set_label_text("")
+g.yaxis.set_label_text("Performance metric")
+g.title.set_text(f"Paper finding benchmark results{model_name}")
+
+plt.ylim(0, 1)
+
 # %% Print them instead.
 
 for run_type in ["train", "test"]:
