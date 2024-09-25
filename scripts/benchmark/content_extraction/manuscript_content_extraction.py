@@ -14,7 +14,7 @@ import os
 import re
 from collections import defaultdict
 from functools import cache
-from typing import Any, List, Set, Tuple, Type
+from typing import Any, Dict, List, Set, Tuple, Type
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -425,17 +425,41 @@ def _generalize_hpo_term(hpo_term: str, depth: int = 3) -> str:
     return path[depth - 1].__str__()
 
 
-def _match_hpo_sets(hpo_left, hpo_right) -> Tuple[list[str], list[str], list[str], list[str]]:
+def _match_hpo_sets(
+    hpo_left, hpo_right
+) -> Tuple[list[str], Dict[str, List[str]], Dict[str, List[str]], Dict[str, List[str]]]:
     left_terms = _hpo_str_to_set(hpo_left)
     right_terms = _hpo_str_to_set(hpo_right)
 
-    left_gen = {_generalize_hpo_term(t) for t in left_terms}
-    left_gen -= {""}  # Remove empty strings.
-    right_gen = {_generalize_hpo_term(t) for t in right_terms}
-    right_gen -= {""}  # Remove empty strings.
+    # Build a mapping from specific to general terms.
+    left_gen_dict = {t: _generalize_hpo_term(t) for t in left_terms}
+    right_gen_dict = {t: _generalize_hpo_term(t) for t in right_terms}
+
+    # Invert the mapping.
+    left_spec_dict: dict[str, list[str]] = defaultdict(list)
+    for k, v in left_gen_dict.items():
+        if k != "":
+            left_spec_dict[v].append(k)
+
+    right_spec_dict: dict[str, list[str]] = defaultdict(list)
+    for k, v in right_gen_dict.items():
+        if k != "":
+            right_spec_dict[v].append(k)
+
+    # Get the generalized terms for the left and right sets.
+    left_gen = set(left_spec_dict.keys())
+    right_gen = set(right_spec_dict.keys())
 
     matches = list(left_gen.intersection(right_gen))
-    return matches, matches, list(left_gen - right_gen), list(right_gen - left_gen)
+
+    # Return the list of general terms that matched, a dict mapping each of those terms back to one or more specific
+    # terms, a dict of terms that were in the left set but not the right, and a dict of terms that were in the right
+    # set but not the left.
+
+    match_dict = {k: list(set(left_spec_dict[k] + right_spec_dict[k])) for k in matches}
+    left_dict = {k: left_spec_dict[k] for k in left_gen - right_gen}
+    right_dict = {k: right_spec_dict[k] for k in right_gen - left_gen}
+    return matches, match_dict, left_dict, right_dict
 
 
 def evaluate_content_extraction(df: pd.DataFrame, columns_of_interest: Set[str]) -> pd.DataFrame:
