@@ -200,4 +200,4 @@ with open(os.path.join(OUTPUT_DIR, "obs_discrepancies.txt"), "w") as f:
             f.write(f"B. This variant is discussed, but it is not associated with the gene {gene}\n")
             f.write(f'C. This variant is discussed, but it is not possessed by the individual "{individual_id}"\n\n\n')
 
-# %%
+# %% Intentionally empty.
