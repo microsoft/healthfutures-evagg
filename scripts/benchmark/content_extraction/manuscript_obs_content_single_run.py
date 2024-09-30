@@ -426,7 +426,7 @@ def _generalize_hpo_term(hpo_term: str, depth: int = 3) -> str:
 
 
 def _match_hpo_sets(
-    hpo_left, hpo_right
+    hpo_left: str, hpo_right: str
 ) -> Tuple[list[str], Dict[str, List[str]], Dict[str, List[str]], Dict[str, List[str]]]:
     left_terms = _hpo_str_to_set(hpo_left)
     right_terms = _hpo_str_to_set(hpo_right)
@@ -472,7 +472,10 @@ def evaluate_content_extraction(df: pd.DataFrame, columns_of_interest: Set[str])
     """
 
     def _col_to_result_type(col: str) -> str:
-        all_indiv_columns = {}
+        # This is intentionally empty. Still under consideration whether phenotype should be considered an individual
+        # column or an I-V column. For now we'll leave this as an empty set so the logic below can be completely fleshed
+        # out.
+        all_indiv_columns: Set[str] = set()
         # Phenotype belongs here only because we collapse "unknown" individual IDs to "inferred proband", but all of the
         # unknown IDs for a particular paper won't necessarily have the same phenotype, so they shouldn't really be
         # collapsed. This means that patients with multiple variants will be counted more than once unfortunately.

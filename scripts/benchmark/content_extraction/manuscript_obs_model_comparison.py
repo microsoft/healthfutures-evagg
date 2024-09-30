@@ -4,6 +4,8 @@ This notebook can only be run after `manuscript_generate_obs_figures.py has been
 in the `MODELS` constant below.
 """
 
+from typing import Dict
+
 # %% Imports.
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -21,7 +23,8 @@ OUTPUT_DIR = ".out/manuscript_content_extraction"
 
 # %% Load in source data.
 
-data_dicts = {}
+data_dicts: Dict[str, Dict[str, pd.DataFrame]] = {}
+
 for model in MODELS:
     data_dicts[model] = {}
     for split in ["train", "test"]:
