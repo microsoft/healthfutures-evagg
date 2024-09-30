@@ -18,7 +18,7 @@ import os
 import shutil
 import subprocess
 from functools import cache
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,7 +30,7 @@ from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.utils.run import get_previous_run
 
 
-def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
+def calculate_metrics(num_correct: int, num_missed: int, num_irrelevant: int) -> Tuple:
     # Calculate precision and recall from benchmarking results
     # precision is calc as true_positives / (true_positives + false_positives)
     precision = num_correct / (num_correct + num_irrelevant) if num_correct + num_irrelevant != 0 else 0
@@ -48,7 +48,7 @@ def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
 def plot_benchmarking_results(
     output_dir: str,
     joined_df: pd.DataFrame,
-):
+) -> None:
     """Plot the benchmarking results from the  set in a barplot."""
     # List of categories
     ea_categories = ["E.A. Correct", "E.A. Missed", "E.A. Irrelevant"]
@@ -82,7 +82,7 @@ def plot_benchmarking_results(
     plt.title("Evidence Aggregator: #correct, # missed & # irrelevant papers")
 
     # Function to add value in bar plot labels
-    def add_labels(bars):
+    def add_labels(bars: Any) -> None:
         for bar in bars:
             height = bar.get_height()
             ax.text(
@@ -166,11 +166,11 @@ def write_output_summary(
             f.write(build_individual_result_summary(gene_tp, gene_fn, gene_fp, "pmid", str(gene_symbol)))
 
 
-def get_git_commit_hash():
+def get_git_commit_hash() -> str:
     return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
 
 
-def read_queries(yaml_data):
+def read_queries(yaml_data: Any) -> List[Dict[str, Any]]:
     query_list_yaml = []
     for query in yaml_data:
         # Extract the values, or use an empty string if they're missing
