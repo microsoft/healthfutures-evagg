@@ -102,9 +102,8 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
             eval_df = get_eval_df(run, column)
 
             if column == "phenotype":
-                phenotype_lists = eval_df[f"{column}_result"].apply(lambda x: x.split("["))
-                assert phenotype_lists.apply(lambda x: len(x) == 5).all()
-                result = phenotype_lists.apply(lambda x: ((len(x[3]) < 10) & (len(x[4]) < 10))).mean()
+                result_tuples = eval_df.phenotype_result.apply(eval)
+                result = sum(len(t[2]) == 0 and len(t[3]) == 0 for t in result_tuples) / len(result_tuples)
             else:
                 result = eval_df[f"{column}_result"].mean()
 
