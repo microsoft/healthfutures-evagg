@@ -1,4 +1,8 @@
-"""This script is used to generate figures related to model comparison on observation finding performance."""
+"""This script is used to generate figures related to model comparison on observation finding performance.
+
+This notebook can only be run after `manuscript_generate_figures.py has been run for all of the models defined
+in the `MODELS` constant below.
+"""
 
 # %% Imports.
 import matplotlib.pyplot as plt
