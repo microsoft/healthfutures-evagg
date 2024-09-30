@@ -1,8 +1,10 @@
-"""This script is used to generate figures related to model comparison on observation finding performance."""
+"""This notebook is used to generate figures related to model comparison on observation finding performance.
+
+This notebook can only be run after `manuscript_generate_obs_figures.py has been run for all of the models defined
+in the `MODELS` constant below.
+"""
 
 # %% Imports.
-import os
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -49,4 +51,4 @@ for metric in ["precision", "recall"]:
         plt.ylim(0, 1)
 
 
-# %%
+# %% Intentionally empty.

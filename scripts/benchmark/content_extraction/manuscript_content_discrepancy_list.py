@@ -292,9 +292,12 @@ for col, df in dfs.items():
                         spec_terms.add(t)
                 if not spec_terms:
                     f.write("ERROR! No specific terms identified for discrepancy\n")
+                letter_prefix = "A"
                 for t in spec_terms:
                     if (hpo_term := hpo.fetch(t)) is not None:
-                        f.write(f"{hpo_term['name']} ({hpo_term['id']})\n")
+                        f.write(f"{letter_prefix}. {hpo_term['name']} ({hpo_term['id']})\n")
+                        letter_prefix = chr(ord(letter_prefix) + 1)
+                        assert letter_prefix != "["  # too many HPO terms to render.
                 f.write("\n\n")
             elif col in ["study_type"]:
                 f.write(f'{count}. What type of study is the paper "{title}" ({link})?\n')
@@ -334,4 +337,4 @@ for col, df in dfs.items():
             else:
                 raise ValueError(f"Unknown column: {col}")
 
-# %%
+# %% Intentionally empty.
