@@ -250,91 +250,103 @@ for col, df in dfs.items():
     if RANDOM_ORDER:
         discrepancies = discrepancies.sample(frac=1, random_state=RANDOM_SEED)
     else:
+        # Order by paper.
         discrepancies = discrepancies.sort_index(level=1)
 
-    with open(os.path.join(OUTPUT_DIR, f"{col}_discrepancies.txt"), "w") as f:
-        count = 0
-        for idx in discrepancies.index.values:
-            count += 1
+    questions_dicts: List[Dict[str, Any]] = []
 
-            # Cheating here, but we know the 2nd item in idx is the pmid
-            paper = get_paper(idx[1])
+    for idx in discrepancies.index.values:
+        # Cheating here, but we know the 2nd item in idx is the pmid
+        paper = get_paper(idx[1])
 
-            if paper is None:
-                title = "Unknown title"
-                link = "Unknown link"
+        # The rest of this block is for formulating the question.
+        if paper is None:
+            title = "Unknown title"
+            link = "Unknown link"
+        else:
+            title = paper.props.get("title", "Unknown title")
+            if pmcid := paper.props.get("pmcid"):
+                link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
             else:
-                title = paper.props.get("title", "Unknown title")
-                if pmcid := paper.props.get("pmcid"):
-                    link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
-                else:
-                    link = paper.props.get("link", "Unknown link")
+                link = paper.props.get("link", "Unknown link")
 
-            if col in ["animal_model", "engineered_cells", "patient_cells_tissues"]:
-                f.write(
-                    f'{count}. The paper "{title}" ({link}) '
-                    f"discusses the functional data from '{col.replace('_', ' ')}' for the variant {idx[2]}\n"
-                )
-                f.write("A. True, the paper discusses functional data from this source\n")
-                f.write("B. False, the paper does not discuss functional data from this source\n\n\n")
-            elif col in ["phenotype"]:
-                f.write(
-                    f'{count}. The paper "{title}" ({link}) '
-                    f"discusses the phenotype for the individual '{idx[3]}' with variant '{idx[2]}'\n"
-                )
-                f.write("Select all phenotypes posessed by the individual:\n")
-                spec_terms = set()
-                for _, v in discrepancies.loc[idx].output_dict.items():
-                    for t in v:
-                        spec_terms.add(t)
-                for _, v in discrepancies.loc[idx].truth_dict.items():
-                    for t in v:
-                        spec_terms.add(t)
-                if not spec_terms:
-                    f.write("ERROR! No specific terms identified for discrepancy\n")
-                letter_prefix = "A"
-                for t in spec_terms:
-                    if (hpo_term := hpo.fetch(t)) is not None:
-                        f.write(f"{letter_prefix}. {hpo_term['name']} ({hpo_term['id']})\n")
-                        letter_prefix = chr(ord(letter_prefix) + 1)
-                        assert letter_prefix != "["  # too many HPO terms to render.
-                f.write("\n\n")
-            elif col in ["study_type"]:
-                f.write(f'{count}. What type of study is the paper "{title}" ({link})?\n')
-                letter_prefix = "A"
-                for study_type in POTENTIAL_VALUES[col]:
-                    f.write(f"{letter_prefix}. {study_type}\n")
+        # Build questions about model organisms, engineered cells, and patient cells/tissues.
+        if col in ["animal_model", "engineered_cells", "patient_cells_tissues"]:
+            question_text = (
+                f'The paper "{title}" ({link}) '
+                f"discusses the functional data from '{col.replace('_', ' ')}' for the variant {idx[2]}.\n"
+                "A. True, the paper discusses functional data from this source\n"
+                "B. False, the paper does not discuss functional data from this source\n"
+            )
+        # Build questions about phenotypes.
+        elif col in ["phenotype"]:
+            question_text = (
+                f'The paper "{title}" ({link}) '
+                f"discusses the phenotype for the individual '{idx[3]}' with variant '{idx[2]}'\n"
+                "Select all phenotypes posessed by the individual:\n"
+            )
+            spec_terms = set()
+            for _, v in discrepancies.loc[idx].output_dict.items():
+                for t in v:
+                    spec_terms.add(t)
+            for _, v in discrepancies.loc[idx].truth_dict.items():
+                for t in v:
+                    spec_terms.add(t)
+            if not spec_terms:
+                raise ValueError("No HPO terms found for phenotype discrepancy.")
+            letter_prefix = "A"
+            for t in spec_terms:
+                if (hpo_term := hpo.fetch(t)) is not None:
+                    question_text += f"{letter_prefix}. {hpo_term['name']} ({hpo_term['id']})\n"
                     letter_prefix = chr(ord(letter_prefix) + 1)
-                f.write("\n\n")
-            elif col in ["variant_inheritance", "zygosity"]:
-                if idx[3] == "inferred proband":
-                    f.write(
-                        f'{count}. The paper "{title}" ({link}) '
-                        f"discusses the {col} for the variant {idx[2]} possessed by the primary proband or an unknown "
-                        f"individual. What is the actual {col} in this case?\n"
-                    )
-                else:
-                    f.write(
-                        f'{count}. The paper "{title}" ({link}) '
-                        f'discusses the {col} for the variant {idx[2]} possessed by the individual "{idx[3]}". What is '
-                        f"the actual {col} in this case?\n"
-                    )
-                letter_prefix = "A"
-                for value in POTENTIAL_VALUES[col]:
-                    f.write(f"{letter_prefix}. {value}\n")
-                    letter_prefix = chr(ord(letter_prefix) + 1)
-                f.write("\n\n")
-            elif col in ["variant_type"]:
-                f.write(
-                    f'{count}. The paper "{title}" ({link}) '
-                    f"discusses the variant type for {idx[2]}. What is the actual variant type in this case?\n"
+                    assert letter_prefix != "["  # too many HPO terms to render.
+        # Build questions about study types.
+        elif col in ["study_type"]:
+            question_text = f'What type of study is the paper "{title}" ({link})?\n'
+            letter_prefix = "A"
+            for study_type in POTENTIAL_VALUES[col]:
+                question_text += f"{letter_prefix}. {study_type}\n"
+                letter_prefix = chr(ord(letter_prefix) + 1)
+        # Build questions about variant inheritance and zygosity.
+        elif col in ["variant_inheritance", "zygosity"]:
+            if idx[3] == "inferred proband":
+                question_text = (
+                    f'The paper "{title}" ({link}) '
+                    f"discusses the {col} for the variant {idx[2]} possessed by the primary proband or an unknown "
+                    f"individual. What is the actual {col} in this case?\n"
                 )
-                letter_prefix = "A"
-                for value in POTENTIAL_VALUES[col]:
-                    f.write(f"{letter_prefix}. {value}\n")
-                    letter_prefix = chr(ord(letter_prefix) + 1)
-                f.write("\n\n")
             else:
-                raise ValueError(f"Unknown column: {col}")
+                question_text = (
+                    f'The paper "{title}" ({link}) '
+                    f'discusses the {col} for the variant {idx[2]} possessed by the individual "{idx[3]}". What is '
+                    f"the actual {col} in this case?\n"
+                )
+            letter_prefix = "A"
+            for value in POTENTIAL_VALUES[col]:
+                question_text += f"{letter_prefix}. {value}\n"
+                letter_prefix = chr(ord(letter_prefix) + 1)
+        # Build questions about variant
+        elif col in ["variant_type"]:
+            question_text = (
+                f'The paper "{title}" ({link}) '
+                f"discusses the variant type for {idx[2]}. What is the actual variant type in this case?\n"
+            )
+            letter_prefix = "A"
+            for value in POTENTIAL_VALUES[col]:
+                question_text += f"{letter_prefix}. {value}\n"
+                letter_prefix = chr(ord(letter_prefix) + 1)
+        else:
+            raise ValueError(f"Unknown column: {col}")
+
+        questions_dicts.append({"index": idx, "pmid": idx[1], "question": question_text})
+
+    # Convert the list of questions to a dataframe, note that the "index" value is a tuple and should be used as a
+    # multi-index for the resultant dataframe.
+    questions_df = pd.DataFrame(questions_dicts).set_index("index")
+    # That gets us an index of the entire tuple, now we need to convert it into a multi-index based on the tuple values
+    questions_df.index = pd.MultiIndex.from_tuples(questions_df.index)
+
+    # Write that dataframe to disk as a TSV.
+    questions_df.to_csv(os.path.join(OUTPUT_DIR, f"{col}_discrepancies.tsv"), sep="\t", index=True)
 
 # %% Intentionally empty.

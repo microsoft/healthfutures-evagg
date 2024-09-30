@@ -4,7 +4,7 @@
 
 import os
 from functools import cache
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
@@ -122,28 +122,49 @@ papers.to_csv(os.path.join(OUTPUT_DIR, "all_papers_list.csv"))
 
 discrepancies = papers.query("discrepancy == True")
 
+RANDOM = False
+RANDOM_SEED = 1
+
+if RANDOM:
+    discrepancies = discrepancies.sample(frac=1, random_state=RANDOM_SEED)
+
 # Each discrepancy Should be given a line of text in the output file with the following format:
 # True or False, the paper "Here's the paper title" (PMID: 123456) discusses one or more human genetic variants in the
 # gene "GENE".
 
-with open(os.path.join(OUTPUT_DIR, "discrepancies.txt"), "w") as f:
-    count = 0
-    for gene, pmid in discrepancies.sample(frac=1, random_state=1).index.values:
-        count += 1
-        paper = get_paper(pmid)
+question_dicts: List[Dict[str, Any]] = []
 
-        if paper is None:
-            title = "Unknown title"
-            link = "Unknown link"
+for gene, pmid in discrepancies.index.values:
+    paper = get_paper(pmid)
+
+    if paper is None:
+        title = "Unknown title"
+        link = "Unknown link"
+    else:
+        title = paper.props.get("title", "Unknown title")
+        if pmcid := paper.props.get("pmcid"):
+            link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
         else:
-            title = paper.props.get("title", "Unknown title")
             link = paper.props.get("link", "Unknown link")
 
-        f.write(
-            f'{count}. The paper "{title}" ({link}) '
-            f"discusses one or more human genetic variants in the gene {gene}.\n"
-        )
-        f.write("A. True\n")
-        f.write("B. False\n\n\n")
+    question_text = (
+        f'The paper "{title}" ({link}) '
+        f"discusses one or more human genetic variants in the gene {gene}.\n"
+        "A. True\n"
+        "B. False\n"
+    )
+
+    question_dicts.append(
+        {
+            "index": (gene, pmid),
+            "pmid": pmid,
+            "question": question_text,
+        }
+    )
+
+questions = pd.DataFrame(question_dicts).set_index("index")
+questions.index = pd.MultiIndex.from_tuples(questions.index)
+
+questions.to_csv(os.path.join(OUTPUT_DIR, "discrepancies.tsv"), sep="\t")
 
 # %% Intentionally empty.
