@@ -254,7 +254,8 @@ print(result.summary())
 
 # %% Make a scatterplot correlating table interactions with papers read, stratified by session.
 dupe_action_counts = action_counts.copy()
-# subtract the S1 values from the S2 values for (variant_review, pub_read), make a new dataframe with this difference and table_use
+# subtract the S1 values from the S2 values for (variant_review, pub_read), make a new dataframe with this difference
+# and table_use
 post_counts = dupe_action_counts.query("session_id == 'S2'")[
     ["variant_review", "pub_read", "participant_id"]
 ].set_index(["participant_id"])
@@ -262,7 +263,9 @@ pre_counts = dupe_action_counts.query("session_id == 'S1'")[["variant_review", "
     ["participant_id"]
 )
 diff_counts = post_counts - pre_counts
-diff_counts["table_use"] = dupe_action_counts.query("session_id == 'S2'")[["table_use", "participant_id"]].set_index(["participant_id"])
+diff_counts["table_use"] = dupe_action_counts.query("session_id == 'S2'")[["table_use", "participant_id"]].set_index(
+    ["participant_id"]
+)
 
 for factor in ["pub_read", "variant_review"]:
     plt.figure()
