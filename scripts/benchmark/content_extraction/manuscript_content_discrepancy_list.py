@@ -6,9 +6,7 @@ import os
 from functools import cache
 from typing import Any, Dict, Tuple
 
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 
 from lib.di import DiContainer
 from lib.evagg.ref import IPaperLookupClient
@@ -175,9 +173,9 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
                     if key not in dicts[col]:
                         dicts[col][key] = {
                             "truth_dict": result[2],
-                            "truth_count": {k: 1 for k in result[2].keys()},
+                            "truth_count": dict.fromkeys(result[2].keys(), 1),
                             "output_dict": result[3],
-                            "output_count": {k: 1 for k in result[3].keys()},
+                            "output_count": dict.fromkeys(result[3].keys(), 1),
                             "gene_group": run_type,
                             "total_count": 1,
                         }
@@ -216,13 +214,14 @@ dfs = {col: pd.DataFrame(dicts[col]).T for col in COLUMNS_OF_INTEREST}
 
 for col, df in dfs.items():
     if col == "phenotype":
-        # Define an output discrepancy for a row as having any value in output_count be greater than or equal to half of the total_count for that row.
+        # Define an output discrepancy for a row as having any value in output_count be greater than or equal to half
+        # of the total_count for that row.
         df["output_discrepancy"] = df.apply(
-            lambda row: any([row["output_count"][k] >= row["total_count"] / 2 for k in row["output_count"]]), axis=1
+            lambda row: any(row["output_count"][k] >= row["total_count"] / 2 for k in row["output_count"]), axis=1
         )
         # Same thing for truth discrepancies.
         df["truth_discrepancy"] = df.apply(
-            lambda row: any([row["truth_count"][k] >= row["total_count"] / 2 for k in row["truth_count"]]), axis=1
+            lambda row: any(row["truth_count"][k] >= row["total_count"] / 2 for k in row["truth_count"]), axis=1
         )
         # If either the output or truth discrepancy is true, then the phenotype discrepancy is true.
         df["discrepancy"] = df["output_discrepancy"] | df["truth_discrepancy"]
