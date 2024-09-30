@@ -4,7 +4,7 @@
 
 import os
 from functools import cache
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
@@ -41,7 +41,7 @@ COLUMNS_OF_INTEREST = [
     "zygosity",
 ]
 
-POTENTIAL_VALUES = {
+POTENTIAL_VALUES: Dict[str, List[Any]] = {
     "animal_model": [True, False],
     "engineered_cells": [True, False],
     "patient_cells_tissues": [True, False],
