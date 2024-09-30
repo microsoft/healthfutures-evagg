@@ -136,7 +136,7 @@ def get_paper(pmid: str) -> Paper | None:
 # %% Generate run stats for observation finding.
 
 
-def get_row_key(row: pd.Series, type_col: str) -> Tuple[str, ...]:
+def get_row_key(row: pd.Series, type_col: str) -> Tuple:
     if row[type_col] == "V":
         return row["gene"], row["paper_id"], row["hgvs_desc"]
     elif row[type_col] == "IV":
@@ -171,8 +171,32 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
                 key = get_row_key(row, f"{col}_result_type")
 
                 if col == "phenotype":
-                    # TODO: figure out how to handle this.
-                    continue
+                    result = eval(str(row["phenotype_result"]))
+                    if key not in dicts[col]:
+                        dicts[col][key] = {
+                            "truth_dict": result[2],
+                            "truth_count": {k: 1 for k in result[2].keys()},
+                            "output_dict": result[3],
+                            "output_count": {k: 1 for k in result[3].keys()},
+                            "gene_group": run_type,
+                            "total_count": 1,
+                        }
+                    else:
+                        dicts[col][key]["total_count"] += 1
+                        for k in result[2]:
+                            if k not in dicts[col][key]["truth_dict"]:
+                                dicts[col][key]["truth_dict"][k] = result[2][k]
+                                dicts[col][key]["truth_count"][k] = 1
+                            else:
+                                dicts[col][key]["truth_dict"][k] += result[2][k]
+                                dicts[col][key]["truth_count"][k] += 1
+                        for k in result[3]:
+                            if k not in dicts[col][key]["output_dict"]:
+                                dicts[col][key]["output_dict"][k] = result[3][k]
+                                dicts[col][key]["output_count"][k] = 1
+                            else:
+                                dicts[col][key]["output_dict"][k] += result[3][k]
+                                dicts[col][key]["output_count"][k] += 1
                 else:
                     if key not in dicts[col]:
                         dicts[col][key] = {
@@ -192,9 +216,18 @@ dfs = {col: pd.DataFrame(dicts[col]).T for col in COLUMNS_OF_INTEREST}
 
 for col, df in dfs.items():
     if col == "phenotype":
-        continue
-
-    df["discrepancy"] = (df["total_count"] - df["agree_count"]) >= MIN_RECURRENCE
+        # Define an output discrepancy for a row as having any value in output_count be greater than or equal to half of the total_count for that row.
+        df["output_discrepancy"] = df.apply(
+            lambda row: any([row["output_count"][k] >= row["total_count"] / 2 for k in row["output_count"]]), axis=1
+        )
+        # Same thing for truth discrepancies.
+        df["truth_discrepancy"] = df.apply(
+            lambda row: any([row["truth_count"][k] >= row["total_count"] / 2 for k in row["truth_count"]]), axis=1
+        )
+        # If either the output or truth discrepancy is true, then the phenotype discrepancy is true.
+        df["discrepancy"] = df["output_discrepancy"] | df["truth_discrepancy"]
+    else:
+        df["discrepancy"] = (df["total_count"] - df["agree_count"]) >= MIN_RECURRENCE
     print(f"Found {df['discrepancy'].sum()} discrepancies for {col}.")
 
 
@@ -203,22 +236,26 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 for col, df in dfs.items():
-    if col == "phenotype":
-        continue
-
     df.to_csv(os.path.join(OUTPUT_DIR, f"all_{col}_list.csv"))
 
-# %% Write out a text file listing all discrepancies in a random order.
+# %% Write out a text file listing all discrepancies.
+
+RANDOM_ORDER = False
+RANDOM_SEED = 1
+
+hpo = DiContainer().create_instance({"di_factory": "lib.evagg.ref.PyHPOClient"}, {})
 
 for col, df in dfs.items():
-    if col == "phenotype":
-        continue
+    discrepancies = df.query("discrepancy == True").copy()
 
-    discrepancies = df.query("discrepancy == True")
+    if RANDOM_ORDER:
+        discrepancies = discrepancies.sample(frac=1, random_state=RANDOM_SEED)
+    else:
+        discrepancies = discrepancies.sort_index(level=1)
 
     with open(os.path.join(OUTPUT_DIR, f"{col}_discrepancies.txt"), "w") as f:
         count = 0
-        for idx in discrepancies.sample(frac=1, random_state=1).index.values:
+        for idx in discrepancies.index.values:
             count += 1
 
             # Cheating here, but we know the 2nd item in idx is the pmid
@@ -229,7 +266,10 @@ for col, df in dfs.items():
                 link = "Unknown link"
             else:
                 title = paper.props.get("title", "Unknown title")
-                link = paper.props.get("link", "Unknown link")
+                if pmcid := paper.props.get("pmcid"):
+                    link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
+                else:
+                    link = paper.props.get("link", "Unknown link")
 
             if col in ["animal_model", "engineered_cells", "patient_cells_tissues"]:
                 f.write(
@@ -239,7 +279,23 @@ for col, df in dfs.items():
                 f.write("A. True, the paper discusses functional data from this source\n")
                 f.write("B. False, the paper does not discuss functional data from this source\n\n\n")
             elif col in ["phenotype"]:
-                f.write("PHENOTYPE NOT IMPLEMENTED.\n")
+                f.write(
+                    f'{count}. The paper "{title}" ({link}) '
+                    f"discusses the phenotype for the individual '{idx[3]}' with variant '{idx[2]}'\n"
+                )
+                f.write("Select all phenotypes posessed by the individual:\n")
+                spec_terms = set()
+                for _, v in discrepancies.loc[idx].output_dict.items():
+                    for t in v:
+                        spec_terms.add(t)
+                for _, v in discrepancies.loc[idx].truth_dict.items():
+                    for t in v:
+                        spec_terms.add(t)
+                if not spec_terms:
+                    f.write("ERROR! No specific terms identified for discrepancy\n")
+                for t in spec_terms:
+                    if (hpo_term := hpo.fetch(t)) is not None:
+                        f.write(f"{hpo_term['name']} ({hpo_term['id']})\n")
                 f.write("\n\n")
             elif col in ["study_type"]:
                 f.write(f'{count}. What type of study is the paper "{title}" ({link})?\n')
