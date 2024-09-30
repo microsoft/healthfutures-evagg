@@ -146,4 +146,4 @@ with open(os.path.join(OUTPUT_DIR, "discrepancies.txt"), "w") as f:
         f.write("A. True\n")
         f.write("B. False\n\n\n")
 
-# %%
+# %% Intentionally empty.
