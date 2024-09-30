@@ -4,7 +4,7 @@
 
 import os
 from functools import cache
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -163,41 +163,63 @@ var.to_csv(os.path.join(OUTPUT_DIR, "all_variants_list.csv"))
 
 # %% Write out a text file listing all OBSERVATION discrepancies in a random order.
 
-discrepancies = obs.query("discrepancy == True")
+RANDOM_ORDER = False
+RANDOM_SEED = 1
 
-with open(os.path.join(OUTPUT_DIR, "obs_discrepancies.txt"), "w") as f:
-    count = 0
-    for gene, pmid, hgvs_desc, individual_id in discrepancies.sample(frac=1, random_state=1).index.values:
-        count += 1
-        paper = get_paper(pmid)
+discrepancies = obs.query("discrepancy == True").copy()
 
-        if paper is None:
-            title = "Unknown title"
-            link = "Unknown link"
+if RANDOM_ORDER:
+    discrepancies = discrepancies.sample(frac=1, random_state=RANDOM_SEED)
+else:
+    # Order by paper.
+    discrepancies = discrepancies.sort_index(level=1)
+
+questions_dicts: List[Dict[str, Any]] = []
+
+for gene, pmid, hgvs_desc, individual_id in discrepancies.index.values:
+    paper = get_paper(pmid)
+
+    if paper is None:
+        title = "Unknown title"
+        link = "Unknown link"
+    else:
+        title = paper.props.get("title", "Unknown title")
+        if pmcid := paper.props.get("pmcid"):
+            link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
         else:
-            title = paper.props.get("title", "Unknown title")
             link = paper.props.get("link", "Unknown link")
 
-        if individual_id == "inferred proband":
-            f.write(
-                f'{count}. The paper "{title}" ({link}) '
-                f"discusses the variant {hgvs_desc} in {gene} in the primary proband or an unknown/unnamed individual\n"
-            )
-            f.write("A. This is completely correct\n")
-            f.write(f"B. This variant is discussed, but it is not associated with the gene {gene}\n")
-            f.write(
-                (
-                    "C. This variant is discussed, but it is not possessed by the primary "
-                    "proband or an unknown/unnamed individual\n\n\n"
-                )
-            )
-        else:
-            f.write(
-                f'{count}. The paper "{title}" ({link}) '
-                f'discusses the variant {hgvs_desc} in {gene} possessed by the individual "{individual_id}"\n'
-            )
-            f.write("A. This is completely correct\n")
-            f.write(f"B. This variant is discussed, but it is not associated with the gene {gene}\n")
-            f.write(f'C. This variant is discussed, but it is not possessed by the individual "{individual_id}"\n\n\n')
+    if individual_id == "inferred proband":
+        question_text = (
+            f'The paper "{title}" ({link}) '
+            f"discusses the variant {hgvs_desc} in {gene} in the primary proband or an unknown/unnamed individual\n"
+            "A. This is completely correct\n"
+            f"B. This variant is discussed, but it is not associated with the gene {gene}\n"
+            "C. This variant is discussed, but it is not possessed by the primary proband "
+            "or an unknown/unnamed individual\n"
+            "D. This is not a real variant or it is not discussed in the paper.\n"
+        )
+    else:
+        question_text = (
+            f"{title} ({link}) "
+            f'discusses the variant {hgvs_desc} in {gene} possessed by the individual "{individual_id}"\n'
+            "A. This is completely correct\n"
+            f"B. This variant is discussed, but it is not associated with the gene {gene}\n"
+            f'C. This variant is discussed, but it is not possessed by the individual "{individual_id}"\n'
+            "D. This is not a real variant or it is not discussed in the paper.\n"
+        )
+
+    questions_dicts.append(
+        {
+            "index": (gene, pmid, hgvs_desc, individual_id),
+            "pmid": pmid,
+            "question": question_text,
+        }
+    )
+
+questions = pd.DataFrame(questions_dicts).set_index("index")
+questions.index = pd.MultiIndex.from_tuples(questions.index)
+
+questions.to_csv(os.path.join(OUTPUT_DIR, "obs_discrepancies.tsv"), sep="\t", index=True)
 
 # %% Intentionally empty.
