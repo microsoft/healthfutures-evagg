@@ -104,7 +104,7 @@ def gen_obs_question(gene: str, pmid: str, hgvs_desc: str, individual_id: str) -
             f"B. This variant is discussed, but it is not associated with the gene {gene}\n"
             "C. This variant is discussed, but it is not possessed by the primary proband "
             "or an unknown/unnamed individual\n"
-            "D. This is not a real variant or it is not discussed in the paper.\n"
+            "D. This variant is either invalid or it is not discussed in the paper.\n"
         )
     else:
         question_text = (
@@ -113,7 +113,7 @@ def gen_obs_question(gene: str, pmid: str, hgvs_desc: str, individual_id: str) -
             "A. This is completely correct\n"
             f"B. This variant is discussed, but it is not associated with the gene {gene}\n"
             f'C. This variant is discussed, but it is not possessed by the individual "{individual_id}"\n'
-            "D. This is not a real variant or it is not discussed in the paper.\n"
+            "D. This variant is either invalid or it is not discussed in the paper.\n"
         )
     return question_text
 
