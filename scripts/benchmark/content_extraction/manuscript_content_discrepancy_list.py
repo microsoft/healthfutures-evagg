@@ -4,7 +4,7 @@
 
 import os
 from functools import cache
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 import pandas as pd
 
@@ -41,25 +41,15 @@ COLUMNS_OF_INTEREST = [
     "zygosity",
 ]
 
-POTENTIAL_VALUES: Dict[str, List[Any]] = {
-    "animal_model": [True, False],
-    "engineered_cells": [True, False],
-    "patient_cells_tissues": [True, False],
-    "phenotype": [],
-    "study_type": ["case report", "case series", "cohort analysis", "other"],
-    "variant_inheritance": ["de novo", "inherited", "unknown"],
-    "variant_type": [
-        "missense",
-        "stop gained",
-        "stop lost",
-        "splice region",
-        "frameshift",
-        "synonymous",
-        "inframe deletion",
-        "indel",
-        "unknown",
-    ],
-    "zygosity": ["homozygous", "heterozygous", "compound heterozygous", "unknown"],
+INDICES_FOR_COLUMN = {
+    "animal_model": ["gene", "pmid", "individual_id"],
+    "engineered_cells": ["gene", "pmid", "individual_id"],
+    "patient_cells_tissues": ["gene", "pmid", "individual_id"],
+    "phenotype": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "study_type": ["gene", "pmid"],
+    "variant_inheritance": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "variant_type": ["gene", "pmid", "hgvs_desc"],
+    "zygosity": ["gene", "pmid", "hgvs_desc", "individual_id"],
 }
 
 # The number of times a discrepancy must appear in order to be included in the output.
@@ -90,28 +80,9 @@ def get_eval_df(df: pd.DataFrame, column: str) -> pd.DataFrame:
     if df.empty:
         return df
 
-    assert df[f"{column}_result_type"].nunique() == 1
-
-    result_type = df[f"{column}_result_type"].iloc[0]
-
-    if result_type == "I":
-        eval_df = df[~df.reset_index().set_index(["paper_id", "individual_id"]).index.duplicated(keep="first")]
-        indices = ["gene", "paper_id", "individual_id"]
-    elif result_type == "IV":
-        eval_df = df[
-            ~df.reset_index().set_index(["paper_id", "hgvs_desc", "individual_id"]).index.duplicated(keep="first")
-        ]
-        indices = ["gene", "paper_id", "hgvs_desc", "individual_id"]
-    elif result_type == "P":
-        eval_df = df[~df.reset_index().set_index(["paper_id"]).index.duplicated(keep="first")]
-        indices = ["gene", "paper_id"]
-    elif result_type == "V":
-        eval_df = df[~df.reset_index().set_index(["paper_id", "hgvs_desc"]).index.duplicated(keep="first")]
-        indices = ["gene", "paper_id", "hgvs_desc"]
-    else:
-        raise ValueError(f"Unknown result type: {result_type}")
-
-    return eval_df[indices + [f"{column}_result", f"{column}_truth", f"{column}_output", f"{column}_result_type"]]
+    indices = INDICES_FOR_COLUMN[column]
+    eval_df = df[~df.reset_index().set_index(indices).index.duplicated(keep="first")]
+    return eval_df[indices + [f"{column}_result", f"{column}_truth", f"{column}_output"]]
 
 
 @cache
@@ -134,17 +105,8 @@ def get_paper(pmid: str) -> Paper | None:
 # %% Generate run stats for observation finding.
 
 
-def get_row_key(row: pd.Series, type_col: str) -> Tuple:
-    if row[type_col] == "V":
-        return row["gene"], row["paper_id"], row["hgvs_desc"]
-    elif row[type_col] == "IV":
-        return row["gene"], row["paper_id"], row["hgvs_desc"], row["individual_id"]
-    elif row[type_col] == "I":
-        return row["gene"], row["paper_id"], row["individual_id"]
-    elif row[type_col] == "P":
-        return row["gene"], row["paper_id"]
-    else:
-        raise ValueError(f"Unknown column: {type_col}")
+def get_row_key(row: pd.Series, col: str) -> Tuple:
+    return tuple(row[INDICES_FOR_COLUMN[col]])
 
 
 dicts: Dict[str, Dict[Tuple[Any, ...], Dict[str, Any]]] = {col: {} for col in COLUMNS_OF_INTEREST}
@@ -159,14 +121,15 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
         print(f"{run_type} - {run.paper_id.nunique()} papers")
 
-        # strip the pmid: prefix from paper_id
-        run["paper_id"] = run["paper_id"].str.replace("pmid:", "").astype(int)
+        # strip the pmid: prefix from paper_id and turn the column into pmid
+        run["pmid"] = run["paper_id"].str.replace("pmid:", "").astype(int)
+        run.drop("paper_id", axis=1, inplace=True)
 
         for col in COLUMNS_OF_INTEREST:
             eval_df = get_eval_df(run, col)
 
             for _, row in eval_df.iterrows():
-                key = get_row_key(row, f"{col}_result_type")
+                key = get_row_key(row, col)
 
                 if col == "phenotype":
                     result = eval(str(row["phenotype_result"]))
@@ -217,16 +180,26 @@ for col, df in dfs.items():
         # Define an output discrepancy for a row as having any value in output_count be greater than or equal to half
         # of the total_count for that row.
         df["output_discrepancy"] = df.apply(
-            lambda row: any(row["output_count"][k] >= row["total_count"] / 2 for k in row["output_count"]), axis=1
+            lambda row: any(
+                (row["output_count"][k] >= row["total_count"] / 2) & (row["total_count"] >= 2)
+                for k in row["output_count"]
+            ),
+            axis=1,
         )
         # Same thing for truth discrepancies.
         df["truth_discrepancy"] = df.apply(
-            lambda row: any(row["truth_count"][k] >= row["total_count"] / 2 for k in row["truth_count"]), axis=1
+            lambda row: any(
+                (row["truth_count"][k] >= row["total_count"] / 2) & (row["total_count"] >= 2)
+                for k in row["truth_count"]
+            ),
+            axis=1,
         )
         # If either the output or truth discrepancy is true, then the phenotype discrepancy is true.
         df["discrepancy"] = df["output_discrepancy"] | df["truth_discrepancy"]
     else:
-        df["discrepancy"] = (df["total_count"] - df["agree_count"]) >= MIN_RECURRENCE
+        df["discrepancy"] = ((df["total_count"] - df["agree_count"]) >= (df["total_count"] / 2)) & (
+            df["total_count"] >= 2
+        )
     print(f"Found {df['discrepancy'].sum()} discrepancies for {col}.")
 
 
@@ -235,118 +208,8 @@ if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
 for col, df in dfs.items():
-    df.to_csv(os.path.join(OUTPUT_DIR, f"all_{col}_list.csv"))
-
-# %% Write out a text file listing all discrepancies.
-
-RANDOM_ORDER = False
-RANDOM_SEED = 1
-
-hpo = DiContainer().create_instance({"di_factory": "lib.evagg.ref.PyHPOClient"}, {})
-
-for col, df in dfs.items():
-    discrepancies = df.query("discrepancy == True").copy()
-
-    if RANDOM_ORDER:
-        discrepancies = discrepancies.sample(frac=1, random_state=RANDOM_SEED)
-    else:
-        # Order by paper.
-        discrepancies = discrepancies.sort_index(level=1)
-
-    questions_dicts: List[Dict[str, Any]] = []
-
-    for idx in discrepancies.index.values:
-        # Cheating here, but we know the 2nd item in idx is the pmid
-        paper = get_paper(idx[1])
-
-        # The rest of this block is for formulating the question.
-        if paper is None:
-            title = "Unknown title"
-            link = "Unknown link"
-        else:
-            title = paper.props.get("title", "Unknown title")
-            if pmcid := paper.props.get("pmcid"):
-                link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
-            else:
-                link = paper.props.get("link", "Unknown link")
-
-        # Build questions about model organisms, engineered cells, and patient cells/tissues.
-        if col in ["animal_model", "engineered_cells", "patient_cells_tissues"]:
-            question_text = (
-                f'The paper "{title}" ({link}) '
-                f"discusses the functional data from '{col.replace('_', ' ')}' for the variant {idx[2]}.\n"
-                "A. True, the paper discusses functional data from this source\n"
-                "B. False, the paper does not discuss functional data from this source\n"
-            )
-        # Build questions about phenotypes.
-        elif col in ["phenotype"]:
-            question_text = (
-                f'The paper "{title}" ({link}) '
-                f"discusses the phenotype for the individual '{idx[3]}' with variant '{idx[2]}'\n"
-                "Select all phenotypes posessed by the individual:\n"
-            )
-            spec_terms = set()
-            for _, v in discrepancies.loc[idx].output_dict.items():
-                for t in v:
-                    spec_terms.add(t)
-            for _, v in discrepancies.loc[idx].truth_dict.items():
-                for t in v:
-                    spec_terms.add(t)
-            if not spec_terms:
-                raise ValueError("No HPO terms found for phenotype discrepancy.")
-            letter_prefix = "A"
-            for t in spec_terms:
-                if (hpo_term := hpo.fetch(t)) is not None:
-                    question_text += f"{letter_prefix}. {hpo_term['name']} ({hpo_term['id']})\n"
-                    letter_prefix = chr(ord(letter_prefix) + 1)
-                    assert letter_prefix != "["  # too many HPO terms to render.
-        # Build questions about study types.
-        elif col in ["study_type"]:
-            question_text = f'What type of study is the paper "{title}" ({link})?\n'
-            letter_prefix = "A"
-            for study_type in POTENTIAL_VALUES[col]:
-                question_text += f"{letter_prefix}. {study_type}\n"
-                letter_prefix = chr(ord(letter_prefix) + 1)
-        # Build questions about variant inheritance and zygosity.
-        elif col in ["variant_inheritance", "zygosity"]:
-            if idx[3] == "inferred proband":
-                question_text = (
-                    f'The paper "{title}" ({link}) '
-                    f"discusses the {col} for the variant {idx[2]} possessed by the primary proband or an unknown "
-                    f"individual. What is the actual {col} in this case?\n"
-                )
-            else:
-                question_text = (
-                    f'The paper "{title}" ({link}) '
-                    f'discusses the {col} for the variant {idx[2]} possessed by the individual "{idx[3]}". What is '
-                    f"the actual {col} in this case?\n"
-                )
-            letter_prefix = "A"
-            for value in POTENTIAL_VALUES[col]:
-                question_text += f"{letter_prefix}. {value}\n"
-                letter_prefix = chr(ord(letter_prefix) + 1)
-        # Build questions about variant
-        elif col in ["variant_type"]:
-            question_text = (
-                f'The paper "{title}" ({link}) '
-                f"discusses the variant type for {idx[2]}. What is the actual variant type in this case?\n"
-            )
-            letter_prefix = "A"
-            for value in POTENTIAL_VALUES[col]:
-                question_text += f"{letter_prefix}. {value}\n"
-                letter_prefix = chr(ord(letter_prefix) + 1)
-        else:
-            raise ValueError(f"Unknown column: {col}")
-
-        questions_dicts.append({"index": idx, "pmid": idx[1], "question": question_text})
-
-    # Convert the list of questions to a dataframe, note that the "index" value is a tuple and should be used as a
-    # multi-index for the resultant dataframe.
-    questions_df = pd.DataFrame(questions_dicts).set_index("index")
-    # That gets us an index of the entire tuple, now we need to convert it into a multi-index based on the tuple values
-    questions_df.index = pd.MultiIndex.from_tuples(questions_df.index)
-
-    # Write that dataframe to disk as a TSV.
-    questions_df.to_csv(os.path.join(OUTPUT_DIR, f"{col}_discrepancies.tsv"), sep="\t", index=True)
+    df.reset_index(names=INDICES_FOR_COLUMN[col]).to_csv(
+        os.path.join(OUTPUT_DIR, f"all_{col}_list.tsv"), sep="\t", index=False
+    )
 
 # %% Intentionally empty.

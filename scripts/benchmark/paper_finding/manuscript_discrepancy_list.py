@@ -3,14 +3,9 @@
 # %% Imports.
 
 import os
-from functools import cache
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 import pandas as pd
-
-from lib.di import DiContainer
-from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import Paper
 
 # %% Constants.
 
@@ -53,25 +48,7 @@ def load_run(run_id: str) -> pd.DataFrame | None:
     return run_data
 
 
-@cache
-def get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/objects/ncbi.yaml"}, {})
-    return ncbi_lookup
-
-
-def get_paper(pmid: str) -> Paper | None:
-    client = get_lookup_client()
-    try:
-        return client.fetch(pmid)
-    except Exception as e:
-        print(f"Error getting title for paper {pmid}: {e}")
-
-    return None
-
-
-# %% Generate sta
-
-# Build a dataframe listing every (gene, pmid) tuple in either the truth data or the pipeline output.
+# %% Build a dataframe listing every (gene, pmid) tuple in either the truth data or the pipeline output.
 # If a (gene, pmid) tuple appears in multiple runs, keep track of the number of times it is found.
 
 # Each value in this dictionary is another dictionary with the keys "truth_count", "pipeline_count", and "group".
@@ -116,55 +93,8 @@ print(f"Found {papers['discrepancy'].sum()} discrepancies.")
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
-papers.to_csv(os.path.join(OUTPUT_DIR, "all_papers_list.csv"))
-
-# %% Write out a text file listing all discrepancies in a random order.
-
-discrepancies = papers.query("discrepancy == True")
-
-RANDOM = False
-RANDOM_SEED = 1
-
-if RANDOM:
-    discrepancies = discrepancies.sample(frac=1, random_state=RANDOM_SEED)
-
-# Each discrepancy Should be given a line of text in the output file with the following format:
-# True or False, the paper "Here's the paper title" (PMID: 123456) discusses one or more human genetic variants in the
-# gene "GENE".
-
-question_dicts: List[Dict[str, Any]] = []
-
-for gene, pmid in discrepancies.index.values:
-    paper = get_paper(pmid)
-
-    if paper is None:
-        title = "Unknown title"
-        link = "Unknown link"
-    else:
-        title = paper.props.get("title", "Unknown title")
-        if pmcid := paper.props.get("pmcid"):
-            link = f"https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/"
-        else:
-            link = paper.props.get("link", "Unknown link")
-
-    question_text = (
-        f'The paper "{title}" ({link}) '
-        f"discusses one or more human genetic variants in the gene {gene}.\n"
-        "A. True\n"
-        "B. False\n"
-    )
-
-    question_dicts.append(
-        {
-            "index": (gene, pmid),
-            "pmid": pmid,
-            "question": question_text,
-        }
-    )
-
-questions = pd.DataFrame(question_dicts).set_index("index")
-questions.index = pd.MultiIndex.from_tuples(questions.index)
-
-questions.to_csv(os.path.join(OUTPUT_DIR, "discrepancies.tsv"), sep="\t")
+papers.reset_index(names=["gene", "pmid"]).to_csv(
+    os.path.join(OUTPUT_DIR, "all_papers_list.tsv"), sep="\t", index=False
+)
 
 # %% Intentionally empty.
