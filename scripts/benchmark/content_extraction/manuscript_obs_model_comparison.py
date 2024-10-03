@@ -4,9 +4,10 @@ This notebook can only be run after `manuscript_generate_obs_figures.py has been
 in the `MODELS` constant below.
 """
 
+# %% Imports.
+
 from typing import Dict
 
-# %% Imports.
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns

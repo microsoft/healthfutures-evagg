@@ -3,54 +3,16 @@
 # %% Imports.
 
 import os
-from functools import cache
 from typing import Any, Dict, Tuple
 
 import pandas as pd
 
-from lib.di import DiContainer
-from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import Paper
+from scripts.benchmark.utils import CONTENT_COLUMNS, INDICES_FOR_COLUMN, get_benchmark_run_ids, get_eval_df
 
 # %% Constants.
 
-TRAIN_RUNS = [
-    "20240909_165847",
-    "20240909_210652",
-    "20240910_044027",
-    "20240910_134659",
-    "20240910_191020",
-]
-
-TEST_RUNS = [
-    "20240911_165451",
-    "20240911_194240",
-    "20240911_223218",
-    "20240912_145606",
-    "20240912_181121",
-]
-
-COLUMNS_OF_INTEREST = [
-    "animal_model",
-    "engineered_cells",
-    "patient_cells_tissues",
-    "phenotype",
-    "study_type",
-    "variant_inheritance",
-    "variant_type",
-    "zygosity",
-]
-
-INDICES_FOR_COLUMN = {
-    "animal_model": ["gene", "pmid", "individual_id"],
-    "engineered_cells": ["gene", "pmid", "individual_id"],
-    "patient_cells_tissues": ["gene", "pmid", "individual_id"],
-    "phenotype": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "study_type": ["gene", "pmid"],
-    "variant_inheritance": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "variant_type": ["gene", "pmid", "hgvs_desc"],
-    "zygosity": ["gene", "pmid", "hgvs_desc", "individual_id"],
-}
+TRAIN_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "train")
+TEST_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "test")
 
 # The number of times a discrepancy must appear in order to be included in the output.
 # By setting MIN_RECURRENCE to 3, with 5 each TRAIN and TEST runs, we're looking for discrepancies that appear in more
@@ -76,32 +38,6 @@ def load_run(run_id: str, run_filename: str) -> pd.DataFrame | None:
     return run_data
 
 
-def get_eval_df(df: pd.DataFrame, column: str) -> pd.DataFrame:
-    if df.empty:
-        return df
-
-    indices = INDICES_FOR_COLUMN[column]
-    eval_df = df[~df.reset_index().set_index(indices).index.duplicated(keep="first")]
-    return eval_df[indices + [f"{column}_result", f"{column}_truth", f"{column}_output"]]
-
-
-@cache
-def get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/objects/ncbi.yaml"}, {})
-    return ncbi_lookup
-
-
-@cache
-def get_paper(pmid: str) -> Paper | None:
-    client = get_lookup_client()
-    try:
-        return client.fetch(pmid)
-    except Exception as e:
-        print(f"Error getting title for paper {pmid}: {e}")
-
-    return None
-
-
 # %% Generate run stats for observation finding.
 
 
@@ -109,7 +45,7 @@ def get_row_key(row: pd.Series, col: str) -> Tuple:
     return tuple(row[INDICES_FOR_COLUMN[col]])
 
 
-dicts: Dict[str, Dict[Tuple[Any, ...], Dict[str, Any]]] = {col: {} for col in COLUMNS_OF_INTEREST}
+dicts: Dict[str, Dict[Tuple[Any, ...], Dict[str, Any]]] = {col: {} for col in CONTENT_COLUMNS}
 
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
@@ -119,10 +55,10 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
         if run is None:
             continue
 
-        print(f"{run_type} - {run.pmid.nunique()} papers")
+        run.set_index(["gene", "pmid", "hgvs_desc", "individual_id"], inplace=True)
 
-        for col in COLUMNS_OF_INTEREST:
-            eval_df = get_eval_df(run, col)
+        for col in CONTENT_COLUMNS:
+            eval_df = get_eval_df(run, col).reset_index()
 
             for _, row in eval_df.iterrows():
                 key = get_row_key(row, col)
@@ -167,7 +103,7 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
                             dicts[col][key]["agree_count"] += 1
 
 # Convert the dictionaries to dataframes.
-dfs = {col: pd.DataFrame(dicts[col]).T for col in COLUMNS_OF_INTEREST}
+dfs = {col: pd.DataFrame(dicts[col]).T for col in CONTENT_COLUMNS}
 
 # %% Annotate the dataframes
 

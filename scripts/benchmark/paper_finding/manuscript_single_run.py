@@ -16,8 +16,6 @@ for the Evidence Aggregator tool
 import argparse
 import os
 import shutil
-import subprocess
-from functools import cache
 from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
@@ -25,9 +23,8 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from lib.di import DiContainer
-from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.utils.run import get_previous_run
+from scripts.benchmark.utils import get_paper
 
 
 def calculate_metrics(num_correct: int, num_missed: int, num_irrelevant: int) -> Tuple:
@@ -166,10 +163,6 @@ def write_output_summary(
             f.write(build_individual_result_summary(gene_tp, gene_fn, gene_fp, "pmid", str(gene_symbol)))
 
 
-def get_git_commit_hash() -> str:
-    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
-
-
 def read_queries(yaml_data: Any) -> List[Dict[str, Any]]:
     query_list_yaml = []
     for query in yaml_data:
@@ -194,18 +187,11 @@ def read_queries(yaml_data: Any) -> List[Dict[str, Any]]:
     return query_list_yaml
 
 
-@cache
-def get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/objects/ncbi.yaml"}, {})
-    return ncbi_lookup
-
-
 def get_paper_title(pmid: str) -> str:
     # This increases execution time a fair amount, we could alternatively store the titles in the MGT and the pipeline
     # output to speed things up if we wanted.
-    client = get_lookup_client()
     try:
-        paper = client.fetch(pmid)
+        paper = get_paper(pmid)
         return paper.props.get("title", "Unknown") if paper else "Unknown"
     except Exception as e:
         print(f"Error getting title for paper {pmid}: {e}")
@@ -331,7 +317,7 @@ def main(args: argparse.Namespace) -> None:
     write_output_summary(outdir, joined_df)
 
     # Write the joined_df to file.
-    joined_df.to_csv(os.path.join(outdir, "pipeline_mgt_comparison.csv"), index=False)
+    joined_df.to_csv(os.path.join(outdir, "pipeline_mgt_comparison.tsv"), sep="\t", index=False)
 
 
 if __name__ == "__main__":

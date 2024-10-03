@@ -2,79 +2,18 @@
 
 # %% Imports.
 
-import os
 from typing import Any, Dict, List
 
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
+from scripts.benchmark.utils import CONTENT_COLUMNS, get_benchmark_run_ids, get_eval_df, load_run
+
 # %% Constants.
 
-TRAIN_RUNS = [
-    "20240909_165847",
-    "20240909_210652",
-    "20240910_044027",
-    "20240910_134659",
-    "20240910_191020",
-]
-
-TEST_RUNS = [
-    "20240911_165451",
-    "20240911_194240",
-    "20240911_223218",
-    "20240912_145606",
-    "20240912_181121",
-]
-
-CONTENT_COLUMNS = [
-    "animal_model",
-    "engineered_cells",
-    "patient_cells_tissues",
-    "phenotype",
-    "study_type",
-    "variant_inheritance",
-    "variant_type",
-    "zygosity",
-]
-
-INDICES_FOR_COLUMN = {
-    "animal_model": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "engineered_cells": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "patient_cells_tissues": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "phenotype": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "study_type": ["gene", "pmid"],
-    "variant_inheritance": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "variant_type": ["gene", "pmid", "hgvs_desc"],
-    "zygosity": ["gene", "pmid", "hgvs_desc", "individual_id"],
-}
-
-
-# %% Function definitions.
-
-
-def load_run(run_id: str, run_filename: str) -> pd.DataFrame | None:
-    """Load the data from a single run."""
-    run_file = f".out/run_evagg_pipeline_{run_id}_content_extraction_benchmarks/{run_filename}"
-    if not os.path.exists(run_file):
-        print(
-            f"No benchmark analysis exists for run_id {run_file}. "
-            "Do you need to run 'manuscript_content_extraction.py' first?"
-        )
-        return None
-
-    run_data = pd.read_csv(run_file, sep="\t")
-    return run_data
-
-
-def get_eval_df(df: pd.DataFrame, column: str) -> pd.DataFrame:
-    if df.empty:
-        return df
-
-    indices = INDICES_FOR_COLUMN[column]
-    eval_df = df[~df.reset_index().set_index(indices).index.duplicated(keep="first")]
-    return eval_df[[f"{column}_result", f"{column}_truth", f"{column}_output"]]
-
+TRAIN_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "train")
+TEST_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "test")
 
 # %% Generate run stats for content extraction.
 
@@ -82,13 +21,15 @@ all_obs_run_stats: Dict[str, pd.DataFrame] = {}
 
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
-    runs = [load_run(id, "content_extraction_results.tsv") for id in run_ids]
+    runs = [load_run(id, "content_extraction", "content_extraction_results.tsv") for id in run_ids]
 
     obs_run_stats_dicts: List[Dict[str, Any]] = []
 
     for run_id, run in zip(run_ids, runs):
         if run is None:
             continue
+
+        run.set_index(["gene", "pmid", "hgvs_desc", "individual_id"], inplace=True)
 
         run_dict: Dict[str, Any] = {
             "run_id": run_id,

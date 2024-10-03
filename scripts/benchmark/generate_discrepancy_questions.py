@@ -14,8 +14,8 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from lib.di import DiContainer
-from lib.evagg.ref import IFetchHPO, IPaperLookupClient
-from lib.evagg.types import Paper
+from lib.evagg.ref import IFetchHPO
+from scripts.benchmark.utils import INDICES_FOR_COLUMN, get_paper
 
 # %% Constants.
 
@@ -28,29 +28,17 @@ OBSERVATION_DISCREPANCY_FILE = ".out/manuscript_content_extraction/all_observati
 CONTENT_DISCREPANCY_ROOT = ".out/manuscript_content_extraction"
 
 # Note here we have excluded animal_model, engineered_cells, and patient_cells_tissues. We could opt to include
-# them later if we think we have time from the analysts to review. Also note we're not doing discrepancy resolution
-# at the variant-only observation level.
+# them later if we think we have time from the analysts to review. Also note we are including papers and observations
+# here so that we can generate questions for them as well.
 
-INDICES_FOR_COLUMN = {
-    "papers": ["gene", "pmid"],
-    "observations": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "animal_model": ["gene", "pmid", "individual_id"],
-    "engineered_cells": ["gene", "pmid", "individual_id"],
-    "patient_cells_tissues": ["gene", "pmid", "individual_id"],
-    "phenotype": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "study_type": ["gene", "pmid"],
-    "variant_inheritance": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "variant_type": ["gene", "pmid", "hgvs_desc"],
-    "zygosity": ["gene", "pmid", "hgvs_desc", "individual_id"],
-}
+INDICES_FOR_COLUMN_RELEVANT_TASKS = INDICES_FOR_COLUMN
+INDICES_FOR_COLUMN_RELEVANT_TASKS["papers"] = ["gene", "pmid"]
+INDICES_FOR_COLUMN_RELEVANT_TASKS["observations"] = ["gene", "pmid", "hgvs_desc", "individual_id"]
+INDICES_FOR_COLUMN_RELEVANT_TASKS.pop("animal_model")
+INDICES_FOR_COLUMN_RELEVANT_TASKS.pop("engineered_cells")
+INDICES_FOR_COLUMN_RELEVANT_TASKS.pop("patient_cells_tissues")
 
 # %% Functions.
-
-
-@cache
-def _get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/objects/ncbi.yaml"}, {})
-    return ncbi_lookup
 
 
 @cache
@@ -59,22 +47,12 @@ def _get_hpo_reference() -> IFetchHPO:
     return hpo_reference
 
 
-def _get_paper(pmid: str) -> Paper | None:
-    client = _get_lookup_client()
-    try:
-        return client.fetch(pmid)
-    except Exception as e:
-        print(f"Error getting title for paper {pmid}: {e}")
-
-    return None
-
-
-def gen_header():
-    return "Discrepancy Questionnaire\n\n"
+def gen_header(current: int, total: int):
+    return f"Discrepancy Questionnaire ({current} of {total})"
 
 
 def gen_group_header(gene: str, pmid: str) -> str:
-    paper = _get_paper(pmid)
+    paper = get_paper(pmid)
 
     if paper is None:
         title = "Unknown title"
@@ -86,7 +64,7 @@ def gen_group_header(gene: str, pmid: str) -> str:
         else:
             link = paper.props.get("link", "Unknown link")
 
-    return f'This section contains questions pertaining to the gene {gene} and paper "{title}" ({link}).\n\n'
+    return f'This section contains questions pertaining to the gene {gene} and paper "{title}" ({link}).'
 
 
 def gen_paper_finding_question(gene: str, pmid: str) -> str:
@@ -206,7 +184,7 @@ def _variant_type_question(pmid: str, hgvs_desc: str) -> str:
         ],
     )
     question_text = (
-        f"The paper {pmid}"
+        f"The paper {pmid} "
         f"discusses the variant type for {hgvs_desc}. What is the actual variant type in this case?\n"
     )
     letter_prefix = "A"
@@ -261,7 +239,7 @@ def gen_content_question(col, params: Dict[str, Any]) -> str:
 
 all_discrepancies: List[pd.DataFrame] = []
 
-for column in INDICES_FOR_COLUMN.keys():
+for column in INDICES_FOR_COLUMN_RELEVANT_TASKS.keys():
     if column == "papers":
         root = ".out/manuscript_paper_finding"
     else:
@@ -270,7 +248,7 @@ for column in INDICES_FOR_COLUMN.keys():
     discrepancy_file = f"all_{column}_list.tsv"
     col_discrepancies = pd.read_csv(os.path.join(root, discrepancy_file), sep="\t")
 
-    indices_to_keep = INDICES_FOR_COLUMN[column]
+    indices_to_keep = INDICES_FOR_COLUMN_RELEVANT_TASKS[column]
     if column == "phenotype":
         indices_to_keep += ["truth_dict", "output_dict"]
         col_discrepancies["truth_dict"] = col_discrepancies["truth_dict"].apply(eval)
@@ -279,7 +257,9 @@ for column in INDICES_FOR_COLUMN.keys():
     col_discrepancies = col_discrepancies.query("discrepancy == True")[indices_to_keep]
     col_discrepancies["task"] = column
     # Make a new column called "id" that contains a tuple of the values in gene and pmid
-    col_discrepancies["id"] = col_discrepancies.apply(lambda x, col=column: tuple(x[INDICES_FOR_COLUMN[col]]), axis=1)
+    col_discrepancies["id"] = col_discrepancies.apply(
+        lambda x, col=column: tuple(x[INDICES_FOR_COLUMN_RELEVANT_TASKS[col]]), axis=1
+    )
     all_discrepancies.append(col_discrepancies)
 
 discrepancies = pd.concat(all_discrepancies).reset_index()
@@ -322,11 +302,17 @@ for _, group_df in discrepancies.groupby(["gene", "pmid"]):
 
 # Now write out the questions to files.
 
+n_files = discrepancies["file_number"].nunique()
+
 for file_number, group_df in discrepancies.groupby("file_number"):
+    # Not the cleanest way to do this, but it works.
+    file_number_int = int(group_df["file_number"].iloc[0])
+
     with open(os.path.join(OUTPUT_DIR, f"discrepancies_qs_{file_number}.txt"), "w") as f:
-        f.write(gen_header())
+        f.write(f"# {gen_header(file_number_int + 1, n_files)} #\n\n\n")
+
         for (gene, pmid), paper_df in group_df.groupby(["gene", "pmid"]):
-            f.write(gen_group_header(gene, pmid))
+            f.write(f"## {gen_group_header(gene, pmid)} ##\n\n\n")
             for idx, row in paper_df.iterrows():
                 if row["task"] == "papers":
                     q = gen_paper_finding_question(row["gene"], row["pmid"])
@@ -336,4 +322,4 @@ for file_number, group_df in discrepancies.groupby("file_number"):
                     q = gen_content_question(row["task"], row.to_dict())
                 f.write(f"Q{idx}. {q}\n\n")
 
-# %%
+# %% Intentionally empty.
