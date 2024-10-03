@@ -38,6 +38,18 @@ CONTENT_COLUMNS = [
     "zygosity",
 ]
 
+INDICES_FOR_COLUMN = {
+    "animal_model": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "engineered_cells": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "patient_cells_tissues": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "phenotype": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "study_type": ["gene", "pmid"],
+    "variant_inheritance": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "variant_type": ["gene", "pmid", "hgvs_desc"],
+    "zygosity": ["gene", "pmid", "hgvs_desc", "individual_id"],
+}
+
+
 # %% Function definitions.
 
 
@@ -59,23 +71,8 @@ def get_eval_df(df: pd.DataFrame, column: str) -> pd.DataFrame:
     if df.empty:
         return df
 
-    assert df[f"{column}_result_type"].nunique() == 1
-
-    result_type = df[f"{column}_result_type"].iloc[0]
-
-    if result_type == "I":
-        eval_df = df[~df.reset_index().set_index(["paper_id", "individual_id"]).index.duplicated(keep="first")]
-    elif result_type == "IV":
-        eval_df = df[
-            ~df.reset_index().set_index(["paper_id", "hgvs_desc", "individual_id"]).index.duplicated(keep="first")
-        ]
-    elif result_type == "P":
-        eval_df = df[~df.reset_index().set_index(["paper_id"]).index.duplicated(keep="first")]
-    elif result_type == "V":
-        eval_df = df[~df.reset_index().set_index(["paper_id", "hgvs_desc"]).index.duplicated(keep="first")]
-    else:
-        raise ValueError(f"Unknown result type: {result_type}")
-
+    indices = INDICES_FOR_COLUMN[column]
+    eval_df = df[~df.reset_index().set_index(indices).index.duplicated(keep="first")]
     return eval_df[[f"{column}_result", f"{column}_truth", f"{column}_output"]]
 
 

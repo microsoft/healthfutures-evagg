@@ -106,6 +106,8 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
         if run_id == "20240920_074218":
             # This is a known busted run, skip it.
+            # More specifically, there was a AOAI generation failure in this run where the limit on output tokens
+            # was exceeded. Penalizing the corresponding model for this would be unfair.
             continue
 
         precision = run.in_truth[run.in_pipeline].mean()
@@ -114,13 +116,13 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
         # Count the variant as being present in truth or pipeline output if it's present in any row, regardless of the
         # individual_id for that row.
-        for _, grp_df in run.groupby(["paper_id", "hgvs_desc"]):
+        for _, grp_df in run.groupby(["pmid", "hgvs_desc"]):
             if grp_df.in_truth.any():
                 run.loc[grp_df.index, "in_truth"] = True
             if grp_df.in_pipeline.any():
                 run.loc[grp_df.index, "in_pipeline"] = True
 
-        run.drop_duplicates(subset=["paper_id", "hgvs_desc"], inplace=True, keep="first")
+        run.drop_duplicates(subset=["pmid", "hgvs_desc"], inplace=True, keep="first")
 
         precision_variant = run.in_truth[run.in_pipeline].mean()
         recall_variant = run.in_pipeline[run.in_truth].mean()

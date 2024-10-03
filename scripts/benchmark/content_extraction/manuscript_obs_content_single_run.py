@@ -350,7 +350,7 @@ def write_observation_finding_summary(merged_df: pd.DataFrame, output_filepath: 
             printable_df = merged_df.reset_index()  #
 
             result = printable_df[~printable_df.in_truth | ~printable_df.in_pipeline].sort_values(
-                ["gene", "paper_id", "hgvs_desc"]
+                ["gene", "pmid", "hgvs_desc"]
             )[
                 [
                     c
@@ -359,7 +359,7 @@ def write_observation_finding_summary(merged_df: pd.DataFrame, output_filepath: 
                     in [
                         "hgvs_desc",
                         "gene",
-                        "paper_id",
+                        "pmid",
                         "individual_id",
                         "hgvs_c_truth",
                         "hgvs_p_truth",
@@ -380,9 +380,7 @@ def write_observation_finding_summary(merged_df: pd.DataFrame, output_filepath: 
 
 
 def write_observation_finding_outputs(merged_df: pd.DataFrame, output_dir: str) -> None:
-    merged_df[["gene", "in_truth", "in_pipeline"]].to_csv(
-        os.path.join(output_dir, "observation_finding_results.tsv"), sep="\t"
-    )
+    merged_df[["in_truth", "in_pipeline"]].to_csv(os.path.join(output_dir, "observation_finding_results.tsv"), sep="\t")
 
 
 def _hpo_str_to_set(hpo_compound_string: str) -> Set[str]:
@@ -470,38 +468,8 @@ def evaluate_content_extraction(df: pd.DataFrame, columns_of_interest: Set[str])
     For the phenotype column, we'll need to do a fuzzy match based on HPO terms and we'll save the results from that
     matching operation.
     """
-
-    def _col_to_result_type(col: str) -> str:
-        # This is intentionally empty. Still under consideration whether phenotype should be considered an individual
-        # column or an I-V column. For now we'll leave this as an empty set so the logic below can be completely fleshed
-        # out.
-        all_indiv_columns: Set[str] = set()
-        # Phenotype belongs here only because we collapse "unknown" individual IDs to "inferred proband", but all of the
-        # unknown IDs for a particular paper won't necessarily have the same phenotype, so they shouldn't really be
-        # collapsed. This means that patients with multiple variants will be counted more than once unfortunately.
-        # It would be a substantial refactor to change this, so we'll leave it like this for now.
-        all_indiv_cross_variant_columns = {"zygosity", "variant_inheritance", "phenotype"}
-        all_paper_columns = {"study_type"}
-        all_variant_columns = {"variant_type", "engineered_cells", "patient_cells_tissues", "animal_model"}
-
-        if col in all_indiv_columns:
-            return "I"
-        elif col in all_indiv_cross_variant_columns:
-            return "IV"
-        elif col in all_paper_columns:
-            return "P"
-        elif col in all_variant_columns:
-            return "V"
-        else:
-            raise ValueError(f"Unknown column type: {col}")
-
     for column in columns_of_interest:
         new_column = f"{column}_result"
-
-        # First, assign an evaluation type to the comparison. This specifies whether downstream evaluation should be
-        # done on a per-individual basis, a per-variant basis, a per-variant-by-individual basis, or a per-paper basis.
-        new_column_eval_type = f"{column}_result_type"
-        df[new_column_eval_type] = _col_to_result_type(column)
 
         if column == "phenotype":
             # Phenotype matching can't be a direct string compare. We'll fuzzy match the HPO terms, note that we're
@@ -516,27 +484,24 @@ def evaluate_content_extraction(df: pd.DataFrame, columns_of_interest: Set[str])
     return df
 
 
-def _get_eval_df(df: pd.DataFrame, column: str) -> pd.DataFrame:
+INDICES_FOR_COLUMN = {
+    "animal_model": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "engineered_cells": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "patient_cells_tissues": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "phenotype": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "study_type": ["gene", "pmid"],
+    "variant_inheritance": ["gene", "pmid", "hgvs_desc", "individual_id"],
+    "variant_type": ["gene", "pmid", "hgvs_desc"],
+    "zygosity": ["gene", "pmid", "hgvs_desc", "individual_id"],
+}
+
+
+def get_eval_df(df: pd.DataFrame, column: str) -> pd.DataFrame:
     if df.empty:
         return df
 
-    assert df[f"{column}_result_type"].nunique() == 1
-
-    result_type = df[f"{column}_result_type"].iloc[0]
-
-    if result_type == "I":
-        eval_df = df[~df.reset_index().set_index(["paper_id", "individual_id"]).index.duplicated(keep="first")]
-    elif result_type == "IV":
-        eval_df = df[
-            ~df.reset_index().set_index(["paper_id", "hgvs_desc", "individual_id"]).index.duplicated(keep="first")
-        ]
-    elif result_type == "P":
-        eval_df = df[~df.reset_index().set_index(["paper_id"]).index.duplicated(keep="first")]
-    elif result_type == "V":
-        eval_df = df[~df.reset_index().set_index(["paper_id", "hgvs_desc"]).index.duplicated(keep="first")]
-    else:
-        raise ValueError(f"Unknown result type: {result_type}")
-
+    indices = INDICES_FOR_COLUMN[column]
+    eval_df = df[~df.reset_index().set_index(indices).index.duplicated(keep="first")]
     return eval_df[[f"{column}_result", f"{column}_truth", f"{column}_output"]]
 
 
@@ -548,7 +513,7 @@ def write_content_extraction_summary(df: pd.DataFrame, columns_of_interest: Set[
         for column in columns_of_interest:
             f.write(f"-- Content extraction summary for {column} --\n")
 
-            eval_df = _get_eval_df(df, column)
+            eval_df = get_eval_df(df, column)
 
             if column != "phenotype":
                 match = eval_df[f"{column}_result"]
@@ -580,11 +545,7 @@ def write_content_extraction_summary(df: pd.DataFrame, columns_of_interest: Set[
 
 
 def write_content_extraction_outputs(df: pd.DataFrame, output_dir: str) -> None:
-    # Sort the columns, putting "gene" first and everything else in alphabetical order.
-    columns = list(df.columns)
-    columns.remove("gene")
-    columns = ["gene"] + sorted(columns)
-
+    columns = sorted(df.columns)
     df[columns].to_csv(os.path.join(output_dir, "content_extraction_results.tsv"), sep="\t")
 
 
@@ -653,7 +614,7 @@ def write_content_plots(df: pd.DataFrame, columns_of_interest: Set[str], output_
 
     for column in columns_of_interest:
         if column in PLOT_CONFIG:
-            eval_df = _get_eval_df(df, column)
+            eval_df = get_eval_df(df, column)
 
             _plot_confusion_matrix(
                 eval_df[f"{column}_truth"].copy(),
@@ -666,8 +627,8 @@ def write_content_plots(df: pd.DataFrame, columns_of_interest: Set[str], output_
 
 def main(args: argparse.Namespace) -> None:
     content_columns = set(args.content_columns.split(","))
-    index_columns = {"individual_id", "hgvs_c", "hgvs_p", "paper_id"}
-    extra_columns = {"gene", "in_supplement"}
+    index_columns = {"gene", "individual_id", "hgvs_c", "hgvs_p", "pmid"}
+    extra_columns = {"in_supplement"}
 
     # Gather inputs.
     ground_truth = get_mgt(args)
@@ -715,7 +676,7 @@ def main(args: argparse.Namespace) -> None:
     merged_data = merge_dfs(ground_truth, pipeline_outputs, all_columns, index_columns).query("in_supplement != 'Y'")
 
     # Merge the dataframes considering variants only (i.e., discarding multiple individuals with the same variant).
-    new_idx = {"hgvs_desc", "paper_id"}
+    new_idx = index_columns - {"individual_id"}
     merged_var_data = merge_dfs(ground_truth, pipeline_outputs, all_columns, new_idx).query("in_supplement != 'Y'")
 
     # Write observation finding-related outputs.
