@@ -86,11 +86,8 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
         if run is None:
             continue
 
-        # strip the pmid: prefix from paper_id
-        run["paper_id"] = run["paper_id"].str.replace("pmid:", "").astype(int)
-
         for _, row in run.iterrows():
-            obs_key = (row["gene"], row["paper_id"], row["hgvs_desc"], row["individual_id"])
+            obs_key = (row["gene"], row["pmid"], row["hgvs_desc"], row["individual_id"])
             if obs_key not in obs_dict:
                 obs_dict[obs_key] = {
                     "truth_count": int(row.in_truth),
@@ -105,15 +102,15 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
         # Repeat the process ignoring the individual_id, this requires us to drop duplicates, but do so carefully.
         # If in_truth or in_pipeline is True for any row in a group, set it to True for all rows in that group.
-        for _, grp_df in run.groupby(["gene", "paper_id", "hgvs_desc"]):
+        for _, grp_df in run.groupby(["gene", "pmid", "hgvs_desc"]):
             if grp_df.in_truth.any():
                 run.loc[grp_df.index, "in_truth"] = True
             if grp_df.in_pipeline.any():
                 run.loc[grp_df.index, "in_pipeline"] = True
-        run.drop_duplicates(subset=["gene", "paper_id", "hgvs_desc"], inplace=True, keep="first")
+        run.drop_duplicates(subset=["gene", "pmid", "hgvs_desc"], inplace=True, keep="first")
 
         for _, row in run.iterrows():
-            var_key = (row["gene"], row["paper_id"], row["hgvs_desc"])
+            var_key = (row["gene"], row["pmid"], row["hgvs_desc"])
             if var_key not in var_dict:
                 var_dict[var_key] = {
                     "truth_count": int(row.in_truth),
