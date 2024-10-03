@@ -119,11 +119,7 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
         if run is None:
             continue
 
-        print(f"{run_type} - {run.paper_id.nunique()} papers")
-
-        # strip the pmid: prefix from paper_id and turn the column into pmid
-        run["pmid"] = run["paper_id"].str.replace("pmid:", "").astype(int)
-        run.drop("paper_id", axis=1, inplace=True)
+        print(f"{run_type} - {run.pmid.nunique()} papers")
 
         for col in COLUMNS_OF_INTEREST:
             eval_df = get_eval_df(run, col)
