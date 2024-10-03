@@ -26,6 +26,7 @@ Ubuntu 20.04/22.04 (VM/WSL2)
 - azure cli
 - git
 - make
+- jq
 - miniconda:
 
     ```bash

@@ -16,78 +16,18 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
+from scripts.benchmark.utils import get_benchmark_run_ids, load_run
+
 # %% Constants.
 
 OUTPUT_DIR = ".out/manuscript_paper_finding"
 
 MODEL = "GPT-4-Turbo"  # or "GPT-4o" or "GPT-4o-mini"
 
-if MODEL == "GPT-4-Turbo":
-    TRAIN_RUNS = [
-        "20240909_165847",
-        "20240909_210652",
-        "20240910_044027",
-        "20240910_134659",
-        "20240910_191020",
-    ]
-
-    TEST_RUNS = [
-        "20240911_165451",
-        "20240911_194240",
-        "20240911_223218",
-        "20240912_145606",
-        "20240912_181121",
-    ]
-elif MODEL == "GPT-4o":
-    TRAIN_RUNS = [
-        "20240920_080739",
-        "20240920_085154",
-        "20240920_093425",
-        "20240920_101905",
-        "20240920_110151",
-    ]
-    TEST_RUNS = [
-        "20240920_055848",
-        "20240920_062457",
-        "20240920_064935",
-        "20240920_071554",
-        "20240920_074218",
-    ]
-elif MODEL == "GPT-4o-mini":
-    TRAIN_RUNS = [
-        "20240920_165153",
-        "20240920_173754",
-        "20240920_181707",
-        "20240920_185736",
-        "20240920_223702",
-    ]
-    TEST_RUNS = [
-        "20240920_144637",
-        "20240920_151008",
-        "20240920_153649",
-        "20240920_160020",
-        "20240920_162832",
-    ]
-else:
-    raise ValueError(f"Unknown model: {MODEL}")
+TRAIN_RUNS = get_benchmark_run_ids(MODEL, "train")
+TEST_RUNS = get_benchmark_run_ids(MODEL, "test")
 
 model_name = f" - {MODEL}"
-
-# %% Function definitions.
-
-
-def load_run(run_id: str) -> pd.DataFrame | None:
-    """Load the data from a single run."""
-    run_file = f".out/run_evagg_pipeline_{run_id}_paper_finding_benchmarks/pipeline_mgt_comparison.csv"
-    if not os.path.exists(run_file):
-        print(
-            f"No benchmark analysis exists for run_id {run_id}. Do you need to run 'manuscript_paper_finding.py' first?"
-        )
-        return None
-
-    run_data = pd.read_csv(run_file)
-    return run_data
-
 
 # %% Generate run stats.
 
@@ -95,7 +35,7 @@ all_run_stats: Dict[str, pd.DataFrame] = {}
 
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
-    runs = [load_run(id) for id in run_ids]
+    runs = [load_run(id, "paper_finding", "pipeline_mgt_comparison.tsv") for id in run_ids]
 
     run_stats_dicts: List[Dict[str, Any]] = []
 
@@ -232,6 +172,9 @@ for run_type in ["train", "test"]:
 
 
 # %% Write outputs for later use.
+
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
 
 for run_type in ["train", "test"]:
     run_stats = all_run_stats[run_type]
