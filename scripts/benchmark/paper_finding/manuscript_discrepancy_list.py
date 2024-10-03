@@ -7,23 +7,12 @@ from typing import Any, Dict, Tuple
 
 import pandas as pd
 
+from scripts.benchmark.utils import get_benchmark_run_ids, load_run
+
 # %% Constants.
 
-TRAIN_RUNS = [
-    "20240909_165847",
-    "20240909_210652",
-    "20240910_044027",
-    "20240910_134659",
-    "20240910_191020",
-]
-
-TEST_RUNS = [
-    "20240911_165451",
-    "20240911_194240",
-    "20240911_223218",
-    "20240912_145606",
-    "20240912_181121",
-]
+TRAIN_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "train")
+TEST_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "test")
 
 # The number of times a discrepancy must appear in order to be included in the output.
 # By setting MIN_RECURRENCE to 3, with 5 each TRAIN and TEST runs, we're looking for discrepancies that appear in more
@@ -31,22 +20,6 @@ TEST_RUNS = [
 MIN_RECURRENCE = 3
 
 OUTPUT_DIR = ".out/manuscript_paper_finding"
-
-# %% Function definitions.
-
-
-def load_run(run_id: str) -> pd.DataFrame | None:
-    """Load the data from a single run."""
-    run_file = f".out/run_evagg_pipeline_{run_id}_paper_finding_benchmarks/pipeline_mgt_comparison.csv"
-    if not os.path.exists(run_file):
-        print(
-            f"No benchmark analysis exists for run_id {run_id}. Do you need to run 'manuscript_paper_finding.py' first?"
-        )
-        return None
-
-    run_data = pd.read_csv(run_file)
-    return run_data
-
 
 # %% Build a dataframe listing every (gene, pmid) tuple in either the truth data or the pipeline output.
 # If a (gene, pmid) tuple appears in multiple runs, keep track of the number of times it is found.
@@ -56,7 +29,7 @@ papers_dict: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
-    runs = [load_run(id) for id in run_ids]
+    runs = [load_run(id, "paper_finding", "pipeline_mgt_comparison.tsv") for id in run_ids]
 
     for run in runs:
         if run is None:
