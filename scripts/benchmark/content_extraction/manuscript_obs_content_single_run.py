@@ -26,6 +26,7 @@ from sklearn.metrics import confusion_matrix
 from lib.di import DiContainer
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.utils.run import get_previous_run
+from scripts.benchmark.utils import get_eval_df
 
 # Function definitions.
 
@@ -482,27 +483,6 @@ def evaluate_content_extraction(df: pd.DataFrame, columns_of_interest: Set[str])
             df[new_column] = df[f"{column}_truth"].str.lower() == df[f"{column}_output"].str.lower()
 
     return df
-
-
-INDICES_FOR_COLUMN = {
-    "animal_model": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "engineered_cells": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "patient_cells_tissues": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "phenotype": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "study_type": ["gene", "pmid"],
-    "variant_inheritance": ["gene", "pmid", "hgvs_desc", "individual_id"],
-    "variant_type": ["gene", "pmid", "hgvs_desc"],
-    "zygosity": ["gene", "pmid", "hgvs_desc", "individual_id"],
-}
-
-
-def get_eval_df(df: pd.DataFrame, column: str) -> pd.DataFrame:
-    if df.empty:
-        return df
-
-    indices = INDICES_FOR_COLUMN[column]
-    eval_df = df[~df.reset_index().set_index(indices).index.duplicated(keep="first")]
-    return eval_df[[f"{column}_result", f"{column}_truth", f"{column}_output"]]
 
 
 def write_content_extraction_summary(df: pd.DataFrame, columns_of_interest: Set[str], output_filepath: str) -> None:

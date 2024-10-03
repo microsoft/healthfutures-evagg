@@ -3,34 +3,18 @@
 # %% Imports.
 
 import os
-from functools import cache
 from typing import Any, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from lib.di import DiContainer
-from lib.evagg.ref import IPaperLookupClient
-from lib.evagg.types import Paper
+from scripts.benchmark.utils import get_benchmark_run_ids, load_run
 
 # %% Constants.
 
-TRAIN_RUNS = [
-    "20240909_165847",
-    "20240909_210652",
-    "20240910_044027",
-    "20240910_134659",
-    "20240910_191020",
-]
-
-TEST_RUNS = [
-    "20240911_165451",
-    "20240911_194240",
-    "20240911_223218",
-    "20240912_145606",
-    "20240912_181121",
-]
+TRAIN_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "train")
+TEST_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "test")
 
 # The number of times a discrepancy must appear in order to be included in the output.
 # By setting MIN_RECURRENCE to 3, with 5 each TRAIN and TEST runs, we're looking for discrepancies that appear in more
@@ -38,39 +22,6 @@ TEST_RUNS = [
 MIN_RECURRENCE = 3
 
 OUTPUT_DIR = ".out/manuscript_content_extraction"
-
-# %% Function definitions.
-
-
-def load_run(run_id: str, run_filename: str) -> pd.DataFrame | None:
-    """Load the data from a single run."""
-    run_file = f".out/run_evagg_pipeline_{run_id}_content_extraction_benchmarks/{run_filename}"
-    if not os.path.exists(run_file):
-        print(
-            f"No benchmark analysis exists for run_id {run_file}. "
-            "Do you need to run 'manuscript_content_extraction.py' first?"
-        )
-        return None
-
-    run_data = pd.read_csv(run_file, sep="\t")
-    return run_data
-
-
-@cache
-def get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/objects/ncbi.yaml"}, {})
-    return ncbi_lookup
-
-
-@cache
-def get_paper(pmid: str) -> Paper | None:
-    client = get_lookup_client()
-    try:
-        return client.fetch(pmid)
-    except Exception as e:
-        print(f"Error getting title for paper {pmid}: {e}")
-
-    return None
 
 
 # %% Generate run stats for observation finding.
@@ -80,7 +31,7 @@ var_dict: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
 
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
-    runs = [load_run(id, "observation_finding_results.tsv") for id in run_ids]
+    runs = [load_run(id, "content_extraction", "observation_finding_results.tsv") for id in run_ids]
 
     for run in runs:
         if run is None:
