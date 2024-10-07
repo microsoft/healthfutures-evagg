@@ -5,33 +5,29 @@ Inputs
 - .yaml of queries
 
 Outputs:
-- benchmarking_paper_finding_results_train.txt: comparison of the papers that were found to the MGT data
+- benchmarking_paper_finding_results.txt: comparison of the papers that were found to the MGT data
 papers
-- benchmarking_paper_finding_results_train.png: barplot of average number of correct, missed, and irrelevant papers
-for the Evidence Aggregator tool and PubMed
-- filtering_paper_finding_results_train.png: barplot of average number of papers filtered into rare and
-other categories
+- benchmarking_paper_finding_results.png: barplot of average number of correct, missed, and irrelevant papers
+for the Evidence Aggregator tool
+- pipeline_mgt_comparison.csv: table comparing the pipeline output to the MGT data
 """
 
 # Libraries
 import argparse
 import os
 import shutil
-import subprocess
-from functools import cache
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import yaml
 
-from lib.di import DiContainer
-from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.utils.run import get_previous_run
+from scripts.benchmark.utils import get_paper
 
 
-def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
+def calculate_metrics(num_correct: int, num_missed: int, num_irrelevant: int) -> Tuple:
     # Calculate precision and recall from benchmarking results
     # precision is calc as true_positives / (true_positives + false_positives)
     precision = num_correct / (num_correct + num_irrelevant) if num_correct + num_irrelevant != 0 else 0
@@ -49,7 +45,7 @@ def calculate_metrics(num_correct, num_missed, num_irrelevant) -> tuple:
 def plot_benchmarking_results(
     output_dir: str,
     joined_df: pd.DataFrame,
-):
+) -> None:
     """Plot the benchmarking results from the  set in a barplot."""
     # List of categories
     ea_categories = ["E.A. Correct", "E.A. Missed", "E.A. Irrelevant"]
@@ -83,7 +79,7 @@ def plot_benchmarking_results(
     plt.title("Evidence Aggregator: #correct, # missed & # irrelevant papers")
 
     # Function to add value in bar plot labels
-    def add_labels(bars):
+    def add_labels(bars: Any) -> None:
         for bar in bars:
             height = bar.get_height()
             ax.text(
@@ -95,7 +91,7 @@ def plot_benchmarking_results(
     plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
 
     # Save barplot
-    plt.savefig(output_dir + "/benchmarking_paper_finding_results_train.png")
+    plt.savefig(output_dir + "/benchmarking_paper_finding_results.png")
 
 
 def build_individual_result_summary(
@@ -110,17 +106,17 @@ def build_individual_result_summary(
 
     summary += f"{prefix} true positives:\n"
     for index, row in tp.reset_index().iterrows():
-        summary += f"* {index+1} * {row[row_id]} * {row.paper_title}\n"
+        summary += f"* {index} * {row[row_id]} * {row.paper_title}\n"
     summary += "\n"
 
     summary += f"{prefix} false negatives:\n"
     for index, row in fn.reset_index().iterrows():
-        summary += f"* {index+1} * {row[row_id]} * {row.paper_title}\n"
+        summary += f"* {index} * {row[row_id]} * {row.paper_title}\n"
     summary += "\n"
 
     summary += f"{prefix} false positives:\n"
     for index, row in fp.reset_index().iterrows():
-        summary += f"* {index+1} * {row[row_id]} * {row.paper_title}\n"
+        summary += f"* {index} * {row[row_id]} * {row.paper_title}\n"
     summary += "\n"
 
     return summary
@@ -137,7 +133,7 @@ def write_output_summary(
     ea_precision, ea_recall, ea_f1_score = calculate_metrics(ea_tp.shape[0], ea_fn.shape[0], ea_fp.shape[0])
 
     # Compile and save the benchmarking results to a file
-    with open(os.path.join(output_dir, "benchmarking_paper_finding_results_train.txt"), "w") as f:
+    with open(os.path.join(output_dir, "benchmarking_paper_finding_results.txt"), "w") as f:
         f.write("Evidence Aggregator Paper Finding Benchmarks Key: \n")
         f.write(
             "- Search 'E.A. overall precision' to see 1) overall Evidence Aggregator precision, recall, F1, and 2) "
@@ -167,11 +163,7 @@ def write_output_summary(
             f.write(build_individual_result_summary(gene_tp, gene_fn, gene_fp, "pmid", str(gene_symbol)))
 
 
-def get_git_commit_hash():
-    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("utf-8").strip()
-
-
-def read_queries(yaml_data):
+def read_queries(yaml_data: Any) -> List[Dict[str, Any]]:
     query_list_yaml = []
     for query in yaml_data:
         # Extract the values, or use an empty string if they're missing
@@ -195,18 +187,11 @@ def read_queries(yaml_data):
     return query_list_yaml
 
 
-@cache
-def get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/objects/ncbi.yaml"}, {})
-    return ncbi_lookup
-
-
 def get_paper_title(pmid: str) -> str:
     # This increases execution time a fair amount, we could alternatively store the titles in the MGT and the pipeline
     # output to speed things up if we wanted.
-    client = get_lookup_client()
     try:
-        paper = client.fetch(pmid)
+        paper = get_paper(pmid)
         return paper.props.get("title", "Unknown") if paper else "Unknown"
     except Exception as e:
         print(f"Error getting title for paper {pmid}: {e}")
@@ -332,7 +317,7 @@ def main(args: argparse.Namespace) -> None:
     write_output_summary(outdir, joined_df)
 
     # Write the joined_df to file.
-    joined_df.to_csv(os.path.join(outdir, "pipeline_mgt_comparison.csv"), index=False)
+    joined_df.to_csv(os.path.join(outdir, "pipeline_mgt_comparison.tsv"), sep="\t", index=False)
 
 
 if __name__ == "__main__":

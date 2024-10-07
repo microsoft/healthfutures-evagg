@@ -26,6 +26,7 @@ Ubuntu 20.04/22.04 (VM/WSL2)
 - azure cli
 - git
 - make
+- jq
 - miniconda:
 
     ```bash
@@ -162,41 +163,44 @@ and granting the repo access to those secrets.
 
 The repository contains the following subdirectories:
 
-```text
-root
-|-- deploy: infrastructure as code for the deployment and management of necessary cloud resources
-|-- lib: source code for scripts and core libraries
-|-- notebooks: shared notebooks for interactive development
-|-- test: unit tests for core libraries
-```
+`root`  
+`|-- data`: sample and reference data  
+`|-- deploy`: infrastructure as code for the deployment and management of necessary cloud resources  
+`|-- lib`: source code for scripts and core libraries  
+`|-- scripts`: helper scripts for pre- and post-processing of results  
+`|-- test`: `pytest` unit tests for core libraries  
+`|-- .out`: default root directory for pipeline run logging and output
 
 ## Trademarks
 
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow Microsoft's Trademark & Brand Guidelines. Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party’s policies.
 
-## Responsible AI Transparency Documentation 
+## Responsible AI Transparency
 
-### Use of this code 
-The Evidence Aggregator is intended to be one tool within a genomic analyst’s toolkit to review literature related to a variant of interest. It is the user's responsibility to verify the accuracy of the information returned by the Evidence Aggregator. The Evidence Aggregator is for research use only. Users must adhere to the [Microsoft Generative AI Services Code of Conduct](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct) in good faith. 
+### Use of this code
 
-The Evidence Aggregator is not designed, intended, or made available for use in the diagnosis, prevention, mitigation, or treatment of a disease or medical condition nor to perform any medical function and the performance of the Evidence Aggregator for such purposes has not been established. You bear sole responsibility for any use of the Evidence Aggregator, including incorporation into any product intended for a medical purpose. 
+The Evidence Aggregator is intended to be one tool within a genomic analyst’s toolkit to review literature related to a variant of interest. It is the user's responsibility to verify the accuracy of the information returned by the Evidence Aggregator. The Evidence Aggregator is for research use only. Users must adhere to the [Microsoft Generative AI Services Code of Conduct](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct).
 
-### Limitations 
-The Evidence Aggregator literature discovery is limited to open-access publications with permissive licenses from the [PubMed Central (PMC) Open Access Subset of journal articles](https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/). Information returned by the Evidence aggregator should not be considered exhaustive. 
+The Evidence Aggregator is not designed, intended, or made available for use in the diagnosis, prevention, mitigation, or treatment of a disease or medical condition nor to perform any medical function and the performance of the Evidence Aggregator for such purposes has not been established. You bear sole responsibility for any use of the Evidence Aggregator, including incorporation into any product intended for a medical purpose.
 
-Performance was not optimized for genes with extensive evidence for definitive gene-disease relationships, but for genes with moderate, limited, or no known gene-disease relationship as annotated by ClinGen (Clinical Genome Resource) https://clinicalgenome.org [July 2024]. 
+### Limitations
+
+The Evidence Aggregator literature discovery is limited to open-access publications with permissive licenses from the [PubMed Central (PMC) Open Access Subset of journal articles](https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/). Information returned by the Evidence aggregator should not be considered exhaustive.
+
+Performance was not optimized for genes with extensive evidence for definitive gene-disease relationships, but for genes with moderate, limited, or no known gene-disease relationship as annotated by ClinGen (Clinical Genome Resource) <https://clinicalgenome.org> [July 2024].
 
 The Evidence Aggregator uses the capabilities of generative AI for both publication foraging and information summarization. Performance of the Evidence Aggregator is limited to the capabilities of the underlying model.  
 
-The design and assessment of the Evidence Aggregator were conducted in English. At present, the Evidence Aggregator is limited to processing inputs and generating outputs in the English language. 
+The design and assessment of the Evidence Aggregator were conducted in English. At present, the Evidence Aggregator is limited to processing inputs and generating outputs in the English language.
 
-### Attributions 
-National Center for Biotechnology Information (NCBI)[Internet]. Bethesda (MD): National Library of Medicine (US), National Center for Biotechnology Information; [1988] – [cited September 2024]. Available from: https://www.ncbi.nlm.nih.gov/ 
+## Attributions
 
-Harrison et al., **Ensembl 2024**, Nucleic Acids Research, 2024, 52(D1):D891–D899. PMID: 37953337. https://doi.org/10.1093/nar/gkad1049 
+National Library of Medicine (US), National Center for Biotechnology Information; [1988]/[cited September 2024]. <https://www.ncbi.nlm.nih.gov/>
 
-The Evidence Aggregator uses the Human Phenotype Ontology (HPO version dependent on user environment build and pipeline execution date/time). Find out more at http://www.human-phenotype-ontology.org  
+Harrison et al., **Ensembl 2024**, Nucleic Acids Research, 2024, 52(D1):D891–D899. PMID: 37953337. <https://doi.org/10.1093/nar/gkad1049>
 
-The Evidence Aggregator team thanks the Gene Curation Coalition (GenCC) for providing curated content referenced during development. GenCC’s curated content was obtained at www.thegencc.org [July 2024] and includes contributions from the following organizations: ClinGen, Ambry Genetics, Franklin by Genoox, G2P, Genomics England PanelApp, Illumina, Invitae, King Faisal Specialist Hospital and Research Center, Laboratory for Molecular Medicine, Myriad Women’s Health, Orphanet, PanelApp Australia. 
+The Evidence Aggregator uses the Human Phenotype Ontology (HPO version dependent on user environment build and pipeline execution date/time). <http://www.human-phenotype-ontology.org>  
+
+The Evidence Aggregator team thanks the Gene Curation Coalition (GenCC) for providing curated content referenced during development. GenCC’s curated content was obtained at <http://www.thegencc.org> [July 2024] and includes contributions from the following organizations: ClinGen, Ambry Genetics, Franklin by Genoox, G2P, Genomics England PanelApp, Illumina, Invitae, King Faisal Specialist Hospital and Research Center, Laboratory for Molecular Medicine, Myriad Women’s Health, Orphanet, PanelApp Australia.
 
 Environment dependencies may be found in environment.yml.  
