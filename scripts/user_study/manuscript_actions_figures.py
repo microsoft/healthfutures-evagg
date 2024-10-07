@@ -193,6 +193,10 @@ ylabels = {
 for col in ylabels.keys():
 
     plt.figure()
+    sns.barplot(data=action_counts, x="session_id", y=col, errorbar="sd")
+    plt.ylabel(ylabels[col])
+
+    plt.figure()
     sns.barplot(data=action_counts, x="session_id", y=col, errorbar="sd", hue="case_group_id")
     plt.ylabel(ylabels[col])
 
@@ -206,7 +210,7 @@ case_review_durations["minutes"] = case_review_durations["seconds"] / 60
 
 plt.figure()
 
-sns.stripplot(data=case_review_durations, x="session_id", y="minutes", hue="case_group_id", jitter=True)
+sns.barplot(data=case_review_durations, x="session_id", y="minutes")
 plt.ylabel("Time spent on each case (minutes)")
 
 plt.figure()
@@ -250,34 +254,35 @@ print(result.summary())
 
 # %% Make a scatterplot correlating table interactions with papers read, stratified by session.
 dupe_action_counts = action_counts.copy()
-# Copy the S2 values for table_use to S1.
-dupe_action_counts.loc[dupe_action_counts["session_id"] == "S1", "table_use"] = action_counts.query(
-    "session_id == 'S2'"
-)["table_use"].values
+# subtract the S1 values from the S2 values for (variant_review, pub_read), make a new dataframe with this difference
+# and table_use
+post_counts = dupe_action_counts.query("session_id == 'S2'")[
+    ["variant_review", "pub_read", "participant_id"]
+].set_index(["participant_id"])
+pre_counts = dupe_action_counts.query("session_id == 'S1'")[["variant_review", "pub_read", "participant_id"]].set_index(
+    ["participant_id"]
+)
+diff_counts = post_counts - pre_counts
+diff_counts["table_use"] = dupe_action_counts.query("session_id == 'S2'")[["table_use", "participant_id"]].set_index(
+    ["participant_id"]
+)
 
 for factor in ["pub_read", "variant_review"]:
     plt.figure()
-    sns.scatterplot(data=dupe_action_counts, x="table_use", y=factor, hue="session_id", alpha=0.5)
+    sns.scatterplot(data=diff_counts, x="table_use", y=factor, alpha=0.5)
 
-    unique_sessions = dupe_action_counts["session_id"].unique()
-    colors = sns.color_palette(n_colors=len(unique_sessions))
-
-    i = 0
-    for session, subset in dupe_action_counts.groupby("session_id"):
-        X = sm.add_constant(subset["table_use"])
-        y = subset[factor]
-        model = sm.OLS(y, X).fit()
-        r_squared = model.rsquared
-        plt.plot(
-            subset["table_use"],
-            model.predict(X),
-            linestyle="--",
-            color=colors[i],
-            label=f"{session} (R²={r_squared:.2f}, p={model.pvalues['table_use']:.2f})",
-        )
-        i += 1
-
+    X = sm.add_constant(diff_counts["table_use"])
+    y = diff_counts[factor]
+    model = sm.OLS(y, X).fit()
+    r_squared = model.rsquared
+    plt.plot(
+        diff_counts["table_use"],
+        model.predict(X),
+        linestyle="--",
+        label=f"R²={r_squared:.2f}, p={model.pvalues['table_use']:.2f}",
+    )
+    plt.xlabel("S2 Table interactions")
+    plt.ylabel(f"S2 - S1 {factor}")
     plt.legend()
-
 
 # %%
