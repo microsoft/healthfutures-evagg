@@ -1,0 +1,39 @@
+{
+    "runs": [
+        {"date": "20240909_165847", "model": "GPT-4-Turbo", "group": "train"},
+        {"date": "20240909_210652", "model": "GPT-4-Turbo", "group": "train"},
+        {"date": "20240910_044027", "model": "GPT-4-Turbo", "group": "train"},
+        {"date": "20240910_134659", "model": "GPT-4-Turbo", "group": "train"},
+        {"date": "20240910_191020", "model": "GPT-4-Turbo", "group": "train"},
+
+        {"date": "20240911_165451", "model": "GPT-4-Turbo", "group": "test"},
+        {"date": "20240911_194240", "model": "GPT-4-Turbo", "group": "test"},
+        {"date": "20240911_223218", "model": "GPT-4-Turbo", "group": "test"},
+        {"date": "20240912_145606", "model": "GPT-4-Turbo", "group": "test"},
+        {"date": "20240912_181121", "model": "GPT-4-Turbo", "group": "test"},
+
+        {"date": "20240920_080739", "model": "GPT-4o", "group": "train"},
+        {"date": "20240920_085154", "model": "GPT-4o", "group": "train"},
+        {"date": "20240920_093425", "model": "GPT-4o", "group": "train"},
+        {"date": "20240920_101905", "model": "GPT-4o", "group": "train"},
+        {"date": "20240920_110151", "model": "GPT-4o", "group": "train"},
+
+        {"date": "20240920_055848", "model": "GPT-4o", "group": "test"},
+        {"date": "20240920_062457", "model": "GPT-4o", "group": "test"},
+        {"date": "20240920_064935", "model": "GPT-4o", "group": "test"},
+        {"date": "20240920_071554", "model": "GPT-4o", "group": "test"},
+        {"date": "20240920_074218", "model": "GPT-4o", "group": "test"},
+
+        {"date": "20240920_165153", "model": "GPT-4o-mini", "group": "train"},
+        {"date": "20240920_173754", "model": "GPT-4o-mini", "group": "train"},
+        {"date": "20240920_181707", "model": "GPT-4o-mini", "group": "train"},
+        {"date": "20240920_185736", "model": "GPT-4o-mini", "group": "train"},
+        {"date": "20240920_223702", "model": "GPT-4o-mini", "group": "train"},
+
+        {"date": "20240920_144637", "model": "GPT-4o-mini", "group": "test"},
+        {"date": "20240920_151008", "model": "GPT-4o-mini", "group": "test"},
+        {"date": "20240920_153649", "model": "GPT-4o-mini", "group": "test"},
+        {"date": "20240920_160020", "model": "GPT-4o-mini", "group": "test"},
+        {"date": "20240920_162832", "model": "GPT-4o-mini", "group": "test"}
+    ]
+}
