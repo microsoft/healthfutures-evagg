@@ -1,5 +1,6 @@
 import logging
 import re
+import urllib.parse
 from functools import cache
 from typing import Any, Dict, Sequence, Tuple
 
@@ -25,7 +26,8 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
 
         hgvsp: The protein variant description to back translate. Must conform to HGVS nomenclature.
         """
-        url = f"https://mutalyzer.nl/api/back_translate/{hgvsp}"
+        encoded = urllib.parse.quote(hgvsp)
+        url = f"https://mutalyzer.nl/api/back_translate/{encoded}"
         return self._web_client.get(url, content_type="json")
 
     def back_translate(self, hgvsp: str) -> Sequence[str]:
@@ -42,12 +44,15 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         # Remove whitespace and unicode whitespace
         hgvs = hgvs.replace(" ", "").replace("\u2009", "")
 
+        # Encode the hgvs string for use in a URL.
+        encoded = urllib.parse.quote(hgvs)
+
         # Response code of 422 signifies an unprocessable entity. This occurs when the description is syntactically
         # invalid, but also occurs when the description is biologically invalid (e.g., the reference is incorrect).
         # Mutalyzer's web client should be configured with no_raise_codes=[422] to avoid raising an exception.
         # For at least one variant (NP_000099.2:p.R316X), Mutalyzer returns a 500 error, which it shouldn't (500
         # is an internal server error). For now we interpret this as an unresolvable entity and return an empty dict.
-        url = f"https://mutalyzer.nl/api/normalize/{hgvs}"
+        url = f"https://mutalyzer.nl/api/normalize/{encoded}"
         try:
             response = self._web_client.get(url, content_type="json")
         except HTTPError as e:
@@ -119,6 +124,9 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         """Validate an HGVS description using Mutalyzer."""
         # Mutalyzer doesn't currently support normalizing frame shift variants, so we can't validate them.
         # TODO, consider tweaking to be a stop gain and normalizing that.
+        if ":" not in hgvs:
+            return (False, "Invalid HGVS description")
+
         if hgvs.split(":")[1].find("fs") != -1:
             logger.debug(f"Skipping validation of frame shift variant {hgvs}")
             return (False, "Frameshift validation not supported")
