@@ -1,0 +1,18 @@
+{
+    "OR4F5": {
+        "Protein": "NP_001005484.2",
+        "Genomic": "NC_000001.11",
+        "Symbol": "OR4F5",
+        "GeneID": "79501",
+        "MANE": true,
+        "RNA": "NM_001005484.2"
+    },
+    "OR4F29": {
+        "Protein": "NP_001005221.2",
+        "Genomic": "NC_000001.11",
+        "Symbol": "OR4F29",
+        "GeneID": "729759",
+        "MANE": true,
+        "RNA": "NM_001005221.2"
+    }
+}
