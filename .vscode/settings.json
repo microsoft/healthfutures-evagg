@@ -36,5 +36,10 @@
     },
     "mypy-type-checker.ignorePatterns": ["test/**", "test/evagg/**" ],
     "jupyter.notebookFileRoot": "${workspaceFolder}",
+    "python.testing.pytestArgs": [
+        "test"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
 
 }
