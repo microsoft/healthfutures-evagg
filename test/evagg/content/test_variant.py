@@ -38,6 +38,11 @@ def test_compare() -> None:
     assert comparator.compare(v1, v2) is v1
     v3 = HGVSVariant("c.123A>G", "COQ2", "NM_123456.7", False, True, None, None, [])
     assert comparator.compare(v2, v3) is v2
+    assert comparator.compare(v1, v3) is v3
+    v4 = HGVSVariant("c.123A>G", "COQ2", None, False, True, None, None, [])
+    assert comparator.compare(v1, v4) is None
+    # v4 has no refseq, so comparison will fail unless we disregard refseqs.
+    assert comparator.compare(v1, v4, True) is v1
 
     # Test variants with equal completeness but different refseq version numbers.
     v1 = HGVSVariant("c.123A>G", "COQ2", "NP_123456.1", True, True, None, None, [])
@@ -78,6 +83,21 @@ def test_compare_via_coding_equivalent() -> None:
     assert comparator.compare(gvar, cvar) is cvar
     assert comparator.compare(pvar, gvar) is pvar
     assert comparator.compare(gvar, pvar) is pvar
+
+
+def test_consolidate() -> None:
+    pvar = HGVSVariant("p.Arg437Ter", "EXOC2", "NP_060773.3", True, True, None, None, [])
+    cvar = HGVSVariant("c.1309C>T", "EXOC2", "NM_018303.6", True, True, None, pvar, [])
+    gvar = HGVSVariant("g.576766G>A", "EXOC2", "NC_000006.11", True, True, None, None, [cvar])
+
+    comparator = HGVSVariantComparator()
+    result = comparator.consolidate([pvar, cvar, gvar])
+
+    assert len(result) == 1
+    assert cvar in result
+    assert pvar in result[cvar]
+    assert cvar in result[cvar]
+    assert gvar in result[cvar]
 
 
 @pytest.fixture
