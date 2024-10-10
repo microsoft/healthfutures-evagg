@@ -231,9 +231,7 @@ class HGVSVariantComparator(ICompareVariants):
         v1score = self._score_refseq_completeness(variant1)
         v2score = self._score_refseq_completeness(variant2)
 
-        if v1score == 0 and v2score == 0:
-            # Neither has a refseq.
-            return variant1
+        # If neither variant has a refseq, we would have already determined them as equivalent.
 
         if v1score > v2score:
             return variant1
@@ -245,11 +243,7 @@ class HGVSVariantComparator(ICompareVariants):
         v2rs_dict = self._parse_refseq_parts(variant2.refseq) if variant2.refseq else {}
 
         shared_keys = v1rs_dict.keys() & v2rs_dict.keys()
-
-        if not shared_keys and not allow_mismatch:
-            raise ValueError(
-                "Expectation mismatch: comparing refseq completeness for variants with no shared accessions."
-            )
+        assert not (shared_keys and allow_mismatch)
 
         for k in shared_keys:
             if v1rs_dict[k] > v2rs_dict[k]:
