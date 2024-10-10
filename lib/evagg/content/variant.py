@@ -39,15 +39,16 @@ class HGVSVariantFactory(ICreateVariants):
                 return f"{transcript_accession}({protein_accession})"
             return protein_accession
         elif text_desc.startswith("c.") and gene_symbol:
-            # TODO: consider also pulling the genomic refseq for the gene_symbol?
             return self._refseq_client.transcript_accession_for_symbol(gene_symbol)
         elif text_desc.startswith("m."):
-            # TODO: consider moving?
             return self.MITO_REFSEQ
         elif text_desc.startswith("g."):
             raise ValueError(f"Genomic (g. prefixed) variants must have a RefSeq. None was provided for {text_desc}")
         else:
-            logger.warning(f"Unsupported HGVS type: {text_desc} with gene symbol {gene_symbol}. Can't predict refseq.")
+            logger.warning(
+                "Unable to predict refseq for variant with unknown HGVS "
+                f"type: {text_desc} with gene symbol {gene_symbol}."
+            )
             return None
 
     def _clean_refseq(self, refseq: str | None, text_desc: str, gene_symbol: str | None) -> Tuple[str, bool]:
@@ -167,17 +168,16 @@ class HGVSVariantFactory(ICreateVariants):
         `gene_symbol` is required for protein (p.) and coding (c.) variants, but not mitochondrial (m.) or genomic (g.)
         variants.
 
-        If not provided, `refseq` will be predicted based on the variant description and gene symbol for protein and
-        coding variants. `refseq` is required for genomic (g.) variants.
+        `refseq` is required for genomic (g.) variants. For other variant types, if a `refseq` is not provided, it will
+        be predicted based on the variant description gene symbol.
 
-        Raises a ValueError if the above requirements are not met, or if anything but (g., c., p., m.) is provided as
-        the description prefix.
-
-        Raises a ValueError if the variant description is not syntactically valid according to HGVS nomenclature.
-
-        Raises a ValueError if the refseq and variant description are not compatible (e.g., a protein variant on a
-        transcript refseq).
+        Raises a ValueError if the above requirements are not met. Otherwise, this function will attempt to parse the
+        provided variant description and return a validated, normalized representation of that variant. If this is not
+        possible, an invalid, non-normalized representation of the variant description will be returned.
         """
+        if (text_desc.startswith("p.") or text_desc.startswith("c.")) and not gene_symbol:
+            raise ValueError(f"Gene symbol required for protein and coding variants: {text_desc}")
+
         refseq, refseq_predicted = self._clean_refseq(refseq, text_desc, gene_symbol)
         (is_valid, validation_error) = self._validator.validate(f"{refseq}:{text_desc}")
 
