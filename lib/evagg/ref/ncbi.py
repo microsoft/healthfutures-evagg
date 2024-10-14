@@ -4,18 +4,17 @@ from abc import ABC
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from defusedxml import ElementTree
-from pydantic import Extra, root_validator
+from pydantic import BaseModel, Extra, root_validator
 
 from lib.evagg.types import Paper
 from lib.evagg.utils import IWebContentClient
-from lib.evagg.utils.settings import SettingsModel
 
 from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient, IVariantLookupClient
 
 logger = logging.getLogger(__name__)
 
 
-class NcbiApiSettings(SettingsModel, extra=Extra.forbid):
+class NcbiApiSettings(BaseModel, extra=Extra.forbid):
     api_key: Optional[str] = None
     email: str = "biomedcomp@microsoft.com"
 
