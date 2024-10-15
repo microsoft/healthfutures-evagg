@@ -38,8 +38,6 @@ extractor:
       di_factory: lib/config/objects/variant_factory.yaml
     variant_comparator:
       di_factory: lib.evagg.content.HGVSVariantComparator
-    normalizer:
-      di_factory: lib/config/objects/mutalyzer.yaml
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: observation_benchmark
