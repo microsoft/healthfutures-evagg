@@ -101,7 +101,7 @@ class PromptBasedContentExtractor(IExtractFields):
         elif field == "individual_id":
             value = ob.individual
         elif field == "gnomad_frequency":
-            value = "TODO"  # TODO  Not yet implemented
+            value = "unknown"
         else:
             raise ValueError(f"Unsupported field: {field}")
         return field, value
@@ -121,7 +121,7 @@ class PromptBasedContentExtractor(IExtractFields):
 
         try:
             result = json.loads(response)
-        except Exception:
+        except json.JSONDecodeError:
             logger.warning(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
             return {}
 
@@ -136,10 +136,10 @@ class PromptBasedContentExtractor(IExtractFields):
 
         # Any descriptions that look like valid HPO terms themselves should be validated.
         for term in phenotype.copy():
-            ids = re.findall(r"\(?HP:\d+\)?", term)
+            ids = re.findall(r"\(?[Hh][Pp]:\d+\)?", term)
             if ids:
                 hpo_id = ids[0]
-                id_result = self._phenotype_fetcher.fetch(hpo_id.strip("()"))
+                id_result = self._phenotype_fetcher.fetch(hpo_id.strip("()").upper())
                 if id_result:
                     phenotype.remove(term)
                     match_dict[term] = f"{id_result['name']} ({id_result['id']})"
@@ -179,6 +179,7 @@ class PromptBasedContentExtractor(IExtractFields):
                 params={"term": term},
                 prompt_settings={"prompt_tag": "phenotypes_simplify"},
             )
+
             if simplified := response.get("simplified"):
                 match = await _get_match_for_term(simplified)
                 if match:
@@ -205,7 +206,7 @@ class PromptBasedContentExtractor(IExtractFields):
         if (all_phenotypes := all_phenotypes_result.get("phenotypes", [])) == []:
             return []
 
-        # TODO: consider linked observations like comp-hets?
+        # Potentially consider linked observations like comp-hets?
         observation_phenotypes_params = {
             "gene": metadata["gene_symbol"],
             "passage": text,
@@ -273,7 +274,6 @@ class PromptBasedContentExtractor(IExtractFields):
     async def _generate_basic_field(self, gene_symbol: str, observation: Observation, field: str) -> str:
         result = (await self._run_field_prompt(gene_symbol, observation, field)).get(field, "failed")
         # result can be a string or a json object.
-        # TODO: A little wonky that we're forcing a string here, when really we should be more permissive.
         if not isinstance(result, str):
             result = json.dumps(result)
         return result
