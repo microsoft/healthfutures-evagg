@@ -58,9 +58,9 @@ class ModifiedFile:
             ValueError: If cannot parse the status line.
 
         """
-        if not status_line:
-            raise ValueError(f"Invalid git status line: {status_line}")
+        assert status_line, "status_line must not be empty"
         self.status_line = status_line
+        match = None
 
         # Parse the line based on the type, which is encoded in the first character.
         if status_line.startswith("1"):
@@ -102,10 +102,6 @@ class ModifiedFile:
     def name(self) -> str:
         """Name of file. If this is a renamed file, then this is the new name."""
         return self.fields["path"]
-
-    def __repr__(self) -> str:
-        """Return string representation."""
-        return f'ModifiedFile("{self.status_line}")'
 
 
 class RepoStatus:
@@ -196,55 +192,3 @@ class RepoStatus:
 
             # The line must represent a modified file.
             self.all_modified_files.append(ModifiedFile(line))
-
-    @property
-    def changed_files(self) -> List[ModifiedFile]:
-        """List of added, deleted, and modified either staged or unstaged."""
-        return [mod_file for mod_file in self.all_modified_files if mod_file.type == "changed"]
-
-    @property
-    def renamed_files(self) -> List[ModifiedFile]:
-        """List of renamed or copied files either staged or unstaged."""
-        return [mod_file for mod_file in self.all_modified_files if mod_file.type == "renamed"]
-
-    @property
-    def unmerged_files(self) -> List[ModifiedFile]:
-        """List of unmerged files."""
-        return [mod_file for mod_file in self.all_modified_files if mod_file.type == "unmerged"]
-
-    @property
-    def untracked_files(self) -> List[ModifiedFile]:
-        """List of untracked files."""
-        return [mod_file for mod_file in self.all_modified_files if mod_file.type == "untracked"]
-
-    @property
-    def ignored_files(self) -> List[ModifiedFile]:
-        """List of ignored files."""
-        return [mod_file for mod_file in self.all_modified_files if mod_file.type == "ignored"]
-
-    def __repr__(self) -> str:
-        """Return string representation."""
-        return f'RepoStatus("{self._repo_root}"):\n{self.status_str}'
-
-    def is_clean(self, include_untracked_files: bool = True) -> bool:
-        """Return True if the repo is clean, and False otherwise.
-
-        Args:
-            include_untracked_files (bool): If True, then the presence of untracked files will return False.
-                If False, then untracked files will not be considered.
-
-        Returns:
-            bool: True if the repo is clean, and False otherwise.
-
-        """
-        if include_untracked_files and self.untracked_files:
-            return False
-        return not self.changed_files and not self.renamed_files and not self.unmerged_files
-
-    def is_up_to_date(self) -> bool:
-        """Return True if the repo is not ahead or behind the upstream branch.
-
-        If no upstream branch is set, then this returns True.
-
-        """
-        return not self.upstream_ahead and not self.upstream_behind
