@@ -120,7 +120,9 @@ def mock_refseq_client(mock_client: Any) -> Any:
     return mock_client(IRefSeqLookupClient)
 
 
-def test_factory_parse_c_dot(mock_validator, mock_normalizer, mock_lookup_client, mock_refseq_client) -> None:
+def test_factory_parse_c_dot(
+    mock_validator: Any, mock_normalizer: Any, mock_lookup_client: Any, mock_refseq_client: Any
+) -> None:
 
     def standard_normalizer() -> INormalizeVariants:
         return mock_normalizer(
@@ -286,7 +288,9 @@ def test_factory_parse_c_dot(mock_validator, mock_normalizer, mock_lookup_client
         factory.parse("BOGUS", "BRCA2", refseq=None)
 
 
-def test_factory_parse_p_dot(mock_validator, mock_normalizer, mock_lookup_client, mock_refseq_client) -> None:
+def test_factory_parse_p_dot(
+    mock_validator: Any, mock_normalizer: Any, mock_lookup_client: Any, mock_refseq_client: Any
+) -> None:
     # Parse a valid p. description
     validator = mock_validator((True, None))
     normalizer = mock_normalizer(
@@ -410,7 +414,9 @@ def test_factory_parse_p_dot(mock_validator, mock_normalizer, mock_lookup_client
     assert result.coding_equivalents == []
 
 
-def test_factory_parse_g_dot(mock_validator, mock_normalizer, mock_lookup_client, mock_refseq_client) -> None:
+def test_factory_parse_g_dot(
+    mock_validator: Any, mock_normalizer: Any, mock_lookup_client: Any, mock_refseq_client: Any
+) -> None:
     # Parse a valid g. description
     validator = mock_validator((True, None))
     normalizer = mock_normalizer(
@@ -468,7 +474,9 @@ def test_factory_parse_g_dot(mock_validator, mock_normalizer, mock_lookup_client
         factory.parse("g.32332592A>C", "BRCA2", refseq=None)
 
 
-def test_factory_parse_m_dot(mock_validator, mock_normalizer, mock_lookup_client, mock_refseq_client) -> None:
+def test_factory_parse_m_dot(
+    mock_validator: Any, mock_normalizer: Any, mock_lookup_client: Any, mock_refseq_client: Any
+) -> None:
     # Parse a valid m. description
     validator = mock_validator((True, None))
     normalizer = mock_normalizer({"normalized_description": "NC_012920.1:m.123A>G"})
@@ -500,7 +508,9 @@ def test_factory_parse_m_dot(mock_validator, mock_normalizer, mock_lookup_client
     assert result.coding_equivalents == []
 
 
-def test_factory_parse_rsid(mock_validator, mock_normalizer, mock_lookup_client, mock_refseq_client) -> None:
+def test_factory_parse_rsid(
+    mock_validator: Any, mock_normalizer: Any, mock_lookup_client: Any, mock_refseq_client: Any
+) -> None:
     # test a valid rsid
     # test an invalid rsid
 

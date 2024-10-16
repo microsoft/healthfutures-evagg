@@ -2,10 +2,12 @@ import json
 import os
 import tempfile
 from typing import Any, Dict
+from unittest.mock import patch
 
 import pytest
 
 from lib.evagg import RareDiseaseFileLibrary, SimpleFileLibrary
+from lib.evagg.library import RareDiseaseLibraryCached
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
 from lib.evagg.types import Paper
@@ -32,7 +34,7 @@ def test_rare_disease_init(mock_paper_client: Any, mock_llm_client: Any) -> None
         RareDiseaseFileLibrary(paper_client, llm_client, ["invalid category"])
 
 
-def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
     paper_client = mock_paper_client([rare_disease_paper.props["pmid"]], rare_disease_paper)
     llm_client = mock_llm_client()
@@ -45,7 +47,7 @@ def test_rare_disease_single_paper(mock_paper_client: Any, mock_llm_client: Any,
     assert result[0] == rare_disease_paper
 
 
-def test_rare_disease_extra_params(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+def test_rare_disease_extra_params(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
     paper_client = mock_paper_client([rare_disease_paper.props["pmid"]], rare_disease_paper)
 
@@ -89,7 +91,7 @@ def test_rare_disease_no_paper(mock_paper_client: Any, mock_llm_client: Any) -> 
     assert not result
 
 
-def test_rare_disease_paper_without_text(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+def test_rare_disease_paper_without_text(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
     rare_disease_paper.props["title"] = None
     rare_disease_paper.props["abstract"] = None
@@ -102,7 +104,7 @@ def test_rare_disease_paper_without_text(mock_paper_client: Any, mock_llm_client
     assert result[0] == rare_disease_paper
 
 
-def test_rare_disease_paper_suffixed_keyword(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+def test_rare_disease_paper_suffixed_keyword(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
     rare_disease_paper.props["title"] = "A paper about Bradycardia"
     rare_disease_paper.props["abstract"] = None
@@ -118,7 +120,7 @@ def test_rare_disease_paper_suffixed_keyword(mock_paper_client: Any, mock_llm_cl
 def test_rare_disease_paper_incomplete_query(mock_paper_client: Any, mock_llm_client: Any) -> None:
     paper_client = mock_paper_client()
     llm_client = mock_llm_client()
-    query = {}
+    query: Dict[str, str] = {}
     with pytest.raises(ValueError):
         RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
 
@@ -127,7 +129,7 @@ def test_rare_disease_paper_incomplete_query(mock_paper_client: Any, mock_llm_cl
         RareDiseaseFileLibrary(paper_client, llm_client).get_papers(query)
 
 
-def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
     other_paper = Paper(**json_load("other_paper.json"))
     ids = [rare_disease_paper.props["pmid"], other_paper.props["pmid"]]
@@ -153,7 +155,7 @@ def test_rare_disease_get_papers(mock_paper_client: Any, mock_llm_client: Any, j
             os.remove(os.path.join("lib/evagg/content/prompts", file))
 
 
-async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+async def test_rare_disease_get_all_papers(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:
     rare_disease_paper = Paper(**json_load("rare_disease_paper.json"))
     other_paper = Paper(**json_load("other_paper.json"))
     ids = [rare_disease_paper.props["pmid"], other_paper.props["pmid"]]
@@ -216,13 +218,7 @@ def test_simple_search() -> None:
         assert paper3 in results
 
 
-from unittest.mock import MagicMock, patch
-
-from lib.evagg.library import RareDiseaseLibraryCached
-from lib.evagg.utils.run import get_run_path
-
-
-def test_caching(mock_paper_client: Any, mock_llm_client: Any, json_load) -> None:
+def test_caching(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
 
         # Mock get_run_path to return the temporary directory.

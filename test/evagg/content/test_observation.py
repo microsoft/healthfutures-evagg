@@ -10,7 +10,7 @@ from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 
 @pytest.fixture
-def paper(json_load) -> Paper:
+def paper(json_load: Any) -> Paper:
     paper = Paper(**json_load("paper_28554332_single_table.json"))
     return paper
 
@@ -546,7 +546,7 @@ def test_find_observations_rsid_variant(
     variant2 = HGVSVariant("c.1919A>G", "BRCA2", "NM_123456.7", False, False, None, None, [])
 
     class DeterministicMockFactory(ICreateVariants):
-        def parse(self, hgvs: str) -> HGVSVariant:
+        def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
             raise NotImplementedError()
 
         def parse_rsid(self, hgvs: str) -> HGVSVariant:
@@ -570,7 +570,7 @@ def test_find_observations_rsid_variant(
     # Test the case where the variant factory can't create a variant given an rsid.
 
     class FailingMockFactory(ICreateVariants):
-        def parse(self, hgvs: str) -> HGVSVariant:
+        def parse(self, text_desc: str, gene_symbol: str | None, refseq: str | None = None) -> HGVSVariant:
             raise NotImplementedError()
 
         def parse_rsid(self, hgvs: str) -> HGVSVariant:
