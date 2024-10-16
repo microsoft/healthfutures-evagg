@@ -75,6 +75,34 @@ def test_run_evagg_app_override(caplog):
     assert "Test app executed with value: overridden_arg" in caplog.text
 
 
+def test_run_evagg_app_override_true(caplog):
+    caplog.set_level(logging.INFO)
+    with patch("sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value:true"]):
+        run_evagg_app()
+    assert "Test app executed with value: True" in caplog.text
+
+
+def test_run_evagg_app_override_false(caplog):
+    caplog.set_level(logging.INFO)
+    with patch("sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value:false"]):
+        run_evagg_app()
+    assert "Test app executed with value: False" in caplog.text
+
+
+def test_run_evagg_app_interrupt(capfd):
+    with patch("sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value:KeyboardInterrupt"]):
+        run_evagg_app()
+    out, err = capfd.readouterr()
+    assert "KeyboardInterrupt in" in out
+
+
+def test_run_evagg_app_exception(caplog):
+    with patch("sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value:Exception", "--retries", "1"]):
+        with pytest.raises(SystemExit):
+            run_evagg_app()
+    assert "Error executing app: " in caplog.text
+
+
 def test_sample_config():
     with patch("sys.argv", ["test", "sample_config"]):
         run_evagg_app()
