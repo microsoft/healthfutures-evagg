@@ -7,7 +7,6 @@ from collections import defaultdict
 from typing import Any, Dict, List, Sequence, Tuple
 
 from lib.evagg.llm import IPromptClient
-from lib.evagg.ref import INormalizeVariants
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .fulltext import get_fulltext, get_sections
@@ -40,12 +39,10 @@ uninterrupted sequences of whitespace characters.
         llm_client: IPromptClient,
         variant_factory: ICreateVariants,
         variant_comparator: ICompareVariants,
-        normalizer: INormalizeVariants,
     ) -> None:
         self._llm_client = llm_client
         self._variant_factory = variant_factory
         self._variant_comparator = variant_comparator
-        self._normalizer = normalizer
 
     async def _run_json_prompt(
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
@@ -68,7 +65,7 @@ uninterrupted sequences of whitespace characters.
 
         try:
             result = json.loads(response)
-        except Exception:
+        except json.decoder.JSONDecodeError:
             logger.error(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
             return {}
 
@@ -181,8 +178,9 @@ uninterrupted sequences of whitespace characters.
                 params={"text": text, "gene_symbol": gene_symbol},
                 prompt_settings={"prompt_tag": "observation__find_variants", "prompt_metadata": metadata},
             )
-            for text in [full_text] + list(focus_texts or [])
+            for text in ([full_text] if full_text else []) + list(focus_texts or [])
         ]
+
         # Run prompts in parallel.
         responses = await asyncio.gather(*prompt_runs)
 
@@ -264,9 +262,6 @@ uninterrupted sequences of whitespace characters.
             prompt_settings={"prompt_tag": "observation__link_entities", "prompt_metadata": metadata},
         )
 
-        # TODO, consider validating the links.
-        # TODO, consider evaluating focus texts in addition to the full-text.
-
         return response
 
     def _get_fulltext_sections(self, paper: Paper) -> Tuple[str, List[str]]:
@@ -291,6 +286,7 @@ uninterrupted sequences of whitespace characters.
             [section.text for section in sections if any(variant in section.text for variant in variant_descriptions)]
         )
         if not filtered_text and not allow_empty:
+            sections = get_sections(paper.props["fulltext_xml"])  # Reset the exhausted generator.
             return "\n\n".join([section.text for section in sections])
         return filtered_text
 
@@ -314,7 +310,7 @@ uninterrupted sequences of whitespace characters.
                         f"dbSNP variant {matched.group(1)} is associated with {variant.gene_symbol}, not {gene_symbol}."
                     )
                     return None
-            except Exception as e:
+            except ValueError as e:
                 logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
                 return None
 
@@ -405,7 +401,8 @@ uninterrupted sequences of whitespace characters.
 
         try:
             return self._variant_factory.parse(variant_str, gene_symbol, refseq)
-        except Exception as e:
+        except ValueError as e:
+            # Exception is too broad, determine appropriate exceptions to catch and raise otherwise.
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
@@ -420,9 +417,9 @@ uninterrupted sequences of whitespace characters.
                     "prompt_metadata": metadata,
                 },
             )
-        except Exception as e:
-            # This is a total hack, but better handling of content length errors would be a more invasive change that
-            # we can save for later.
+        except Exception as e:  # pragma: no cover
+            # This is not ideal, but better handling of content length errors would be a more invasive change that
+            # we can save for later. Skipping test coverage for the same reason.
             import openai
 
             if (
@@ -459,8 +456,6 @@ uninterrupted sequences of whitespace characters.
         )
         logger.debug(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
-        # If necessary, determine the genome build most likely used for those variants.
-        # TODO: consider doing this on a per-variant bases.
         if any("chr" in v or "g." in v for v in variant_descriptions):
             genome_build = await self._find_genome_build(full_text=full_text, metadata=metadata)
             logger.info(f"Found the following genome build in {paper}: {genome_build}")

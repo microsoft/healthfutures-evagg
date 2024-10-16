@@ -1,0 +1,21 @@
+{
+    "terms": [
+        {
+            "id": "HP:0001640",
+            "name": "Cardiomegaly",
+            "definition": "Increased size of the heart, clinically defined as an increased transverse diameter of the cardiac silhouette that is greater than or equal to 50% of the transverse diameter of the chest (increased cardiothoracic ratio) on a posterior-anterior projection of a chest radiograph or a computed tomography.",
+            "comment": "",
+            "descendantCount": 0,
+            "synonyms": [
+                "Enlarged heart",
+                "Increased heart size"
+            ],
+            "xrefs": [
+                "SNOMEDCT_US:8186001",
+                "UMLS:C0018800"
+            ],
+            "translations": null
+        }
+    ],
+    "totalCount": 1
+}
