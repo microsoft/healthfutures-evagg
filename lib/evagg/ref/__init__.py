@@ -14,14 +14,11 @@ from .interfaces import (
     IValidateVariants,
     IVariantLookupClient,
 )
-from .litvar import LitVarReference
 from .mutalyzer import MutalyzerClient
 from .ncbi import NcbiLookupClient
 from .refseq import RefSeqGeneLookupClient, RefSeqLookupClient
 
 __all__ = [
-    # Litvar.
-    "LitVarReference",
     # Interfaces.
     "IAnnotateEntities",
     "IGeneLookupClient",
