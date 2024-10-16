@@ -10,7 +10,9 @@ def test_stdout_output():
     assert output_path is None
 
 
-def test_csv_output_no_results(tmp_path):
+@patch("lib.evagg.io.get_run_path")
+def test_csv_output_no_results(mock_get_run_path, tmp_path):
+    mock_get_run_path.return_value = str(tmp_path / "run")
     table_output_writer = TableOutputWriter("test")
     output_path = table_output_writer.write([])
     assert output_path is None
