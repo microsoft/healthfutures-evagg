@@ -44,6 +44,11 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         # Remove whitespace and unicode whitespace
         hgvs = hgvs.replace(" ", "").replace("\u2009", "")
 
+        # Replace forward slashes with commas, these are occasionally used to designate multiple alternate alleles,
+        # but they are not valid in a URL and urrlib.parse.quote doesn't solve the issue.
+        hgvs = hgvs.replace("/", ",")
+
+        #
         # Encode the hgvs string for use in a URL.
         encoded = urllib.parse.quote(hgvs)
 
