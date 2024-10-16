@@ -1,0 +1,20 @@
+{
+    "name": "evagg_pipeline_truthset",
+    "timestamp": "20241016_132702",
+    "args": [
+        "evagg_pipeline_truthset",
+        "-o",
+        "log.level:INFO",
+        "writer.tsv_name:pub_evidence"
+    ],
+    "git": {
+        "branch": "feature/utils-tests",
+        "commit": "bbef24550728835c393758b194513360f00504de",
+        "modified_files": [
+            "test/evagg/utils/test_run.py"
+        ]
+    },
+    "path": ".out/run_evagg_pipeline_truthset_20241016_132702",
+    "output_file": "pub_evidence.tsv",
+    "elapsed_secs": 41.9
+}
