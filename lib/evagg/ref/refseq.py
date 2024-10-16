@@ -34,8 +34,8 @@ class BaseLookupClient(NcbiClientBase, IRefSeqLookupClient):
         super().__init__(web_client, settings)
 
     def _lazy_init(self) -> None:
-        self._ref = {}
-        self._lazy_initialized = True
+        self._ref = {}  # pragma: no cover
+        self._lazy_initialized = True  # pragma: no cover
 
     def transcript_accession_for_symbol(self, symbol: str) -> str | None:
         """Get the RefSeq transcript accession for a gene symbol."""
@@ -82,7 +82,7 @@ class RefSeqLookupClient(BaseLookupClient):
     _RAW_FILENAME = "GCF_000001405.39_GRCh38.p13_genomic.gff.gz"
     _PROCESSED_FILEPATH = "refseq_processed.json"
 
-    def _download_binary_reference(self, url: str, target: str) -> None:
+    def _download_binary_reference(self, url: str, target: str) -> None:  # pragma: no cover
         response = requests.get(url, timeout=60)
         response.raise_for_status()
 
@@ -128,9 +128,8 @@ class RefSeqLookupClient(BaseLookupClient):
 
             if attributes["gene"] in refseqs:
                 if refseqs[attributes["gene"]]["MANE"]:
+                    logger.warning(f"{attributes['gene']} already has a MANE protein")
                     continue
-                elif "MANE Select" in attributes["tag"]:
-                    print(f"Warning: {attributes['gene']} already has a non-MANE protein, replacing.")
 
             refseqs[attributes["gene"]] = {
                 "Protein": attributes["protein_id"],
@@ -149,15 +148,18 @@ class RefSeqLookupClient(BaseLookupClient):
             assert "transcript_id" in attributes, "transcript_id not found in attributes"
 
             if attributes["gene"] not in refseqs:
-                print(f"Warning: {attributes['gene']} not found in proteins")
+                # This is uncommon, so log a warning.
+                logger.warning(f"{attributes['gene']} not found in proteins")
                 continue
 
             if "RNA" in refseqs[attributes["gene"]]:
-                print(f"Warning: {attributes['gene']} already has an RNA")
+                # This is relatively common, because a gene can have multiple transcripts.
+                logger.debug(f"{attributes['gene']} already has an RNA")
                 continue
 
             if "MANE Select" in attributes["tag"] and not refseqs[attributes["gene"]]["MANE"]:
-                print(f"Warning: {attributes['gene']} has a non-MANE protein, but a MANE RNA.")
+                # No observed instances of this in the current reference data, but it's possible, so log a warning.
+                logger.warning(f"{attributes['gene']} has a non-MANE protein, but a MANE RNA.")  # pragma: no cover
 
             refseqs[attributes["gene"]]["RNA"] = attributes["transcript_id"].strip()
 
@@ -167,7 +169,7 @@ class RefSeqLookupClient(BaseLookupClient):
 
     def _lazy_init(self) -> None:
         # Download the reference file if necessary.
-        if not os.path.exists(self._reference_dir):
+        if not os.path.exists(self._reference_dir):  # pragma: no cover
             logging.info(f"Creating reference directory at {self._reference_dir}")
             os.makedirs(self._reference_dir)
 
@@ -180,35 +182,6 @@ class RefSeqLookupClient(BaseLookupClient):
             self._ref = json.load(open(resource_path, "r"))
 
         self._lazy_initialized = True
-
-    def _load_reference(self, filepath: str) -> Dict[str, Dict[str, str]]:
-        """Load a reference TSV file into a dictionary."""
-        with open(filepath, "r") as f:
-            lines = f.readlines()
-
-        header = lines[0].strip().split("\t")
-
-        # First two columns are taxon and gene ID, which we don't care about, so we'll skip them.
-        # The third column is gene symbol, which we'll use as a key.
-        # Only keep rows where the last column is "reference standard". If there's more than
-        # one row per gene symbol, print a warning and keep the first one.
-        kept_fields = ["GeneID", "Symbol", "RSG", "RNA", "Protein"]
-        field_mapping = {"RSG": "Genomic"}
-
-        reference_dict = {}
-        for line in lines[1:]:
-            fields = line.strip().split("\t")
-            if fields[-1] != "reference standard":
-                continue
-            gene_symbol = fields[2]
-            if gene_symbol in reference_dict:
-                logging.debug(f"Multiple reference standard entries for gene {gene_symbol}. Keeping the first one.")
-                continue
-            reference_dict[gene_symbol] = {
-                field_mapping.get(k, k): v for k, v in zip(header, fields) if k in kept_fields
-            }
-
-        return reference_dict
 
 
 class RefSeqGeneLookupClient(BaseLookupClient):
