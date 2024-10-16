@@ -875,7 +875,7 @@ def test_caching(
                 )
             )
             content_extractor = PromptBasedContentExtractorCached(
-                ["study_type"], prompts, observation_finder, pheno_searcher, pheno_fetcher
+                ["study_type"], prompts, observation_finder, pheno_searcher, pheno_fetcher, use_previous_cache=False
             )
             content = content_extractor.extract(paper, gene)
 
