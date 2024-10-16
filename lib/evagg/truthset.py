@@ -120,7 +120,7 @@ class TruthsetFileHandler(IGetPapers, IFindObservations, PropertyContentExtracto
             if "link" in self._fields:
                 ev["link"] = paper.props["link"]
             if "gnomad_frequency" in self._fields:
-                ev["gnomad_frequency"] = "TODO"
+                ev["gnomad_frequency"] = "unknown"
             return ev
 
         return [_add_fields(ev) for ev in self._get_evidence(paper.id, gene_symbol)]

@@ -20,10 +20,7 @@ class PyHPOClient(ICompareHPO, IFetchHPO):
 
     @cache
     def _get_hpo_object(self, term: str) -> HPOTerm:
-        try:
-            return Ontology.get_hpo_object(term)
-        except Exception as e:
-            raise ValueError(f"Failed to retrieve HPO term {term}: {e}")
+        return Ontology.get_hpo_object(term)
 
     def compare(self, subject: str, object: str, method: str = "graphic") -> float:
         term1 = self._get_hpo_object(subject)
@@ -58,7 +55,7 @@ class PyHPOClient(ICompareHPO, IFetchHPO):
         try:
             term = self._get_hpo_object(query)
             return {"id": term.id, "name": term.name}
-        except Exception as e:
+        except RuntimeError as e:
             logger.debug(f"Failed to retrieve HPO term {query}: {e}")
             return None
 
@@ -71,7 +68,7 @@ class WebHPOClient(ISearchHPO):
         self._web_client = web_client
 
     def _clean_query(self, query: str) -> str:
-        # urllib.parse.quote doesn't get everything, so we'll manually fix the rest.
+        # urllib.parse.quote doesn't get everything that upsets this service, so we'll manually fix the rest.
         # Forward slashes generate 500 errors even when encoded, replace with spaces.
         # Tildes cause 500 errors only when they're at the end of a string, even when encoded, replace with spaces.
         # Parentheses cause 500 errors even when encoded, replace with spaces.
