@@ -1,0 +1,229 @@
+{
+    "input_description": "NM_001276.4:c.104G>A",
+    "input_model": {
+        "type": "description_dna",
+        "reference": {
+            "id": "NM_001276.4"
+        },
+        "coordinate_system": "c",
+        "variants": [
+            {
+                "location": {
+                    "type": "point",
+                    "position": 104
+                },
+                "type": "substitution",
+                "source": "reference",
+                "deleted": [
+                    {
+                        "sequence": "G",
+                        "source": "description"
+                    }
+                ],
+                "inserted": [
+                    {
+                        "sequence": "A",
+                        "source": "description"
+                    }
+                ]
+            }
+        ]
+    },
+    "corrected_model": {
+        "type": "description_dna",
+        "reference": {
+            "id": "NM_001276.4",
+            "selector": {
+                "id": "NM_001276.4"
+            }
+        },
+        "coordinate_system": "c",
+        "variants": [
+            {
+                "location": {
+                    "type": "point",
+                    "position": 104
+                },
+                "type": "substitution",
+                "source": "reference",
+                "deleted": [
+                    {
+                        "sequence": "G",
+                        "source": "description"
+                    }
+                ],
+                "inserted": [
+                    {
+                        "sequence": "A",
+                        "source": "description"
+                    }
+                ]
+            }
+        ]
+    },
+    "corrected_description": "NM_001276.4:c.104G>A",
+    "normalized_description": "NM_001276.4:c.104G>A",
+    "normalized_model": {
+        "variants": [
+            {
+                "type": "substitution",
+                "location": {
+                    "type": "point",
+                    "position": 104
+                },
+                "inserted": [
+                    {
+                        "source": "description",
+                        "sequence": "A"
+                    }
+                ],
+                "source": "reference",
+                "deleted": [
+                    {
+                        "sequence": "G",
+                        "source": "description"
+                    }
+                ]
+            }
+        ],
+        "reference": {
+            "id": "NM_001276.4"
+        },
+        "coordinate_system": "c"
+    },
+    "chromosomal_descriptions": [
+        {
+            "assembly": "GRCH38",
+            "c": "NC_000001.11(NM_001276.4):c.104G>A",
+            "g": "NC_000001.11:g.203185337C>T",
+            "tag": {
+                "id": "NM_001276.4",
+                "details": "MANE Select"
+            }
+        },
+        {
+            "assembly": "GRCH37",
+            "c": "NC_000001.10(NM_001276.4):c.104G>A",
+            "g": "NC_000001.10:g.203154465C>T"
+        }
+    ],
+    "protein": {
+        "description": "NM_001276.4(NP_001267.2):p.(Arg35Gln)",
+        "reference": "MGVKASQTGFVVLVLLQCCSAYKLVCYYTSWSQYREGDGSCFPDALDRFLCTHIIYSFANISNDHIDTWEWNDVTLYGMLNTLKNRNPNLKTLLSVGGWNFGSQRFSKIASNTQSRRTFIKSVPPFLRTHGFDGLDLAWLYPGRRDKQHFTTLIKEMKAEFIKEAQPGKKQLLLSAALSAGKVTIDSSYDIAKISQHLDFISIMTYDFHGAWRGTTGHHSPLFRGQEDASPDRFSNTDYAVGYMLRLGAPASKLVMGIPTFGRSFTLASSETGVGAPISGPGIPGRFTKEAGTLAYYEICDFLRGATVHRILGQQVPYATKGNQWVGYDDQESVKSKVQYLKDRQLAGAMVWALDLDDFQGSFCGQDLRFPLTNAIKDALAAT*",
+        "predicted": "MGVKASQTGFVVLVLLQCCSAYKLVCYYTSWSQYQEGDGSCFPDALDRFLCTHIIYSFANISNDHIDTWEWNDVTLYGMLNTLKNRNPNLKTLLSVGGWNFGSQRFSKIASNTQSRRTFIKSVPPFLRTHGFDGLDLAWLYPGRRDKQHFTTLIKEMKAEFIKEAQPGKKQLLLSAALSAGKVTIDSSYDIAKISQHLDFISIMTYDFHGAWRGTTGHHSPLFRGQEDASPDRFSNTDYAVGYMLRLGAPASKLVMGIPTFGRSFTLASSETGVGAPISGPGIPGRFTKEAGTLAYYEICDFLRGATVHRILGQQVPYATKGNQWVGYDDQESVKSKVQYLKDRQLAGAMVWALDLDDFQGSFCGQDLRFPLTNAIKDALAAT*",
+        "position_first": 34,
+        "position_last_original": 35,
+        "position_last_predicted": 35
+    },
+    "rna": {
+        "description": "NM_001276.4:r.(104g>a)"
+    },
+    "infos": [
+        {
+            "code": "IMRNAGENOMICTIP",
+            "details": "An 'mRNA' sequence was used with the 'c.' coordinate system. Make use of a genomic reference sequence if the experiment performed involved measured DNA."
+        }
+    ],
+    "selector_short": {
+        "exon": {
+            "g": [
+                [
+                    "1",
+                    "106"
+                ],
+                [
+                    "107",
+                    "136"
+                ],
+                [
+                    "137",
+                    "338"
+                ],
+                [
+                    "339",
+                    "395"
+                ],
+                [
+                    "396",
+                    "546"
+                ],
+                [
+                    "547",
+                    "668"
+                ],
+                [
+                    "669",
+                    "792"
+                ],
+                [
+                    "793",
+                    "975"
+                ],
+                [
+                    "976",
+                    "1092"
+                ],
+                [
+                    "1093",
+                    "1747"
+                ]
+            ],
+            "c": [
+                [
+                    "-81",
+                    "25"
+                ],
+                [
+                    "26",
+                    "55"
+                ],
+                [
+                    "56",
+                    "257"
+                ],
+                [
+                    "258",
+                    "314"
+                ],
+                [
+                    "315",
+                    "465"
+                ],
+                [
+                    "466",
+                    "587"
+                ],
+                [
+                    "588",
+                    "711"
+                ],
+                [
+                    "712",
+                    "894"
+                ],
+                [
+                    "895",
+                    "1011"
+                ],
+                [
+                    "1012",
+                    "*514"
+                ]
+            ]
+        },
+        "cds": {
+            "g": [
+                [
+                    "82",
+                    "1233"
+                ]
+            ],
+            "c": [
+                [
+                    "1",
+                    "1152"
+                ]
+            ]
+        }
+    }
+}

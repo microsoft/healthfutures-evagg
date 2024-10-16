@@ -84,7 +84,7 @@ def mock_client(arg_loader):
 
                             self._calls.append((name, *args, *[{k: v} for k, v in kwargs.items()]))
                             return next(self._responses)
-    
+
                         async def async_method(*args, **kwargs):
                             return method(*args, **kwargs)
 
