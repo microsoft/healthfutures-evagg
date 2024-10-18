@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from defusedxml import ElementTree
 from pydantic import Extra, root_validator
+from requests import HTTPError
 
 from lib.evagg.types import Paper
 from lib.evagg.utils import IWebContentClient
@@ -209,7 +210,16 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             raise ValueError("Invalid rsids list - must provide 'rs' followed by a string of numeric characters.")
 
         uids = {rsid[2:] for rsid in rsids}
-        root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
+        try:
+            root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
+        except HTTPError as e:
+            # The NCBI API occassionally returns a 400 error when the ID isn't prefixed with 'rs'. In this case, try
+            # again with the ID prefixed with 'rs'.
+            if e.response.status_code == 400:
+                root = self._efetch(db="snp", id=",".join(rsids), retmode="xml", rettype="xml")
+            else:
+                raise e
+
         return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids}
 
     # IAnnotateEntities
