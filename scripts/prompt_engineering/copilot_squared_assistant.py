@@ -30,7 +30,9 @@ def get_git_commit_hash():
 @cache
 def get_lookup_client() -> IPaperLookupClient:
     """Get the lookup client."""
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
+    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance(
+        {"di_factory": "lib/config/ncbi_lookup_cache.yaml"}, {}
+    )
     return ncbi_lookup
 
 

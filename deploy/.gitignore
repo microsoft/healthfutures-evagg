@@ -1,6 +1,0 @@
-# Terraform state
-.terraform*
-terraform.tfstate*
-.database*
-out.plan
-

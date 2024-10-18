@@ -1,3 +1,6 @@
+# This YAML file configures the EvAgg pipeline to run end to end using only the truthset source. It is used
+# for simple testing scenarios.
+
 # Logging.
 log:
   di_factory: lib.evagg.utils.init_logger
