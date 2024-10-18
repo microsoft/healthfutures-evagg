@@ -75,7 +75,7 @@ with open(GENE_PATH, "r") as f:
 study_set_genes.sort()
 
 # %% Make an NCBI client
-ncbi_client = DiContainer().create_instance(spec={"di_factory": "lib/config/objects/ncbi.yaml"}, resources={})
+ncbi_client = DiContainer().create_instance(spec={"di_factory": "lib/config/objects/ncbi_cache.yaml"}, resources={})
 
 # %% Run the NCBI fetch for each gene.
 
