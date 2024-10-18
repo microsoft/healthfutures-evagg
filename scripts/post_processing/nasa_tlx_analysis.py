@@ -1,5 +1,5 @@
-""" This script calculates and analyzes NASA task load index (TLX) scores for the Evidence Aggregator user study.
-It compares the task workload of users with and without Copilot across 6 categories*.
+""" This script calculates and analyzes NASA task load index (TLX) scores for the Evidence Aggregator User Study.
+It compares the task workload of users without and with Copilot across 6 categories*.
 Specifically, this script calculates
 A) the NASA TLX weighted scores per user and per category,
 B) the NASA TLX raw scores per user and per category,
@@ -9,14 +9,28 @@ C) and the NASA TLX coefficients per category.
   Level
 
 The script performs the following 5 tasks:
-1. Calculates and plots NASA TLX weighted and raw scores for each user, with and without Copilot.
+1. Calculates and plots NASA TLX weighted and raw scores for each user, without and with Copilot.
 2. Analyzes the distribution of percent changes in scores to assess normality and suitability for paired t-tests.
-3. Conducts statistical tests to identify significant differences between users with decreased
-   v.s. increased task load.
-4. Calculates and plots NASA TLX raw and weighted scores for 6 categories to identify possible significant changes
+3. Conducts statistical tests to identify significant differences between users (groups are: all users, decreased 
+   task load users, and increased task load users).
+4. Calculates and plots NASA TLX weighted and raw scores for 6 categories to identify possible significant changes
    due to Copilot use.
-5. Creates scatter plots to compare NASA TLX raw and weighted scores and coefficients across categories, identifying
+5. Creates scatter plots to compare NASA TLX weighted and raw scores and coefficients across categories, identifying
    potential relationships.
+   
+The outputs of this script are, correspondingly:
+1. Bar plots comparing NASA TLX weighted and raw scores for each user without and with Copilot 
+   (weighted_scores_by_user.png, raw_scores_by_user.png)
+2. Distribution plots of percent changes in NASA TLX weighted and raw scores (percent_changes_weighted.png, 
+   percent_changes_raw.png)
+3. A text file containing the results of paired t-tests and Wilcoxon signed-rank tests for each user group (
+   users_mod_task_load_signif_tests.txt) where mod is "modified" (i.e. exhibiting a decrease, increase, or no change 
+   in task load).
+4. Bar plots comparing the average NASA TLX weighted and raw scores for each category without and with Copilot 
+   (average_raw_scores.png, average_weighted_scores.png, average_coefficients.png)
+5. Scatter plots comparing NASA TLX raw scores, weighted scores, and coefficients for each pair of categories without 
+   and with Copilot (combined_scatter_plots_raw.png, combined_scatter_plots_weighted.png, 
+   combined_scatter_plots_coef.png)
 """
 
 # Libraries
@@ -418,7 +432,7 @@ def create_combined_scatter_plots(without_copilot, with_copilot, nasa_categories
 def main(args):
     # Set up plot characteristics
     plt.rcParams.update({"font.size": 14})
-    users = np.arange(1, args.num_users)
+    users = np.arange(1, args.num_users + 1)
     bar_width = args.bar_width
 
     # Create output directory
@@ -554,8 +568,8 @@ if __name__ == "__main__":
         type=str,
         default=(r"data/user_study/Evidence_Aggregator_User_Acceptance_Study_Day_1_Session_Data(1_8).csv"),
         help=(
-            "User study data without Copilot "
-            "(i.e. Evidence_Aggregator_User_Acceptance_Study_Day_1_Session_Data(1_8).csv)"
+            "user study data without Copilot, default is "
+            "Evidence_Aggregator_User_Acceptance_Study_Day_1_Session_Data(1_8).csv"
         ),
     )
     parser.add_argument(
@@ -563,13 +577,15 @@ if __name__ == "__main__":
         type=str,
         default=(r"data/user_study/Evidence_Aggregator_User_Acceptance_Study_Day_2_Session_Data(1_8).csv"),
         help=(
-            "User study data with Copilot "
-            "(i.e. Evidence_Aggregator_User_Acceptance_Study_Day_2_Session_Data(1_8).csv)"
+            "user study data with Copilot, default is "
+            "Evidence_Aggregator_User_Acceptance_Study_Day_2_Session_Data(1_8).csv"
         ),
     )
-    parser.add_argument("--bar-width", default=0.35, type=float, help="the width of the bars in the bar plots")
-    parser.add_argument("--num-users", default=9, type=int)
-    parser.add_argument("--outdir", default=".out/", type=str)
+    parser.add_argument(
+        "--bar-width", default=0.35, type=float, help="width of the bars in the bar plots, default is 0.35"
+    )
+    parser.add_argument("--num-users", default=8, help="default is 8", type=int)
+    parser.add_argument("--outdir", default=".out/", help="default is .out/", type=str)
     args = parser.parse_args()
 
     main(args)
