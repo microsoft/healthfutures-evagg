@@ -8,14 +8,14 @@ This project aims to support the use of Large Language Models for information re
 
 The following steps will allow you to run a test execution of the pipeline that verifies full functionality.
 
-1. [Deploy an AOAI Resource](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal) and [deploy a gpt-4 (or equivalent) model](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal#deploy-a-model)
+1. [Deploy an AOAI Resource](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal), [deploy a gpt-4 (or equivalent) model](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal#deploy-a-model), and optionally configure RBAC authentication (recommended)
 2. Configure your runtime environment
   a. Install software pre-requisites (`git`, `make`, `jq`, `miniconda`; optionally `az cli` depending on your AOAI authentication approach)
   b. Clone this repository (`git clone https://github.com/microsoft/healthfutures-evagg && cd healthfutures-evagg`)
   c. Build a conda environment (`conda env create -f environment.yml && conda activate evagg`)
   d. Install poetry dependencies (`poetry install`)
   e. Configure `template.env` with your cloud environment settings and save as `.env`
-3. Run the pipeline with the example configuration (`run_evagg_app lib/config/evagg_pipeline_example.yaml`)
+3. Run the pipeline with the example configuration (`run_evagg_app lib/config/evagg_pipeline_example.yaml`) - if you are not using RBAC authentication for the AOAI resource, you will need to comment out the `token_provider` section in `lib/config/objects/llm.yaml` and `lib/config/objects/llm_cache.yaml`
 
 After pipeline execution is complete, results can be viewed in `.out/run_evagg_pipeline_example_<YYYYMMDD_HHMMSS>`
 
@@ -26,9 +26,9 @@ Each of these steps is described in more detail below.
 The only Azure Resource required to run the Evidence Aggregator pipeline is an Azure OpenAI Service Resource which can be deployed using [these instructions](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal).
 Once the AOAI Service Resource is deployed, it is necessary to [deploy a model](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal#deploy-a-model) on that resource that has sufficient capabilities to run the EvAgg pipeline. Specifically, the pipeline currently requires that a model supports at least 128k tokens of input context and the [json output mode](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/json-mode?tabs=python). Currently, the models that meet these two requirements are `gpt-4` (`1106-preview` or newer), `gpt-4o`, and `gpt-4o-mini`. Ensure that one of these models is deployed in your AOAI Service Resource and that you have sufficient quota (at least 100k TPM or equivalent) allocated to that deployment.
 
-Authentication to use the AOAI Service Resource REST APIs can happen either through Role-based access control (RBAC) or shared keys. The EvAgg pipeline currently supports either. After deploying your AOAI Service Resource you will either need to configure RBAC for the identity that will be running the pipeline or take note of one of the shared keys for your AOAI Service Resource. The minimum privilege RBAC role needed to use the AOAI REST APIs during pipeline execution is the `Cognitive Services OpenAI User` role.
+Authentication to use the AOAI Service Resource REST APIs can happen either through Role-based access control (RBAC) or shared keys. RBAC-based authentication is recommended, but the EvAgg pipeline currently supports either. After deploying your AOAI Service Resource you will either need to configure RBAC for the identity that will be running the pipeline or take note of one of the shared keys for your AOAI Service Resource. The minimum privilege RBAC role needed to use the AOAI REST APIs during pipeline execution is the `Cognitive Services OpenAI User` role. If you do plan to use key-based authentication for the AOAI Service Resource, you will need to comment out the `token_provider` section in each of `lib/config/objects/llm.yaml` and `lib/config/objects/llm_cache.yaml`.
 
-In addition to this you will need to make note of the endpoint for AOAI Service Resource (typically `https://<your_resource_name>.openai.azure.com/`) and the name of the model deployment that you configured.
+Additionally, you will need to make note of the endpoint for AOAI Service Resource (typically `https://<your_resource_name>.openai.azure.com/`) and the name of the model deployment that you configured.
 
 ## Configuring your runtime environment
 
@@ -58,6 +58,7 @@ If you will be using Entra IDs for authentication to the AOAI Service Resource a
 have a current credential for an identity that is authorized to perform the desired operations.
 
 Additionally, if you plan to perform development tasks for this repo, the following packages are also required:
+
 - make
 - jq
 
@@ -179,7 +180,7 @@ The yaml app spec fully defines the behavior of pipeline execution. To perform a
 run_evagg_app lib/config/evagg_pipeline_example.yaml
 ```
 
-Using gpt-4o-mini with 500k TPM of quota allocated (TODO verify), this example will complete in approximately 2 minutes. Results of the run are located
+Using gpt-4o-mini with 2000k TPM of quota allocated, this example will complete in approximately 2 minutes. Results of the run are located
 in `.out/run_evagg_pipeline_example_<YYYYMMDD_HHMMSS>`. The primary pipeline output file is `pipeline_benchmark.tsv` contained in that folder.
 
 In a single example run, the pipeline identified 15 unique observations from a total of 4 publications considered in this configuration.
@@ -207,9 +208,15 @@ The pipeline can be easily configured to use an Azure CosmosDB for this purpose 
 
 ### Deploy and configure an Azure CosmosDB database
 
-1. Create an Azure CosmosDB account using [these instructions](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/quickstart-portal) TODO: default settings?
-2. Within that new account, create a database and container using [these instructions](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/quickstart-portal#create-a-database-and-container). The default container name used by this repository is `cache`, but this can be modified below. TODO: default settings?
-3. If using EntraID for authentication configure RBAC settings for your CosmosDB account. A sufficient built-in role to assign is `Cosmos DB Built-in Data Contributor`
+1. Create an Azure CosmosDB account using [these instructions](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/quickstart-portal). For the most part, the default settings are likely suitable for your application, but apply/consider the following changes
+    1. Select a unique name for your CosmosDB account and make note of it as it will be used in subsequent configuration steps
+    2. If your runtime environment is an Azure VM, you should consider deploying your Cosmos DB Account in the same region
+    3. Under capacity mode, switch the selection to "Serverless" as the sustained loads for DBs in this account are likely to be minimal
+2. Within that new account, create a database and container using [these instructions](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/quickstart-portal#create-a-database-and-container). Use the following settings
+    1. For the Database id, ensure that "Create new" is selected and enter `document_cache`
+    2. For the Container id, enter `cache`
+    3. For the Partition key, enter `/id`
+3. If using EntraID for authentication (recommended) configure RBAC settings for your CosmosDB account. A sufficient built-in role to assign is `Cosmos DB Built-in Data Contributor`. Alternatively, if using shared key-based authentication, make note of the Primary Key for your CosmosDB account from within the Azure Portal
 
 ### Configure your runtime environment to use this CosmosDB database
 
@@ -223,6 +230,8 @@ EVAGG_CONTENT_CACHE_CONTAINER="<container>" # [optional] CosmosDB cache containe
 ```
 
 See above for more detail on each of these settings. In short, `EVAGG_CONTENT_CACHE_ENDPOINT` is the only required setting unless you are using key-based authentication for CosmosDB, in which case `EVAGG_CONTENT_CACHE_CREDENTIAL` is also required.
+
+Note, if you are using key-based authentication, you will need to coment out the `credential` section in `lib/config/objects/web_cache.yaml`.
 
 ### Configure your yaml app spec to enable CosmosDB-based caching
 
