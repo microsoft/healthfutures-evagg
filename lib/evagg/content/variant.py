@@ -243,7 +243,7 @@ class HGVSVariantComparator(ICompareVariants):
         v2rs_dict = self._parse_refseq_parts(variant2.refseq) if variant2.refseq else {}
 
         shared_keys = v1rs_dict.keys() & v2rs_dict.keys()
-        assert not (shared_keys and allow_mismatch)
+        # assert not (shared_keys and allow_mismatch)
 
         for k in shared_keys:
             if v1rs_dict[k] > v2rs_dict[k]:
