@@ -58,7 +58,7 @@ def test_rare_disease_extra_params(mock_paper_client: Any, mock_llm_client: Any,
         {"query": "gene pubmed pmc open access[filter]"},
         {"retmax": 9},
     )
-    # assert paper_client.call_count() == 2
+    assert paper_client.call_count() == 2
     assert len(result) == 1 and result[0] == rare_disease_paper
 
     # Simple min date test.
