@@ -44,7 +44,9 @@ def load_run(run_id: str, task: str, run_filename: str) -> pd.DataFrame | None:
 
 @cache
 def _get_lookup_client() -> IPaperLookupClient:
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/objects/ncbi.yaml"}, {})
+    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance(
+        {"di_factory": "lib/config/objects/ncbi_cache.yaml"}, {}
+    )
     return ncbi_lookup
 
 

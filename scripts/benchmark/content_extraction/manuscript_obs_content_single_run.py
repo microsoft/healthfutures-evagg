@@ -148,7 +148,7 @@ def sanity_check_inputs(
 
 @cache
 def _get_variant_factory() -> HGVSVariantFactory:
-    return DiContainer().create_instance({"di_factory": "lib/config/objects/variant_factory.yaml"}, {})
+    return DiContainer().create_instance({"di_factory": "lib/config/objects/variant_factory_cache.yaml"}, {})
 
 
 def _convert_single_to_three(single_code: str) -> str:
