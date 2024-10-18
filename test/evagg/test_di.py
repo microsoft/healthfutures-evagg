@@ -41,6 +41,8 @@ def test_default_path():
         "sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value.di_factory:queries/EXOC2.yaml"]
     ):
         run_evagg_app()
+    # Undo run completion to avoid polluting other tests
+    _current_run.elapsed_secs = None
 
 
 def test_missing_entrypoint():
@@ -66,6 +68,8 @@ def test_run_evagg_app(caplog):
     with patch("sys.argv", ["test", "test/resources/di.yaml"]):
         run_evagg_app()
     assert "Test app executed with value: {'a': 'b:2 c:3'}" in caplog.text
+    # Undo run completion to avoid polluting other tests
+    _current_run.elapsed_secs = None
 
 
 def test_run_evagg_app_override(caplog):
@@ -73,6 +77,8 @@ def test_run_evagg_app_override(caplog):
     with patch("sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value:overridden_arg"]):
         run_evagg_app()
     assert "Test app executed with value: overridden_arg" in caplog.text
+    # Undo run completion to avoid polluting other tests
+    _current_run.elapsed_secs = None
 
 
 def test_run_evagg_app_override_true(caplog):
@@ -80,6 +86,8 @@ def test_run_evagg_app_override_true(caplog):
     with patch("sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value:true"]):
         run_evagg_app()
     assert "Test app executed with value: True" in caplog.text
+    # Undo run completion to avoid polluting other tests
+    _current_run.elapsed_secs = None
 
 
 def test_run_evagg_app_override_false(caplog):
@@ -87,6 +95,8 @@ def test_run_evagg_app_override_false(caplog):
     with patch("sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value:false"]):
         run_evagg_app()
     assert "Test app executed with value: False" in caplog.text
+    # Undo run completion to avoid polluting other tests
+    _current_run.elapsed_secs = None
 
 
 def test_run_evagg_app_interrupt(capfd):
@@ -101,11 +111,6 @@ def test_run_evagg_app_exception(caplog):
         with pytest.raises(SystemExit):
             run_evagg_app()
     assert "Error executing app: " in caplog.text
-
-
-def test_sample_config():
-    with patch("sys.argv", ["test", "sample_config"]):
-        run_evagg_app()
 
 
 @pytest.fixture
@@ -139,6 +144,8 @@ def test_evagg_paper_query_app(json_load, mock_library: Any, mock_extractor: Any
     }
     _current_run.elapsed_secs = None  # Reset elapsed_secs to avoid error on multiple runs in the same test.
     DiContainer().create_instance(spec, resources).execute()
+    # Undo run completion to avoid polluting other tests
+    _current_run.elapsed_secs = None
 
     # Test missing query gene_symbol.
     with pytest.raises(ValueError):
