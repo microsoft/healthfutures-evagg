@@ -1,6 +1,6 @@
 di_factory: lib.evagg.TruthsetFileHandler
 file_path: data/v1/evidence_train_v1.tsv
 variant_factory: 
-  di_factory: lib/config/objects/variant_factory.yaml
+  di_factory: lib/config/objects/variant_factory_cache.yaml
 paper_client:
-  di_factory: lib/config/objects/ncbi.yaml
+  di_factory: lib/config/objects/ncbi_cache.yaml

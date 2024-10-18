@@ -381,7 +381,8 @@ evidence_df["validation_error"] = ""
 # Add a paper_id column right after pmid that is formatted as "pmid:{pmid}".
 evidence_df["paper_id"] = "pmid:" + evidence_df["pmid"].astype(str)
 
-ncbi_client = DiContainer().create_instance(spec={"di_factory": "lib/config/objects/ncbi.yaml"}, resources={})
+ncbi_client = DiContainer().create_instance(spec={"di_factory": "lib/config/objects/ncbi_cache.yaml"}, resources={})
+
 
 @cache
 def get_paper(pmid: str) -> Any:

@@ -1,3 +1,6 @@
+# This YAML file configures the EvAgg pipeline to run paper finding only for papers from the train split
+# of the v1 truthset. 
+
 # Logging.
 log:
   di_factory: lib.evagg.utils.init_logger
@@ -11,7 +14,7 @@ queries:
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client: 
-    di_factory: lib/config/objects/ncbi.yaml
+    di_factory: lib/config/objects/ncbi_cache.yaml
   llm_client:
     di_factory: lib/config/objects/llm.yaml
   allowed_categories: 
