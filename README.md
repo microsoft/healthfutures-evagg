@@ -8,14 +8,14 @@ This project aims to support the use of Large Language Models for information re
 
 The following steps will allow you to run a test execution of the pipeline that verifies full functionality.
 
-1. [Deploy an AOAI Resource](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal), [deploy a gpt-4 (or equivalent) model](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal#deploy-a-model), and optionally configure RBAC authentication (recommended)
+1. [Deploy an AOAI Resource](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal), [deploy a gpt-4 (or equivalent) model](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal#deploy-a-model), and optionally configure RBAC-based authorization (recommended)
 2. Configure your runtime environment
-  a. Install software pre-requisites (`git`, `make`, `jq`, `miniconda`; optionally `az cli` depending on your AOAI authentication approach)
-  b. Clone this repository (`git clone https://github.com/microsoft/healthfutures-evagg && cd healthfutures-evagg`)
-  c. Build a conda environment (`conda env create -f environment.yml && conda activate evagg`)
-  d. Install poetry dependencies (`poetry install`)
-  e. Configure `template.env` with your cloud environment settings and save as `.env`
-3. Run the pipeline with the example configuration (`run_evagg_app lib/config/evagg_pipeline_example.yaml`) - if you are not using RBAC authentication for the AOAI resource, you will need to comment out the `token_provider` section in `lib/config/objects/llm.yaml` and `lib/config/objects/llm_cache.yaml`
+    1. Install software pre-requisites (`git`, `make`, `jq`, `miniconda`; optionally `az cli` depending on your AOAI authorization approach)
+    2. Clone this repository (`git clone https://github.com/microsoft/healthfutures-evagg && cd healthfutures-evagg`)
+    3. Build a conda environment (`conda env create -f environment.yml && conda activate evagg`)
+    4. Install poetry dependencies (`poetry install`)
+    5. Configure `template.env` with your cloud environment settings and save as `.env`
+3. Run the pipeline with the example configuration (`run_evagg_app lib/config/evagg_pipeline_example.yaml`). If you are not using RBAC authorization for the AOAI resource, you will need to comment out the `token_provider` section in `lib/config/objects/llm.yaml` and `lib/config/objects/llm_cache.yaml`
 
 After pipeline execution is complete, results can be viewed in `.out/run_evagg_pipeline_example_<YYYYMMDD_HHMMSS>`
 
@@ -24,9 +24,9 @@ Each of these steps is described in more detail below.
 ## Deploying required Azure Resources
 
 The only Azure Resource required to run the Evidence Aggregator pipeline is an Azure OpenAI Service Resource which can be deployed using [these instructions](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal).
-Once the AOAI Service Resource is deployed, it is necessary to [deploy a model](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal#deploy-a-model) on that resource that has sufficient capabilities to run the EvAgg pipeline. Specifically, the pipeline currently requires that a model supports at least 128k tokens of input context and the [json output mode](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/json-mode?tabs=python). Currently, the models that meet these two requirements are `gpt-4` (`1106-preview` or newer), `gpt-4o`, and `gpt-4o-mini`. Ensure that one of these models is deployed in your AOAI Service Resource and that you have sufficient quota (at least 100k TPM or equivalent) allocated to that deployment.
+Once the AOAI Service Resource is deployed, it is necessary to [deploy a model](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource?pivots=web-portal#deploy-a-model) on that resource that has sufficient capabilities to run the EvAgg pipeline. Specifically, the pipeline currently requires that a model supports at least 128k tokens of input context and the [json output mode](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/json-mode?tabs=python). Currently, the models that meet these two requirements are `gpt-4` (`1106-preview` or newer), `gpt-4o`, and `gpt-4o-mini`. See [this article](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/models?tabs=python-secure) for a discussion of the differences between these models. Ensure that one of these models is deployed in your AOAI Service Resource and that you have sufficient quota (at least 100k TPM or equivalent) allocated to that deployment.
 
-Authentication to use the AOAI Service Resource REST APIs can happen either through Role-based access control (RBAC) or shared keys. RBAC-based authentication is recommended, but the EvAgg pipeline currently supports either. After deploying your AOAI Service Resource you will either need to configure RBAC for the identity that will be running the pipeline or take note of one of the shared keys for your AOAI Service Resource. The minimum privilege RBAC role needed to use the AOAI REST APIs during pipeline execution is the `Cognitive Services OpenAI User` role. If you do plan to use key-based authentication for the AOAI Service Resource, you will need to comment out the `token_provider` section in each of `lib/config/objects/llm.yaml` and `lib/config/objects/llm_cache.yaml`.
+Authentication/authorization to use the AOAI Service Resource REST APIs can be done either using EntraIDs and role-based access control (RBAC) or shared keys. RBAC-based authorization is recommended, but the EvAgg pipeline currently supports either. After deploying your AOAI Service Resource you will either need to configure RBAC for the identity that will be running the pipeline or take note of one of the shared keys for your AOAI Service Resource. The minimum privilege built-in RBAC role needed to use the AOAI REST APIs during pipeline execution is the `Cognitive Services OpenAI User` role. If you do plan to use key-based authentication for the AOAI Service Resource, you will need to comment out the `token_provider` section in each of `lib/config/objects/llm.yaml` and `lib/config/objects/llm_cache.yaml`.
 
 Additionally, you will need to make note of the endpoint for AOAI Service Resource (typically `https://<your_resource_name>.openai.azure.com/`) and the name of the model deployment that you configured.
 
@@ -107,7 +107,7 @@ that can be used as a starting point for generating the `.env` file.
 
 The `.env` file contains a set of environment variables that are used to configure pipeline behavior. To leave any optional settings unset, simply comment them out or delete them from your `.env` file.
 
-Here is an minimal example `.env` file that can be used for a basic test of pipeline functionality if your AOAI Service Resource is configured for EntraID-based authentication.
+Here is an minimal example `.env` file that can be used for a basic test of pipeline functionality if your AOAI Service Resource is configured for EntraID-based authentication/authorization.
 
 ```bash
 AZURE_OPENAI_DEPLOYMENT="gpt-4-1106-preview" # whatever model name you chose during model deployment
@@ -115,7 +115,7 @@ AZURE_OPENAI_ENDPOINT="https://<your_aoai_resource>.openai.azure.com" # https en
 AZURE_OPENAI_API_VERSION="2024-02-15-preview"
 ```
 
---
+#### OpenAI Service resource configuration
 
 The following sections discuss all the variables in `template.env` in more detail.
 
@@ -134,7 +134,7 @@ AZURE_OPENAI_MAX_PARALLEL_REQUESTS=<integer> # [optional] How many simultaneous 
 - **AZURE_OPENAI_API_VERSION** - unless you have a specific reason to do so, set this to "2024-02-15-preview"
 - **AZURE_OPENAI_MAX_PARALLEL_REQUESTS** [optional] - this controls the maximum number of concurrent requests being made to the AOAI endpoint. Unless you have a reason to, either don't set this in your `.env` file or set it to 0 (no max).
 
---
+#### NCBI E-utilities configuration [optional]
 
 The pipeline relies heavily on REST API calls to the NCBI E-utilities service. By default, these requests are throttled to 3 requests per minute. Pipeline execution
 can be accelerated by obtaining an API KEY. When provided to E-utilities REST API calls, the max request rate is increased to 10 requests per minute.
@@ -146,10 +146,10 @@ NCBI_EUTILS_API_KEY="<key>" # [optional] NCBI API key
 NCBI_EUTILS_EMAIL="<email>" # [optional] Email address associated with key
 ```
 
-- **NCBI_EUTILS_API_KEY** [optional] - an API KEY for the NCBU E-utilities web resource
+- **NCBI_EUTILS_API_KEY** [optional] - an API KEY for the NCBI E-utilities web resource
 - **NCBI_EUTILS_EMAIL** [optional] - an email address associated with this key
 
---
+#### CosmosDB caching configuration [optional]
 
 Pipeline execution can be substantially accelerated by creating an Azure-local cache of responses to external web endpoints (e.g., Mutalyzer). Subsequent sections will
 discuss how to deploy and configure the Azure resouces associated with this cache, but the following settings are used by the pipeline to identify and communicate with it. They are not necessary if a cache is not being used.
@@ -181,7 +181,7 @@ run_evagg_app lib/config/evagg_pipeline_example.yaml
 ```
 
 Using gpt-4o-mini with 2000k TPM of quota allocated, this example will complete in approximately 2 minutes. Results of the run are located
-in `.out/run_evagg_pipeline_example_<YYYYMMDD_HHMMSS>`. The primary pipeline output file is `pipeline_benchmark.tsv` contained in that folder.
+in `.out/run_evagg_pipeline_example_<YYYYMMDD_HHMMSS>`, where each individual run is given a unique datestamp suffix. The primary pipeline output file is `pipeline_benchmark.tsv` contained in that folder.
 
 In a single example run, the pipeline identified 15 unique observations from a total of 4 publications considered in this configuration.
 
@@ -216,7 +216,7 @@ The pipeline can be easily configured to use an Azure CosmosDB for this purpose 
     1. For the Database id, ensure that "Create new" is selected and enter `document_cache`
     2. For the Container id, enter `cache`
     3. For the Partition key, enter `/id`
-3. If using EntraID for authentication (recommended) configure RBAC settings for your CosmosDB account.
+3. If using EntraID-based authentication and authorization (recommended) configure role assignment settings for your CosmosDB account.
     1. First, create a JSON file describing a cosmosdb SQL role definition.
 
     ```bash
@@ -277,7 +277,7 @@ Note, if you are using key-based authentication, you will need to coment out the
 ### Configure your yaml app spec to enable CosmosDB-based caching
 
 To make use of the CosmosDB database, the pipeline should be configured to use `lib.evagg.utils.CosmosCachingWebClient` in places where classes are making REST API calls (e.g., `lib.evagg.ref.MutalyzerClient`). By default, `lib/config/evagg_pipeline.yaml` is configured to use CosmosDB-based caching
-wherever possible and can be used as an example for custom `yaml` app specs.
+wherever possible and can be used as an example for custom `yaml` app specs. The example app spec, `lib/config/evagg_pipeline_example.yaml` does not use any CosmosDB-based caching.
 
 In short, in the top level `yaml` app spec, or any referenced specs, instances of `di_factory: lib.evagg.utils.RequestsWebContentClient` can be changed to `di_factory: lib.evagg.utils.CosmosCachingWebClient` to enable caching functionality.
 
@@ -289,7 +289,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for additional detail on guidelines for c
 
 The repository contains the following subdirectories:
 
-`root`  
+  `root`  
 `|-- data`: sample and reference data  
 `|-- lib`: source code for scripts and core libraries  
 `|-- scripts`: helper scripts for pre- and post-processing of results  
