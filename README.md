@@ -216,7 +216,48 @@ The pipeline can be easily configured to use an Azure CosmosDB for this purpose 
     1. For the Database id, ensure that "Create new" is selected and enter `document_cache`
     2. For the Container id, enter `cache`
     3. For the Partition key, enter `/id`
-3. If using EntraID for authentication (recommended) configure RBAC settings for your CosmosDB account. A sufficient built-in role to assign is `Cosmos DB Built-in Data Contributor`. Alternatively, if using shared key-based authentication, make note of the Primary Key for your CosmosDB account from within the Azure Portal
+3. If using EntraID for authentication (recommended) configure RBAC settings for your CosmosDB account.
+    1. First, create a JSON file describing a cosmosdb SQL role definition.
+
+    ```bash
+    cat << EOF >> cache_role.json
+    {
+      "Id": "$(uuidgen)",
+      "RoleName": "cache_role",
+      "Type": "CustomRole",
+      "AssignableScopes": ["/dbs/document_cache/colls/cache"],
+      "Permissions": [{
+        "DataActions": [
+          "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+          "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/executeQuery",
+          "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/read",
+          "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/create",
+          "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/replace",
+          "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/upsert",
+          "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/delete"
+        ]
+      }]
+    }
+    EOF
+    ```
+
+    2. Now, create that role on your CosmosDB Account. Ensure that you are logged into `az cli` as an identity with sufficient privileges for this operation
+
+    ```bash
+    az cosmosdb sql role definition create -a <your comsosdb account> -g <your resource group> --body cache_role.json
+    rm cache_role.json
+    ```
+
+    3. Lastly, assign this role to the identity that will be running the pipeline
+
+    ```bash
+    az cosmosdb sql role assignment create -a <your cosmosdb account> -g <your resource group> \
+      --role-definition-name "cache_role" \
+      --scope "/dbs/document_cache/colls/cache" \
+      --principal-id $(az ad signed-in-user show --query id --output tsv)
+    ```
+
+    Alternatively, if using shared key-based authentication, make note of the Primary Key for your CosmosDB account from within the Azure Portal
 
 ### Configure your runtime environment to use this CosmosDB database
 
