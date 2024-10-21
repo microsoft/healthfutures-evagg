@@ -17,7 +17,7 @@ The script performs the following 5 tasks:
    due to Copilot use.
 5. Creates scatter plots to compare NASA TLX weighted and raw scores and coefficients across categories, identifying
    potential relationships.
-   
+
 The outputs of this script are, correspondingly:
 1. Bar plots comparing NASA TLX weighted and raw scores for each user without and with Copilot 
    (weighted_scores_by_user.png, raw_scores_by_user.png)
