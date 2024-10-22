@@ -213,12 +213,8 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         try:
             root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
         except HTTPError as e:
-            # The NCBI API occassionally returns a 400 error when the ID isn't prefixed with 'rs'. In this case, try
-            # again with the ID prefixed with 'rs'.
-            if e.response.status_code == 400:
-                root = self._efetch(db="snp", id=",".join(rsids), retmode="xml", rettype="xml")
-            else:
-                raise e
+            logger.warning(f"Unexpected error fetching HGVS data for rsids {','.join(uids)}: {e}")
+            return {}
 
         return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids}
 
