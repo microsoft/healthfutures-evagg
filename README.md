@@ -11,12 +11,12 @@ The following section walks you through how to configure your software environme
 
 The following steps will allow you to run a test execution of the pipeline that verifies software pre-requisites.
 
-1. Configure your runtime environment
+1. [Configure your runtime environment](#configuring-your-runtime-environment)
     1. Install software pre-requisites (`git`, `make`, `jq`, `miniconda`, `az cli`)
     2. Clone this repository (`git clone https://github.com/microsoft/healthfutures-evagg && cd healthfutures-evagg`)
     3. Build a conda environment (`conda env create -f environment.yml && conda activate evagg`)
     4. Install poetry dependencies (`poetry install`)
-2. Run the pipeline with the example configuration (`run_evagg_app lib/config/sample_config.yaml`).
+2. [Run the pipeline](#running-the-pipeline---standalone-example) with the example configuration (`run_evagg_app lib/config/sample_config.yaml`).
 
 ### Configuring your runtime environment
 
@@ -88,6 +88,16 @@ You should see a help message displayed providing usage for the `run_evagg_app` 
 
 Now that your software pre-requisites are configured correctly, run the following command to execute the pipeline using a sample configuration. Note when using this configuration, EvAgg will not try to leverage external dependencies (e.g., AOAI Service Resource, NCBI's E-utilities, Mutalyzer, etc). Correspondingly, the outputs of the pipeline for this example
 are not particularly interesting. However, this does permit you to validate whether your software pre-requisites are correctly installed and configured.
+
+Run the pipeline using the following command:
+
+```bash
+run_evagg_app lib/config/sample_config.yaml
+```
+
+The pipeline should output a few lines of placeholder "evidence" to standard output.
+
+Proceed to [Resource Configuration](RESOURCE_CONFIG.md) to set up external dependencies and perform a full-featured test execution of the pipeline.
 
 ## Contributing
 
