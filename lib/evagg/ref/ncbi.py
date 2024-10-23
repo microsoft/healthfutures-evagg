@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from defusedxml import ElementTree
 from pydantic import Extra, root_validator
+from requests.exceptions import HTTPError, RetryError
 
 from lib.evagg.types import Paper
 from lib.evagg.utils import IWebContentClient
@@ -156,7 +157,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             return ""
         try:
             root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
-        except Exception as e:
+        except (HTTPError, RetryError, ElementTree.ParseError) as e:
             logger.warning(f"Unexpected error fetching BioC entry for {pmcid}: {e}")
             return ""
 
