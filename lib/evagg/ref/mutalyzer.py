@@ -5,7 +5,7 @@ from functools import cache
 from typing import Any, Dict, Sequence, Tuple
 
 from Bio.SeqUtils import IUPACData
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, RetryError
 
 from lib.evagg.utils import IWebContentClient
 
@@ -57,13 +57,17 @@ class MutalyzerClient(INormalizeVariants, IBackTranslateVariants, IValidateVaria
         # For at least one variant (NP_000099.2:p.R316X), Mutalyzer returns a 500 error, which it shouldn't (500
         # is an internal server error). For now we interpret this as an unresolvable entity and return an empty dict.
         url = f"https://mutalyzer.nl/api/normalize/{encoded}"
+
         try:
             response = self._web_client.get(url, content_type="json")
-        except HTTPError as e:
+        except (HTTPError, RetryError) as e:
             logger.debug(f"{url} returned an error: {e}")
-            if e.response.status_code == 500:
+            if isinstance(e, HTTPError) and e.response.status_code == 500:
                 return {"error_message": "Mutalyzer system error"}
-            raise e
+            elif isinstance(e, RetryError) and "500 error" in str(e):
+                return {"error_message": "Mutalyzer system error"}
+            else:
+                raise e
 
         if "errors" in response or ("custom" in response and "errors" in response["custom"]):
             error_dict = response.get("errors") or response["custom"]["errors"]
