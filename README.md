@@ -1,7 +1,8 @@
 # Evidence Aggregator
 
 The Evidence Aggregator is a collaboration between the [Broad Institute](https://www.broadinstitute.org/), [Microsoft Research Health Futures](https://www.microsoft.com/en-us/research/lab/microsoft-health-futures/), and the [Centre for Population Genomics](https://populationgenomics.org.au/).
-This project aims to support the use of Large Language Models for information retrieval from public literature databases (e.g., PubMed). An example use case is aiding genetic analysts in diagnosis of potential Mendelian disease by searching the the entirety of PubMed for specific details from publications that are potentially relevant to a given case. The code implements a set of Python modules configurable into a pipeline that uses Azure OpenAI to produce output tables with relevant aggregated publication evidence for input gene or genes of interest.
+
+This project leverages Generative AI to drastically accelerate targeted information retrieval and reasoning over large text knowledge bases (e.g. PubMed). We focus here on rare disease diagnostics, where retrival of relevant, current information from the scientific literature is particularly challenging. The Evidence Aggregator is an evidence aggregation Copilot that can query the entirety of PubMed, highlighting relevant literature for a given gene of interest, detailing information including described genetic variants, the patients they impact, and the phenotypic consequences. This approach is readily scalable to other applications and the modularity of the codebase readily supports this.
 
 ## Running Evidence Aggregator
 
