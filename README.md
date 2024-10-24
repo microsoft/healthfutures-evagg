@@ -86,7 +86,7 @@ You should see a help message displayed providing usage for the `run_evagg_app` 
 
 ### Running the pipeline - standalone example
 
-Now that your software pre-requisites are configured correctly, run the following command to execute the pipeline using a sample configuration. Note when using this configuration, EvAgg will not try to leverage external dependencies (e.g., AOAI Service Resource, NCBI's E-utilities, Mutalyzer, etc). Correspondingly, the outputs of the pipeline for this example
+Now that your software pre-requisites are configured correctly, run the following command to execute the pipeline using a sample configuration. Note when using this configuration, the Evidence Aggregator will not try to leverage external dependencies (e.g., AOAI Service Resource, NCBI's E-utilities, Mutalyzer, etc). Correspondingly, the outputs of the pipeline for this example
 are not particularly interesting. However, this does permit you to validate whether your software pre-requisites are correctly installed and configured.
 
 Run the pipeline using the following command:
@@ -135,7 +135,7 @@ The Evidence Aggregator is not designed, intended, or made available for use in 
 
 The Evidence Aggregator literature discovery is limited to open-access publications with permissive licenses from the [PubMed Central (PMC) Open Access Subset of journal articles](https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/). Information returned by the Evidence aggregator should not be considered exhaustive.
 
-Performance was not optimized for genes with extensive evidence for definitive gene-disease relationships, but for genes with moderate, limited, or no known gene-disease relationship as annotated by ClinGen (Clinical Genome Resource) <https://clinicalgenome.org> [July 2024].
+Performance was not optimized for genes with extensive evidence for definitive gene-disease relationships, but for genes with moderate, limited, or no known gene-disease relationship as annotated in Gene Curation Coalition (GenCC) <http://www.thegencc.org> [July 2024].
 
 The Evidence Aggregator uses the capabilities of generative AI for both publication foraging and information summarization. Performance of the Evidence Aggregator is limited to the capabilities of the underlying model.  
 
