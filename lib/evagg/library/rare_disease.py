@@ -175,7 +175,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         if "retmax" in params and len(paper_ids) == params["retmax"]:
             logger.warning(
-                f"Reached the maximum number of papers ({params['retmax'}) for {query['gene_symbol']}. This may cause an incomplete result, with not all papers matching the gene and date range being processed."
+                f"Reached the maximum number of papers ({params['retmax']}) for {query['gene_symbol']}. This may cause an incomplete result, with not all papers matching the gene and date range being processed."
             )
 
         # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
