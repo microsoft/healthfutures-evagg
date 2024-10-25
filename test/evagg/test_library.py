@@ -67,7 +67,7 @@ def test_rare_disease_extra_params(mock_paper_client: Any, mock_llm_client: Any,
     result = RareDiseaseFileLibrary(paper_client, mock_llm_client("genetic disease")).get_papers(query)
     assert len(result) == 1 and result[0] == rare_disease_paper
 
-    # Retmax results, signifies search overrun.
+    # Retmax results, signifies search overrun, results still returned.
     paper_client = mock_paper_client(
         [rare_disease_paper.props["pmid"], rare_disease_paper.props["pmid"]], rare_disease_paper, rare_disease_paper
     )
@@ -75,7 +75,7 @@ def test_rare_disease_extra_params(mock_paper_client: Any, mock_llm_client: Any,
     result = RareDiseaseFileLibrary(paper_client, mock_llm_client("genetic disease", "genetic disease")).get_papers(
         query
     )
-    assert len(result) == 0
+    assert len(result) == 2 and result[0] == rare_disease_paper and result[1] == rare_disease_paper
 
 
 def test_rare_disease_no_paper(mock_paper_client: Any, mock_llm_client: Any) -> None:
