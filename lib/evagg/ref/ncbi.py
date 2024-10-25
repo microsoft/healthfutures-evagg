@@ -210,7 +210,12 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             raise ValueError("Invalid rsids list - must provide 'rs' followed by a string of numeric characters.")
 
         uids = {rsid[2:] for rsid in rsids}
-        root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
+        try:
+            root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
+        except HTTPError as e:
+            logger.warning(f"Unexpected error fetching HGVS data for rsids {','.join(uids)}: {e}")
+            return {}
+
         return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids}
 
     # IAnnotateEntities
