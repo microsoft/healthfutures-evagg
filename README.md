@@ -1,33 +1,37 @@
 # Evidence Aggregator
 
-This repo contains the code and deployment instructions for the Evidence Aggregator, a collaboration between the
-[Broad Institute](https://www.broadinstitute.org/) and [Microsoft Research Health Futures](https://www.microsoft.com/en-us/research/lab/microsoft-health-futures/).
-This project aims to support genomic analysts in diagnosis of potential Mendelian disease by using Large Language Models to review external public literature databases (i.e. PubMed) and summarize the rare disease-relevant information for a given case. The code implements a set of Python modules configurable into a pipeline for running experiments using Azure OpenAI endpoints and producing output tables with clinically-relevant aggregated publication evidence for input gene or genes of interest.
+The Evidence Aggregator is a collaboration between the [Broad Institute](https://www.broadinstitute.org/), [Microsoft Research Health Futures](https://www.microsoft.com/en-us/research/lab/microsoft-health-futures/), and the [Centre for Population Genomics](https://populationgenomics.org.au/).
 
-## Setup
+This project leverages Generative AI to drastically accelerate targeted information retrieval and reasoning over large text knowledge bases (e.g. PubMed). We focus here on rare disease diagnostics, where retrival of relevant, current information from the scientific literature is particularly challenging. The Evidence Aggregator is an evidence aggregation Copilot that can query the entirety of PubMed, highlighting relevant literature for a given gene of interest, detailing information including described genetic variants, the patients they impact, and the phenotypic consequences. This approach is readily scalable to other applications and the modularity of the codebase readily supports this.
 
-The following sections walk through the setup of a Linux development environment on a virtual machine or within WSL2.
-Alternatively, there is a `.devcontainer` defined at the repo root for use with
-[GitHub Codespaces](https://docs.github.com/en/codespaces/developing-in-a-codespace/creating-a-codespace-for-a-repository).
+## Running Evidence Aggregator
 
-### Pre-requisites
+The following section walks you through how to configure your software environment to successfully run the Evidence Aggregator. After successfully completing and testing your environment setup, you can proceed to [Resource Configuration](RESOURCE_CONFIG.md) to set up external dependencies and perform a full-featured test execution of the pipeline.
 
-**Note: this environment has been tested on Ubuntu 20.04/22.04 in WSL2 and Azure VMs.**
+### Overview - standalone example
 
-Local Machine
+The following steps will allow you to run a test execution of the pipeline that verifies software pre-requisites.
 
-- [Visual Studio Code](https://code.visualstudio.com/download)
-- The Remote Development Extension Pack for VSCode.
+1. [Configure your runtime environment](#configuring-your-runtime-environment)
+    1. Install software pre-requisites (`git`, `make`, `jq`, `miniconda`, `az cli`)
+    2. Clone this repository (`git clone https://github.com/microsoft/healthfutures-evagg && cd healthfutures-evagg`)
+    3. Build a conda environment (`conda env create -f environment.yml && conda activate evagg`)
+    4. Install poetry dependencies (`poetry install`)
+2. [Run the pipeline](#running-the-pipeline---standalone-example) with the example configuration (`run_evagg_app lib/config/sample_config.yaml`).
 
-Ubuntu 20.04/22.04 (VM/WSL2)
+### Configuring your runtime environment
 
-- [Python](https://www.python.org/downloads/) 3.12 and above
-- azcopy
-- azure cli
+Note, these instructions have been tested on Ubuntu 20.04/22.04 in WSL2 and Azure VMs. Instructions may differ for other platforms.
+
+### Software pre-requisites
+
+- [Python](https://www.python.org/downloads/) 3.12 or above
+- azure cli (this is optional depending on whether you intend to authenticate to AOAI via Entra ID or using shared keys)
+
+  ```curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash```
+
 - git
-- make
-- jq
-- miniconda:
+- miniconda (installed and configured as below)
 
     ```bash
     curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
@@ -39,13 +43,24 @@ Ubuntu 20.04/22.04 (VM/WSL2)
     conda config --set solver libmamba
     ```
 
-Open VSCode on your local machine and connect to the VM using `Remote-SSH: Connect to Host`. This will initiate a
-connectionto your VM within VSCode. Alternatively, if you're using WSL connect using `WSL: Connect to WSL`. Next,
-clone this repository with `git clone https://github.com/microsoft/healthfutures-evagg`. Open the newly-cloned
-repository in VSCode with `File -> Open Folder`. You will be prompted to install recommended extensions for this
-repository; accept these recommendations.
+If you will be using Entra IDs for authentication to the AOAI Service Resource and any other Azure services, ensure that you have run `az login` and
+have a current credential for an identity that is authorized to perform the desired operations.
 
-### Configuring an environment
+Additionally, if you plan to perform development tasks for this repo, the following packages are also required:
+
+- make
+- jq
+
+### Clone this repository
+
+Create and enter a local clone of this repository in your runtime environment:
+
+```bash
+git clone https://github.com/microsoft/healthfutures-evagg
+cd healthfutures-evagg
+```
+
+### Build a conda environment
 
 Create a conda environment. All shell commands in this section should be executed from the repository's root directory.
 
@@ -54,122 +69,56 @@ conda env create -f environment.yml
 conda activate evagg
 ```
 
-Use poetry to install the local library and register pipeline run endpoint.
+### Install poetry dependencies
+
+Use poetry to install the local library and register pipeline run application.
 
 ```bash
 poetry install
 ```
 
-Test endpoint installation by running the following command:
+Test application installation by running the following command:
 
 ```bash
 run_evagg_app -h
 ```
 
-You should see a help message displayed providing usage for the `run_evagg_app` endpoint.
+You should see a help message displayed providing usage for the `run_evagg_app` application.
 
-## Running the pipeline
+### Running the pipeline - standalone example
 
-The library code consists of a variety of independent pipeline components for querying, filtering, and aggregating genetic
-variant publication evidence. These components are designed to be assembled in various ways into a pipeline "app"
-that can be run via the `run_evagg_app` entrypoint to generate some sort of concrete analysis or output.
+Now that your software pre-requisites are configured correctly, run the following command to execute the pipeline using a sample configuration. Note when using this configuration, the Evidence Aggregator will not try to leverage external dependencies (e.g., AOAI Service Resource, NCBI's E-utilities, Mutalyzer, etc). Correspondingly, the outputs of the pipeline for this example
+are not particularly interesting. However, this does permit you to validate whether your software pre-requisites are correctly installed and configured.
 
-### Defining pipeline apps
-
-An "app" is any Python class that implements the `lib.evagg.IEvAggApp` protocol (effectively an `execute` method).
-An app is defined in a yaml specification file as an ordered dictionary of key/value pairs describing the full
-class/parameter component hierarchy to be instantiated before `execute` is called. The abstract format of a yaml spec
-is as follows:
-
-```yaml
-# Reusable resource definitions.
-resource_1: <value or spec sub-dictionary>
-...
-resource_n: <value or spec sub-dictionary>
-
-# Application definition.
-di_factory: <fully-qualified class name, factory method, or yaml file path>
-param_1: <value or spec sub-dictionary>
-...
-param_n: <value or spec sub-dictionary>
-```
-
-The `lib.di` module is responsible for parsing, instantiating, and returning an arbitrary app object from an app spec.
-For a given spec, it first collects, in order, the top-level name/value pairs - "resources" are entries occurring
-before the `di_factory` key, and "parameters" are those occurring after. It then resolves any string value in the
-parameter collection of the form `"{{resource_name}}"` by looking `resource_name` up in the "resources" collection -
-this allows instantiation of singleton objects earlier in the spec that may be reused at multiple places later
-in the spec. Finally, the `di` module instantiates and returns the top-level app object represented by the spec by invoking
-the `di_factory:` entrypoint value, passing in the resolved/collected parameters as named keyword arguments. If any
-resource or parameter value in the spec consists of a sub-dictionary with its own `di_factory` key, that value is first
-resolved to a runtime object, recursively, following the same mechanism just described for the top-level spec. Object
-hierarchies of this sort may be arbitrarily deep.
-
-A library of existing app and sub-object specs for defining various pipelines can be found in `lib/config/`.
-
-### Executing pipeline apps
-
-The script `run_evagg_app` is used to execute a pipeline app. It has one required argument - a pointer to a yaml
-app spec - and is invoked as follows:
+Run the pipeline using the following command:
 
 ```bash
-run_evagg_app <path_to_yaml_app_spec_file>
-```
-
-This will instantiate the app object via the `lib.di` system described above and call the `IEvAggApp.execute`
-method on it. For convenience you may omit the the `lib/config/` prefix or the `.yaml` suffix.
-
-**Note:** A yaml spec may define any instantiable object, but `run_evagg_app` requires a spec defining a top-level
-object that implements `IEvAggApp`.
-
-As a simple test of script execution, run the following command from the repo root:
-
-```bash
-# equivalently: run_evagg_app sample_config
 run_evagg_app lib/config/sample_config.yaml
 ```
 
-This extracts content from a local sample library of fake papers using a dummy implementation and prints the resulting
-evidence table to `stdout`. While this doesn't actually do anything useful, it's a good way to verify that the
-pipeline and its dependencies are configured correctly.
+The pipeline should output a few lines of placeholder "evidence" to standard output.
 
-You can optionally add or override any leaf value within an app spec dictionary (or sub-dictionary) using
-the `-o` argument followed by one or more dictionary `key:value` specifications separated by spaces. The following
-command overrides the default log level and outputs the run results to a named file in the `.out` directory:
-
-```bash
-run_evagg_app sample_config -o writer.tsv_name:sample_test log.level:DEBUG
-```
-
-### Configuration and secrets
-
-Various concrete components in the library code (e.g. `OpenAIClient`, `NcbiLookupClient`) require runtime
-configuration and/or secrets passed in as constructor arguments in order to securely access external resources. This is
-done via settings dictionaries that are instantiated with an appropriate factory specified in the app spec yaml.
-The most common built in factory is `lib.evagg.utils.get_dotenv_settings`, which reads all settings with a given
-prefix (e.g. `AZURE_OPENAI_`) from a `.env` file in the repo root and parses them into a corresponding settings
-dictionary. A template file `template.env` documenting known component settings is offered at the repo root. To get
-started, copy this file, rename it to `.env`, and fill it in with actual values as needed.
-
-For development on this repo from within [Codespaces](#codespaces-setup),
-make use of the analogous factory `lib.evagg.utils.get_env_settings` in the app spec, which reads
-settings in from environment variables. Create the required GitHub secrets and settings by following
-[these instructions](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-secrets-for-your-codespaces)
-and granting the repo access to those secrets.
+Proceed to [Resource Configuration](RESOURCE_CONFIG.md) to set up external dependencies and perform a full-featured test execution of the pipeline.
 
 ## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for additional detail on guidelines for contribution.
 
 ### Code organization
 
 The repository contains the following subdirectories:
 
-`root`  
+  `root`  
 `|-- data`: sample and reference data  
-`|-- deploy`: infrastructure as code for the deployment and management of necessary cloud resources  
 `|-- lib`: source code for scripts and core libraries  
 `|-- scripts`: helper scripts for pre- and post-processing of results  
 `|-- test`: `pytest` unit tests for core libraries  
-`|-- .out`: default root directory for pipeline run logging and output
+`|-- .out` [generated]: default root directory for pipeline run logging and output  
+`|-- .ref` [generated]: default root directory for localized pipeline resources
+
+### Pre-PR checks
+
+Before submitting any PR for review, please verify that linting checks pass (`make lint`) and that tests pass with acceptable coverage for any new code (`make test`). All Pre-PR checks can be run in a single command via `make ci`.
 
 ## Trademarks
 
@@ -179,7 +128,7 @@ This project may contain trademarks or logos for projects, products, or services
 
 ### Use of this code
 
-The Evidence Aggregator is intended to be one tool within a genomic analyst’s toolkit to review literature related to a variant of interest. It is the user's responsibility to verify the accuracy of the information returned by the Evidence Aggregator. The Evidence Aggregator is for research use only. Users must adhere to the [Microsoft Generative AI Services Code of Conduct](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct).
+The Evidence Aggregator is intended to be one tool within a genomic analyst's toolkit to review literature related to a variant of interest. It is the user's responsibility to verify the accuracy of the information returned by the Evidence Aggregator. The Evidence Aggregator is for research use only. Users must adhere to the [Microsoft Generative AI Services Code of Conduct](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct).
 
 The Evidence Aggregator is not designed, intended, or made available for use in the diagnosis, prevention, mitigation, or treatment of a disease or medical condition nor to perform any medical function and the performance of the Evidence Aggregator for such purposes has not been established. You bear sole responsibility for any use of the Evidence Aggregator, including incorporation into any product intended for a medical purpose.
 
@@ -187,7 +136,7 @@ The Evidence Aggregator is not designed, intended, or made available for use in 
 
 The Evidence Aggregator literature discovery is limited to open-access publications with permissive licenses from the [PubMed Central (PMC) Open Access Subset of journal articles](https://www.ncbi.nlm.nih.gov/pmc/tools/openftlist/). Information returned by the Evidence aggregator should not be considered exhaustive.
 
-Performance was not optimized for genes with extensive evidence for definitive gene-disease relationships, but for genes with moderate, limited, or no known gene-disease relationship as annotated by ClinGen (Clinical Genome Resource) <https://clinicalgenome.org> [July 2024].
+Performance was not optimized for genes with extensive evidence for definitive gene-disease relationships, but for genes with moderate, limited, or no known gene-disease relationship as annotated in Gene Curation Coalition (GenCC) <http://www.thegencc.org> [July 2024].
 
 The Evidence Aggregator uses the capabilities of generative AI for both publication foraging and information summarization. Performance of the Evidence Aggregator is limited to the capabilities of the underlying model.  
 
@@ -198,6 +147,8 @@ The design and assessment of the Evidence Aggregator were conducted in English. 
 National Library of Medicine (US), National Center for Biotechnology Information; [1988]/[cited September 2024]. <https://www.ncbi.nlm.nih.gov/>
 
 Harrison et al., **Ensembl 2024**, Nucleic Acids Research, 2024, 52(D1):D891–D899. PMID: 37953337. <https://doi.org/10.1093/nar/gkad1049>
+
+Lefter M et al. (2021). Mutalyzer 2: Next Generation HGVS Nomenclature Checker. Bioinformatics, 2021 Sep 15; 37(28):2811-7
 
 The Evidence Aggregator uses the Human Phenotype Ontology (HPO version dependent on user environment build and pipeline execution date/time). <http://www.human-phenotype-ontology.org>  
 

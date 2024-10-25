@@ -37,7 +37,9 @@ def get_git_commit_hash():
 @cache
 def get_lookup_client() -> IPaperLookupClient:
     """Get the lookup client."""
-    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance({"di_factory": "lib/config/ncbi_lookup.yaml"}, {})
+    ncbi_lookup: IPaperLookupClient = DiContainer().create_instance(
+        {"di_factory": "lib/config/ncbi_lookup_cache.yaml"}, {}
+    )
     return ncbi_lookup
 
 
@@ -257,7 +259,7 @@ def sample_save_examples(seed, outdir, clusters, gene_pmid_title_abstract_dict, 
             random.seed(seed)
             random.shuffle(papers)  # shuffle the papers
             sampled_papers = 0  # count the number of papers sampled from this cluster
-            for j, (gene, pmid) in enumerate(papers):
+            for _, (gene, pmid) in enumerate(papers):
                 title = gene_pmid_title_abstract_dict[gene][pmid]["title"]
                 abstract = gene_pmid_title_abstract_dict[gene][pmid]["abstract"]
                 if (
@@ -464,7 +466,7 @@ if __name__ == "__main__":
         "--outdir",
         default=f".out/few_shot_examples_{(datetime.today().strftime('%Y-%m-%d'))}_{get_git_commit_hash()}/",
         type=str,
-        help=("Results output directory. Default is " f".out/few_shot_examples_<YYYY-MM-DD>_<GIT_COMMIT_HASH>/"),
+        help=("Results output directory. Default is .out/few_shot_examples_<YYYY-MM-DD>_<GIT_COMMIT_HASH>/"),
     )
     args = parser.parse_args()
 
