@@ -1,6 +1,7 @@
-# This YAML file configures the EvAgg pipeline to run the full pipeline. By default it is configured to use the
-# study set queries, but this can be overriden by setting the queries object to a custom set of queries, either
-# here or in a command-line argument.
+# This is an example YAML file that configures the EvAgg pipeline to run end to end on a small number of genes/papers.
+# It does not employ CosmosDB-based caching, nor does it employ local file caching of the RareDiseaseFileLibrary and 
+# PromptBasedContentExtractor classes. However, it does use the OpenAICacheClient for content extraction. This is
+# a simple, in-memory cache.
 
 log:
   di_factory: lib.evagg.utils.init_logger
@@ -14,16 +15,17 @@ llm_client:
 # Application.
 di_factory: lib.evagg.PaperQueryApp
 queries:
-  di_factory: lib/config/queries/study_set.yaml
+  di_factory: lib/config/queries/example_subset.yaml
 library:
-  di_factory: lib.evagg.RareDiseaseLibraryCached
+  di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client:
-    di_factory: lib/config/objects/ncbi_cache.yaml
+    di_factory: lib/config/objects/ncbi.yaml
+    # di_factory: lib/config/objects/ncbi_cache.yaml
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "genetic disease"
 extractor:
-  di_factory: lib.evagg.PromptBasedContentExtractorCached
+  di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
     di_factory: lib/config/fields/evidence_all.yaml
   llm_client:
@@ -31,14 +33,16 @@ extractor:
   phenotype_searcher:
     di_factory: lib.evagg.ref.WebHPOClient
     web_client:
-      di_factory: lib/config/objects/web_cache.yaml
+      di_factory: lib/config/objects/web.yaml
+      # di_factory: lib/config/objects/web_cache.yaml
   phenotype_fetcher:
     di_factory: lib.evagg.ref.PyHPOClient    
   observation_finder:
     di_factory: lib.evagg.content.ObservationFinder
     llm_client: "{{llm_client}}"
     variant_factory: 
-      di_factory: lib/config/objects/variant_factory_cache.yaml
+      di_factory: lib/config/objects/variant_factory.yaml
+      # di_factory: lib/config/objects/variant_factory_cache.yaml
     variant_comparator: 
       di_factory: lib.evagg.content.HGVSVariantComparator
 writer:
