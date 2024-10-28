@@ -218,15 +218,24 @@ for column in INDICES_FOR_COLUMN_RELEVANT_TASKS.keys():
     discrepancy_file = f"all_{column}_list.tsv"
     col_discrepancies = pd.read_csv(os.path.join(root, discrepancy_file), sep="\t")
 
-    indices_to_keep = INDICES_FOR_COLUMN_RELEVANT_TASKS[column]
+    # Fake truth value for cases where it is implicit.
+    if column == "papers":
+        col_discrepancies["truth_value"] = col_discrepancies["truth_count"] > 0
+    elif column == "observations":
+        col_discrepancies["truth_value"] = col_discrepancies["truth_count"] > 0
+
+    indices_to_keep = INDICES_FOR_COLUMN_RELEVANT_TASKS[column].copy()
     if column == "phenotype":
         indices_to_keep += ["truth_dict", "output_dict"]
         col_discrepancies["truth_dict"] = col_discrepancies["truth_dict"].apply(eval)
         col_discrepancies["output_dict"] = col_discrepancies["output_dict"].apply(eval)
+    else:
+        assert "truth_value" in col_discrepancies.columns
+        indices_to_keep += ["truth_value"]
 
     col_discrepancies = col_discrepancies.query("discrepancy == True")[indices_to_keep]
     col_discrepancies["task"] = column
-    # Make a new column called "id" that contains a tuple of the values in gene and pmid
+    # Make a new column called "id" that contains a tuple index values
     col_discrepancies["id"] = col_discrepancies.apply(
         lambda x, col=column: tuple(x[INDICES_FOR_COLUMN_RELEVANT_TASKS[col]]), axis=1
     )
