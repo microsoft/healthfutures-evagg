@@ -96,8 +96,10 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
                             "total_count": 1,
                             "agree_count": int(row[f"{col}_result"]),
                             "gene_group": run_type,
+                            "truth_value": row[f"{col}_truth"],
                         }
                     else:
+                        assert dicts[col][key]["truth_value"] == row[f"{col}_truth"], "Truth values do not match."
                         dicts[col][key]["total_count"] += 1
                         if row[f"{col}_result"]:
                             dicts[col][key]["agree_count"] += 1
