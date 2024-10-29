@@ -2,6 +2,7 @@ di_factory: lib.evagg.utils.CosmosCachingWebClient
 cache_settings:
   di_factory: lib.evagg.utils.get_dotenv_settings
   filter_prefix: "EVAGG_CONTENT_CACHE_"
+  # Comment the following block out and provide a key in your .env file to use key-based authentication.
   credential:
     di_factory: lib.evagg.utils.get_azure_credential
     cred_type: "AzureCli"

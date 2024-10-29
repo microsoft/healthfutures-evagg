@@ -1,7 +1,7 @@
 di_factory: lib.evagg.ref.MutalyzerClient
 # Dedicated web-client that doesn't raise on 422 because of mutalyzer's behavior.
 web_client:
-  di_factory: lib.evagg.utils.RequestsWebContentClient
-  settings:
+  di_factory: lib/config/objects/web_cache.yaml
+  web_settings:
     # Mutalyzer response code of 422 signifies an unprocessable entity.
     no_raise_codes: [422]

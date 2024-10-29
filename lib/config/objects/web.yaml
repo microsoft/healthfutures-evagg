@@ -1,0 +1,3 @@
+di_factory: lib.evagg.utils.RequestsWebContentClient
+settings:
+  max_retries: 10 

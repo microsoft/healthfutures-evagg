@@ -1,7 +1,7 @@
 di_factory: lib.evagg.ref.NcbiLookupClient
 web_client:
-  di_factory: lib/config/objects/web.yaml
-  settings:
+  di_factory: lib/config/objects/web_cache.yaml
+  web_settings:
     status_code_translator:
       di_factory: lib.evagg.ref.ncbi.get_ncbi_response_translator
 settings:

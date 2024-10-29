@@ -38,7 +38,8 @@ def test_missing_file_execute():
 
 def test_default_path():
     with patch(
-        "sys.argv", ["test", "test/resources/di.yaml", "--override", "test_value.di_factory:queries/EXOC2.yaml"]
+        "sys.argv",
+        ["test", "test/resources/di.yaml", "--override", "test_value.di_factory:queries/example_subset.yaml"],
     ):
         run_evagg_app()
     # Undo run completion to avoid polluting other tests

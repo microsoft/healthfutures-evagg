@@ -1,3 +1,5 @@
+# This YAML file is a simple example config used for basic testing scenarios.
+
 # Logging.
 log:
   di_factory: lib.evagg.utils.init_logger
