@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from defusedxml import ElementTree
 from pydantic import BaseModel, Extra, root_validator
+from requests.exceptions import HTTPError, RetryError
 
 from lib.evagg.types import Paper
 from lib.evagg.utils import IWebContentClient
@@ -155,7 +156,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             return ""
         try:
             root = self._web_client.get(self.BIOC_GET_URL.format(pmcid=pmcid), content_type="xml")
-        except Exception as e:
+        except (HTTPError, RetryError, ElementTree.ParseError) as e:
             logger.warning(f"Unexpected error fetching BioC entry for {pmcid}: {e}")
             return ""
 
@@ -208,7 +209,12 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             raise ValueError("Invalid rsids list - must provide 'rs' followed by a string of numeric characters.")
 
         uids = {rsid[2:] for rsid in rsids}
-        root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
+        try:
+            root = self._efetch(db="snp", id=",".join(uids), retmode="xml", rettype="xml")
+        except HTTPError as e:
+            logger.warning(f"Unexpected error fetching HGVS data for rsids {','.join(uids)}: {e}")
+            return {}
+
         return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids}
 
     # IAnnotateEntities

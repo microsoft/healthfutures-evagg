@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+import urllib.parse
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import requests
@@ -133,7 +134,12 @@ class CosmosCachingWebClient(RequestsWebContentClient):
     ) -> Any:
         """GET (or POST) the content at the provided URL, using the cache if available."""
         cache_key = url.removeprefix("http://").removeprefix("https://")
-        cache_key = cache_key.replace(":", "|").replace("/", "|").replace("?", "|").replace("#", "|")
+        invalid_chars = ["?", "#", "(", ")", ":", "/"]
+        invalid_subs = [urllib.parse.quote(c) for c in invalid_chars]
+
+        for invalid in invalid_chars + invalid_subs:
+            cache_key = cache_key.replace(invalid, "|")
+
         if data is not None:
             cache_key += f"&POST={self._invariant_hash(json.dumps(data))}"
         container = self._get_container()
