@@ -1,0 +1,9 @@
+- "gene_symbol": "LRRC10" # no known gene-disease relationship
+  "min_date": "2015/01/01"
+  "max_date": "2024/06/01"
+  "retmax": 24
+
+- "gene_symbol": "EXOC2" # Limited
+  "min_date": "2020/01/01"
+  "max_date": "2024/06/01"
+  "retmax": 22
