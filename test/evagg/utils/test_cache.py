@@ -21,6 +21,7 @@ def test_previous_run(mock_subprocess_run, mock_dirs, mock_run_path, mock_previo
     mock_dirs.assert_called_with("root/results_cache/me", exist_ok=True)
     mock_subprocess_run.assert_called_with(["cp", "-r", "other_root/results_cache/me", "root/results_cache"], check=True)
 
+
 def test_object_cache():
     cache = ObjectCache(lambda x: x > 0)
     cache._cache[0] = 1
