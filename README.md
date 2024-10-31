@@ -2,103 +2,49 @@
 
 The Evidence Aggregator is a collaboration between the [Broad Institute](https://www.broadinstitute.org/), [Microsoft Research Health Futures](https://www.microsoft.com/en-us/research/lab/microsoft-health-futures/), and the [Centre for Population Genomics](https://populationgenomics.org.au/).
 
-This project leverages Generative AI to drastically accelerate targeted information retrieval and reasoning over large text knowledge bases (e.g. PubMed). We focus here on rare disease diagnostics, where retrival of relevant, current information from the scientific literature is particularly challenging. The Evidence Aggregator is an evidence aggregation Copilot that can query the entirety of PubMed, highlighting relevant literature for a given gene of interest, detailing information including described genetic variants, the patients they impact, and the phenotypic consequences. This approach is readily scalable to other applications and the modularity of the codebase readily supports this.
+This project leverages Generative AI to drastically accelerate targeted information retrieval and reasoning over large text knowledge bases (e.g. PubMed). We focus here on rare disease diagnostics, where retrieval of relevant, current information from the scientific literature is particularly challenging. The Evidence Aggregator is an analytic Copilot that can query the entirety of PubMed, highlighting relevant literature for a given gene of interest, detailing information including described genetic variants, the patients they impact, and the phenotypic consequences. This approach is readily scalable to other applications and the modularity of the codebase readily supports this.
 
-## Running Evidence Aggregator
+## Using Evidence Aggregator
 
-The following section walks you through how to configure your software environment to successfully run the Evidence Aggregator. After successfully completing and testing your environment setup, you can proceed to [Resource Configuration](RESOURCE_CONFIG.md) to set up external dependencies and perform a full-featured test execution of the pipeline.
+Evidence Aggregator functionality is exposed as a library of independent pipeline components, implemented as Python functions or classes, for querying, filtering, and aggregating genetic variant publication evidence. These components are designed to be assembled in various ways into a pipeline "app" that can be run to generate some sort of concrete analysis or output - for example, to take a set of gene names as input and output a table of PubMed publication data referencing variants in those genes. The repo contains a number of existing pipeline definitions that can be run as-is or modified/reconfigured to produce different results.
 
-### Overview - standalone example
+### Pipeline apps
 
-The following steps will allow you to run a test execution of the pipeline that verifies software pre-requisites.
+An "app" is any Python class that implements the `lib.evagg.IEvAggApp` protocol (effectively an `execute` method) to be instantiated and run via the `run_evagg_app` Linux command-line entrypoint. An app is defined in a yaml specification file as an ordered dictionary of key/value pairs describing the full class/parameter component hierarchy to be instantiated before `execute` is called. The abstract format of a yaml spec is as follows:
 
-1. [Configure your runtime environment](#configuring-your-runtime-environment)
-    1. Install software pre-requisites (`git`, `make`, `jq`, `miniconda`, `az cli`)
-    2. Clone this repository (`git clone https://github.com/microsoft/healthfutures-evagg && cd healthfutures-evagg`)
-    3. Build a conda environment (`conda env create -f environment.yml && conda activate evagg`)
-    4. Install poetry dependencies (`poetry install`)
-2. [Run the pipeline](#running-the-pipeline---standalone-example) with the example configuration (`run_evagg_app lib/config/sample_config.yaml`).
+```yaml
+# Reusable resource definitions.
+resource_1: <value or spec sub-dictionary>
+...
+resource_n: <value or spec sub-dictionary>
 
-### Configuring your runtime environment
-
-Note, these instructions have been tested on Ubuntu 20.04/22.04 in WSL2 and Azure VMs. Instructions may differ for other platforms.
-
-### Software pre-requisites
-
-- [Python](https://www.python.org/downloads/) 3.12 or above
-- azure cli (this is optional depending on whether you intend to authenticate to AOAI via Entra ID or using shared keys)
-
-  ```curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash```
-
-- git
-- miniconda (installed and configured as below)
-
-    ```bash
-    curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh > miniconda.sh
-    sh ./miniconda.sh # close and reopen shell.
-    /home/azureuser/miniconda3/bin/conda init $SHELL # if you didn't init conda for your shell during setup.
-    conda update -n base -c defaults conda -y
-    conda config --add channels conda-forge
-    conda install -n base conda-libmamba-solver -y
-    conda config --set solver libmamba
-    ```
-
-If you will be using Entra IDs for authentication to the AOAI Service Resource and any other Azure services, ensure that you have run `az login` and
-have a current credential for an identity that is authorized to perform the desired operations.
-
-Additionally, if you plan to perform development tasks for this repo, the following packages are also required:
-
-- make
-- jq
-
-### Clone this repository
-
-Create and enter a local clone of this repository in your runtime environment:
-
-```bash
-git clone https://github.com/microsoft/healthfutures-evagg
-cd healthfutures-evagg
+# Application definition.
+di_factory: <fully-qualified class name, factory method, or yaml file path>
+param_1: <value or spec sub-dictionary>
+...
+param_n: <value or spec sub-dictionary>
 ```
 
-### Build a conda environment
+The `lib.di` module is responsible for parsing, instantiating, and returning an arbitrary app object from an app spec when `run_evagg_app` is called. For a given spec, it first collects, in file order, the top-level name/value pairs - "resources" are entries occurring before the `di_factory` key, and "parameters" are those occurring after. It then resolves any string value of the form `"{{resource_name}}"` by looking `resource_name` up in the "resources" collection - this allows instantiation of singleton objects earlier in the spec that may be reused at multiple places later in the spec. Finally, the `di` module instantiates and returns the top-level app object represented by the spec by invoking the `di_factory:` entrypoint value, passing in the resolved/collected parameters as named keyword arguments. If any resource or parameter value in the spec consists of a sub-dictionary with its own `di_factory` key, that value is first resolved to a runtime object, recursively, following the same mechanism just described for the top-level spec. Object hierarchies of this sort may be arbitrarily deep.
 
-Create a conda environment. All shell commands in this section should be executed from the repository's root directory.
+The existing app/sub-object spec files for defining various runnable pipelines are found in `lib/config/`.
 
-```bash
-conda env create -f environment.yml
-conda activate evagg
-```
+### Quickstart
 
-### Install poetry dependencies
+The following setup steps will allow you to run a simple pipeline app at the Linux command-line that outputs (fabricated) sample results without relying on any external resources. (Each step is described in greater detail for increased pipeline functionality in [SETUP.md](SETUP.md).)
 
-Use poetry to install the local library and register pipeline run application.
+1. [Install software prerequisites](SETUP.md#install-software-prerequisites): `python`, `git`, `miniconda/libmamba`
+2. [Clone this repository](SETUP.md#clone-the-repository): `git clone https://github.com/microsoft/healthfutures-evagg && cd healthfutures-evagg`
+3. [Build a conda environment](SETUP.md#build-a-conda-environment): `conda env create -f environment.yml && conda activate evagg`
+4. [Install poetry dependencies](SETUP.md#install-poetry-dependencies): `poetry install`
 
-```bash
-poetry install
-```
-
-Test application installation by running the following command:
-
-```bash
-run_evagg_app -h
-```
-
-You should see a help message displayed providing usage for the `run_evagg_app` application.
-
-### Running the pipeline - standalone example
-
-Now that your software pre-requisites are configured correctly, run the following command to execute the pipeline using a sample configuration. Note when using this configuration, the Evidence Aggregator will not try to leverage external dependencies (e.g., AOAI Service Resource, NCBI's E-utilities, Mutalyzer, etc). Correspondingly, the outputs of the pipeline for this example
-are not particularly interesting. However, this does permit you to validate whether your software pre-requisites are correctly installed and configured.
-
-Run the pipeline using the following command:
+Then run the sample pipeline using the following command. It will output a few lines of placeholder publication "evidence" to standard output.
 
 ```bash
 run_evagg_app lib/config/sample_config.yaml
 ```
 
-The pipeline should output a few lines of placeholder "evidence" to standard output.
-
-Proceed to [Resource Configuration](RESOURCE_CONFIG.md) to set up external dependencies and perform a full-featured test execution of the pipeline.
+Proceed to [SETUP.md](SETUP.md) to set up external dependencies and perform a full-featured example execution of the pipeline against live resources.
 
 ## Contributing
 
@@ -118,7 +64,7 @@ The repository contains the following subdirectories:
 
 ### Pre-PR checks
 
-Before submitting any PR for review, please verify that linting checks pass (`make lint`) and that tests pass with acceptable coverage for any new code (`make test`). All Pre-PR checks can be run in a single command via `make ci`.
+Before submitting any PR for review, please verify that linting checks pass (`make lint`) and that tests pass with acceptable coverage for any new code (`make test`). All pre-PR checks can be run in a single command via `make ci`.
 
 ## Trademarks
 
