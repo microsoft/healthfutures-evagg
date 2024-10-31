@@ -3,14 +3,17 @@ responses to identify discrepancies between the analysts. The discrepancies are 
 analysis.
 """
 
-# Libraries
 import argparse
+
+# Libraries
 import os
+from typing import List
 
 import pandas as pd
+from pandas import DataFrame
 
 
-def parse_discrepancy_excel(file_path):
+def parse_discrepancy_excel(file_path: str) -> DataFrame:
     """
     This function parses the discrepancy resolution Excel file and returns a DataFrame with the parsed data.
     """
@@ -86,7 +89,7 @@ def parse_discrepancy_excel(file_path):
     return parsed_df
 
 
-def compare_discrepancy_dfs(df1, df2):
+def compare_discrepancy_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
     """This function compares two discrepancy DataFrames and returns a subset of the rows where the responses are
     different.
     """
@@ -123,13 +126,12 @@ def compare_discrepancy_dfs(df1, df2):
     return subset_df.reset_index(drop=True)
 
 
-# Ensure the directory exists
-output_dir = ".out"
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
+def main(args: argparse.Namespace) -> None:
 
-
-def main(args):
+    # Ensure the directory exists
+    output_dir = ".out"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     # Parsing the discrepancy Excel files for each analyst
     parsed_df_analyst1 = parse_discrepancy_excel(args.analyst_1_file)
