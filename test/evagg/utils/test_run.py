@@ -31,6 +31,7 @@ def test_run_record():
 
 
 def test_output_path(tmpdir):
+    _current_run.path = None
     set_output_root(str(tmpdir))
     path = get_run_path()
     assert Path(path).is_dir()
@@ -48,6 +49,7 @@ def test_output_path(tmpdir):
 
 
 def test_previous_run(test_resources_path):
+    _current_run.path = None
     assert get_previous_run() is None
     _current_run.path = None
     set_output_root(str(test_resources_path))
