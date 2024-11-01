@@ -1,5 +1,7 @@
-""" This script reads the discrepancy resolution data from Excel files provided by the analysts and compares the 
-responses to identify discrepancies between the analysts. The discrepancies are saved to separate files for further 
+"""Truthset Discrepancy Resolution.
+
+This script reads the discrepancy resolution data from Excel files provided by the analysts and compares the
+responses to identify discrepancies between the analysts. The discrepancies are saved to separate files for further
 analysis.
 """
 
@@ -7,16 +9,13 @@ import argparse
 
 # Libraries
 import os
-from typing import List
 
 import pandas as pd
 from pandas import DataFrame
 
 
 def parse_discrepancy_excel(file_path: str) -> DataFrame:
-    """
-    This function parses the discrepancy resolution Excel file and returns a DataFrame with the parsed data.
-    """
+    """This function parses the discrepancy resolution Excel file and returns a DataFrame with the parsed data."""
     df = pd.read_excel(file_path, header=None)
 
     genes = []
@@ -37,9 +36,9 @@ def parse_discrepancy_excel(file_path: str) -> DataFrame:
             i += 3  # Move to the next row after the link
 
             while i < len(df) and df.iloc[i, 0] != "Gene":
-                if pd.notna(df.iloc[i, 1]) and df.iloc[i, 1].startswith("Q"):
-                    question_number = df.iloc[i, 1].split(".")[0]
-                    question_itself = df.iloc[i, 1].split(".")[1]
+                if pd.notna(df.iloc[i, 1]) and df.iloc[i, 1].startswith("Q"):  # type: ignore
+                    question_number = df.iloc[i, 1].split(".")[0]  # type: ignore
+                    question_itself = df.iloc[i, 1].split(".")[1]  # type: ignore
 
                     responses = []
                     phenotypes = []
@@ -90,9 +89,7 @@ def parse_discrepancy_excel(file_path: str) -> DataFrame:
 
 
 def compare_discrepancy_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
-    """This function compares two discrepancy DataFrames and returns a subset of the rows where the responses are
-    different.
-    """
+    """This compares two discrepancy DataFrames and returns a subset of the rows where the responses are different."""
     # Merge the two dataframes on the "Q###", "Gene", "Paper", and "Link" columns
     merged_df = df1.merge(df2, on=["Q###", "Gene", "Paper", "Link"], suffixes=("_1", "_2"))
 
