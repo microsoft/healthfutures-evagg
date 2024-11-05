@@ -16,7 +16,7 @@ from pandas import DataFrame
 
 def parse_discrepancy_excel(file_path: str) -> DataFrame:
     """This function parses the discrepancy resolution Excel file and returns a DataFrame with the parsed data."""
-    df = pd.read_excel(file_path, header=None)
+    df = pd.read_csv(file_path, header=None, encoding="unicode_escape")
 
     genes = []
     papers = []
@@ -36,9 +36,9 @@ def parse_discrepancy_excel(file_path: str) -> DataFrame:
             i += 3  # Move to the next row after the link
 
             while i < len(df) and df.iloc[i, 0] != "Gene":
-                if pd.notna(df.iloc[i, 1]) and df.iloc[i, 1].startswith("Q"):  # type: ignore
-                    question_number = df.iloc[i, 1].split(".")[0]  # type: ignore
-                    question_itself = df.iloc[i, 1].split(".")[1]  # type: ignore
+                cell_value = str(df.iloc[i, 1]) if pd.notna(df.iloc[i, 1]) else ""
+                if cell_value.startswith("Q"):
+                    question_number, question_itself = cell_value.split(".", 1)
 
                     responses = []
                     phenotypes = []
@@ -126,7 +126,7 @@ def compare_discrepancy_dfs(df1: DataFrame, df2: DataFrame) -> DataFrame:
 def main(args: argparse.Namespace) -> None:
 
     # Ensure the directory exists
-    output_dir = ".out"
+    output_dir = os.path.join(".out", "discrepancy_resolution")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -141,9 +141,9 @@ def main(args: argparse.Namespace) -> None:
     subset_df_2_3 = compare_discrepancy_dfs(parsed_df_analyst2, parsed_df_analyst3)
 
     # Save the discrepancies to .out files
-    subset_df_1_2.to_csv(os.path.join(output_dir, ".out/discrepancies_analyst1_vs_analyst2.tsv"), index=False, sep="\t")
-    subset_df_1_3.to_csv(os.path.join(output_dir, ".out/discrepancies_analyst1_vs_analyst3.tsv"), index=False, sep="\t")
-    subset_df_2_3.to_csv(os.path.join(output_dir, ".out/discrepancies_analyst2_vs_analyst3.tsv"), index=False, sep="\t")
+    subset_df_1_2.to_csv(os.path.join(output_dir, "discrepancies_analyst1_vs_analyst2.tsv"), index=False, sep="\t")
+    subset_df_1_3.to_csv(os.path.join(output_dir, "discrepancies_analyst1_vs_analyst3.tsv"), index=False, sep="\t")
+    subset_df_2_3.to_csv(os.path.join(output_dir, "discrepancies_analyst2_vs_analyst3.tsv"), index=False, sep="\t")
 
     # Output the number of discordances between each pair of analysts
     print(
@@ -168,20 +168,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "--analyst-1-file",
         type=str,
-        default=(r"data/discrepancy_resolution/ana1_discrepancy_resolution.xlsx"),
-        help=("data/discrepancy_resolution/ana1_discrepancy_resolution.xlsx"),
+        default=(r"data/discrepancy_resolution/ana1_discrepancy_resolution.csv"),
+        help=("data/discrepancy_resolution/ana1_discrepancy_resolution.csv"),
     )
     parser.add_argument(
         "--analyst-2-file",
         type=str,
-        default=(r"data/discrepancy_resolution/ana2_discrepancy_resolution.xlsx"),
-        help=("data/discrepancy_resolution/ana2_discrepancy_resolution.xlsx"),
+        default=(r"data/discrepancy_resolution/ana2_discrepancy_resolution.csv"),
+        help=("data/discrepancy_resolution/ana2_discrepancy_resolution.csv"),
     )
     parser.add_argument(
         "--analyst-3-file",
         type=str,
-        default=(r"data/discrepancy_resolution/ana3_discrepancy_resolution.xlsx"),
-        help=("data/discrepancy_resolution/ana3_discrepancy_resolution.xlsx"),
+        default=(r"data/discrepancy_resolution/ana3_discrepancy_resolution.csv"),
+        help=("data/discrepancy_resolution/ana3_discrepancy_resolution.csv"),
     )
 
     args = parser.parse_args()
