@@ -3,34 +3,38 @@ It compares the task workload of users without and with Copilot across 6 categor
 Specifically, this script calculates
 A) the NASA TLX weighted scores per user and per category,
 B) the NASA TLX raw scores per user and per category,
-C) and the NASA TLX coefficients per category.
+C) the NASA TLX coefficients per category, 
+D) and bar plots of weighted, raw, and coefficient NASA TLX by user by category with and without the tool.
 
 * Categories: Mental Demand, Physical Demand, Time Pressure, Personal Performance Success, Effort Level, Frustration
   Level
 
-The script performs the following 5 tasks:
+The script performs the following tasks:
 1. Calculates and plots NASA TLX weighted and raw scores for each user, without and with Copilot.
 2. Analyzes the distribution of percent changes in scores to assess normality and suitability for paired t-tests.
-3. Conducts statistical tests to identify significant differences between users (groups are: all users, decreased 
+3. Conducts statistical tests to identify significant differences between users (groups are: all users, decreased
    task load users, and increased task load users).
 4. Calculates and plots NASA TLX weighted and raw scores for 6 categories to identify possible significant changes
    due to Copilot use.
 5. Creates scatter plots to compare NASA TLX weighted and raw scores and coefficients across categories, identifying
    potential relationships.
+6. Creates bar plots of weighted and raw NASA TLX by user by category with and without the tool.
 
 The outputs of this script are, correspondingly:
-1. Bar plots comparing NASA TLX weighted and raw scores for each user without and with Copilot 
+1. Bar plots comparing NASA TLX weighted and raw scores for each user without and with Copilot
    (weighted_scores_by_user.png, raw_scores_by_user.png)
-2. Distribution plots of percent changes in NASA TLX weighted and raw scores (percent_changes_weighted.png, 
+2. Distribution plots of percent changes in NASA TLX weighted and raw scores (percent_changes_weighted.png,
    percent_changes_raw.png)
 3. A text file containing the results of paired t-tests and Wilcoxon signed-rank tests for each user group (
-   users_mod_task_load_signif_tests.txt) where mod is "modified" (i.e. exhibiting a decrease, increase, or no change 
+   users_mod_task_load_signif_tests.txt) where mod is "modified" (i.e. exhibiting a decrease, increase, or no change
    in task load).
-4. Bar plots comparing the average NASA TLX weighted and raw scores for each category without and with Copilot 
+4. Bar plots comparing the average NASA TLX weighted and raw scores for each category without and with Copilot
    (average_raw_scores.png, average_weighted_scores.png, average_coefficients.png)
-5. Scatter plots comparing NASA TLX raw scores, weighted scores, and coefficients for each pair of categories without 
-   and with Copilot (combined_scatter_plots_raw.png, combined_scatter_plots_weighted.png, 
+5. Scatter plots comparing NASA TLX raw scores, weighted scores, and coefficients for each pair of categories without
+   and with Copilot (combined_scatter_plots_raw.png, combined_scatter_plots_weighted.png,
    combined_scatter_plots_coef.png)
+6. 2 (weighted and raw NASA) 6x8 bar plots comparing the NASA TLX per category (6) and user (8) with and without
+   Copilot (weighted_scores_by_user_cat.png, raw_scores_by_user_cat.png).
 """
 
 # Libraries
@@ -39,6 +43,7 @@ import os
 import warnings
 from datetime import datetime
 from itertools import combinations
+from typing import Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -54,7 +59,7 @@ from statsmodels.formula.api import mixedlm
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def convert_text_to_score(text):
+def convert_text_to_score(text: str) -> int:
     """Convert a Likert scale text to a raw value."""
     score_map = {"Very Low": 5, "Low": 25, "Moderate": 50, "High": 75, "Very High": 100}
     if text not in score_map:
@@ -62,12 +67,12 @@ def convert_text_to_score(text):
     return score_map[text]
 
 
-def count_instances(df, category, columns):
+def count_instances(df: pd.DataFrame, category: str, columns: List[str]) -> pd.Series:
     """Count the number of instances of a specific category in the columns of interest."""
     return df[columns].apply(lambda row: (row == category).sum(), axis=1)
 
 
-def calculate_overall_nasa_tlx_weighted_score(df):
+def calculate_overall_nasa_tlx_weighted_score(df: pd.DataFrame) -> pd.Series:
     """Calculate the overall NASA TLX weighted score for each user."""
     categories = [
         "Mental Demand",
@@ -77,17 +82,27 @@ def calculate_overall_nasa_tlx_weighted_score(df):
         "Effort Level",
         "Frustration Level",
     ]
-    return sum(df[f"{cat} raw"] * df[f"{cat} count"] for cat in categories) / 15
+    return sum(df[f"{cat} raw"] * df[f"{cat} count"] for cat in categories) / 15  # type: ignore
 
 
-def create_bar_plot(users, without_scores, with_scores, ylabel, title, filename, bar_width, output_dir):
+def create_bar_plot(
+    users: np.ndarray,
+    without_scores: List[float],
+    with_scores: List[float],
+    ylabel: str,
+    title: str,
+    filename: str,
+    bar_width: float,
+    output_dir: str,
+) -> None:
     """Create and save a bar plot comparing NASA TLX weighted and raw scores without and with Copilot for each user."""
+
     _, ax = plt.subplots(figsize=(10, 6))
     ax.bar(
-        users - bar_width / 2, without_scores, bar_width, label="without"
+        users - bar_width / 2, without_scores, bar_width, label="without"  # type: ignore
     )  # Note setting bar1 to the return value of ax.bar for without Copilot
     ax.bar(
-        users + bar_width / 2, with_scores, bar_width, label="with Copilot"
+        users + bar_width / 2, with_scores, bar_width, label="with Copilot"  # type: ignore
     )  # Note setting bar2 to the return value of ax.bar for with Copilot
 
     for i in range(len(users)):
@@ -113,7 +128,7 @@ def create_bar_plot(users, without_scores, with_scores, ylabel, title, filename,
     plt.close()
 
 
-def plot_distribution(percent_changes, title, filename, color, output_dir):
+def plot_distribution(percent_changes: List[float], title: str, filename: str, color: str, output_dir: str) -> None:
     """Plot the distribution of percent changes in NASA TLX scores."""
     plt.figure(figsize=(12, 6))
     sns.histplot(percent_changes, kde=True, bins=8, color=color)
@@ -124,7 +139,9 @@ def plot_distribution(percent_changes, title, filename, color, output_dir):
     plt.close()
 
 
-def perform_stat_tests(with_scores, without_scores, user_indices):
+def perform_stat_tests(
+    with_scores: List[float], without_scores: List[float], user_indices: List[int]
+) -> Tuple[float, float]:
     """Perform t-test and Wilcoxon signed-rank test on the selected users."""
     with_selected = [with_scores[i] for i in user_indices]
     without_selected = [without_scores[i] for i in user_indices]
@@ -133,7 +150,9 @@ def perform_stat_tests(with_scores, without_scores, user_indices):
     return p_value_t, p_value_w
 
 
-def plot_average_scores(df1, df2, columns, title, ylabel, filename, output_dir):
+def plot_average_scores(
+    df1: pd.DataFrame, df2: pd.DataFrame, columns: List[str], title: str, ylabel: str, filename: str, output_dir: str
+) -> None:
     """Plot average weighted scores, raw scores, or coefficients for each category, without and with Copilot."""
     avg_scores_without_copilot = df1[columns].mean()
     avg_scores_with_copilot = df2[columns].mean()
@@ -207,7 +226,9 @@ def plot_average_scores(df1, df2, columns, title, ylabel, filename, output_dir):
     plt.close()
 
 
-def create_combined_scatter_plot(df1, df2, columns, title, filename, output_dir):
+def create_combined_scatter_plot(
+    df1: pd.DataFrame, df2: pd.DataFrame, columns: List[str], title: str, filename: str, output_dir: str
+) -> None:
     """Create scatter plots to compare the various NASA TLX scores
     (raw, weighted, and coefficients) for each pair of categories."""
     combinations_list = list(combinations(columns, 2))
@@ -267,7 +288,9 @@ def create_combined_scatter_plot(df1, df2, columns, title, filename, output_dir)
     plt.close()
 
 
-def process_data(df, nasa_categories, columns_of_interest, output_dir, term):
+def process_data(
+    df: pd.DataFrame, nasa_categories: List[str], columns_of_interest: List[str], output_dir: str, term: str
+) -> pd.DataFrame:
     """Process the data to calculate NASA TLX raw and weighted scores and coefficients."""
 
     for column in nasa_categories:
@@ -282,12 +305,12 @@ def process_data(df, nasa_categories, columns_of_interest, output_dir, term):
     return df
 
 
-def format_user_list(user_list):
+def format_user_list(user_list: List[int]) -> List[int]:
     """Add one to each user in a given list to avoid 'user 0'."""
     return [user + 1 for user in user_list]
 
 
-def categorize_users(with_scores, without_scores):
+def categorize_users(with_scores: List[float], without_scores: List[float]) -> Tuple[List[int], List[int], List[int]]:
     """Categorize users into three groups based on their change in task load (NASA TLX weighted scores)."""
     decrease_users = []
     increase_users = []
@@ -304,7 +327,9 @@ def categorize_users(with_scores, without_scores):
     return decrease_users, increase_users, no_change_users
 
 
-def perform_stat_tests_for_groups(with_scores, without_scores, user_groups):
+def perform_stat_tests_for_groups(
+    with_scores: List[float], without_scores: List[float], user_groups: Dict[str, List[int]]
+) -> Dict[str, Tuple[float, float]]:
     """Perform paired t-test and Wilcoxon signed-rank test on the selected users."""
     p_values = {}
 
@@ -315,7 +340,12 @@ def perform_stat_tests_for_groups(with_scores, without_scores, user_groups):
     return p_values
 
 
-def categorize_and_perform_tests(with_scores, without_scores, user_groups, output_dir):
+def categorize_and_perform_tests(
+    with_scores: Dict[str, List[float]],
+    without_scores: Dict[str, List[float]],
+    user_groups: Dict[str, Dict[str, List[int]]],
+    output_dir: str,
+) -> None:
     """Categorize users and perform statistical tests for each group."""
     p_values = {}
 
@@ -337,10 +367,14 @@ def categorize_and_perform_tests(with_scores, without_scores, user_groups, outpu
     write_stats_to_file(output_dir, user_groups, p_values)
 
 
-def write_stats_to_file(output_dir, user_groups, p_values):
+def write_stats_to_file(
+    output_dir: str,
+    user_groups: Dict[str, Dict[str, List[int]]],
+    p_values: dict[str, dict[str, tuple[float, float] | tuple[None, None]]],
+) -> None:  # dict[str, dict[str, tuple[float, float]]]
     """Write paired t-test and Wilcoxon statistical test results to a file, given a user group."""
 
-    def format_p_value(p_value):
+    def format_p_value(p_value: float | None) -> str:
         """Format the p-value to 5 decimal places."""
         return f"{p_value:.5f}" if p_value is not None else "N/A"
 
@@ -352,7 +386,7 @@ def write_stats_to_file(output_dir, user_groups, p_values):
         for group_name, users in user_groups.items():
             if users["weighted"] or users["raw"]:  # Check if the list is not empty
                 if group_name == "all users":
-                    file.write(f"\nAll users:")
+                    file.write("\nAll users:")
                 else:
                     file.write(f"\nUsers who experienced a {group_name} in NASA task load: ")
                 file.write(
@@ -378,7 +412,9 @@ def write_stats_to_file(output_dir, user_groups, p_values):
                 )
 
 
-def plot_avg_nasa_tlx_per_cat(without_copilot, with_copilot, nasa_categories, output_dir):
+def plot_avg_nasa_tlx_per_cat(
+    without_copilot: pd.DataFrame, with_copilot: pd.DataFrame, nasa_categories: List[str], output_dir: str
+) -> None:
     """
     Create and save a bar plot comparing the average NASA TLX raw and weighted scores
     for each category, without and with Copilot.
@@ -416,7 +452,9 @@ def plot_avg_nasa_tlx_per_cat(without_copilot, with_copilot, nasa_categories, ou
         plot_average_scores(df1, df2, columns, title, ylabel, filename, output_dir)
 
 
-def create_combined_scatter_plots(without_copilot, with_copilot, nasa_categories, output_dir):
+def create_combined_scatter_plots(
+    without_copilot: pd.DataFrame, with_copilot: pd.DataFrame, nasa_categories: List[str], output_dir: str
+) -> None:
     """Create scatter plots to compare the NASA TLX raw and weighted scores, and the NASA TLX coefficients."""
     plot_params = [
         ("raw", "Combined Scatter Plots for Raw Scores", "combined_scatter_plots_raw.png"),
@@ -429,7 +467,59 @@ def create_combined_scatter_plots(without_copilot, with_copilot, nasa_categories
         create_combined_scatter_plot(without_copilot, with_copilot, columns, title, filename, output_dir)
 
 
-def main(args):
+def plot_nasa_tlx_per_category(
+    df_without: pd.DataFrame, df_with: pd.DataFrame, nasa_categories: List[str], output_dir: str, suffix: str
+) -> None:
+    """
+    Create and save a 6x8 bar plot comparing the NASA TLX scores per category (6) and user (8) with and without Copilot
+    for a given suffix.
+    """
+    # Extract the relevant columns with the given suffix
+    columns_without = [f"{cat} {suffix}" for cat in nasa_categories]
+    columns_with = [f"{cat} {suffix}" for cat in nasa_categories]
+
+    # Create a figure and axis
+    fig, axes = plt.subplots(nrows=6, ncols=8, figsize=(24, 18), sharey=True)
+    fig.suptitle(f"NASA TLX Scores per Category and User with and without Copilot ({suffix})", fontsize=20)
+
+    # Plot the data
+    for i, category in enumerate(nasa_categories):
+        for j in range(len(df_without)):
+            ax = axes[i, j]
+            scores_without = df_without.iloc[j][columns_without[i]]
+            scores_with = df_with.iloc[j][columns_with[i]]
+            scores = [scores_without, scores_with]
+            bars = ax.bar(
+                ["without", "with"],
+                scores,
+                color=["blue", "orange"],
+            )
+            if j == 0:
+                ax.set_ylabel(category)
+
+            # Add the actual numbers above or within the bars
+            for bar, score in zip(bars, scores):
+                height = bar.get_height()
+                ax.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height,
+                    f"{score:.2f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                )
+              
+    # Add a common x-axis label for user names
+    for ax, col in zip(axes[5], range(1, 9)):
+        ax.set_xlabel(f"User {col}")
+
+    # Adjust layout and save the plot
+    plt.tight_layout(rect=(0, 0, 1, 0.96))
+    plt.savefig(os.path.join(output_dir, f"nasa_tlx_scores_by_user_cat_{suffix}.png"))
+    plt.close()
+
+
+def main(args: argparse.Namespace) -> None:
     # Set up plot characteristics
     plt.rcParams.update({"font.size": 14})
     users = np.arange(1, args.num_users + 1)
@@ -551,13 +641,16 @@ def main(args):
 
     # 4. Calculate and plot the average NASA TLX raw and weighted scores for each of 6 categories, without and with
     #    the Copilot to identify any potential significant changes in task load due to Copilot use.
-
     plot_avg_nasa_tlx_per_cat(without_copilot, with_copilot, nasa_categories, output_dir)
 
     # 5. Create scatter plots to compare the NASA TLX raw scores, weighted scores, and coefficients for users without
     #    and with Copilot for each pair of categories, to identify any potential relationships between the categories.
-
     create_combined_scatter_plots(without_copilot, with_copilot, nasa_categories, output_dir)
+
+    # 6. Create and save 6x8 bar plots comparing NASA TLX weighted and raw scores and coefficients per category and user
+    #    with and without Copilot
+    for suffix in ["weighted_score", "raw", "coef"]:
+        plot_nasa_tlx_per_category(without_copilot, with_copilot, nasa_categories, output_dir, suffix)
 
 
 if __name__ == "__main__":
