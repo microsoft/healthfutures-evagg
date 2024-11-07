@@ -508,27 +508,7 @@ def plot_nasa_tlx_per_category(
                     va="bottom",
                     fontsize=8,
                 )
-
-            # # Calculate the difference and confidence interval for the pair
-            # diff = scores_with - scores_without
-            # SE = np.std([scores_without, scores_with]) / np.sqrt(2)  # Standard error
-            # confidence_level = 0.95
-            # z_score = stats.norm.ppf(1 - (1 - confidence_level) / 2)
-            # margin_of_error = z_score * SE
-            # lower_bound = diff - margin_of_error
-            # upper_bound = diff + margin_of_error
-
-            # # Display the confidence interval above the bars
-            # ax.text(
-            #     0.5,
-            #     max(scores) + 0.5,
-            #     f"CI: [{lower_bound:.2f}, {upper_bound:.2f}]",
-            #     ha="center",
-            #     va="bottom",
-            #     fontsize=8,
-            #     color="black",
-            # )
-
+              
     # Add a common x-axis label for user names
     for ax, col in zip(axes[5], range(1, 9)):
         ax.set_xlabel(f"User {col}")
