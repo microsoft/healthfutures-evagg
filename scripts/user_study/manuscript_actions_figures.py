@@ -6,7 +6,7 @@ This includes generation of paper figures and statistics about actions and actio
 # %% Imports.
 
 import os
-from typing import List
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,7 +19,11 @@ from statsmodels.formula.api import mixedlm
 # %% Constants.
 
 ACTIONS_ROOT = "data/user_study"
-ACTIONS_FILES = [action_file for action_file in os.listdir(ACTIONS_ROOT) if action_file.endswith(".csv")]
+ACTIONS_FILES = [
+    action_file
+    for action_file in os.listdir(ACTIONS_ROOT)
+    if action_file.startswith("P") and action_file.endswith(".csv")
+]
 
 # %% Function definitions.
 
@@ -81,7 +85,7 @@ actions = actions.sort_values(["participant_id", "session_id"])
 
 def count_action(action_names: List[str]) -> pd.DataFrame | pd.Series:
     """Count the number of actions in the actions dataframe."""
-    return actions.query("action in @action_names").groupby(["participant_id", "session_id"]).size()
+    return actions.query("action in @action_names").groupby(["participant_id", "session_id"]).aggregate("size")
 
 
 case_review_counts = count_action(["start case", "completed case set- no additional variants for review"]) - 1
@@ -119,7 +123,7 @@ def duration_for_actions(start_actions: List[str], end_actions: List[str]) -> pd
 
     for id, group_df in actions.groupby(["participant_id", "session_id", "case_group_id"]):
         start_row = None
-        duration_list = []
+        duration_list: List[Tuple[Any, Any]] = []
         # Iterate through the rows of group_df, looking for start_actions and end_actions.
         for i, row in group_df.iterrows():
 
@@ -178,6 +182,18 @@ variant_review_durations = duration_for_actions(
     ["new variant review", "review saved variant"], ["move on from variant"]
 )
 
+# %% Add categorizations based on qualitative analyses
+
+for df in [case_review_durations, variant_review_durations, action_counts]:
+    df["interaction_style"] = "rule-out (P3, P6, P7)"
+    df["review_strategy"] = "single-sort (P2, P3, P7, P8)"
+
+    df.loc[df["participant_id"].isin(["P1", "P2", "P4", "P5", "P8"]), "interaction_style"] = (
+        "dig-in (P1, P2, P4, P5, P8)"
+    )
+    df.loc[df["participant_id"].isin(["P1", "P4", "P5", "P6"]), "review_strategy"] = "multi-sort (P1, P4, P5, P6)"
+
+
 # %% Make counts performance barplots.
 
 # First, make a barplot with a pair of bars for each individual, stratified by session.
@@ -204,6 +220,15 @@ for col in ylabels.keys():
     sns.barplot(data=action_counts, y=col, x="participant_id", hue="session_id", palette="pastel")
     plt.ylabel(ylabels[col])
 
+# %% Make counts performance barplots with subgroups derived from qualitative analyses.
+
+for col in ylabels.keys():
+    plt.figure()
+    sns.barplot(data=action_counts, x="interaction_style", y=col, hue="session_id")
+
+    plt.figure()
+    sns.barplot(data=action_counts, x="review_strategy", y=col, hue="session_id")
+
 # %% Make duration barplots.
 
 case_review_durations["minutes"] = case_review_durations["seconds"] / 60
@@ -226,6 +251,17 @@ plt.ylabel("Time spent on each variant (minutes)")
 plt.figure()
 sns.boxplot(data=variant_review_durations, y="minutes", x="participant_id", hue="session_id")
 plt.ylabel("Time spent on each variant (minutes)")
+
+# %% Make a few more duration barplots with subgroups derived from qualitative analyses.
+
+for df, label in [(case_review_durations, "case"), (variant_review_durations, "variant")]:
+    plt.figure()
+    sns.barplot(data=df, y="minutes", x="interaction_style", hue="session_id")
+    plt.ylabel(f"Time spent on each {label} (minutes)")
+
+    plt.figure()
+    sns.barplot(data=df, y="minutes", x="review_strategy", hue="session_id")
+    plt.ylabel(f"Time spent on each {label} (minutes)")
 
 # %% Perform statistical analyses of the counts.
 
