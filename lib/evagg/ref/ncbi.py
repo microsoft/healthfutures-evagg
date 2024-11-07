@@ -1,6 +1,5 @@
 import logging
 import urllib.parse as urlparse
-from abc import ABC
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from defusedxml import ElementTree
@@ -35,7 +34,7 @@ class NcbiApiSettings(BaseModel, extra=Extra.forbid):
         return values
 
 
-class NcbiClientBase(ABC):
+class NcbiClientBase:
     EUTILS_HOST = "https://eutils.ncbi.nlm.nih.gov"
     EUTILS_SEARCH_SITE = "/entrez/eutils/esearch.fcgi"
     EUTILS_FETCH_SITE = "/entrez/eutils/efetch.fcgi"
