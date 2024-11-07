@@ -648,7 +648,7 @@ def main(args: argparse.Namespace) -> None:
     create_combined_scatter_plots(without_copilot, with_copilot, nasa_categories, output_dir)
 
     # 6. Create and save 6x8 bar plots comparing NASA TLX weighted and raw scores and coefficients per category and user
-    # with and without Copilot
+    #    with and without Copilot
     for suffix in ["weighted_score", "raw", "coef"]:
         plot_nasa_tlx_per_category(without_copilot, with_copilot, nasa_categories, output_dir, suffix)
 
