@@ -3,6 +3,10 @@
 # Logging.
 log:
   di_factory: lib.evagg.utils.init_logger
+  prompts_to_console: True
+  to_file: true
+  include_modules:
+    - test_log
 
 # Application.
 di_factory: lib.evagg.PaperQueryApp
