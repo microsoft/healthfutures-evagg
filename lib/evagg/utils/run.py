@@ -4,11 +4,12 @@ import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel
+
 from .git import RepoStatus
-from .settings import SettingsModel
 
 
-class RunRecord(SettingsModel):
+class RunRecord(BaseModel):
     name: str
     timestamp: str
     args: List[str]

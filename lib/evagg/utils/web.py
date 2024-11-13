@@ -8,10 +8,8 @@ import requests
 from azure.cosmos import ContainerProxy, CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from defusedxml import ElementTree
-from pydantic import Extra, validator
+from pydantic import BaseModel, Extra, validator
 from requests.adapters import HTTPAdapter, Retry
-
-from lib.evagg.utils.settings import SettingsModel
 
 from .interfaces import IWebContentClient
 
@@ -20,7 +18,7 @@ logger = logging.getLogger(__name__)
 CONTENT_TYPES = ["text", "json", "xml"]
 
 
-class WebClientSettings(SettingsModel, extra=Extra.forbid):
+class WebClientSettings(BaseModel, extra=Extra.forbid):
     max_retries: int = 0  # no retries by default
     retry_backoff: float = 0.5  # indicates progression of 0.5, 1, 2, 4, 8, etc. seconds
     retry_codes: List[int] = [429, 500, 502, 503, 504]  # rate-limit exceeded, server errors
@@ -104,7 +102,7 @@ class RequestsWebContentClient(IWebContentClient):
         return self._transform_content(content, content_type)
 
 
-class CacheClientSettings(SettingsModel, extra=Extra.forbid):
+class CacheClientSettings(BaseModel, extra=Extra.forbid):
     endpoint: str
     credential: Any
     database: str = "document_cache"

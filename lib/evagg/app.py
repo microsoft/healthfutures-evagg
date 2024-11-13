@@ -49,4 +49,8 @@ class TestApp(IEvAggApp):
         self._test_value = test_value
 
     def execute(self) -> None:
+        if self._test_value == "KeyboardInterrupt":
+            raise KeyboardInterrupt("Test app raised KeyboardInterrupt")
+        if self._test_value == "Exception":
+            raise Exception("Test app raised Exception")
         logger.info(f"Test app executed with value: {self._test_value}")
