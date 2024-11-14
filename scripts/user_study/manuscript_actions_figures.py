@@ -263,6 +263,34 @@ for df, label in [(case_review_durations, "case"), (variant_review_durations, "v
     sns.barplot(data=df, y="minutes", x="review_strategy", hue="session_id")
     plt.ylabel(f"Time spent on each {label} (minutes)")
 
+# %% Make duration histograms for session 2 only, stratified by sugroups derived from qualititative analyses.
+
+for df, label in [(variant_review_durations, "variant")]:
+    for session in ["S1", "S2"]:
+        plt.figure()
+        sns.histplot(
+            data=df.query(f"session_id == '{session}'"),
+            x="minutes",
+            hue="interaction_style",
+            element="step",
+            bins=20,
+            log_scale=(True, False),
+        )
+        plt.xlabel(f"Time spent on each {label} (minutes) [{session}]")
+        plt.ylabel("Frequency")
+
+        plt.figure()
+        sns.histplot(
+            data=df.query(f"session_id == '{session}'"),
+            x="minutes",
+            hue="review_strategy",
+            element="step",
+            bins=20,
+            log_scale=(True, False),
+        )
+        plt.xlabel(f"Time spent on each {label} (minutes) [{session}]")
+        plt.ylabel("Frequency")
+
 # %% Perform statistical analyses of the counts.
 
 for col in ylabels.keys():
