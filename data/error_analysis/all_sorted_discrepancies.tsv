@@ -1,0 +1,320 @@
+question_number	pmid	gene	hgvs_desc	individual_id	task	id	index	truth_dict	output_dict	truth_value
+152	33585230	ADCY1			papers	('ADCY1', 33585230)	0			False
+205	27848944	AHCY			papers	('AHCY', 27848944)	114			True
+206	30555514	AHCY			papers	('AHCY', 30555514)	115			False
+207	35463910	AHCY			papers	('AHCY', 35463910)	117			True
+48	38052822	AHCY	p.Tyr143Cys	inferred proband	phenotype	('AHCY', 38052822, 'p.Tyr143Cys', 'inferred proband')	155	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0003235', 'HP:0003235', 'HP:0003235', 'HP:0003235', 'HP:0003235']}	{'HP:0001507 | Growth abnormality': ['HP:0004324', 'HP:0004324', 'HP:0004324'], 'HP:0031797 | Clinical course': ['HP:0040006', 'HP:0040006', 'HP:0040006', 'HP:0040006', 'HP:0040006']}	
+61	38052822	AHCY			study_type	('AHCY', 38052822)	30			case report
+314	38052822	AHCY	p.Tyr145Cys	inferred proband	observations	('AHCY', 38052822, 'p.Tyr145Cys', 'inferred proband')	301			False
+315	38052822	AHCY	p.Tyr320Asp	inferred proband	observations	('AHCY', 38052822, 'p.Tyr320Asp', 'inferred proband')	302			False
+316	38052822	AHCY	p.Tyr328Asp	inferred proband	observations	('AHCY', 38052822, 'p.Tyr328Asp', 'inferred proband')	303			False
+153	25279699	B4GAT1			papers	('B4GAT1', 25279699)	1			True
+238	25279699	B4GAT1	c.464T>C	inferred proband	observations	('B4GAT1', 25279699, 'c.464T>C', 'inferred proband')	0			True
+154	34602496	B4GAT1			papers	('B4GAT1', 34602496)	2			True
+155	28135719	BAZ2B			papers	('BAZ2B', 28135719)	3			True
+156	28554332	BAZ2B			papers	('BAZ2B', 28554332)	4			True
+157	33057194	BAZ2B			papers	('BAZ2B', 33057194)	5			True
+201	25359423	COG4			papers	('COG4', 25359423)	104			False
+0	33688625	COG4	p.Arg724Trp	inferred proband	phenotype	('COG4', 33688625, 'p.Arg724Trp', 'inferred proband')	0	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0012345']}	{'HP:0000152 | Abnormality of head or neck': ['HP:0000280', 'HP:0000280', 'HP:0000280', 'HP:0000280'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0011342', 'HP:0001250', 'HP:0001263', 'HP:0001250', 'HP:0011342', 'HP:0001250', 'HP:0011342', 'HP:0001250', 'HP:0001250', 'HP:0011342'], 'HP:0012824 | Severity': ['HP:0012825']}	
+1	33688625	COG4	p.Arg729Ala	inferred proband	phenotype	('COG4', 33688625, 'p.Arg729Ala', 'inferred proband')	1	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0012345']}	{'HP:0000152 | Abnormality of head or neck': ['HP:0000280', 'HP:0000280', 'HP:0000280'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0011342', 'HP:0001250', 'HP:0001263', 'HP:0001250', 'HP:0011342', 'HP:0001250', 'HP:0001250', 'HP:0011342'], 'HP:0012824 | Severity': ['HP:0012825']}	
+2	33688625	COG4	p.Arg729Trp	inferred proband	phenotype	('COG4', 33688625, 'p.Arg729Trp', 'inferred proband')	2	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0012345']}	{'HP:0000152 | Abnormality of head or neck': ['HP:0000280', 'HP:0000280', 'HP:0000280', 'HP:0000280'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0011342', 'HP:0001250', 'HP:0001263', 'HP:0001250', 'HP:0011342', 'HP:0001250', 'HP:0011342', 'HP:0001250', 'HP:0001250', 'HP:0011342'], 'HP:0012824 | Severity': ['HP:0012825']}	
+3	33688625	COG4	p.Glu764Ala	inferred proband	phenotype	('COG4', 33688625, 'p.Glu764Ala', 'inferred proband')	3	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0012345']}	{'HP:0000152 | Abnormality of head or neck': ['HP:0000280', 'HP:0000280', 'HP:0000280', 'HP:0000280'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0011342', 'HP:0001250', 'HP:0001263', 'HP:0001250', 'HP:0011342', 'HP:0001250', 'HP:0011342', 'HP:0001250', 'HP:0001250', 'HP:0011342'], 'HP:0012824 | Severity': ['HP:0012825']}	
+4	33688625	COG4	p.Gly516Arg	inferred proband	phenotype	('COG4', 33688625, 'p.Gly516Arg', 'inferred proband')	4	{'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0002652', 'HP:0002652', 'HP:0002652', 'HP:0002652', 'HP:0002652']}	{'HP:0001507 | Growth abnormality': ['HP:0004322', 'HP:0004322', 'HP:0004322', 'HP:0004322', 'HP:0004322'], 'HP:0000152 | Abnormality of head or neck': ['HP:0004439', 'HP:0004439', 'HP:0004439', 'HP:0004439'], 'HP:0040064 | Abnormality of limbs': ['HP:0009372', 'HP:0009372', 'HP:0009372', 'HP:0009372', 'HP:0009372'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0001263', 'HP:0001263', 'HP:0000750', 'HP:0000750', 'HP:0001263', 'HP:0001263', 'HP:0000750', 'HP:0001263']}	
+52	33688625	COG4			study_type	('COG4', 33688625)	0			case report
+121	33688625	COG4	p.Arg729Ala	inferred proband	zygosity	('COG4', 33688625, 'p.Arg729Ala', 'inferred proband')	1			none
+122	33688625	COG4	p.Arg729Trp	inferred proband	zygosity	('COG4', 33688625, 'p.Arg729Trp', 'inferred proband')	2			none
+123	33688625	COG4	p.Glu764Ala	inferred proband	zygosity	('COG4', 33688625, 'p.Glu764Ala', 'inferred proband')	3			none
+124	33688625	COG4	p.Gly516Arg	inferred proband	zygosity	('COG4', 33688625, 'p.Gly516Arg', 'inferred proband')	4			none
+38	34298581	COG4	c.1255G>T	p21	phenotype	('COG4', 34298581, 'c.1255G>T', 'p21')	114	{}	{'HP:0001871 | Abnormality of blood and blood-forming tissues': ['HP:0001928', 'HP:0003225', 'HP:0003225', 'HP:0005542', 'HP:0001928']}	
+41	34298581	COG4	c.941G>A	p21	phenotype	('COG4', 34298581, 'c.941G>A', 'p21')	118	{}	{'HP:0001871 | Abnormality of blood and blood-forming tissues': ['HP:0001928', 'HP:0003225', 'HP:0003225', 'HP:0005542', 'HP:0001928']}	
+86	34298581	COG4	c.1255G>T	p21	variant_inheritance	('COG4', 34298581, 'c.1255G>T', 'p21')	114			inherited
+87	34298581	COG4	c.941G>A	p21	variant_inheritance	('COG4', 34298581, 'c.941G>A', 'p21')	118			inherited
+117	34298581	COG4	c.1255G>T		variant_type	('COG4', 34298581, 'c.1255G>T')	101			missense
+158	26084686	CTF1			papers	('CTF1', 26084686)	14			True
+39	33193563	DNAJC7	c.281G>C	inferred proband	phenotype	('DNAJC7', 33193563, 'c.281G>C', 'inferred proband')	115	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0002015', 'HP:0007354', 'HP:0000743', 'HP:0001260', 'HP:0007354', 'HP:0000743', 'HP:0002015', 'HP:0001260'], 'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0001324', 'HP:0003444', 'HP:0030196', 'HP:0003202', 'HP:0003444', 'HP:0001324', 'HP:0003202'], 'HP:0002086 | Abnormality of the respiratory system': ['HP:0002094', 'HP:0002094', 'HP:0002878']}	
+57	33193563	DNAJC7			study_type	('DNAJC7', 33193563)	20			case report
+147	33193563	DNAJC7	c.281G>C	inferred proband	zygosity	('DNAJC7', 33193563, 'c.281G>C', 'inferred proband')	115			none
+239	33193563	DNAJC7	c.281G>C	inferred proband	observations	('DNAJC7', 33193563, 'c.281G>C', 'inferred proband')	15			True
+240	33193563	DNAJC7	c.712A>G	inferred proband	observations	('DNAJC7', 33193563, 'c.712A>G', 'inferred proband')	24			True
+125	35456894	DNAJC7	c.466C>T	inferred proband	zygosity	('DNAJC7', 35456894, 'c.466C>T', 'inferred proband')	13			none
+126	35456894	DNAJC7	c.467G>A	inferred proband	zygosity	('DNAJC7', 35456894, 'c.467G>A', 'inferred proband')	14			none
+159	36993367	DNAJC7			papers	('DNAJC7', 36993367)	17			True
+160	28327206	EMC1			papers	('EMC1', 28327206)	18			False
+242	29271071	EMC1	c.1212+1G>A	inferred proband	observations	('EMC1', 29271071, 'c.1212+1G>A', 'inferred proband')	31			False
+243	29271071	EMC1	c.19564510C>T	inferred proband	observations	('EMC1', 29271071, 'c.19564510C>T', 'inferred proband')	32			False
+244	29271071	EMC1	c.430G>A	inferred proband	observations	('EMC1', 29271071, 'c.430G>A', 'inferred proband')	34			False
+245	29271071	EMC1	p.Arg401Trp	inferred proband	observations	('EMC1', 29271071, 'p.Arg401Trp', 'inferred proband')	36			False
+246	29271071	EMC1	p.Gly471Arg	inferred proband	observations	('EMC1', 29271071, 'p.Gly471Arg', 'inferred proband')	37			False
+247	29271071	EMC1	p.Gly868Arg	inferred proband	observations	('EMC1', 29271071, 'p.Gly868Arg', 'inferred proband')	38			False
+248	29271071	EMC1	p.Thr82Met	inferred proband	observations	('EMC1', 29271071, 'p.Thr82Met', 'inferred proband')	40			False
+251	29271071	EMC1	c.1212+1G>A	proband (iv-1)	observations	('EMC1', 29271071, 'c.1212+1G>A', 'proband (iv-1)')	43			True
+42	37187958	EMC1	p.Val792=	sister	phenotype	('EMC1', 37187958, 'p.Val792=', 'sister')	120	{}	{'HP:0000478 | Abnormality of the eye': ['HP:0000505', 'HP:0000505', 'HP:0000505']}	
+108	37187958	EMC1	c.2376G>A		variant_type	('EMC1', 37187958, 'c.2376G>A')	21			synonymous
+241	37187958	EMC1	c.2376G>A	father	observations	('EMC1', 37187958, 'c.2376G>A', 'father')	30			False
+249	37187958	EMC1	p.Val792=	inferred proband	observations	('EMC1', 37187958, 'p.Val792=', 'inferred proband')	41			False
+250	37187958	EMC1	c.765_777delinsATTCTACTT	mother	observations	('EMC1', 37187958, 'c.765_777delinsATTCTACTT', 'mother')	42			False
+252	37187958	EMC1	c.2376G>A	sister	observations	('EMC1', 37187958, 'c.2376G>A', 'sister')	44			False
+253	37187958	EMC1	c.765_777delinsATTCTACTT	sister	observations	('EMC1', 37187958, 'c.765_777delinsATTCTACTT', 'sister')	45			False
+254	37187958	EMC1	p.Leu256fs	sister	observations	('EMC1', 37187958, 'p.Leu256fs', 'sister')	46			True
+282	37187958	EMC1	p.Val792=	father	observations	('EMC1', 37187958, 'p.Val792=', 'father')	192			False
+283	37187958	EMC1	p.Val792fs	inferred proband	observations	('EMC1', 37187958, 'p.Val792fs', 'inferred proband')	194			False
+284	37187958	EMC1	p.Val792fs	sister	observations	('EMC1', 37187958, 'p.Val792fs', 'sister')	195			False
+161	37947657	EMC1			papers	('EMC1', 37947657)	21			False
+5	32639540	EXOC2	c.1309C>T	1:iv-2	phenotype	('EXOC2', 32639540, 'c.1309C>T', '1:iv-2')	23	{}	{'HP:0000478 | Abnormality of the eye': ['HP:0007766', 'HP:0000519', 'HP:0007766', 'HP:0000519', 'HP:0000519', 'HP:0000519']}	
+6	32639540	EXOC2	c.1739T>C	2:ii-1	phenotype	('EXOC2', 32639540, 'c.1739T>C', '2:ii-1')	25	{'HP:0025031 | Abnormality of the digestive system': ['HP:0010451', 'HP:0010451', 'HP:0010451'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0002419', 'HP:0031913', 'HP:0001320', 'HP:0002870']}	{'HP:0000769 | Abnormality of the breast': ['HP:0006610', 'HP:0006610', 'HP:0006610', 'HP:0006610', 'HP:0006610']}	
+7	32639540	EXOC2	c.389G>A	2:ii-1	phenotype	('EXOC2', 32639540, 'c.389G>A', '2:ii-1')	26	{'HP:0025031 | Abnormality of the digestive system': ['HP:0010451', 'HP:0010451', 'HP:0010451'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0002419', 'HP:0031913', 'HP:0001320', 'HP:0002870']}	{'HP:0000769 | Abnormality of the breast': ['HP:0006610', 'HP:0006610', 'HP:0006610', 'HP:0006610', 'HP:0006610']}	
+162	20161761	FBN2			papers	('FBN2', 20161761)	23			True
+163	24348270	FBN2			papers	('FBN2', 24348270)	24			False
+164	26114882	FBN2			papers	('FBN2', 26114882)	25			True
+165	29208648	FBN2			papers	('FBN2', 29208648)	30			False
+8	32184806	FBN2	c.3724+3A>C	ii-1	phenotype	('FBN2', 32184806, 'c.3724+3A>C', 'ii-1')	29	{}	{'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0003100', 'HP:0003100', 'HP:0003100', 'HP:0003100', 'HP:0003100'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0030051', 'HP:0030051', 'HP:0030051', 'HP:0030051', 'HP:0030051']}	
+9	32184806	FBN2	c.3724+3A>C	ii-8	phenotype	('FBN2', 32184806, 'c.3724+3A>C', 'ii-8')	31	{}	{'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0003100', 'HP:0003100', 'HP:0003100', 'HP:0003100', 'HP:0003100']}	
+11	32184806	FBN2	c.3724+3A>C	iii-1	phenotype	('FBN2', 32184806, 'c.3724+3A>C', 'iii-1')	34	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0030051', 'HP:0030051', 'HP:0030051', 'HP:0030051', 'HP:0030051']}	
+12	32184806	FBN2	c.3724+3A>C	iii-3	phenotype	('FBN2', 32184806, 'c.3724+3A>C', 'iii-3')	35	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0030051', 'HP:0030051', 'HP:0030051', 'HP:0030051', 'HP:0030051']}	
+13	32184806	FBN2	c.3724+3A>C	iii-6	phenotype	('FBN2', 32184806, 'c.3724+3A>C', 'iii-6')	37	{}	{'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0003100', 'HP:0003100', 'HP:0003100', 'HP:0003100', 'HP:0003100']}	
+63	32184806	FBN2	c.3724+3A>C	i-1	variant_inheritance	('FBN2', 32184806, 'c.3724+3A>C', 'i-1')	27			unknown
+65	32184806	FBN2	c.3724+3A>C	ii-1	variant_inheritance	('FBN2', 32184806, 'c.3724+3A>C', 'ii-1')	29			inherited
+66	32184806	FBN2	c.3724+3A>C	ii-8	variant_inheritance	('FBN2', 32184806, 'c.3724+3A>C', 'ii-8')	31			inherited
+67	32184806	FBN2	c.3724+3A>C	iii-1	variant_inheritance	('FBN2', 32184806, 'c.3724+3A>C', 'iii-1')	34			inherited
+166	32771030	FBN2			papers	('FBN2', 32771030)	33			False
+10	33638605	FBN2	c.3344A>T	ii2	phenotype	('FBN2', 33638605, 'c.3344A>T', 'ii2')	32	{'HP:0000152 | Abnormality of head or neck': ['HP:0000160', 'HP:0000160', 'HP:0000160', 'HP:0000160']}	{}	
+14	33638605	FBN2	c.3344A>T	iii1	phenotype	('FBN2', 33638605, 'c.3344A>T', 'iii1')	39	{'HP:0000152 | Abnormality of head or neck': ['HP:0000160', 'HP:0000160', 'HP:0000160', 'HP:0000160'], 'HP:0040064 | Abnormality of limbs': ['HP:0034681', 'HP:0040070']}	{}	
+15	33638605	FBN2	c.3344A>T	iii3	phenotype	('FBN2', 33638605, 'c.3344A>T', 'iii3')	40	{'HP:0000152 | Abnormality of head or neck': ['HP:0000160', 'HP:0000160', 'HP:0000160', 'HP:0000160', 'HP:0000160'], 'HP:0040064 | Abnormality of limbs': ['HP:0034681', 'HP:0040070']}	{'HP:0001507 | Growth abnormality': ['HP:0001533']}	
+64	33638605	FBN2	c.3344A>T	i1	variant_inheritance	('FBN2', 33638605, 'c.3344A>T', 'i1')	28			unknown
+255	33638605	FBN2	c.3344A>T	iii8	observations	('FBN2', 33638605, 'c.3344A>T', 'iii8')	66			False
+167	34356068	FBN2			papers	('FBN2', 34356068)	35			True
+202	35590413	FBN2			papers	('FBN2', 35590413)	106			False
+168	36800380	FBN2			papers	('FBN2', 36800380)	40			True
+169	37100863	FBN2			papers	('FBN2', 37100863)	42			False
+170	37254066	FBN2			papers	('FBN2', 37254066)	43			True
+171	37579195	FBN2			papers	('FBN2', 37579195)	44			False
+172	37875969	FBN2			papers	('FBN2', 37875969)	45			True
+173	38791509	FBN2			papers	('FBN2', 38791509)	48			False
+208	27218149	FOXE3			papers	('FOXE3', 27218149)	119			False
+209	30479708	FOXE3			papers	('FOXE3', 30479708)	120			False
+210	30991053	FOXE3			papers	('FOXE3', 30991053)	121			True
+50	32976546	FOXE3	c.289A>G	iv:2	phenotype	('FOXE3', 32976546, 'c.289A>G', 'iv:2')	158	{}	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0012040', 'HP:0012040', 'HP:0012040']}	
+106	32976546	FOXE3	c.289A>G	iv:2	variant_inheritance	('FOXE3', 32976546, 'c.289A>G', 'iv:2')	158			unknown
+294	32976546	FOXE3	c.289A>G	iii:7	observations	('FOXE3', 32976546, 'c.289A>G', 'iii:7')	241			True
+295	32976546	FOXE3	c.289A>G	iv:1	observations	('FOXE3', 32976546, 'c.289A>G', 'iv:1')	242			True
+296	32976546	FOXE3	c.289A>G	iv:3	observations	('FOXE3', 32976546, 'c.289A>G', 'iv:3')	244			True
+297	32976546	FOXE3	c.289A>G	v:1	observations	('FOXE3', 32976546, 'c.289A>G', 'v:1')	245			True
+298	32976546	FOXE3	c.289A>G	v:2	observations	('FOXE3', 32976546, 'c.289A>G', 'v:2')	246			True
+299	32976546	FOXE3	c.289A>G	v:3	observations	('FOXE3', 32976546, 'c.289A>G', 'v:3')	247			True
+300	32976546	FOXE3	c.289A>G	v:4	observations	('FOXE3', 32976546, 'c.289A>G', 'v:4')	248			True
+46	34046667	FOXE3	c.291C>G	9b	phenotype	('FOXE3', 34046667, 'c.291C>G', '9b')	136	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0000717', 'HP:0001249', 'HP:0000717', 'HP:0001249', 'HP:0001249', 'HP:0000717', 'HP:0000717', 'HP:0001249']}	
+59	34046667	FOXE3			study_type	('FOXE3', 34046667)	27			case series
+90	34046667	FOXE3	c.21_24del	2a	variant_inheritance	('FOXE3', 34046667, 'c.21_24del', '2a')	127			unknown
+91	34046667	FOXE3	c.21_24del	2b	variant_inheritance	('FOXE3', 34046667, 'c.21_24del', '2b')	128			unknown
+92	34046667	FOXE3	c.21_24del	2c	variant_inheritance	('FOXE3', 34046667, 'c.21_24del', '2c')	129			unknown
+93	34046667	FOXE3	c.244A>G	6	variant_inheritance	('FOXE3', 34046667, 'c.244A>G', '6')	132			unknown
+94	34046667	FOXE3	c.291C>G	9a	variant_inheritance	('FOXE3', 34046667, 'c.291C>G', '9a')	135			unknown
+95	34046667	FOXE3	c.291C>G	9b	variant_inheritance	('FOXE3', 34046667, 'c.291C>G', '9b')	136			unknown
+96	34046667	FOXE3	c.359G>C	10a	variant_inheritance	('FOXE3', 34046667, 'c.359G>C', '10a')	137			unknown
+97	34046667	FOXE3	c.359G>C	10b	variant_inheritance	('FOXE3', 34046667, 'c.359G>C', '10b')	138			unknown
+98	34046667	FOXE3	c.359G>C	10c	variant_inheritance	('FOXE3', 34046667, 'c.359G>C', '10c')	139			unknown
+99	34046667	FOXE3	c.720C>A	14a	variant_inheritance	('FOXE3', 34046667, 'c.720C>A', '14a')	142			unknown
+100	34046667	FOXE3	c.720C>A	14b	variant_inheritance	('FOXE3', 34046667, 'c.720C>A', '14b')	143			unknown
+101	34046667	FOXE3	c.958T>C	16c	variant_inheritance	('FOXE3', 34046667, 'c.958T>C', '16c')	146			unknown
+102	34046667	FOXE3	c.958T>C	16d	variant_inheritance	('FOXE3', 34046667, 'c.958T>C', '16d')	147			unknown
+103	34046667	FOXE3	c.959G>C	15a	variant_inheritance	('FOXE3', 34046667, 'c.959G>C', '15a')	149			unknown
+104	34046667	FOXE3	c.959G>C	15c	variant_inheritance	('FOXE3', 34046667, 'c.959G>C', '15c')	151			unknown
+107	34046667	FOXE3	c.371C>T	12	variant_inheritance	('FOXE3', 34046667, 'c.371C>T', '12')	161			unknown
+118	34046667	FOXE3	c.21_24del		variant_type	('FOXE3', 34046667, 'c.21_24del')	114			stop gained
+119	34046667	FOXE3	c.958T>C		variant_type	('FOXE3', 34046667, 'c.958T>C')	121			stop lost
+120	34046667	FOXE3	c.959G>C		variant_type	('FOXE3', 34046667, 'c.959G>C')	122			stop lost
+302	34046667	FOXE3	c.146G>C	inferred proband	observations	('FOXE3', 34046667, 'c.146G>C', 'inferred proband')	254			False
+303	34046667	FOXE3	c.148_170del	3	observations	('FOXE3', 34046667, 'c.148_170del', '3')	255			True
+304	34046667	FOXE3	c.21_24del	1	observations	('FOXE3', 34046667, 'c.21_24del', '1')	256			True
+305	34046667	FOXE3	c.244A>G	5	observations	('FOXE3', 34046667, 'c.244A>G', '5')	262			False
+306	34046667	FOXE3	c.286G>A	4	observations	('FOXE3', 34046667, 'c.286G>A', '4')	266			False
+307	34046667	FOXE3	c.543del	7a	observations	('FOXE3', 34046667, 'c.543del', '7a')	277			False
+308	34046667	FOXE3	c.543del	7b	observations	('FOXE3', 34046667, 'c.543del', '7b')	278			False
+309	34046667	FOXE3	c.844_850dup	11a	observations	('FOXE3', 34046667, 'c.844_850dup', '11a')	282			False
+310	34046667	FOXE3	c.844_850dup	11b	observations	('FOXE3', 34046667, 'c.844_850dup', '11b')	283			False
+317	34046667	FOXE3	c.148_170dup	3	observations	('FOXE3', 34046667, 'c.148_170dup', '3')	310			False
+211	34434212	FOXE3			papers	('FOXE3', 34434212)	126			False
+212	36359912	FOXE3			papers	('FOXE3', 36359912)	128			False
+174	28383030	GRXCR2			papers	('GRXCR2', 28383030)	49			True
+175	30157177	GRXCR2			papers	('GRXCR2', 30157177)	50			True
+256	30157177	GRXCR2	p.Glu69Lys	inferred proband	observations	('GRXCR2', 30157177, 'p.Glu69Lys', 'inferred proband')	70			True
+257	30157177	GRXCR2	p.Gly98Asp	inferred proband	observations	('GRXCR2', 30157177, 'p.Gly98Asp', 'inferred proband')	71			True
+259	30157177	GRXCR2	p.Leu181Phe	inferred proband	observations	('GRXCR2', 30157177, 'p.Leu181Phe', 'inferred proband')	73			True
+260	30157177	GRXCR2	p.Ser52Asn	inferred proband	observations	('GRXCR2', 30157177, 'p.Ser52Asn', 'inferred proband')	74			True
+53	33528103	GRXCR2			study_type	('GRXCR2', 33528103)	6			cohort analysis
+68	33528103	GRXCR2	c.251delC	inferred proband	variant_inheritance	('GRXCR2', 33528103, 'c.251delC', 'inferred proband')	41			inherited
+258	33528103	GRXCR2	p.Ile85fs	inferred proband	observations	('GRXCR2', 33528103, 'p.Ile85fs', 'inferred proband')	72			False
+176	35454363	GRXCR2			papers	('GRXCR2', 35454363)	53			True
+177	29165669	JPH2			papers	('JPH2', 29165669)	54			True
+178	34394822	JPH2			papers	('JPH2', 34394822)	57			True
+16	35001666	JPH2	c.1513G>A	inferred proband	phenotype	('JPH2', 35001666, 'c.1513G>A', 'inferred proband')	52	{}	{'HP:0001626 | Abnormality of the cardiovascular system': ['HP:0012249', 'HP:0032197', 'HP:0005144', 'HP:0034313', 'HP:0001639', 'HP:0001644', 'HP:0034313', 'HP:0032197', 'HP:0005144', 'HP:0001639', 'HP:0012249', 'HP:0034313', 'HP:0001644', 'HP:0001639', 'HP:0005144', 'HP:0001639', 'HP:0005144', 'HP:0034313', 'HP:0032197', 'HP:0001644', 'HP:0012249', 'HP:0034313', 'HP:0005144', 'HP:0032197', 'HP:0012249', 'HP:0001639', 'HP:0001644'], 'HP:0025142 | Constitutional symptom': ['HP:0001645', 'HP:0001645', 'HP:0001645', 'HP:0001645']}	
+17	35001666	JPH2	c.163C>G	inferred proband	phenotype	('JPH2', 35001666, 'c.163C>G', 'inferred proband')	53	{}	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0011034', 'HP:0011034', 'HP:0011034', 'HP:0011034', 'HP:0011034']}	
+18	35001666	JPH2	c.1920dup	inferred proband	phenotype	('JPH2', 35001666, 'c.1920dup', 'inferred proband')	59	{}	{'HP:0025142 | Constitutional symptom': ['HP:0001699', 'HP:0001699', 'HP:0001699']}	
+19	35001666	JPH2	c.424G>T	inferred proband	phenotype	('JPH2', 35001666, 'c.424G>T', 'inferred proband')	68	{'HP:0001626 | Abnormality of the cardiovascular system': ['HP:0001639', 'HP:0001639', 'HP:0001639']}	{'HP:0001197 | Abnormality of prenatal development or birth': ['HP:0033552']}	
+20	35001666	JPH2	p.Arg643Ter	inferred proband	phenotype	('JPH2', 35001666, 'p.Arg643Ter', 'inferred proband')	79	{}	{'HP:0001626 | Abnormality of the cardiovascular system': ['HP:0001644', 'HP:0001639', 'HP:0001644', 'HP:0001639', 'HP:0001644', 'HP:0001639', 'HP:0001644', 'HP:0001639', 'HP:0001644', 'HP:0001639']}	
+21	35001666	JPH2	p.Gly21Ter	inferred proband	phenotype	('JPH2', 35001666, 'p.Gly21Ter', 'inferred proband')	83	{'HP:0001626 | Abnormality of the cardiovascular system': ['HP:0001638', 'HP:0001638', 'HP:0001638', 'HP:0001638', 'HP:0001638']}	{}	
+22	35001666	JPH2	p.Val143fs	inferred proband	phenotype	('JPH2', 35001666, 'p.Val143fs', 'inferred proband')	90	{'HP:0001626 | Abnormality of the cardiovascular system': ['HP:0001639', 'HP:0001639', 'HP:0001639']}	{}	
+69	35001666	JPH2	c.1213G>T	inferred proband	variant_inheritance	('JPH2', 35001666, 'c.1213G>T', 'inferred proband')	46			de novo
+109	35001666	JPH2	c.1083G>A		variant_type	('JPH2', 35001666, 'c.1083G>A')	31			missense
+110	35001666	JPH2	c.1513G>A		variant_type	('JPH2', 35001666, 'c.1513G>A')	39			missense
+111	35001666	JPH2	c.2006_2010+1dup		variant_type	('JPH2', 35001666, 'c.2006_2010+1dup')	49			splice region
+112	35001666	JPH2	c.424G>T		variant_type	('JPH2', 35001666, 'c.424G>T')	55			stop gained
+113	35001666	JPH2	c.493_514delinsC		variant_type	('JPH2', 35001666, 'c.493_514delinsC')	57			indel
+114	35001666	JPH2	c.494C>T		variant_type	('JPH2', 35001666, 'c.494C>T')	58			missense
+115	35001666	JPH2	c.559G>A		variant_type	('JPH2', 35001666, 'c.559G>A')	61			missense
+127	35001666	JPH2	c.1213G>T	inferred proband	zygosity	('JPH2', 35001666, 'c.1213G>T', 'inferred proband')	46			heterozygous
+128	35001666	JPH2	c.1240A>C	inferred proband	zygosity	('JPH2', 35001666, 'c.1240A>C', 'inferred proband')	47			compound heterozygous
+129	35001666	JPH2	c.1282C>T	inferred proband	zygosity	('JPH2', 35001666, 'c.1282C>T', 'inferred proband')	48			homozygous
+130	35001666	JPH2	c.1513G>A	inferred proband	zygosity	('JPH2', 35001666, 'c.1513G>A', 'inferred proband')	52			heterozygous
+131	35001666	JPH2	c.1920dup	inferred proband	zygosity	('JPH2', 35001666, 'c.1920dup', 'inferred proband')	59			homozygous
+132	35001666	JPH2	c.253G>A	inferred proband	zygosity	('JPH2', 35001666, 'c.253G>A', 'inferred proband')	64			heterozygous
+133	35001666	JPH2	c.301A>C	inferred proband	zygosity	('JPH2', 35001666, 'c.301A>C', 'inferred proband')	65			heterozygous
+134	35001666	JPH2	c.421T>C	inferred proband	zygosity	('JPH2', 35001666, 'c.421T>C', 'inferred proband')	67			heterozygous
+135	35001666	JPH2	c.482C>A	inferred proband	zygosity	('JPH2', 35001666, 'c.482C>A', 'inferred proband')	69			heterozygous
+136	35001666	JPH2	c.494C>T	inferred proband	zygosity	('JPH2', 35001666, 'c.494C>T', 'inferred proband')	71			heterozygous
+137	35001666	JPH2	c.709A>G	inferred proband	zygosity	('JPH2', 35001666, 'c.709A>G', 'inferred proband')	77			compound heterozygous
+261	35001666	JPH2	p.Ala189Thr	inferred proband	observations	('JPH2', 35001666, 'p.Ala189Thr', 'inferred proband')	115			False
+262	35001666	JPH2	p.Gln142Ter	inferred proband	observations	('JPH2', 35001666, 'p.Gln142Ter', 'inferred proband')	117			False
+263	35001666	JPH2	p.Gly505STer	inferred proband	observations	('JPH2', 35001666, 'p.Gly505STer', 'inferred proband')	122			False
+264	35001666	JPH2	p.Lys361Asn	inferred proband	observations	('JPH2', 35001666, 'p.Lys361Asn', 'inferred proband')	124			False
+265	35001666	JPH2	p.Ser165Asn172delinsHis	inferred proband	observations	('JPH2', 35001666, 'p.Ser165Asn172delinsHis', 'inferred proband')	127			False
+179	35800456	JPH2			papers	('JPH2', 35800456)	59			False
+40	37371654	JPH2	c.482C>A	inferred proband	phenotype	('JPH2', 37371654, 'c.482C>A', 'inferred proband')	116	{'HP:0002086 | Abnormality of the respiratory system': ['HP:0002094', 'HP:0002094', 'HP:0002094']}	{'HP:0031797 | Clinical course': ['HP:0025297', 'HP:0025297'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0003436']}	
+180	38438248	JPH2			papers	('JPH2', 38438248)	62			False
+213	24904291	KIF1B			papers	('KIF1B', 24904291)	130			False
+214	29113313	KIF1B			papers	('KIF1B', 29113313)	132			False
+215	29203804	KIF1B			papers	('KIF1B', 29203804)	133			False
+216	29504908	KIF1B			papers	('KIF1B', 29504908)	134			False
+217	30073017	KIF1B			papers	('KIF1B', 30073017)	135			False
+218	33138083	KIF1B			papers	('KIF1B', 33138083)	140			False
+51	33362715	KIF1B	c.3649C>T	108	phenotype	('KIF1B', 33362715, 'c.3649C>T', '108')	160	{}	{'HP:0001574 | Abnormality of the integument': ['HP:0000975'], 'HP:0001626 | Abnormality of the cardiovascular system': ['HP:0001962'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0002315']}	
+150	33362715	KIF1B	c.3649C>T	108	zygosity	('KIF1B', 33362715, 'c.3649C>T', '108')	160			heterozygous
+301	33362715	KIF1B	c.3649C>T	108	observations	('KIF1B', 33362715, 'c.3649C>T', '108')	250			True
+219	37529773	KIF1B			papers	('KIF1B', 37529773)	143			False
+47	37780619	KIF1B	c.4660G>C	inferred proband	phenotype	('KIF1B', 37780619, 'c.4660G>C', 'inferred proband')	154	{'HP:0000818 | Abnormality of the endocrine system': ['HP:0002668', 'HP:0002668', 'HP:0002668'], 'HP:0002715 | Abnormality of the immune system': ['HP:0030783', 'HP:0030783']}	{'HP:0025031 | Abnormality of the digestive system': ['HP:0001392', 'HP:0001392', 'HP:0033769'], 'HP:0001626 | Abnormality of the cardiovascular system': ['HP:0001708', 'HP:0030005', 'HP:0005180', 'HP:0001962', 'HP:0030718', 'HP:0030718', 'HP:0001962', 'HP:0005180', 'HP:0001962', 'HP:0001649', 'HP:0001708', 'HP:0030005', 'HP:0001649', 'HP:0001962', 'HP:0001962', 'HP:0001649', 'HP:0005180', 'HP:0030005'], 'HP:0002086 | Abnormality of the respiratory system': ['HP:0002878', 'HP:0002094', 'HP:0002092', 'HP:0002878', 'HP:0002092', 'HP:0002094', 'HP:0002092', 'HP:0002094', 'HP:0002878', 'HP:0002092', 'HP:0002094'], 'HP:0001871 | Abnormality of blood and blood-forming tissues': ['HP:0001894', 'HP:0004840', 'HP:0001903', 'HP:0031364', 'HP:0004840', 'HP:0001894', 'HP:0004840', 'HP:0001903', 'HP:0004840', 'HP:0001903', 'HP:0004840'], 'HP:0025142 | Constitutional symptom': ['HP:0012378', 'HP:0012378', 'HP:0012378', 'HP:0012378', 'HP:0012378'], 'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0001945', 'HP:0000969', 'HP:0001945', 'HP:0001945', 'HP:0001945', 'HP:0002910', 'HP:0001945'], 'HP:0001574 | Abnormality of the integument': ['HP:0000964']}	
+312	37780619	KIF1B	c.10428570G>C	inferred proband	observations	('KIF1B', 37780619, 'c.10428570G>C', 'inferred proband')	297			False
+313	37780619	KIF1B	p.Val1554Leu	inferred proband	observations	('KIF1B', 37780619, 'p.Val1554Leu', 'inferred proband')	299			False
+70	27536250	LRRC10	p.Leu163Ile	inferred proband	variant_inheritance	('LRRC10', 27536250, 'p.Leu163Ile', 'inferred proband')	91			unknown
+71	27536250	LRRC10	p.Leu41Val	inferred proband	variant_inheritance	('LRRC10', 27536250, 'p.Leu41Val', 'inferred proband')	92			unknown
+220	34564127	MIB1			papers	('MIB1', 34564127)	146			False
+237	35052463	MIB1			papers	('MIB1', 35052463)	184			False
+221	36008935	MIB1			papers	('MIB1', 36008935)	147			False
+222	37239988	MIB1			papers	('MIB1', 37239988)	148			False
+181	18551179	MLH3			papers	('MLH3', 18551179)	65			True
+182	24639688	MLH3			papers	('MLH3', 24639688)	66			False
+183	29212164	MLH3			papers	('MLH3', 29212164)	68			True
+184	31410062	MLH3			papers	('MLH3', 31410062)	71			False
+185	31607598	MLH3			papers	('MLH3', 31607598)	72			False
+186	32390703	MLH3			papers	('MLH3', 32390703)	74			False
+54	33117677	MLH3			study_type	('MLH3', 33117677)	9			case report
+138	33117677	MLH3	p.Asp206fs	4	zygosity	('MLH3', 33117677, 'p.Asp206fs', '4')	93			none
+266	33117677	MLH3	p.Asp206fs	4	observations	('MLH3', 33117677, 'p.Asp206fs', '4')	135			True
+187	34408140	MLH3			papers	('MLH3', 34408140)	76			False
+203	34729042	MLH3			papers	('MLH3', 34729042)	107			False
+188	36041235	MLH3			papers	('MLH3', 36041235)	77			True
+23	37656691	MLH3	c.3343C>T	p-13	phenotype	('MLH3', 37656691, 'c.3343C>T', 'p-13')	94	{}	{'HP:0000119 | Abnormality of the genitourinary system': ['HP:0012114', 'HP:0012114', 'HP:0012114', 'HP:0012114', 'HP:0012114'], 'HP:0025031 | Abnormality of the digestive system': ['HP:0005227', 'HP:0005227', 'HP:0005227', 'HP:0005227', 'HP:0005227'], 'HP:0001871 | Abnormality of blood and blood-forming tissues': ['HP:0001909', 'HP:0001909']}	
+44	32154054	NDUFA2	c.134A>C	case 2	phenotype	('NDUFA2', 32154054, 'c.134A>C', 'case 2')	125	{}	{'HP:0031797 | Clinical course': ['HP:0031797', 'HP:0031797'], 'HP:0001507 | Growth abnormality': ['HP:0001508', 'HP:0001508'], 'HP:0000598 | Abnormality of the ear': ['HP:0000365'], 'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0008936', 'HP:0008936'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0002197', 'HP:0100022', 'HP:0007109', 'HP:0001250', 'HP:0002059', 'HP:0011931', 'HP:0033369', 'HP:0002395', 'HP:0001348', 'HP:0002079', 'HP:0002376', 'HP:0012502', 'HP:0002352', 'HP:0006965', 'HP:0002307', 'HP:0002500', 'HP:0000252', 'HP:0001263', 'HP:0002395', 'HP:0012502', 'HP:0002059', 'HP:0011931', 'HP:0002500', 'HP:0100022', 'HP:0001250', 'HP:0001263', 'HP:0000252', 'HP:0002079', 'HP:0002376', 'HP:0006965', 'HP:0002197', 'HP:0007109', 'HP:0001348'], 'HP:0040064 | Abnormality of limbs': ['HP:0001762', 'HP:0001762'], 'HP:0025142 | Constitutional symptom': ['HP:0001645'], 'HP:0000478 | Abnormality of the eye': ['HP:0000478', 'HP:0000478']}	
+45	32154054	NDUFA2	c.170A>C	case 4	phenotype	('NDUFA2', 32154054, 'c.170A>C', 'case 4')	126	{}	{'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0008936', 'HP:0008936', 'HP:0008936', 'HP:0008936', 'HP:0008936'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0002197', 'HP:0002307', 'HP:0033369', 'HP:0002352', 'HP:0000252', 'HP:0002395', 'HP:0001263', 'HP:0001348', 'HP:0002376', 'HP:0001250', 'HP:0002500', 'HP:0001250', 'HP:0002395', 'HP:0000252', 'HP:0033369', 'HP:0002197', 'HP:0002376', 'HP:0001348', 'HP:0002307', 'HP:0001263', 'HP:0002307', 'HP:0001263', 'HP:0002395', 'HP:0001348', 'HP:0002197', 'HP:0000252', 'HP:0002518', 'HP:0001250', 'HP:0002376', 'HP:0002500', 'HP:0001250', 'HP:0001348', 'HP:0002395', 'HP:0002307', 'HP:0000252', 'HP:0002352', 'HP:0033369', 'HP:0002197', 'HP:0001263', 'HP:0002376', 'HP:0002197', 'HP:0000252', 'HP:0002395', 'HP:0002376', 'HP:0001250', 'HP:0001348', 'HP:0001263', 'HP:0002307'], 'HP:0040064 | Abnormality of limbs': ['HP:0001762', 'HP:0001762', 'HP:0001762', 'HP:0008110', 'HP:0001762'], 'HP:0000478 | Abnormality of the eye': ['HP:0000649', 'HP:0000478', 'HP:0000478', 'HP:0007677', 'HP:0000649', 'HP:0000649', 'HP:0000649', 'HP:0000478'], 'HP:0001507 | Growth abnormality': ['HP:0001508', 'HP:0001508', 'HP:0001508', 'HP:0001508', 'HP:0001508'], 'HP:0000598 | Abnormality of the ear': ['HP:0000365', 'HP:0000365', 'HP:0000365', 'HP:0000365', 'HP:0000365']}	
+49	32154054	NDUFA2	c.208+5G>A	case 1	phenotype	('NDUFA2', 32154054, 'c.208+5G>A', 'case 1')	156	{'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0003128', 'HP:0003128']}	{'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0008936', 'HP:0008936'], 'HP:0000598 | Abnormality of the ear': ['HP:0000365', 'HP:0000365'], 'HP:0001507 | Growth abnormality': ['HP:0001508', 'HP:0001508'], 'HP:0000478 | Abnormality of the eye': ['HP:0000478', 'HP:0000478'], 'HP:0040064 | Abnormality of limbs': ['HP:0001762', 'HP:0001762']}	
+88	32154054	NDUFA2	c.134A>C	case 2	variant_inheritance	('NDUFA2', 32154054, 'c.134A>C', 'case 2')	125			unknown
+89	32154054	NDUFA2	c.170A>C	case 4	variant_inheritance	('NDUFA2', 32154054, 'c.170A>C', 'case 4')	126			unknown
+105	32154054	NDUFA2	c.208+5G>A	case 1	variant_inheritance	('NDUFA2', 32154054, 'c.208+5G>A', 'case 1')	156			unknown
+148	32154054	NDUFA2	c.134A>C	case 2	zygosity	('NDUFA2', 32154054, 'c.134A>C', 'case 2')	125			homozygous
+285	32154054	NDUFA2	c.134A>C	case 1	observations	('NDUFA2', 32154054, 'c.134A>C', 'case 1')	230			False
+286	32154054	NDUFA2	c.134A>C	case 2	observations	('NDUFA2', 32154054, 'c.134A>C', 'case 2')	231			True
+287	32154054	NDUFA2	c.134A>C	case 3	observations	('NDUFA2', 32154054, 'c.134A>C', 'case 3')	232			True
+288	32154054	NDUFA2	c.134A>C	case 3a	observations	('NDUFA2', 32154054, 'c.134A>C', 'case 3a')	233			False
+289	32154054	NDUFA2	c.170A>C	inferred proband	observations	('NDUFA2', 32154054, 'c.170A>C', 'inferred proband')	235			False
+290	32154054	NDUFA2	c.208+5G>A	case 1	observations	('NDUFA2', 32154054, 'c.208+5G>A', 'case 1')	236			True
+291	32154054	NDUFA2	c.208+5G>A	inferred proband	observations	('NDUFA2', 32154054, 'c.208+5G>A', 'inferred proband')	237			False
+292	32154054	NDUFA2	c.225del	case 3	observations	('NDUFA2', 32154054, 'c.225del', 'case 3')	238			True
+293	32154054	NDUFA2	c.225del	case 3a	observations	('NDUFA2', 32154054, 'c.225del', 'case 3a')	239			False
+223	21615902	NLGN3			papers	('NLGN3', 21615902)	152			False
+224	22723984	NLGN3			papers	('NLGN3', 22723984)	153			False
+225	23468870	NLGN3			papers	('NLGN3', 23468870)	156			True
+226	25533962	NLGN3			papers	('NLGN3', 25533962)	160			True
+227	28841651	NLGN3			papers	('NLGN3', 28841651)	164			False
+58	28948087	NLGN3			study_type	('NLGN3', 28948087)	24			other
+228	29622757	NLGN3			papers	('NLGN3', 29622757)	166			False
+229	31002480	NLGN3			papers	('NLGN3', 31002480)	167			False
+230	31827744	NLGN3			papers	('NLGN3', 31827744)	169			True
+231	32327975	NLGN3			papers	('NLGN3', 32327975)	170			False
+232	33758193	NLGN3			papers	('NLGN3', 33758193)	172			False
+60	34262438	NLGN3			study_type	('NLGN3', 34262438)	28			other
+149	34262438	NLGN3	p.Arg451Cys	inferred proband	zygosity	('NLGN3', 34262438, 'p.Arg451Cys', 'inferred proband')	153			none
+233	36479216	NLGN3			papers	('NLGN3', 36479216)	175			False
+234	37509099	NLGN3			papers	('NLGN3', 37509099)	177			False
+235	38475840	NLGN3			papers	('NLGN3', 38475840)	179			False
+189	32211440	NPPA			papers	('NPPA', 32211440)	80			False
+204	32555714	NPPA			papers	('NPPA', 32555714)	108			False
+190	36303204	NPPA			papers	('NPPA', 36303204)	81			False
+191	37363091	NPPA			papers	('NPPA', 37363091)	82			False
+192	36180924	OTUD7A			papers	('OTUD7A', 36180924)	83			False
+193	36604605	OTUD7A			papers	('OTUD7A', 36604605)	84			False
+236	25299611	PRPH			papers	('PRPH', 25299611)	181			True
+43	30992453	PRPH	c.996+1G>A	inferred proband	phenotype	('PRPH', 30992453, 'c.996+1G>A', 'inferred proband')	124	{}	{'HP:0012824 | Severity': ['HP:0012825', 'HP:0012825', 'HP:0012825'], 'HP:0031797 | Clinical course': ['HP:0030674', 'HP:0030674', 'HP:0030674']}	
+194	26343007	RGS9			papers	('RGS9', 26343007)	85			False
+195	28508084	RNASEH1			papers	('RNASEH1', 28508084)	86			True
+24	31258551	RNASEH1	c.258_260del	inferred proband	phenotype	('RNASEH1', 31258551, 'c.258_260del', 'inferred proband')	95	{}	{'HP:0025142 | Constitutional symptom': ['HP:0012378'], 'HP:0002086 | Abnormality of the respiratory system': ['HP:0002747', 'HP:0002747', 'HP:0002747'], 'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0003236']}	
+25	31258551	RNASEH1	c.487T>C	inferred proband	phenotype	('RNASEH1', 31258551, 'c.487T>C', 'inferred proband')	96	{}	{'HP:0025142 | Constitutional symptom': ['HP:0012378'], 'HP:0002086 | Abnormality of the respiratory system': ['HP:0002747', 'HP:0002747', 'HP:0002747'], 'HP:0001939 | Abnormality of metabolism/homeostasis': ['HP:0003236']}	
+72	31258551	RNASEH1	c.258_260del	inferred proband	variant_inheritance	('RNASEH1', 31258551, 'c.258_260del', 'inferred proband')	95			unknown
+73	31258551	RNASEH1	c.487T>C	inferred proband	variant_inheritance	('RNASEH1', 31258551, 'c.487T>C', 'inferred proband')	96			unknown
+196	32082360	RNASEH1			papers	('RNASEH1', 32082360)	88			False
+197	33396418	RNASEH1			papers	('RNASEH1', 33396418)	89			True
+198	35711919	RNASEH1			papers	('RNASEH1', 35711919)	90			False
+199	35947649	RNASEH1			papers	('RNASEH1', 35947649)	91			False
+26	36041817	SARS1	c.969+1_969+3del	inferred proband	phenotype	('SARS1', 36041817, 'c.969+1_969+3del', 'inferred proband')	97	{}	{'HP:0001197 | Abnormality of prenatal development or birth': ['HP:0033336'], 'HP:0025354 | Abnormal cellular phenotype': ['HP:0025461'], 'HP:0000478 | Abnormality of the eye': ['HP:0000486', 'HP:0000486', 'HP:0000540', 'HP:0000486', 'HP:0000486', 'HP:0000540']}	
+116	36041817	SARS1	c.969+1_969+3del		variant_type	('SARS1', 36041817, 'c.969+1_969+3del')	84			splice region
+267	36041817	SARS1	c.109778053_109778055delGGT	inferred proband	observations	('SARS1', 36041817, 'c.109778053_109778055delGGT', 'inferred proband')	139			False
+268	36041817	SARS1	c.514G>A	inferred proband	observations	('SARS1', 36041817, 'c.514G>A', 'inferred proband')	140			False
+269	36041817	SARS1	c.638G>T	inferred proband	observations	('SARS1', 36041817, 'c.638G>T', 'inferred proband')	141			False
+270	36041817	SARS1	p.Lys323_Ile324insSerArgTrpValArg	inferred proband	observations	('SARS1', 36041817, 'p.Lys323_Ile324insSerArgTrpValArg', 'inferred proband')	143			False
+55	29678925	SLFN14			study_type	('SLFN14', 29678925)	14			other
+75	29678925	SLFN14	p.Lys218Glu	inferred proband	variant_inheritance	('SLFN14', 29678925, 'p.Lys218Glu', 'inferred proband')	99			unknown
+76	29678925	SLFN14	p.Val220Asp	inferred proband	variant_inheritance	('SLFN14', 29678925, 'p.Val220Asp', 'inferred proband')	101			unknown
+271	29678925	SLFN14	p.Arg223Trp	inferred proband	observations	('SLFN14', 29678925, 'p.Arg223Trp', 'inferred proband')	147			False
+27	37041648	SLFN14	c.655A>G	inferred proband	phenotype	('SLFN14', 37041648, 'c.655A>G', 'inferred proband')	98	{'HP:0000152 | Abnormality of head or neck': ['HP:0006323', 'HP:0006323', 'HP:0006323', 'HP:0006323', 'HP:0006323']}	{}	
+74	37041648	SLFN14	c.655A>G	inferred proband	variant_inheritance	('SLFN14', 37041648, 'c.655A>G', 'inferred proband')	98			unknown
+272	37041648	SLFN14	p.Arg223Trp	inferred proband	observations	('SLFN14', 37041648, 'p.Arg223Trp', 'inferred proband')	148			False
+273	37041648	SLFN14	p.Lys218Glu	inferred proband	observations	('SLFN14', 37041648, 'p.Lys218Glu', 'inferred proband')	150			False
+274	37041648	SLFN14	p.Val220Asp	inferred proband	observations	('SLFN14', 37041648, 'p.Val220Asp', 'inferred proband')	153			False
+281	37041648	SLFN14	p.Lys219Asn	inferred proband	observations	('SLFN14', 37041648, 'p.Lys219Asn', 'inferred proband')	191			False
+62	35743796	TDO2			study_type	('TDO2', 35743796)	33			case report
+151	35743796	TDO2	c.803T>A	elder brother	zygosity	('TDO2', 35743796, 'c.803T>A', 'elder brother')	164			heterozygous
+311	35743796	TDO2	T>A	inferred proband	observations	('TDO2', 35743796, 'T>A', 'inferred proband')	294			False
+318	35743796	TDO2	c.803T>A	father	observations	('TDO2', 35743796, 'c.803T>A', 'father')	318			False
+28	31953910	TOP2B	c.187C>T	inferred proband	phenotype	('TOP2B', 31953910, 'c.187C>T', 'inferred proband')	102	{}	{'HP:0033127 | Abnormality of the musculoskeletal system': ['HP:0001252', 'HP:0001252', 'HP:0001252', 'HP:0008936', 'HP:0001252', 'HP:0001252']}	
+139	31953910	TOP2B	c.187C>T	inferred proband	zygosity	('TOP2B', 31953910, 'c.187C>T', 'inferred proband')	102			none
+276	31953910	TOP2B	c.187C>T	lam et al.	observations	('TOP2B', 31953910, 'c.187C>T', 'lam et al.')	164			True
+29	36450898	TOP2B	p.Ala485Pro	inferred proband	phenotype	('TOP2B', 36450898, 'p.Ala485Pro', 'inferred proband')	103	{'HP:0002715 | Abnormality of the immune system': ['HP:0002721', 'HP:0002721', 'HP:0002721', 'HP:0002721']}	{'HP:0001871 | Abnormality of blood and blood-forming tissues': ['HP:0010976', 'HP:0010976'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0000729', 'HP:0001263']}	
+30	36450898	TOP2B	p.EE587E	inferred proband	phenotype	('TOP2B', 36450898, 'p.EE587E', 'inferred proband')	104	{'HP:0002715 | Abnormality of the immune system': ['HP:0002721', 'HP:0002721', 'HP:0002721', 'HP:0002721']}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0000717', 'HP:0001263'], 'HP:0001871 | Abnormality of blood and blood-forming tissues': ['HP:0010976']}	
+31	36450898	TOP2B	p.Gly180Ile	inferred proband	phenotype	('TOP2B', 36450898, 'p.Gly180Ile', 'inferred proband')	105	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0001263', 'HP:0000729', 'HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0000717', 'HP:0001263']}	
+32	36450898	TOP2B	p.Gly633Ser	inferred proband	phenotype	('TOP2B', 36450898, 'p.Gly633Ser', 'inferred proband')	106	{'HP:0002715 | Abnormality of the immune system': ['HP:0002721', 'HP:0002721', 'HP:0002721', 'HP:0002721']}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0000729', 'HP:0001263', 'HP:0000717', 'HP:0001263']}	
+33	36450898	TOP2B	p.His58Tyr	inferred proband	phenotype	('TOP2B', 36450898, 'p.His58Tyr', 'inferred proband')	107	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0000729', 'HP:0001263', 'HP:0000717', 'HP:0001263']}	
+34	36450898	TOP2B	p.Leu185Phe	inferred proband	phenotype	('TOP2B', 36450898, 'p.Leu185Phe', 'inferred proband')	108	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0000717', 'HP:0001263']}	
+35	36450898	TOP2B	p.Ser483Leu	inferred proband	phenotype	('TOP2B', 36450898, 'p.Ser483Leu', 'inferred proband')	109	{'HP:0002715 | Abnormality of the immune system': ['HP:0002721', 'HP:0002721', 'HP:0002721', 'HP:0002721']}	{'HP:0001871 | Abnormality of blood and blood-forming tissues': ['HP:0010976', 'HP:0010976'], 'HP:0000707 | Abnormality of the nervous system': ['HP:0000729', 'HP:0001263', 'HP:0000717', 'HP:0001263']}	
+36	36450898	TOP2B	p.Tyr66Phe	inferred proband	phenotype	('TOP2B', 36450898, 'p.Tyr66Phe', 'inferred proband')	110	{}	{'HP:0000707 | Abnormality of the nervous system': ['HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0001263', 'HP:0000729', 'HP:0000729', 'HP:0001263', 'HP:0000717', 'HP:0001263']}	
+56	36450898	TOP2B			study_type	('TOP2B', 36450898)	16			case report
+77	36450898	TOP2B	p.Ala485Pro	inferred proband	variant_inheritance	('TOP2B', 36450898, 'p.Ala485Pro', 'inferred proband')	103			unknown
+78	36450898	TOP2B	p.EE587E	inferred proband	variant_inheritance	('TOP2B', 36450898, 'p.EE587E', 'inferred proband')	104			unknown
+79	36450898	TOP2B	p.Gly180Ile	inferred proband	variant_inheritance	('TOP2B', 36450898, 'p.Gly180Ile', 'inferred proband')	105			unknown
+80	36450898	TOP2B	p.Gly633Ser	inferred proband	variant_inheritance	('TOP2B', 36450898, 'p.Gly633Ser', 'inferred proband')	106			unknown
+81	36450898	TOP2B	p.Leu185Phe	inferred proband	variant_inheritance	('TOP2B', 36450898, 'p.Leu185Phe', 'inferred proband')	108			unknown
+82	36450898	TOP2B	p.Ser483Leu	inferred proband	variant_inheritance	('TOP2B', 36450898, 'p.Ser483Leu', 'inferred proband')	109			unknown
+83	36450898	TOP2B	p.Tyr66Phe	inferred proband	variant_inheritance	('TOP2B', 36450898, 'p.Tyr66Phe', 'inferred proband')	110			unknown
+140	36450898	TOP2B	p.Ala485Pro	inferred proband	zygosity	('TOP2B', 36450898, 'p.Ala485Pro', 'inferred proband')	103			none
+141	36450898	TOP2B	p.EE587E	inferred proband	zygosity	('TOP2B', 36450898, 'p.EE587E', 'inferred proband')	104			none
+142	36450898	TOP2B	p.Gly180Ile	inferred proband	zygosity	('TOP2B', 36450898, 'p.Gly180Ile', 'inferred proband')	105			none
+143	36450898	TOP2B	p.Gly633Ser	inferred proband	zygosity	('TOP2B', 36450898, 'p.Gly633Ser', 'inferred proband')	106			none
+144	36450898	TOP2B	p.Leu185Phe	inferred proband	zygosity	('TOP2B', 36450898, 'p.Leu185Phe', 'inferred proband')	108			none
+145	36450898	TOP2B	p.Ser483Leu	inferred proband	zygosity	('TOP2B', 36450898, 'p.Ser483Leu', 'inferred proband')	109			none
+146	36450898	TOP2B	p.Tyr66Phe	inferred proband	zygosity	('TOP2B', 36450898, 'p.Tyr66Phe', 'inferred proband')	110			none
+275	36450898	TOP2B	p.Thr65Ile	inferred proband	observations	('TOP2B', 36450898, 'p.Thr65Ile', 'inferred proband')	162			True
+200	30084161	TOPBP1			papers	('TOPBP1', 30084161)	99			False
+277	34199176	TOPBP1	c.951T>G	9	observations	('TOPBP1', 34199176, 'c.951T>G', '9')	165			True
+278	34199176	TOPBP1	c.951T>G	inferred proband	observations	('TOPBP1', 34199176, 'c.951T>G', 'inferred proband')	166			False
+37	33270637	ZNF423	c.1144T>C	29	phenotype	('ZNF423', 33270637, 'c.1144T>C', '29')	111	{}	{'HP:0001507 | Growth abnormality': ['HP:0008897', 'HP:0008897'], 'HP:0000119 | Abnormality of the genitourinary system': ['HP:0008209', 'HP:0008209', 'HP:0008209'], 'HP:0000818 | Abnormality of the endocrine system': ['HP:0031100']}	
+84	33531950	ZNF423	c.1192C>T	inferred proband	variant_inheritance	('ZNF423', 33531950, 'c.1192C>T', 'inferred proband')	112			unknown
+85	33531950	ZNF423	c.272C>T	inferred proband	variant_inheritance	('ZNF423', 33531950, 'c.272C>T', 'inferred proband')	113			unknown
+279	33531950	ZNF423	p.Arg398Trp	inferred proband	observations	('ZNF423', 33531950, 'p.Arg398Trp', 'inferred proband')	171			False
+280	33531950	ZNF423	p.Pro91Leu	inferred proband	observations	('ZNF423', 33531950, 'p.Pro91Leu', 'inferred proband')	172			False
