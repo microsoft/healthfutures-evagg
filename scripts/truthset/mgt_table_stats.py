@@ -2,7 +2,10 @@
 The objective of this script is to extract summary statistics about the manual ground truth data.
 """
 
+import argparse
+import os
 import re
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -149,7 +152,7 @@ def extract_stats(file_path: str) -> tuple[dict, dict, dict, dict]:
     return summaries, average_patients, unique_papers, patients_per_paper_dict
 
 
-def print_summary_table(
+def create_large_summary_table(
     summaries_train: dict,
     summaries_test: dict,
     average_patients_train: dict,
@@ -158,6 +161,7 @@ def print_summary_table(
     unique_papers_test: dict,
     patients_per_paper_dict_train: dict,
     patients_per_paper_dict_test: dict,
+    output_dir: str,
 ) -> None:
     """Prints a summary table of the extracted statistics for the train and test DataFrames."""
     headers = ["Category", "Train M", "Test M", "Train L", "Test L", "Train N", "Test N"]
@@ -233,12 +237,20 @@ def print_summary_table(
         ]
     )
 
-    print("\t".join(headers))
-    for row in rows:
-        print("\t".join(map(str, row)))
+    # Create a DataFrame from the rows
+    df = pd.DataFrame(rows, columns=headers)
+
+    # Save the DataFrame to a TSV file
+    df.to_csv(output_dir + "mgt_category_stats.tsv", sep="\t", index=False)
 
 
-def main() -> None:
+def main(args) -> None:
+
+    # Create output directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = os.path.join(args.outdir, f"mgt_table_stats_{timestamp}/")
+    os.makedirs(output_dir, exist_ok=True)
+
     # File paths
     file_path_train = "data/v1/papers_train_v1.tsv"
     file_path_test = "data/v1/papers_test_v1.tsv"
@@ -281,18 +293,16 @@ def main() -> None:
     merged_result = merge_dataframes(
         result, unique_combined_gene_evidence_base_df, gene_to_evidence_base, evidence_base_mapping
     )
-    # print(merged_result)
 
     # Add submission data
     merged_result_w_gencc = add_submission_data(merged_result, submission_file_path)
-    # print(merged_result_w_gencc)
 
     # Split train and test
     train_df, test_df = split_train_test(merged_result_w_gencc, group_assignments_file_path)
-    print("\nTraining Set Paper Summary")
-    print(train_df)
-    print("\nTest Set Paper Summary")
-    print(test_df)
+
+    # Save the train and test dataframes to a file
+    train_df.to_csv(output_dir + "train_paper_summary.tsv", sep="\t", index=False)
+    test_df.to_csv(output_dir + "test_paper_summary.tsv", sep="\t", index=False)
 
     # Calculate grouped means
     train_grouped = calculate_grouped_means(train_df)
@@ -301,6 +311,10 @@ def main() -> None:
     test_grouped = calculate_grouped_means(test_df)
     print("\nTest Set Average Statistics per Evidence Base")
     print(test_grouped)
+
+    # Save the training and test set average stats per evidence base
+    train_grouped.to_csv(output_dir + "train_avg_stats.tsv", sep="\t", index=False)
+    test_grouped.to_csv(output_dir + "test_avg_stats.tsv", sep="\t", index=False)
 
     # Extract stats from train and test data
     summaries_train, average_patients_train, unique_papers_train, patients_per_paper_dict_train = extract_stats(
@@ -312,9 +326,9 @@ def main() -> None:
 
     # Print combined summary table
     print(
-        "\nManual Ground Truth statistics. M:moderate evidence type, L: limited evidence type, N: no known gene-disease relationship type"
+        "\nManual Ground Truth statistics. M: moderate evidence type, L: limited evidence type, N: no known gene-disease relationship type"
     )
-    print_summary_table(
+    create_large_summary_table(
         summaries_train,
         summaries_test,
         average_patients_train,
@@ -323,8 +337,12 @@ def main() -> None:
         unique_papers_test,
         patients_per_paper_dict_train,
         patients_per_paper_dict_test,
+        output_dir,
     )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Manual Ground Truth (MGT) Table Statistics")
+    parser.add_argument("--outdir", type=str, default=".out/", help="Output directory")
+    args = parser.parse_args()
+    main(args)
