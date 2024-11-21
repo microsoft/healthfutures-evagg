@@ -83,7 +83,7 @@ def generate_pie_chart(
     plt.savefig(os.path.join(outdir, f"{task_name}_piechart.png"), format="png", dpi=300, bbox_inches="tight")
 
 
-def update_resolved_discrepancies(df: pd.DataFrame, df_resolved: pd.DataFrame) -> pd.DataFrame:
+def update_error_analysis_worksheet(df: pd.DataFrame, df_resolved: pd.DataFrame) -> pd.DataFrame:
     """Update the responses in the error analysis DataFrame with the resolved discrepancies."""
     for _, row in df_resolved.iterrows():
         question_number = row["Q###"]
@@ -101,10 +101,19 @@ def read_and_process_files(args: argparse.Namespace) -> pd.DataFrame:
 
     if args.resolved_discrepancies:
         df_resolved = pd.read_csv(args.resolved_discrep_file, sep="\t", encoding="latin1")
+
+        # Ensure that all inter-rater discrepancies are resolved
         assert (df_resolved["Response_1"] == df_resolved["Response_2"]).all()
-        df_1 = update_resolved_discrepancies(df_1, df_resolved)
-        df_2 = update_resolved_discrepancies(df_2, df_resolved)
-        df_3 = update_resolved_discrepancies(df_3, df_resolved)
+
+        # Update the error analysis worksheets with the resolved inter-rater discrepancies
+        df_1 = update_error_analysis_worksheet(df_1, df_resolved)
+        df_2 = update_error_analysis_worksheet(df_2, df_resolved)
+        df_3 = update_error_analysis_worksheet(df_3, df_resolved)
+
+        # Save those updated worksheets
+        df_1.to_csv(args.outdir + "parsed_ana1_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
+        df_2.to_csv(args.outdir + "parsed_ana2_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
+        df_3.to_csv(args.outdir + "parsed_ana3_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
 
     responses_1 = df_1[["Q###", "Response"]].rename(columns={"Q###": "question_number"})
     responses_2 = df_2[["Q###", "Response"]].rename(columns={"Q###": "question_number"})
