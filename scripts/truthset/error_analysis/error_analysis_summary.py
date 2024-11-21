@@ -92,7 +92,7 @@ def update_error_analysis_worksheet(df: pd.DataFrame, df_resolved: pd.DataFrame)
     return df
 
 
-def read_and_process_files(args: argparse.Namespace) -> pd.DataFrame:
+def read_and_process_files(args: argparse.Namespace, output_dir: str) -> pd.DataFrame:
     """Read and process the files to generate the error analysis summary."""
     df_1 = pd.read_csv(args.parsed_ana1_error_analysis_file, sep="\t", encoding="latin1")
     df_2 = pd.read_csv(args.parsed_ana2_error_analysis_file, sep="\t", encoding="latin1")
@@ -111,9 +111,9 @@ def read_and_process_files(args: argparse.Namespace) -> pd.DataFrame:
         df_3 = update_error_analysis_worksheet(df_3, df_resolved)
 
         # Save those updated worksheets
-        df_1.to_csv(args.outdir + "parsed_ana1_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
-        df_2.to_csv(args.outdir + "parsed_ana2_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
-        df_3.to_csv(args.outdir + "parsed_ana3_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
+        df_1.to_csv(output_dir + "parsed_ana1_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
+        df_2.to_csv(output_dir + "parsed_ana2_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
+        df_3.to_csv(output_dir + "parsed_ana3_error_analysis_worksheet_resolved.tsv", sep="\t", index=False)
 
     responses_1 = df_1[["Q###", "Response"]].rename(columns={"Q###": "question_number"})
     responses_2 = df_2[["Q###", "Response"]].rename(columns={"Q###": "question_number"})
@@ -143,7 +143,7 @@ def main(args: argparse.Namespace) -> None:
     output_dir = os.path.join(args.outdir, f"error_analysis_{timestamp}/")
     os.makedirs(output_dir, exist_ok=True)
 
-    merged_df = read_and_process_files(args)
+    merged_df = read_and_process_files(args, output_dir)
 
     conditions_papers = {
         lambda tv, rc1, rc2: tv == "true"
