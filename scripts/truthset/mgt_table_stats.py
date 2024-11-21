@@ -244,7 +244,7 @@ def create_large_summary_table(
     df.to_csv(output_dir + "mgt_category_stats.tsv", sep="\t", index=False)
 
 
-def main(args) -> None:
+def main(args: argparse.Namespace) -> None:
 
     # Create output directory
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -306,11 +306,7 @@ def main(args) -> None:
 
     # Calculate grouped means
     train_grouped = calculate_grouped_means(train_df)
-    print("\nTraining Set Average Statistics per Evidence Base")
-    print(train_grouped)
     test_grouped = calculate_grouped_means(test_df)
-    print("\nTest Set Average Statistics per Evidence Base")
-    print(test_grouped)
 
     # Save the training and test set average stats per evidence base
     train_grouped.to_csv(output_dir + "train_avg_stats.tsv", sep="\t", index=False)
@@ -324,10 +320,7 @@ def main(args) -> None:
         evidence_test_file_path
     )
 
-    # Print combined summary table
-    print(
-        "\nManual Ground Truth statistics. M: moderate evidence type, L: limited evidence type, N: no known gene-disease relationship type"
-    )
+    # Create a large summary table across categories and the values they can take
     create_large_summary_table(
         summaries_train,
         summaries_test,
