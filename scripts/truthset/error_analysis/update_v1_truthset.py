@@ -110,7 +110,7 @@ if any(updates["Response_Consensus"] == "MISSING"):
 
 # Collapse the phenotype responses into a single row for each question number where Response_Consensus is a list
 # of all the individual responses.
-def collapse_pheno_group(group_df) -> pd.Series:
+def collapse_pheno_group(group_df: pd.DataFrame) -> pd.Series:
     if group_df.shape[0] == 1 and group_df.iloc[0]["Phenotype"] == "":
         return group_df.iloc[0]
 
