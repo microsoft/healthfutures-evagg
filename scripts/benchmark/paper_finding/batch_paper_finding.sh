@@ -26,7 +26,7 @@ for run_id in "${TRAIN[@]}"; do
     echo "### Processing TRAIN run $run_id ###"
     python scripts/benchmark/paper_finding/manuscript_single_run.py \
     -s "scripts/benchmark/paper_finding/paper_finding_benchmarks_skipped_pmids.txt" \
-    -m data/v1/papers_train_v1.tsv -p "$run_id"
+    -m data/v1.1/papers_train_v1.1.tsv -p "$run_id"
 done
 
 # Loop through each element in the TEST list
@@ -34,5 +34,5 @@ for run_id in "${TEST[@]}"; do
     echo "### Processing TEST run $run_id ###"
     python scripts/benchmark/paper_finding/manuscript_single_run.py \
     -s "scripts/benchmark/paper_finding/paper_finding_benchmarks_skipped_pmids.txt" \
-    -m data/v1/papers_test_v1.tsv -p "$run_id"
+    -m data/v1.1/papers_test_v1.1.tsv -p "$run_id"
 done
