@@ -171,7 +171,7 @@ pd.set_option("display.width", 2000)
 for run_type in ["train", "test"]:
     run_stats = all_obs_run_stats[run_type]
 
-    print(f"-- Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}) --")
+    print(f"-- Observation finding benchmark results ({run_type}; N={run_stats.shape[0]}) --")
 
     print(run_stats[["n", "precision", "recall", "n_variant", "precision_variant", "recall_variant"]])
 
