@@ -1,0 +1,251 @@
+gene	pmid	has_fulltext	can_access	license	group
+CTF1	11058912	True	False	unknown	train
+CTF1	24503780	True	False	unknown	train
+FBN2	9605585	True	False	unknown	train
+FBN2	9714438	True	False	unknown	train
+FBN2	9737771	True	False	unknown	train
+FBN2	10797416	True	False	unknown	train
+FBN2	11285249	True	False	unknown	train
+FBN2	11754102	True	False	unknown	train
+FBN2	15121784	True	False	not_open_access	train
+FBN2	15742475	True	False	unknown	train
+FBN2	15912465	True	False	unknown	train
+FBN2	16407178	True	False	not_open_access	train
+FBN2	17345643	True	False	unknown	train
+FBN2	18646717	True	False	unknown	train
+FBN2	18767143	True	False	unknown	train
+FBN2	18838118	True	False	unknown	train
+FBN2	19006240	True	False	unknown	train
+FBN2	19473076	True	False	unknown	train
+FBN2	24036431	True	False	unknown	train
+FBN2	24130178	True	False	not_open_access	train
+FBN2	24585410	True	False	unknown	train
+FBN2	24833718	True	False	not_open_access	train
+FBN2	24899048	True	False	not_open_access	train
+FBN2	27625873	True	False	not_open_access	train
+FBN2	25195018	True	False	unknown	train
+FBN2	25493702	True	False	unknown	train
+FBN2	25834781	True	False	CC BY-NC-ND	train
+FBN2	25975422	True	False	unknown	train
+FBN2	27007659	True	True	CC BY	train
+FBN2	27196565	True	True	CC BY	train
+FBN2	27606123	True	False	not_open_access	train
+FBN2	27912749	True	True	CC BY	train
+FBN2	28379158	True	True	CC BY	train
+FBN2	28383543	True	False	unknown	train
+FBN2	28762477	True	False	unknown	train
+FBN2	29501612	True	False	unknown	train
+FBN2	29742989	True	False	unknown	train
+FBN2	29864108	True	False	unknown	train
+FBN2	30147916	True	True	CC BY	train
+FBN2	30675029	True	False	unknown	train
+FBN2	31316167	True	False	unknown	train
+FBN2	31426022	True	False	unknown	train
+FBN2	31506931	True	False	CC BY-NC-ND	train
+FBN2	31624054	True	False	unknown	train
+FBN2	32184806	True	True	CC BY	train
+FBN2	32335871	True	False	unknown	train
+FBN2	32534992	True	False	unknown	train
+FBN2	32702406	True	False	unknown	train
+FBN2	32747207	True	False	unknown	train
+FBN2	32900841	True	False	unknown	train
+FBN2	33571691	True	False	unknown	train
+FBN2	33638605	True	True	CC BY	train
+FBN2	34355836	True	False	not_open_access	train
+FBN2	34456093	True	False	unknown	train
+FBN2	35126451	True	True	CC BY	train
+FBN2	35154713	True	False	CC BY-NC-ND	train
+FBN2	35360850	True	True	CC BY	train
+FBN2	35598270	True	False	unknown	train
+FBN2	35754816	True	True	CC BY	train
+FBN2	35804365	True	True	CC BY	train
+FBN2	36800380	True	True	CC BY	train
+FBN2	36849876	True	False	CC BY-NC-ND	train
+FBN2	36936417	True	True	CC BY	train
+FBN2	37399314	True	False	unknown	train
+FBN2	37962692	True	True	CC BY	train
+FBN2	38099230	True	True	CC BY	train
+FBN2	38114583	True	True	CC BY	train
+FBN2	38215673	True	False	unknown	train
+FBN2	38326314	True	True	CC BY	train
+FBN2	37100863	True	True	CC BY	train
+FBN2	38791509	True	True	CC BY	train
+EXOC2	32639540	True	True	CC BY-NC-SA	train
+RHOH	22850876	True	False	not_open_access	train
+RNASEH1	30340744	True	False	unknown	train
+RNASEH1	28508084	True	True	CC BY	train
+RNASEH1	31258551	True	True	CC BY	train
+RNASEH1	26094573	True	False	not_open_access	train
+RNASEH1	32082360	True	True	CC BY	train
+RNASEH1	35711919	True	True	CC BY	train
+RNASEH1	35947649	True	True	CC BY	train
+DNAJC7	31768050	True	False	not_open_access	train
+DNAJC7	32897108	True	False	unknown	train
+DNAJC7	33062890	True	False	CC BY-NC-ND	train
+DNAJC7	33193563	True	True	CC BY	train
+DNAJC7	34233860	True	False	unknown	train
+DNAJC7	35039179	True	False	unknown	train
+DNAJC7	35456894	True	True	CC BY	train
+DNAJC7	37870677	True	False	unknown	train
+DNAJC7	38112783	True	False	unknown	train
+ZNF423	32925911	True	True	CC BY	train
+ZNF423	33531950	True	True	CC BY-NC-SA	train
+ZNF423	33270637	True	True	CC BY	train
+ZNF423	22863007	True	False	not_open_access	train
+OTUD7A	33381903	True	False	unknown	train
+OTUD7A	31997314	True	False	unknown	train
+OTUD7A	36180924	True	True	CC BY	train
+OTUD7A	36604605	True	True	CC BY	train
+ADCY1	24482543	True	False	not_open_access	train
+ADCY1	33585230	True	True	CC BY	train
+IGKC	32278584	True	False	unknown	train
+IGKC	26853951	True	False	unknown	train
+IGKC	4132042	True	False	unknown	train
+SARS1	35790048	True	False	unknown	train
+SARS1	36041817	True	True	CC BY	train
+SARS1	34570399	True	False	unknown	train
+BAZ2B	31999386	True	False	not_open_access	train
+BAZ2B	25363768	True	False	not_open_access	train
+BAZ2B	28867142	True	False	not_open_access	train
+BAZ2B	31398340	True	False	not_open_access	train
+BAZ2B	31981491	True	False	not_open_access	train
+BAZ2B	37872713	True	False	unknown	train
+TAPBP	12149238	True	False	unknown	train
+B4GAT1	34587870	True	False	unknown	train
+B4GAT1	23877401	True	False	unknown	train
+TOP2B	31198993	True	False	unknown	train
+TOP2B	31409799	True	True	CC BY	train
+TOP2B	31953910	True	True	CC BY	train
+TOP2B	33459963	True	False	unknown	train
+TOP2B	35063500	True	False	unknown	train
+TOP2B	36450898	True	True	CC BY	train
+TOP2B	37068767	True	False	unknown	train
+TOP2B	32128574	True	False	not_open_access	train
+SLFN14	30431218	True	False	unknown	train
+SLFN14	31378119	True	True	CC BY	train
+SLFN14	37140956	True	False	not_open_access	train
+SLFN14	36790527	True	False	CC BY-NC-ND	train
+SLFN14	26280575	True	False	not_open_access	train
+SLFN14	33496736	True	False	not_open_access	train
+SLFN14	29678925	True	True	CC BY	train
+SLFN14	37041648	True	True	CC BY	train
+SLFN14	36237120	True	False	unknown	train
+SLFN14	26769223	True	False	unknown	train
+SLFN14	30536060	True	False	unknown	train
+HYAL1	10339581	True	False	not_open_access	train
+HYAL1	21559944	True	False	unknown	train
+HYAL1	26322170	True	False	not_open_access	train
+RGS9	17826834	True	False	unknown	train
+RGS9	14702087	True	False	unknown	train
+RGS9	29107794	True	False	unknown	train
+RGS9	19818506	True	False	unknown	train
+RGS9	26343007	True	True	CC BY	train
+MLH3	11586295	True	False	unknown	train
+MLH3	12702580	True	False	unknown	train
+MLH3	12800209	True	False	unknown	train
+MLH3	15193445	True	False	unknown	train
+MLH3	16885347	True	False	unknown	train
+MLH3	16981255	True	False	not_open_access	train
+MLH3	17656264	True	False	unknown	train
+MLH3	18521850	True	False	unknown	train
+MLH3	19156873	True	False	unknown	train
+MLH3	24549055	True	False	not_open_access	train
+MLH3	25142776	True	False	unknown	train
+MLH3	26149658	True	False	unknown	train
+MLH3	26296701	True	True	CC BY-NC	train
+MLH3	26542077	True	False	unknown	train
+MLH3	27401157	True	False	unknown	train
+MLH3	30573798	True	True	CC BY-NC-SA	train
+MLH3	30614234	True	False	not_open_access	train
+MLH3	31043711	True	False	unknown	train
+MLH3	31297992	True	True	CC BY-NC	train
+MLH3	31686011	True	True	CC BY	train
+MLH3	32469048	True	False	unknown	train
+MLH3	33117677	True	True	CC BY	train
+MLH3	33453991	True	False	not_open_access	train
+MLH3	33517345	True	False	unknown	train
+MLH3	34008015	True	False	not_open_access	train
+MLH3	34897210	True	False	unknown	train
+MLH3	35475445	True	False	CC BY-NC-ND	train
+MLH3	37656691	True	True	CC BY	train
+MLH3	38201513	True	True	CC BY	train
+MLH3	28195393	True	False	unknown	train
+MLH3	29212164	True	True	CC BY	train
+MLH3	24639688	True	True	CC BY	train
+MLH3	31410062	True	True	CC BY-NC	train
+MLH3	31607598	True	True	CC BY	train
+MLH3	34408140	True	True	CC BY	train
+COG4	19494034	True	True	CC BY-NC	train
+COG4	19651599	True	False	not_open_access	train
+COG4	21185756	True	False	not_open_access	train
+COG4	25312861	True	False	unknown	train
+COG4	30287385	True	False	not_open_access	train
+COG4	30290151	True	False	not_open_access	train
+COG4	31949312	True	True	none	train
+COG4	32078278	False	False		train
+COG4	32652690	True	False	not_open_access	train
+COG4	33340551	True	False	unknown	train
+COG4	33629572	True	False	unknown	train
+COG4	33688625	True	True	CC BY	train
+COG4	34022244	True	False	unknown	train
+COG4	34298581	True	True	CC BY-NC	train
+COG4	34595172	True	True	CC BY	train
+COG4	34603392	True	True	CC BY	train
+COG4	35455576	True	True	CC BY	train
+COG4	36393834	True	True	CC BY	train
+JPH2	17476457	True	False	unknown	train
+JPH2	17509612	True	False	not_open_access	train
+JPH2	20694023	True	False	not_open_access	train
+JPH2	22515980	True	False	not_open_access	train
+JPH2	23715556	True	False	not_open_access	train
+JPH2	23973696	True	False	not_open_access	train
+JPH2	24636942	True	False	not_open_access	train
+JPH2	24935431	True	False	not_open_access	train
+JPH2	25500949	True	False	not_open_access	train
+JPH2	26869393	True	False	unknown	train
+JPH2	27471098	True	False	unknown	train
+JPH2	30167555	True	False	CC BY-NC-ND	train
+JPH2	28393127	True	False	CC BY-NC-ND	train
+JPH2	30235249	True	True	CC BY	train
+JPH2	30384889	True	False	unknown	train
+JPH2	31227780	True	True	CC BY	train
+JPH2	31478477	True	False	unknown	train
+JPH2	32777767	True	False	unknown	train
+JPH2	32879264	True	False	unknown	train
+JPH2	34526680	True	False	unknown	train
+JPH2	34861382	True	False	not_open_access	train
+JPH2	35001666	True	True	CC BY	train
+JPH2	35238659	True	False	CC BY-NC-ND	train
+JPH2	36357925	True	True	CC BY	train
+JPH2	37371654	True	True	CC BY	train
+JPH2	29540472	True	False	unknown	train
+JPH2	35800456	True	True	CC BY-NC	train
+JPH2	38438248	True	True	CC BY	train
+GRXCR2	24619944	True	False	not_open_access	train
+GRXCR2	32048449	True	True	CC BY	train
+GRXCR2	30157177	True	True	CC0	train
+GRXCR2	33528103	True	True	CC BY	train
+EMC1	36799557	True	False	not_open_access	train
+EMC1	35234901	True	False	not_open_access	train
+EMC1	37187958	True	True	CC BY	train
+EMC1	26942288	True	False	not_open_access	train
+EMC1	32092440	True	False	unknown	train
+EMC1	29271071	True	True	CC BY	train
+EMC1	38161285	True	False	unknown	train
+EMC1	37187958	True	True	CC BY	train
+EMC1	37554197	True	False	CC BY-NC-ND	train
+EMC1	37947657	True	True	CC BY	train
+KMO	23459468	True	False	CC BY-NC-ND	train
+CPT1B	18023382	True	False	not_open_access	train
+NPPA	32211440	True	True	CC BY	train
+NPPA	36303204	True	True	CC BY	train
+NPPA	37363091	True	True	CC BY	train
+LRRC10	26017719	True	False	unknown	train
+LRRC10	29431102	True	True	CC BY-NC	train
+LRRC10	28032242	True	False	not_open_access	train
+LRRC10	27536250	True	True	CC BY	train
+LRRC10	29431105	True	False	CC BY-NC-ND	train
+LRRC10	31270560	True	False	not_open_access	train
+TOPBP1	24702692	True	False	not_open_access	train
+TOPBP1	34199176	True	True	CC BY	train
+TOPBP1	30084161	True	True	CC BY	train
