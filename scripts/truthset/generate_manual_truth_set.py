@@ -28,9 +28,10 @@ from lib.di import DiContainer
 
 # %% Constants.
 
-TRUTH_XLSX = "./.tmp/Manual Ground Truth - 2024.06.25.xlsx"
+TRUTH_XLSX = "./.tmp/Manual Ground Truth v1.1 - 2024.11.26.xlsx"
 GROUP_ASSIGNMENT_CSV = "./data/v1/group_assignments.tsv"
-OUTPUT_ROOT = "./data/v1"
+TRUTHSET_VERSION = "v1.1"
+OUTPUT_ROOT = f"./data/{TRUTHSET_VERSION}"
 
 PAPERS_SHEET_NAME = "find_right_papers"
 
@@ -160,6 +161,7 @@ def _zygosity_validator(x: Any) -> Tuple[bool, str]:
 
 
 _VARIANT_INHERITANCES = [
+    "inherited",
     "maternally inherited",
     "paternally inherited",
     "de novo",
@@ -514,8 +516,16 @@ print(
 
 os.makedirs(OUTPUT_ROOT, exist_ok=True)
 
-gene_paper_df.query("group == 'train'").to_csv(os.path.join(OUTPUT_ROOT, "papers_train_v1.tsv"), sep="\t", index=False)
-gene_paper_df.query("group == 'test'").to_csv(os.path.join(OUTPUT_ROOT, "papers_test_v1.tsv"), sep="\t", index=False)
+gene_paper_df.query("group == 'train'").to_csv(
+    os.path.join(OUTPUT_ROOT, f"papers_train_{TRUTHSET_VERSION}.tsv"), sep="\t", index=False
+)
+gene_paper_df.query("group == 'test'").to_csv(
+    os.path.join(OUTPUT_ROOT, f"papers_test_{TRUTHSET_VERSION}.tsv"), sep="\t", index=False
+)
 
-evidence_df.query("group == 'train'").to_csv(os.path.join(OUTPUT_ROOT, "evidence_train_v1.tsv"), sep="\t", index=False)
-evidence_df.query("group == 'test'").to_csv(os.path.join(OUTPUT_ROOT, "evidence_test_v1.tsv"), sep="\t", index=False)
+evidence_df.query("group == 'train'").to_csv(
+    os.path.join(OUTPUT_ROOT, f"evidence_train_{TRUTHSET_VERSION}.tsv"), sep="\t", index=False
+)
+evidence_df.query("group == 'test'").to_csv(
+    os.path.join(OUTPUT_ROOT, f"evidence_test_{TRUTHSET_VERSION}.tsv"), sep="\t", index=False
+)

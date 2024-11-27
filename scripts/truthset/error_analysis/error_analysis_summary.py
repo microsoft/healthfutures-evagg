@@ -7,6 +7,8 @@ from typing import Any, Callable, Dict, Tuple
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from scripts.truthset.error_analysis.utils import parse_error_analysis_excel
+
 # Suppress specific warnings
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -94,9 +96,9 @@ def update_error_analysis_worksheet(df: pd.DataFrame, df_resolved: pd.DataFrame)
 
 def read_and_process_files(args: argparse.Namespace, output_dir: str) -> pd.DataFrame:
     """Read and process the files to generate the error analysis summary."""
-    df_1 = pd.read_csv(args.parsed_ana1_error_analysis_file, sep="\t", encoding="latin1")
-    df_2 = pd.read_csv(args.parsed_ana2_error_analysis_file, sep="\t", encoding="latin1")
-    df_3 = pd.read_csv(args.parsed_ana3_error_analysis_file, sep="\t", encoding="latin1")
+    df_1 = parse_error_analysis_excel(args.analyst_1_file)
+    df_2 = parse_error_analysis_excel(args.analyst_2_file)
+    df_3 = parse_error_analysis_excel(args.analyst_3_file)
     df_all_qs = pd.read_csv(args.all_sorted_discrep_file, sep="\t", encoding="latin1")
 
     if args.resolved_discrepancies:
@@ -285,22 +287,22 @@ def main(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Error Analysis Summary")
     parser.add_argument(
-        "--parsed-ana1-error-analysis-file",
+        "--analyst-1-file",
         type=str,
-        default="data/error_analysis/parsed_ana1_error_analysis_worksheet.tsv",
-        help="Path to parsed analyst 1 error analysis file",
+        default=(r"data/error_analysis/ana1_error_analysis_worksheet.csv"),
+        help=("data/error_analysis/ana1_error_analysis_worksheet.csv"),
     )
     parser.add_argument(
-        "--parsed-ana2-error-analysis-file",
+        "--analyst-2-file",
         type=str,
-        default="data/error_analysis/parsed_ana2_error_analysis_worksheet.tsv",
-        help="Path to parsed analyst 2 error analysis file",
+        default=(r"data/error_analysis/ana2_error_analysis_worksheet.csv"),
+        help=("data/error_analysis/ana2_error_analysis_worksheet.csv"),
     )
     parser.add_argument(
-        "--parsed-ana3-error-analysis-file",
+        "--analyst-3-file",
         type=str,
-        default="data/error_analysis/parsed_ana3_error_analysis_worksheet.tsv",
-        help="Path to parsed analyst 3 error analysis file",
+        default=(r"data/error_analysis/ana3_error_analysis_worksheet.csv"),
+        help=("data/error_analysis/ana3_error_analysis_worksheet.csv"),
     )
     parser.add_argument(
         "--all-sorted-discrep-file",
@@ -311,7 +313,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--resolved-discrep-file",
         type=str,
-        default="data/error_analysis/resolved_discrepancies/resolved_discrepancies.tsv",
+        default="data/error_analysis/resolved_discrepancies.tsv",
         help="Path to resolved discrepancies file",
     )
     parser.add_argument("--outdir", type=str, default=".out/", help="Output directory")

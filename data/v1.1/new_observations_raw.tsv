@@ -1,0 +1,47 @@
+pmid	gene	hgvs_desc	individual_id	id	link
+38052822	AHCY	p.Tyr328Asp	inferred proband	('AHCY', 38052822, 'p.Tyr328Asp', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10698036/
+29271071	EMC1	c.1212+1G>A	inferred proband	('EMC1', 29271071, 'c.1212+1G>A', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC5902391/
+29271071	EMC1	c.19564510C>T	inferred proband	('EMC1', 29271071, 'c.19564510C>T', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC5902391/
+29271071	EMC1	c.430G>A	inferred proband	('EMC1', 29271071, 'c.430G>A', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC5902391/
+29271071	EMC1	p.Arg401Trp	inferred proband	('EMC1', 29271071, 'p.Arg401Trp', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC5902391/
+29271071	EMC1	p.Gly471Arg	inferred proband	('EMC1', 29271071, 'p.Gly471Arg', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC5902391/
+29271071	EMC1	p.Gly868Arg	inferred proband	('EMC1', 29271071, 'p.Gly868Arg', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC5902391/
+29271071	EMC1	p.Thr82Met	inferred proband	('EMC1', 29271071, 'p.Thr82Met', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC5902391/
+37187958	EMC1	c.2376G>A	father	('EMC1', 37187958, 'c.2376G>A', 'father')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+37187958	EMC1	p.Val792=	inferred proband	('EMC1', 37187958, 'p.Val792=', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+37187958	EMC1	c.765_777delinsATTCTACTT	mother	('EMC1', 37187958, 'c.765_777delinsATTCTACTT', 'mother')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+37187958	EMC1	c.2376G>A	sister	('EMC1', 37187958, 'c.2376G>A', 'sister')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+37187958	EMC1	c.765_777delinsATTCTACTT	sister	('EMC1', 37187958, 'c.765_777delinsATTCTACTT', 'sister')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+37187958	EMC1	p.Val792=	father	('EMC1', 37187958, 'p.Val792=', 'father')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+37187958	EMC1	p.Val792fs	inferred proband	('EMC1', 37187958, 'p.Val792fs', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+37187958	EMC1	p.Val792fs	sister	('EMC1', 37187958, 'p.Val792fs', 'sister')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10175691/
+33638605	FBN2	c.3344A>T	iii8	('FBN2', 33638605, 'c.3344A>T', 'iii8')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8123754/
+34046667	FOXE3	c.146G>C	inferred proband	('FOXE3', 34046667, 'c.146G>C', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+34046667	FOXE3	c.244A>G	5	('FOXE3', 34046667, 'c.244A>G', '5')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+34046667	FOXE3	c.286G>A	4	('FOXE3', 34046667, 'c.286G>A', '4')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+34046667	FOXE3	c.543del	7a	('FOXE3', 34046667, 'c.543del', '7a')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+34046667	FOXE3	c.543del	7b	('FOXE3', 34046667, 'c.543del', '7b')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+34046667	FOXE3	c.844_850dup	11a	('FOXE3', 34046667, 'c.844_850dup', '11a')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+34046667	FOXE3	c.844_850dup	11b	('FOXE3', 34046667, 'c.844_850dup', '11b')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+34046667	FOXE3	c.148_170dup	3	('FOXE3', 34046667, 'c.148_170dup', '3')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8369840/
+33528103	GRXCR2	p.Ile85fs	inferred proband	('GRXCR2', 33528103, 'p.Ile85fs', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8104159/
+35001666	JPH2	p.Ala189Thr	inferred proband	('JPH2', 35001666, 'p.Ala189Thr', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8934682/
+35001666	JPH2	p.Gln142Ter	inferred proband	('JPH2', 35001666, 'p.Gln142Ter', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8934682/
+35001666	JPH2	p.Gly505STer	inferred proband	('JPH2', 35001666, 'p.Gly505STer', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8934682/
+35001666	JPH2	p.Lys361Asn	inferred proband	('JPH2', 35001666, 'p.Lys361Asn', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8934682/
+35001666	JPH2	p.Ser165Asn172delinsHis	inferred proband	('JPH2', 35001666, 'p.Ser165Asn172delinsHis', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC8934682/
+37780619	KIF1B	c.10428570G>C	inferred proband	('KIF1B', 37780619, 'c.10428570G>C', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10538641/
+37780619	KIF1B	p.Val1554Leu	inferred proband	('KIF1B', 37780619, 'p.Val1554Leu', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10538641/
+32154054	NDUFA2	c.134A>C	case 3a	('NDUFA2', 32154054, 'c.134A>C', 'case 3a')	https://pmc.ncbi.nlm.nih.gov/articles/PMC7052689/
+32154054	NDUFA2	c.170A>C	inferred proband	('NDUFA2', 32154054, 'c.170A>C', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC7052689/
+32154054	NDUFA2	c.225del	case 3a	('NDUFA2', 32154054, 'c.225del', 'case 3a')	https://pmc.ncbi.nlm.nih.gov/articles/PMC7052689/
+36041817	SARS1	c.109778053_109778055delGGT	inferred proband	('SARS1', 36041817, 'c.109778053_109778055delGGT', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC9691831/
+36041817	SARS1	p.Lys323_Ile324insSerArgTrpValArg	inferred proband	('SARS1', 36041817, 'p.Lys323_Ile324insSerArgTrpValArg', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC9691831/
+29678925	SLFN14	p.Arg223Trp	inferred proband	('SLFN14', 29678925, 'p.Arg223Trp', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC6004054/
+37041648	SLFN14	p.Arg223Trp	inferred proband	('SLFN14', 37041648, 'p.Arg223Trp', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10091655/
+37041648	SLFN14	p.Lys218Glu	inferred proband	('SLFN14', 37041648, 'p.Lys218Glu', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10091655/
+37041648	SLFN14	p.Val220Asp	inferred proband	('SLFN14', 37041648, 'p.Val220Asp', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10091655/
+37041648	SLFN14	p.Lys219Asn	inferred proband	('SLFN14', 37041648, 'p.Lys219Asn', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC10091655/
+35743796	TDO2	c.803T>A	father	('TDO2', 35743796, 'c.803T>A', 'father')	https://pmc.ncbi.nlm.nih.gov/articles/PMC9224546/
+33531950	ZNF423	p.Arg398Trp	inferred proband	('ZNF423', 33531950, 'p.Arg398Trp', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC7847091/
+33531950	ZNF423	p.Pro91Leu	inferred proband	('ZNF423', 33531950, 'p.Pro91Leu', 'inferred proband')	https://pmc.ncbi.nlm.nih.gov/articles/PMC7847091/
