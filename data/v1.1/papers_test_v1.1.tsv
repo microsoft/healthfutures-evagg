@@ -7,6 +7,7 @@ PTCD3	30607703	True	False	unknown	test
 PRPH	15322088	True	False	unknown	test
 PRPH	15446584	True	False	not_open_access	test
 PRPH	20363051	True	False	unknown	test
+PRPH	25299611	True	True	CC BY	test
 PRPH	26742954	True	False	unknown	test
 PRPH	32638105	True	False	unknown	test
 PRPH	25588603	True	False	unknown	test
@@ -33,12 +34,13 @@ AHCY	35789945	True	False	CC BY-NC-ND	test
 AHCY	38052822	True	True	CC BY	test
 AHCY	15024124	True	False	not_open_access	test
 AHCY	16736098	True	False	not_open_access	test
+AHCY	27848944	True	True	CC BY	test
 AHCY	35463910	True	True	CC BY	test
 NLGN3	12669065	True	False	not_open_access	test
 NLGN3	24126926	True	False	unknown	test
 NLGN3	25167861	True	True	CC BY-NC	test
 NLGN3	25363768	True	False	not_open_access	test
-NLGN3	28841651	True	True	CC BY	test
+NLGN3	25533962	True	True	none	test
 NLGN3	28263302	True	False	not_open_access	test
 NLGN3	15150161	True	False	unknown	test
 NLGN3	19360662	True	False	not_open_access	test
@@ -94,6 +96,7 @@ NLGN3	33758193	True	True	CC BY	test
 NLGN3	36479216	True	True	CC BY	test
 NLGN3	37509099	True	True	CC BY	test
 NLGN3	38475840	True	True	CC BY	test
+NLGN3	28841651	True	True	CC BY	test
 FOXE3	26854927	True	False	not_open_access	test
 FOXE3	26995144	True	False	unknown	test
 FOXE3	27669367	True	False	unknown	test
