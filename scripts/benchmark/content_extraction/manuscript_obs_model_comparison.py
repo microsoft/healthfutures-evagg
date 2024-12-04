@@ -55,4 +55,21 @@ for metric in ["precision", "recall"]:
         plt.ylim(0, 1)
 
 
+# %% Print out summary statistics.
+
+# Make a table that averages across runs, stratified on model and split, giving average precision and recall for each.
+summary = (
+    data.groupby(["model", "split"])[["precision", "recall", "precision_variant", "recall_variant"]]
+    .agg(["mean", "std"])
+    .reset_index()
+)
+
+# Just display to 3 sig figs
+summary = summary.round(3)
+
+# Don't let pandas split rows over newlines.
+pd.set_option("display.expand_frame_repr", False)
+print(summary)
+
+
 # %% Intentionally empty.
