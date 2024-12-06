@@ -155,7 +155,7 @@ g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Performance metric")
 g.title.set_text(f"Paper finding benchmark results{model_name}")
 
-plt.ylim(0.6, 1)
+plt.ylim(0.5, 1)
 
 # %% Print them instead.
 
