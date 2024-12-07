@@ -2,6 +2,7 @@ import argparse
 import os
 import warnings
 from datetime import datetime
+from functools import cache
 from typing import Any, Callable, Dict, Tuple
 
 import matplotlib.pyplot as plt
@@ -94,15 +95,52 @@ def update_error_analysis_worksheet(df: pd.DataFrame, df_resolved: pd.DataFrame)
     return df
 
 
+@cache
+def load_skipped_pmids(skipped_pmids_file: str) -> list[int]:
+    """Load the skipped PMIDs from the file."""
+    print("Loading skipped PMIDs...")
+    with open(skipped_pmids_file) as f:
+        return [int(line.strip()) for line in f.readlines()]
+
+
+def remove_skipped_pmids_by_question(
+    args: argparse.Namespace, df: pd.DataFrame, question_col: str = "Questions"
+) -> pd.DataFrame:
+    """Remove the skipped PMIDs from the DataFrame."""
+    skipped_pmids = load_skipped_pmids(args.skipped_pmids_file)
+
+    # For any value in question_col that looks like "The paper (\d+)...", extract the number and convert to int
+    # otherwise fill with 0
+    pmids = (
+        df[question_col]
+        .str.extract(r"The paper (\d+) discusses one or more human genetic variants", expand=False)
+        .fillna(0)
+        .astype(int)
+    )
+    return df[~pmids.isin(skipped_pmids)]
+
+
+def remove_skipped_pmids_by_pmid(args: argparse.Namespace, df: pd.DataFrame, pmid_col: str = "pmid") -> pd.DataFrame:
+    """Remove the skipped PMIDs from the DataFrame."""
+    skipped_pmids = load_skipped_pmids(args.skipped_pmids_file)
+    return df[~df[pmid_col].isin(skipped_pmids)]
+
+
 def read_and_process_files(args: argparse.Namespace, output_dir: str) -> pd.DataFrame:
     """Read and process the files to generate the error analysis summary."""
     df_1 = parse_error_analysis_excel(args.analyst_1_file)
+    df_1 = remove_skipped_pmids_by_question(args, df_1)
     df_2 = parse_error_analysis_excel(args.analyst_2_file)
+    df_2 = remove_skipped_pmids_by_question(args, df_2)
     df_3 = parse_error_analysis_excel(args.analyst_3_file)
+    df_3 = remove_skipped_pmids_by_question(args, df_3)
+
     df_all_qs = pd.read_csv(args.all_sorted_discrep_file, sep="\t", encoding="latin1")
+    df_all_qs = remove_skipped_pmids_by_pmid(args, df_all_qs)
 
     if args.resolved_discrepancies:
         df_resolved = pd.read_csv(args.resolved_discrep_file, sep="\t", encoding="latin1")
+        df_resolved = remove_skipped_pmids_by_question(args, df_resolved, question_col="Questions_1")
 
         # Ensure that all inter-rater discrepancies are resolved
         assert (df_resolved["Response_1"] == df_resolved["Response_2"]).all()
@@ -315,6 +353,12 @@ if __name__ == "__main__":
         type=str,
         default="data/error_analysis/resolved_discrepancies.tsv",
         help="Path to resolved discrepancies file",
+    )
+    parser.add_argument(
+        "--skipped-pmids-file",
+        type=str,
+        default="scripts/benchmark/paper_finding/paper_finding_benchmarks_skipped_pmids.txt",
+        help="Path to skipped PMIDs file",
     )
     parser.add_argument("--outdir", type=str, default=".out/", help="Output directory")
     parser.add_argument(

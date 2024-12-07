@@ -1,6 +1,7 @@
 gene	pmid	has_fulltext	can_access	license	group
 CTF1	11058912	True	False	unknown	train
 CTF1	24503780	True	False	unknown	train
+CTF1	26084686	True	True	CC BY-NC	train
 FBN2	9605585	True	False	unknown	train
 FBN2	9714438	True	False	unknown	train
 FBN2	9737771	True	False	unknown	train
@@ -63,9 +64,9 @@ FBN2	36800380	True	True	CC BY	train
 FBN2	36849876	True	False	CC BY-NC-ND	train
 FBN2	36936417	True	True	CC BY	train
 FBN2	37399314	True	False	unknown	train
-FBN2	37962692	True	True	CC BY	train
+FBN2	37962692	True	False	CC BY	train
 FBN2	38099230	True	True	CC BY	train
-FBN2	38114583	True	True	CC BY	train
+FBN2	38114583	True	False	CC BY	train
 FBN2	38215673	True	False	unknown	train
 FBN2	38326314	True	True	CC BY	train
 FBN2	37100863	True	True	CC BY	train
@@ -106,9 +107,12 @@ SARS1	36041817	True	True	CC BY	train
 SARS1	34570399	True	False	unknown	train
 BAZ2B	31999386	True	False	not_open_access	train
 BAZ2B	25363768	True	False	not_open_access	train
+BAZ2B	28135719	True	True	none	train
+BAZ2B	28554332	True	True	CC BY	train
 BAZ2B	28867142	True	False	not_open_access	train
 BAZ2B	31398340	True	False	not_open_access	train
 BAZ2B	31981491	True	False	not_open_access	train
+BAZ2B	33057194	True	True	none	train
 BAZ2B	37872713	True	False	unknown	train
 TAPBP	12149238	True	False	unknown	train
 B4GAT1	34587870	True	False	unknown	train
@@ -219,9 +223,11 @@ JPH2	35238659	True	False	CC BY-NC-ND	train
 JPH2	36357925	True	True	CC BY	train
 JPH2	37371654	True	True	CC BY	train
 JPH2	29540472	True	False	unknown	train
+JPH2	29165669	True	True	none	train
 JPH2	35800456	True	True	CC BY-NC	train
 JPH2	38438248	True	True	CC BY	train
 GRXCR2	24619944	True	False	not_open_access	train
+GRXCR2	28383030	True	True	CC BY	train
 GRXCR2	32048449	True	True	CC BY	train
 GRXCR2	30157177	True	True	CC0	train
 GRXCR2	33528103	True	True	CC BY	train

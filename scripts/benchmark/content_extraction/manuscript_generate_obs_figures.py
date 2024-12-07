@@ -155,10 +155,13 @@ g = sns.barplot(
     hue="split",
     alpha=0.6,
 )
+# rename the x labels to precision, recall, precision (variant), recall (variant).
+g.set_xticklabels(["Precision", "Recall", "Precision (var)", "Recall (var)"])
+
 g.xaxis.set_label_text("")
-g.yaxis.set_label_text("Performance")
+g.yaxis.set_label_text("Performance metric")
 g.title.set_text(f"Observation finding benchmark results{model_suffix}")
-plt.ylim(0, 1)
+plt.ylim(0.5, 1)
 
 # %% Print them instead.
 

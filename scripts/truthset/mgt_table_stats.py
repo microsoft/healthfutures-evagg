@@ -2,33 +2,18 @@
 The objective of this script is to extract summary statistics about the manual ground truth data.
 """
 
-import argparse
+# %%
+
 import os
 import re
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import scipy.stats as stats
+import yaml
 
-
-def read_data(file_path: str, sep: str = "\t") -> pd.DataFrame:
-    """Reads a file"""
-    return pd.read_csv(file_path, sep=sep)
-
-
-def combine_dataframes(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
-    """Combines two dataframes"""
-    return pd.concat([df1, df2])
-
-
-def calculate_papers_per_gene(df: pd.DataFrame) -> pd.Series:
-    """Calculates the number of papers per gene"""
-    return df.groupby("gene").size()  # type: ignore
-
-
-def calculate_accessible_papers_per_gene(df: pd.DataFrame) -> pd.Series:
-    """Calculates the number of accessible papers per gene"""
-    return df[df["can_access"] == True].groupby("gene").size()  # type: ignore
+# %% Function definitions.
 
 
 def create_result_dataframe(papers_per_gene: pd.Series, accessible_papers_per_gene: pd.Series) -> pd.DataFrame:
@@ -49,9 +34,9 @@ def create_result_dataframe(papers_per_gene: pd.Series, accessible_papers_per_ge
 
 def identify_evidence_base(file_path_train: str, file_path_test: str) -> pd.DataFrame:
     """Identifies the evidence base for each gene and combines the train and test data"""
-    df_train = read_data(file_path_train)
-    df_test = read_data(file_path_test)
-    combined_df = combine_dataframes(df_train[["gene", "evidence_base"]], df_test[["gene", "evidence_base"]])
+    df_train = pd.read_csv(file_path_train, sep="\t")
+    df_test = pd.read_csv(file_path_test, sep="\t")
+    combined_df = pd.concat([df_train[["gene", "evidence_base"]], df_test[["gene", "evidence_base"]]])
     return combined_df.drop_duplicates().reset_index(drop=True)
 
 
@@ -78,7 +63,7 @@ def merge_dataframes(
 
 def add_submission_data(merged_result: pd.DataFrame, submission_file_path: str) -> pd.DataFrame:
     """Adds GenCC ClinGen submission and # PubMed Papers to the merged result DataFrame"""
-    submission_df = read_data(submission_file_path)
+    submission_df = pd.read_csv(submission_file_path, sep="\t")
     submission_df = submission_df.rename(columns={"submitted_as_classification_name": "gene"})
     merged_result_w_gencc = merged_result.merge(
         submission_df[["gene", "Date_of_first_GenCC_ClinGen_submission", "#_returned_PubMed_papers"]],
@@ -97,7 +82,7 @@ def split_train_test(
     merged_result_w_gencc: pd.DataFrame, group_assignments_file_path: str
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Splits the merged result DataFrame into train and test DataFrames"""
-    group_assignments = read_data(group_assignments_file_path)
+    group_assignments = pd.read_csv(group_assignments_file_path, sep="\t")
     merged_result_w_gencc = merged_result_w_gencc.merge(group_assignments, on="gene", how="left")
     train_df = (
         merged_result_w_gencc[merged_result_w_gencc["group"] == "train"].drop(columns=["group"]).reset_index(drop=True)
@@ -119,7 +104,8 @@ def calculate_grouped_means(df: pd.DataFrame) -> pd.DataFrame:
 
 def extract_stats(file_path: str) -> tuple[dict, dict, dict, dict]:
     """Extracts summary statistics from the evidence file"""
-    df = read_data(file_path)
+    df = pd.read_csv(file_path, sep="\t")
+
     df["individual_id"] = df["individual_id"].replace(to_replace=re.compile(r"unknown", re.IGNORECASE), value=np.nan)  # type: ignore
     evidence_base_groups = df["evidence_base"].unique()
     columns_to_summarize = [
@@ -244,98 +230,135 @@ def create_large_summary_table(
     df.to_csv(output_dir + "mgt_category_stats.tsv", sep="\t", index=False)
 
 
-def main(args: argparse.Namespace) -> None:
+# def main(args: argparse.Namespace) -> None:
+OUTPUT_DIRECTORY = ".out/"
 
-    # Create output directory
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = os.path.join(args.outdir, f"mgt_table_stats_{timestamp}/")
-    os.makedirs(output_dir, exist_ok=True)
+# %%
+# Create output directory
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+output_dir = os.path.join(OUTPUT_DIRECTORY, f"mgt_table_stats_{timestamp}/")
+# output_dir = os.path.join(args.outdir, f"mgt_table_stats_{timestamp}/")
+os.makedirs(output_dir, exist_ok=True)
 
-    # File paths
-    file_path_train = "data/v1/papers_train_v1.tsv"
-    file_path_test = "data/v1/papers_test_v1.tsv"
-    evidence_train_file_path = "data/v1/evidence_train_v1.tsv"
-    evidence_test_file_path = "data/v1/evidence_test_v1.tsv"
-    submission_file_path = "data/gencc_clingen_submit_date.tsv"
-    group_assignments_file_path = "data/v1/group_assignments.tsv"
+# %%
+# File paths
+papers_train_file_path = "data/v1.1/papers_train_v1.1.tsv"
+papers_test_file_path = "data/v1.1/papers_test_v1.1.tsv"
 
-    # Read and combine data
-    df_train = read_data(file_path_train)
-    df_test = read_data(file_path_test)
-    df_combined = combine_dataframes(df_train, df_test)
+evidence_train_file_path = "data/v1.1/evidence_train_v1.1.tsv"
+evidence_test_file_path = "data/v1.1/evidence_test_v1.1.tsv"
 
-    # Calculate papers per gene
-    papers_per_gene = calculate_papers_per_gene(df_combined)
-    accessible_papers_per_gene = calculate_accessible_papers_per_gene(df_combined)
+submission_file_path = "data/gencc_clingen_submit_date.tsv"
+group_assignments_file_path = "data/v1/group_assignments.tsv"
 
-    # Create result DataFrame
-    result = create_result_dataframe(papers_per_gene, accessible_papers_per_gene)
+test_config_file_path = "lib/config/queries/mgttest_subset.yaml"
+train_config_file_path = "lib/config/queries/mgttrain_subset.yaml"
 
-    # Identify evidence base
-    unique_combined_gene_evidence_base_df = identify_evidence_base(evidence_train_file_path, evidence_test_file_path)
+skipped_pmids_file_path = "scripts/benchmark/paper_finding/paper_finding_benchmarks_skipped_pmids.txt"
 
-    # Merge dataframes
-    gene_to_evidence_base = {
-        "RHOH": "L",
-        "CPT1B": "N",
-        "TAPBP": "M",
-        "HYAL1": "M",
-        "RGS9": "M",
-        "PTCD3": "L",
-        "IGKC": "L",
-        "PEX11G": "N",
-        "OTUD7A": "L",
-        "MPST": "N",
-        "KMO": "N",
-        "ADCY1": "L",
-    }
-    evidence_base_mapping = {"L": "Limited", "N": "No Known", "M": "Moderate"}
-    merged_result = merge_dataframes(
-        result, unique_combined_gene_evidence_base_df, gene_to_evidence_base, evidence_base_mapping
+
+# %% Read and combine papers data
+train_papers_df = pd.read_csv(papers_train_file_path, sep="\t")
+test_papers_df = pd.read_csv(papers_test_file_path, sep="\t")
+papers_df = pd.concat([train_papers_df, test_papers_df])
+
+test_config_list = yaml.safe_load(open(test_config_file_path))
+train_config_list = yaml.safe_load(open(train_config_file_path))
+
+config_list = test_config_list + train_config_list
+config = pd.DataFrame(config_list)
+
+skipped_pmids = pd.read_csv(skipped_pmids_file_path, header=None, names=["pmid"])
+
+evidence_base_df = pd.read_csv(submission_file_path, sep="\t")
+
+# %% Drop all the skipped pmids
+
+skippable = papers_df["pmid"].isin(skipped_pmids["pmid"])
+print(f"Skipped {skippable.sum()} papers as they're not available from pubmed using standardized search.")
+
+papers_df = papers_df[~skippable]
+
+# %% Generate the per gene and total papers dataframes
+
+rows = []
+for gene, group_df in papers_df.groupby("gene"):
+    rows.append(
+        {
+            "gene": gene,
+            "group": group_df["group"].iloc[0],
+            "category": evidence_base_df.query("submitted_as_classification_name == @gene")[
+                "unique_disease_count"
+            ].iloc[0],
+            "considered": config.query("gene_symbol == @gene").iloc[0]["retmax"],
+            "total": group_df.shape[0],
+            "accessible": group_df["can_access"].sum(),
+        }
     )
 
-    # Add submission data
-    merged_result_w_gencc = add_submission_data(merged_result, submission_file_path)
+papers_summary_df = pd.DataFrame(rows)
 
-    # Split train and test
-    train_df, test_df = split_train_test(merged_result_w_gencc, group_assignments_file_path)
+# %% Test for a significant effect of category on the number of papers per gene
+# using a kruskall wallace test
 
-    # Save the train and test dataframes to a file
-    train_df.to_csv(output_dir + "train_paper_summary.tsv", sep="\t", index=False)
-    test_df.to_csv(output_dir + "test_paper_summary.tsv", sep="\t", index=False)
+stat, p_value = stats.kruskal(
+    papers_summary_df.query("category == 'Limited'")["total"],
+    papers_summary_df.query("category == 'Moderate'")["total"],
+    papers_summary_df.query("category == 'No Known Disease Relationship'")["total"],
+)
 
-    # Calculate grouped means
-    train_grouped = calculate_grouped_means(train_df)
-    test_grouped = calculate_grouped_means(test_df)
+# %% Print out some interesting facts for the paper.
 
-    # Save the training and test set average stats per evidence base
-    train_grouped.to_csv(output_dir + "train_avg_stats.tsv", sep="\t", index=False)
-    test_grouped.to_csv(output_dir + "test_avg_stats.tsv", sep="\t", index=False)
+print(f"Considered papers: {papers_summary_df['considered'].sum()}")
+print("  Per gene:")
+print(papers_summary_df["considered"].agg(["mean", "std"]).round(2))
+print("  Per category:")
+print(papers_summary_df.groupby("category")["considered"].agg(["mean", "std"]).round(2))
+print("")
 
-    # Extract stats from train and test data
-    summaries_train, average_patients_train, unique_papers_train, patients_per_paper_dict_train = extract_stats(
-        evidence_train_file_path
-    )
-    summaries_test, average_patients_test, unique_papers_test, patients_per_paper_dict_test = extract_stats(
-        evidence_test_file_path
-    )
+print(f"Relevant papers: {papers_summary_df['total'].sum()}")
+print("  Per gene:")
+print(papers_summary_df["total"].agg(["mean", "std"]).round(2))
+print("")
 
-    # Create a large summary table across categories and the values they can take
-    create_large_summary_table(
-        summaries_train,
-        summaries_test,
-        average_patients_train,
-        average_patients_test,
-        unique_papers_train,
-        unique_papers_test,
-        patients_per_paper_dict_train,
-        patients_per_paper_dict_test,
-        output_dir,
-    )
+print(f"Accessible papers: {papers_summary_df['accessible'].sum()}")
+print("  Per gene:")
+print(papers_summary_df["accessible"].agg(["mean", "std"]).round(2))
+print("")
 
+# %% Load in the evidence data.
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Manual Ground Truth (MGT) Table Statistics")
-    parser.add_argument("--outdir", type=str, default=".out/", help="Output directory")
-    args = parser.parse_args()
-    main(args)
+evidence_train_df = pd.read_csv(evidence_train_file_path, sep="\t")
+evidence_test_df = pd.read_csv(evidence_test_file_path, sep="\t")
+evidence_df = pd.concat([evidence_train_df, evidence_test_df])
+
+evidence_df["hgvs"] = evidence_df["hgvs_c"].fillna(evidence_df["hgvs_p"])
+
+# %% Print out some interesting facts for the evidence.
+
+print(f"Number of observations: {evidence_df.shape[0]}")
+print(f"Number of unique variants: {evidence_df.drop_duplicates(["hgvs", "gene"]).shape[0]}")
+print(f"Number of unique genes: {evidence_df['gene'].nunique()}")
+print(f"Number of unique papers: {evidence_df['paper_id'].nunique()}")
+
+# Generate a new df indexed by gene with the number of observations and unique variants.
+gene_evidence_df = (
+    evidence_df.groupby("gene")
+    .agg({"hgvs": "nunique", "author": "count"})
+    .rename({"hgvs": "variants", "author": "observations"}, axis=1)  # author is an arbitrary column choice.
+)
+paper_evidence_df = (
+    evidence_df.groupby(["pmid", "gene"])
+    .agg({"hgvs": "nunique", "author": "count"})
+    .rename({"hgvs": "variants", "author": "observations"}, axis=1)  # author is an arbitrary column choice.
+)
+
+print("Averages by gene:")
+print(gene_evidence_df.agg(["mean", "std"]).round(2))
+print("")
+
+print("Averages by paper:")
+print(paper_evidence_df.agg(["mean", "std"]).round(2))
+print("")
+
+# %% Intentionally left blank

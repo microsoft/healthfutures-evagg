@@ -28,7 +28,7 @@ from lib.di import DiContainer
 
 # %% Constants.
 
-TRUTH_XLSX = "./.tmp/Manual Ground Truth v1.1 - 2024.11.26.xlsx"
+TRUTH_XLSX = "./.tmp/Manual Ground Truth v1.1 - 2024.12.03.xlsx"
 GROUP_ASSIGNMENT_CSV = "./data/v1/group_assignments.tsv"
 TRUTHSET_VERSION = "v1.1"
 OUTPUT_ROOT = f"./data/{TRUTHSET_VERSION}"
