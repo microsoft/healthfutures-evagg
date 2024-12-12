@@ -155,7 +155,7 @@ g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Performance metric")
 g.title.set_text(f"Paper finding benchmark results{model_name}")
 
-plt.ylim(0, 1)
+plt.ylim(0.5, 1)
 
 # %% Print them instead.
 
@@ -164,10 +164,14 @@ for run_type in ["train", "test"]:
 
     print(f"-- Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}) --")
 
-    print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]])
+    print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]].round(3))
 
     print()
-    print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]].aggregate(["mean", "std"]))
+    print(
+        run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]]
+        .aggregate(["mean", "std"])
+        .round(3)
+    )
     print()
 
 

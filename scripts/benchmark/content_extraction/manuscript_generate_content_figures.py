@@ -83,6 +83,50 @@ for run_type in ["train", "test"]:
         item.set_rotation(90)
 
 
+# %% Make another version of the plot where train and test are shown together.
+
+sns.set_theme(style="whitegrid")
+
+all_obs_run_stats_labeled = []
+for run_type in ["train", "test"]:
+    run_stats_labeled = all_obs_run_stats[run_type].copy()
+    run_stats_labeled["split"] = run_type
+    all_obs_run_stats_labeled.append(run_stats_labeled)
+
+obs_run_stats_labeled = pd.concat(all_obs_run_stats_labeled)
+
+obs_run_stats_labeled_melted = obs_run_stats_labeled[
+    [
+        "split",
+        "run_id",
+        "zygosity",
+        "variant_type",
+        "variant_inheritance",
+        "phenotype",
+        "study_type",
+        "animal_model",
+        "engineered_cells",
+        "patient_cells_tissues",
+    ]
+].melt(id_vars=["split", "run_id"], var_name="metric", value_name="result")
+
+plt.figure()
+
+g = sns.barplot(
+    data=obs_run_stats_labeled_melted,
+    x="metric",
+    y="result",
+    errorbar="sd",
+    hue="split",
+    alpha=0.6,
+)
+g.xaxis.set_label_text("")
+g.yaxis.set_label_text("Accuracy")
+g.set_xticklabels(g.get_xticklabels(), rotation=90)
+
+g.title.set_text("Content extraction benchmark results")
+plt.ylim(0.25, 1)
+
 # %% Print them instead.
 
 max_columns = pd.get_option("display.max_columns")
