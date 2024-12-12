@@ -38,6 +38,10 @@ ANALYST_RESPONSES_FILES = [
 # disagreements during error analysis.
 CONSENSUS_RESOLUTION_FILE = "data/error_analysis/resolved_discrepancies.tsv"
 
+# List of manually skipped PMIDs from the benchmarking process. Even if the error resolution process indicated that
+# these PMIDs should be removed from the truthset, they shouldn't be removed if they're on this list.
+SKIPPED_PMIDS = "scripts/benchmark/paper_finding/paper_finding_benchmarks_skipped_pmids.txt"
+
 # The original v1 truthset. This will serve as a starting point for the updated truthset.
 TRUTHSET_ROOT = "data/v1"
 
@@ -190,6 +194,9 @@ group_assignments = pd.read_csv(f"{TRUTHSET_ROOT}/group_assignments.tsv", sep="\
 
 discrepancies["group"] = discrepancies["gene"].map(group_assignments.set_index("gene")["group"])
 
+with open(SKIPPED_PMIDS) as f:
+    skipped_pmids = [int(line.strip()) for line in f.readlines()]
+
 # %% List the todos for papers, order by gene and group
 
 print("#")
@@ -198,6 +205,7 @@ print("#")
 print("")
 
 paper_discrepancies = discrepancies.query("task == 'papers'")
+paper_discrepancies = paper_discrepancies.query("pmid not in @skipped_pmids")
 
 for group, group_df in paper_discrepancies.groupby("group"):
     for gene, gene_df in group_df.groupby("gene"):
