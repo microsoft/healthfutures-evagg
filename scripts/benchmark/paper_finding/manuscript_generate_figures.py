@@ -29,6 +29,31 @@ TEST_RUNS = get_benchmark_run_ids(MODEL, "test")
 
 model_name = f" - {MODEL}"
 
+# %% Compute inter-run-agreement.
+
+from itertools import combinations
+from typing import Set
+
+for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
+
+    runs = [load_run(id, "paper_finding", "pipeline_mgt_comparison.tsv") for id in run_ids]
+
+    run_papers: Dict[str, Set[int]] = {}
+
+    for run_id, run in zip(run_ids, runs):
+        if run is None:
+            continue
+
+        run_papers[run_id] = set(run.pmid.unique())
+
+    # Make a dataframe where every row is a pmid that appears at least once across all runs, and each column is a run
+    # with a boolean value for whether that pmid appears in that run.
+    all_papers = set.union(*run_papers.values())
+    paper_presence = pd.DataFrame({run_id: [pmid in run_papers[run_id] for pmid in all_papers] for run_id in run_ids})
+
+    print(f"Paper consistency ({run_type}): {paper_presence.agg("mean", axis=1).agg("mean")}")
+
+
 # %% Generate run stats.
 
 all_run_stats: Dict[str, pd.DataFrame] = {}
@@ -155,7 +180,7 @@ g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Performance metric")
 g.title.set_text(f"Paper finding benchmark results{model_name}")
 
-plt.ylim(0.5, 1)
+plt.ylim(0.6, 1)
 
 # %% Print them instead.
 
