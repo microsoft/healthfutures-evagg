@@ -85,50 +85,6 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
     all_obs_run_stats[run_type] = run_stats
 
-# %% Make the performance barplot.
-sns.set_theme(style="whitegrid")
-
-for run_type in ["train", "test"]:
-    run_stats = all_obs_run_stats[run_type]
-
-    obs_perf_melted = run_stats[["run_id", "precision", "recall"]].melt(
-        id_vars="run_id", var_name="metric", value_name="result"
-    )
-
-    plt.figure()
-
-    g = sns.barplot(
-        data=obs_perf_melted,
-        x="metric",
-        y="result",
-        errorbar="sd",
-        alpha=0.6,
-    )
-    g.xaxis.set_label_text("")
-    g.yaxis.set_label_text("Performance")
-    g.title.set_text(f"Observation finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_suffix}")
-
-    var_perf_melted = run_stats[["run_id", "precision_variant", "recall_variant"]].melt(
-        id_vars="run_id", var_name="metric", value_name="result"
-    )
-    var_perf_melted["metric"] = var_perf_melted["metric"].map(
-        {"precision_variant": "precision", "recall_variant": "recall"}
-    )
-
-    plt.figure()
-
-    g = sns.barplot(
-        data=var_perf_melted,
-        x="metric",
-        y="result",
-        errorbar="sd",
-        alpha=0.6,
-    )
-    g.xaxis.set_label_text("")
-    g.yaxis.set_label_text("Performance")
-    g.title.set_text(f"Variant finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_suffix}")
-
-
 # %% Make another version of the performance barplot where both train and test are shown together.
 
 sns.set_theme(style="whitegrid")
@@ -145,6 +101,9 @@ obs_run_stats_labeled_melted = obs_run_stats_labeled[
     ["split", "run_id", "precision", "recall", "precision_variant", "recall_variant"]
 ].melt(id_vars=["split", "run_id"], var_name="metric", value_name="result")
 
+# Recode split from "train" and "test" to "dev" and "eval".
+obs_run_stats_labeled_melted["split"] = obs_run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
+
 plt.figure()
 
 g = sns.barplot(
@@ -160,7 +119,7 @@ g.set_xticklabels(["Precision", "Recall", "Precision (var)", "Recall (var)"])
 
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Performance metric")
-g.title.set_text(f"Observation finding benchmark results{model_suffix}")
+g.title.set_text("Observation finding")
 plt.ylim(0.5, 1)
 
 # %% Print them instead.
@@ -174,7 +133,9 @@ pd.set_option("display.width", 2000)
 for run_type in ["train", "test"]:
     run_stats = all_obs_run_stats[run_type]
 
-    print(f"-- Observation finding benchmark results ({run_type}; N={run_stats.shape[0]}) --")
+    run_type_alt = "dev" if run_type == "train" else "eval"
+
+    print(f"-- Observation finding benchmark results ({run_type_alt}; N={run_stats.shape[0]}) --")
 
     print(run_stats[["n", "precision", "recall", "n_variant", "precision_variant", "recall_variant"]])
 

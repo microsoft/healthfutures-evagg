@@ -10,7 +10,7 @@ pipeline output set for a different model.
 # %% Imports.
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 import pandas as pd
 import seaborn as sns
@@ -31,12 +31,11 @@ model_name = f" - {MODEL}"
 
 # %% Compute inter-run-agreement.
 
-from itertools import combinations
-from typing import Set
-
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
     runs = [load_run(id, "paper_finding", "pipeline_mgt_comparison.tsv") for id in run_ids]
+
+    run_type_alt = "train" if run_type == "train" else "eval"
 
     run_papers: Dict[str, Set[int]] = {}
 
@@ -51,7 +50,7 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
     all_papers = set.union(*run_papers.values())
     paper_presence = pd.DataFrame({run_id: [pmid in run_papers[run_id] for pmid in all_papers] for run_id in run_ids})
 
-    print(f"Paper consistency ({run_type}): {paper_presence.agg("mean", axis=1).agg("mean")}")
+    print(f"Paper consistency ({run_type_alt}): {paper_presence.agg("mean", axis=1).agg("mean")}")
 
 
 # %% Generate run stats.
@@ -106,6 +105,8 @@ sns.set_theme(style="whitegrid")
 for run_type in ["train", "test"]:
     run_stats = all_run_stats[run_type]
 
+    run_type_alt = "train" if run_type == "train" else "eval"
+
     # Convert this dataframe to have the columns: run_id, count_type, and count_value.
     run_counts_melted = run_stats[["run_id", "n_correct", "n_missed", "n_irrelevant"]].melt(
         id_vars="run_id", var_name="count_type", value_name="count_value"
@@ -122,32 +123,7 @@ for run_type in ["train", "test"]:
     )
     g.xaxis.set_label_text("")
     g.yaxis.set_label_text("Papers in category")
-    g.title.set_text(f"Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_name}")
-
-# %% Make the stats performance barplot.
-sns.set_theme(style="whitegrid")
-
-for run_type in ["train", "test"]:
-    run_stats = all_run_stats[run_type]
-
-    # Convert this dataframe to have the columns: run_id, count_type, and count_value.
-    run_stats_melted = run_stats[["run_id", "precision", "recall", "f1"]].melt(
-        id_vars="run_id", var_name="stat_type", value_name="stat_value"
-    )
-
-    plt.figure()
-
-    g = sns.barplot(
-        data=run_stats_melted,
-        x="stat_type",
-        y="stat_value",
-        errorbar="sd",
-        alpha=0.6,
-    )
-
-    g.xaxis.set_label_text("")
-    g.yaxis.set_label_text("Performance metric")
-    g.title.set_text(f"Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_name}")
+    g.title.set_text(f"Paper finding benchmark results ({run_type_alt}; N={run_stats.shape[0]}){model_name}")
 
 # %% Make another barplot that shows train and test performance together.
 
@@ -165,6 +141,9 @@ run_stats_labeled_melted = run_stats_labeled[["split", "run_id", "precision", "r
     id_vars=["split", "run_id"], var_name="stat_type", value_name="stat_value"
 )
 
+# Recode split from "train" and "test" to "dev" and "eval".
+run_stats_labeled_melted["split"] = run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
+
 plt.figure()
 
 g = sns.barplot(
@@ -178,9 +157,9 @@ g = sns.barplot(
 
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Performance metric")
-g.title.set_text(f"Paper finding benchmark results{model_name}")
+g.title.set_text("Paper finding")
 
-plt.ylim(0.6, 1)
+plt.ylim(0.5, 1)
 
 # %% Print them instead.
 
