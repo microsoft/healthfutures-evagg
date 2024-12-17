@@ -17,6 +17,7 @@ LOCAL_CONTENT_COLUMNS.remove("study_type")
 LOCAL_CONTENT_COLUMNS.remove("animal_model")
 LOCAL_CONTENT_COLUMNS.remove("engineered_cells")
 LOCAL_CONTENT_COLUMNS.remove("patient_cells_tissues")
+LOCAL_CONTENT_COLUMNS.remove("phenotype")
 
 TRAIN_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "train")
 TEST_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "test")
@@ -80,7 +81,6 @@ obs_run_stats_labeled_melted = obs_run_stats_labeled[
         "zygosity",
         "variant_type",
         "variant_inheritance",
-        "phenotype",
     ]
 ].melt(id_vars=["split", "run_id"], var_name="metric", value_name="result")
 
