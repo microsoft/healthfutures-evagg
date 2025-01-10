@@ -11,8 +11,6 @@ from typing import Any, List, Tuple
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-
-# test imports
 import statsmodels.api as sm
 from statsmodels.formula.api import mixedlm
 
@@ -212,13 +210,14 @@ for col in ylabels.keys():
     sns.barplot(data=action_counts, x="session_id", y=col, errorbar="sd")
     plt.ylabel(ylabels[col])
 
-    plt.figure()
-    sns.barplot(data=action_counts, x="session_id", y=col, errorbar="sd", hue="case_group_id")
-    plt.ylabel(ylabels[col])
+    # plt.figure()
+    # sns.barplot(data=action_counts, x="session_id", y=col, errorbar="sd", hue="case_group_id")
+    # plt.ylabel(ylabels[col])
 
-    plt.figure()
-    sns.barplot(data=action_counts, y=col, x="participant_id", hue="session_id", palette="pastel")
-    plt.ylabel(ylabels[col])
+    # plt.figure()
+    # sns.barplot(data=action_counts, y=col, x="participant_id", hue="session_id", palette="pastel")
+    # plt.ylabel(ylabels[col])
+
 
 # %% Make counts performance barplots with subgroups derived from qualitative analyses.
 
@@ -235,7 +234,7 @@ case_review_durations["minutes"] = case_review_durations["seconds"] / 60
 
 plt.figure()
 
-sns.barplot(data=case_review_durations, x="session_id", y="minutes")
+sns.barplot(data=case_review_durations, hue="session_id", x="session_id", y="minutes")
 plt.ylabel("Time spent on each case (minutes)")
 
 plt.figure()
@@ -297,12 +296,20 @@ for col in ylabels.keys():
     if col == "table_use":
         continue
     print(f"-- {ylabels[col]} --")
+
+    # Also make a table showing means and stds
+    print(action_counts.groupby("session_id")[col].describe())
+
     model = mixedlm(f"{col} ~ session_id + case_group_id", action_counts, groups=action_counts["participant_id"])
     result = model.fit()
     print(result.summary())
 
+
+# %%
+
 # # Mixed effects model for duration data
 print("-- Case review durations --")
+print(case_review_durations.groupby("session_id")["seconds"].agg(["mean", "std"]) / 60)
 model = mixedlm(
     "seconds ~ session_id + case_group_id", case_review_durations, groups=case_review_durations["participant_id"]
 )
@@ -310,6 +317,7 @@ result = model.fit()
 print(result.summary())
 
 print("-- Variant review durations --")
+print(variant_review_durations.groupby("session_id")["seconds"].agg(["mean", "std"]) / 60)
 model = mixedlm(
     "seconds ~ session_id + case_group_id", variant_review_durations, groups=variant_review_durations["participant_id"]
 )
