@@ -223,10 +223,22 @@ for col in ylabels.keys():
 
 for col in ylabels.keys():
     plt.figure()
-    sns.barplot(data=action_counts, x="interaction_style", y=col, hue="session_id")
+    sns.barplot(
+        data=action_counts, x="interaction_style", y=col, hue="session_id", palette={"S1": "#1F77B4", "S2": "#FA621E"}
+    )
+
+    # For the axis labels, substitute spaces for underscores and capitalize.
+    plt.ylabel(ylabels[col].replace("_", " ").capitalize())
+    plt.xlabel("Interaction style")
 
     plt.figure()
-    sns.barplot(data=action_counts, x="review_strategy", y=col, hue="session_id")
+    sns.barplot(
+        data=action_counts, x="review_strategy", y=col, hue="session_id", palette={"S1": "#1F77B4", "S2": "#FA621E"}
+    )
+
+    # For the axis labels, substitute spaces for underscores and capitalize.
+    plt.ylabel(ylabels[col].replace("_", " ").capitalize())
+    plt.xlabel("Review strategy")
 
 # %% Make duration barplots.
 
@@ -255,12 +267,16 @@ plt.ylabel("Time spent on each variant (minutes)")
 
 for df, label in [(case_review_durations, "case"), (variant_review_durations, "variant")]:
     plt.figure()
-    sns.barplot(data=df, y="minutes", x="interaction_style", hue="session_id")
+    sns.barplot(
+        data=df, y="minutes", x="interaction_style", hue="session_id", palette={"S1": "#1F77B4", "S2": "#FA621E"}
+    )
     plt.ylabel(f"Time spent on each {label} (minutes)")
+    plt.xlabel("Interaction style")
 
     plt.figure()
-    sns.barplot(data=df, y="minutes", x="review_strategy", hue="session_id")
+    sns.barplot(data=df, y="minutes", x="review_strategy", hue="session_id", palette={"S1": "#1F77B4", "S2": "#FA621E"})
     plt.ylabel(f"Time spent on each {label} (minutes)")
+    plt.xlabel("Review strategy")
 
 # %% Make duration histograms for session 2 only, stratified by sugroups derived from qualititative analyses.
 
