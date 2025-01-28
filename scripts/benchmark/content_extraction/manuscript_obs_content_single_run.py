@@ -11,22 +11,20 @@ This notebook compares the performance of the two components separately.
 
 import argparse
 import os
-import re
 from collections import defaultdict
 from functools import cache
-from typing import Any, Dict, List, Set, Tuple, Type
+from typing import Any, Dict, List, Set, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from Bio.SeqUtils import IUPACData
-from pyhpo import Ontology
 from sklearn.metrics import confusion_matrix
 
 from lib.di import DiContainer
 from lib.evagg.content import HGVSVariantFactory
 from lib.evagg.utils.run import get_previous_run
-from scripts.benchmark.utils import get_eval_df
+from scripts.benchmark.utils import generalize_hpo_term, get_eval_df, hpo_str_to_set
 
 # Function definitions.
 
@@ -384,55 +382,15 @@ def write_observation_finding_outputs(merged_df: pd.DataFrame, output_dir: str) 
     merged_df[["in_truth", "in_pipeline"]].to_csv(os.path.join(output_dir, "observation_finding_results.tsv"), sep="\t")
 
 
-def _hpo_str_to_set(hpo_compound_string: str) -> Set[str]:
-    """Convert a comma-separated list of HPO terms to a set of terms.
-
-    Takes a string of the form "Foo (HP:1234), Bar (HP:4321) and provides a set of strings that correspond to the
-    HPO IDs embedded in the string.
-    """
-    return set(re.findall(r"HP:\d+", hpo_compound_string)) if pd.isna(hpo_compound_string) is False else set()
-
-
-@cache
-def _get_ontology() -> Type[Ontology]:
-    Ontology()
-    return Ontology
-
-
-def _generalize_hpo_term(hpo_term: str, depth: int = 3) -> str:
-    """Take an HPO term ID and return the generalized version of that term at `depth`.
-
-    `depth` determines the degree to which hpo_term gets generalized, setting depth=1 will always return HP:0000001.
-
-    If the provided term is more generalized than depth (e.g., "HP:0000118"), then that term itself will be returned.
-    If the provided term doesn't exist in the ontology, then an error will be raised.
-    """
-    try:
-        hpo_obj = _get_ontology().get_hpo_object(hpo_term)
-    except RuntimeError:
-        # HPO term not found in pyhpo, can't use
-        print("Warning: HPO term not found in pyhpo, can't use", hpo_term)
-        return ""
-
-    try:
-        path_len, path, _, _ = _get_ontology().get_hpo_object("HP:0000001").path_to_other(hpo_obj)
-    except RuntimeError:
-        # No root found, occurs for obsolete terms.
-        return hpo_obj.__str__()
-    if path_len < depth:
-        return hpo_obj.__str__()
-    return path[depth - 1].__str__()
-
-
 def _match_hpo_sets(
     hpo_left: str, hpo_right: str
 ) -> Tuple[list[str], Dict[str, List[str]], Dict[str, List[str]], Dict[str, List[str]]]:
-    left_terms = _hpo_str_to_set(hpo_left)
-    right_terms = _hpo_str_to_set(hpo_right)
+    left_terms = hpo_str_to_set(hpo_left)
+    right_terms = hpo_str_to_set(hpo_right)
 
     # Build a mapping from specific to general terms.
-    left_gen_dict = {t: _generalize_hpo_term(t) for t in left_terms}
-    right_gen_dict = {t: _generalize_hpo_term(t) for t in right_terms}
+    left_gen_dict = {t: generalize_hpo_term(t) for t in left_terms}
+    right_gen_dict = {t: generalize_hpo_term(t) for t in right_terms}
 
     # Invert the mapping.
     left_spec_dict: dict[str, list[str]] = defaultdict(list)

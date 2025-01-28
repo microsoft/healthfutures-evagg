@@ -10,7 +10,7 @@ pipeline output set for a different model.
 # %% Imports.
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 
 import pandas as pd
 import seaborn as sns
@@ -28,6 +28,30 @@ TRAIN_RUNS = get_benchmark_run_ids(MODEL, "train")
 TEST_RUNS = get_benchmark_run_ids(MODEL, "test")
 
 model_name = f" - {MODEL}"
+
+# %% Compute inter-run-agreement.
+
+for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
+
+    runs = [load_run(id, "paper_finding", "pipeline_mgt_comparison.tsv") for id in run_ids]
+
+    run_type_alt = "train" if run_type == "train" else "eval"
+
+    run_papers: Dict[str, Set[int]] = {}
+
+    for run_id, run in zip(run_ids, runs):
+        if run is None:
+            continue
+
+        run_papers[run_id] = set(run.pmid.unique())
+
+    # Make a dataframe where every row is a pmid that appears at least once across all runs, and each column is a run
+    # with a boolean value for whether that pmid appears in that run.
+    all_papers = set.union(*run_papers.values())
+    paper_presence = pd.DataFrame({run_id: [pmid in run_papers[run_id] for pmid in all_papers] for run_id in run_ids})
+
+    print(f"Paper consistency ({run_type_alt}): {paper_presence.agg("mean", axis=1).agg("mean")}")
+
 
 # %% Generate run stats.
 
@@ -75,58 +99,13 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
     all_run_stats[run_type] = run_stats
 
-# %% Make the counts performance barplot.
-sns.set_theme(style="whitegrid")
 
-for run_type in ["train", "test"]:
-    run_stats = all_run_stats[run_type]
-
-    # Convert this dataframe to have the columns: run_id, count_type, and count_value.
-    run_counts_melted = run_stats[["run_id", "n_correct", "n_missed", "n_irrelevant"]].melt(
-        id_vars="run_id", var_name="count_type", value_name="count_value"
-    )
-
-    plt.figure()
-
-    g = sns.barplot(
-        data=run_counts_melted,
-        x="count_type",
-        y="count_value",
-        errorbar="sd",
-        alpha=0.6,
-    )
-    g.xaxis.set_label_text("")
-    g.yaxis.set_label_text("Papers in category")
-    g.title.set_text(f"Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_name}")
-
-# %% Make the stats performance barplot.
-sns.set_theme(style="whitegrid")
-
-for run_type in ["train", "test"]:
-    run_stats = all_run_stats[run_type]
-
-    # Convert this dataframe to have the columns: run_id, count_type, and count_value.
-    run_stats_melted = run_stats[["run_id", "precision", "recall", "f1"]].melt(
-        id_vars="run_id", var_name="stat_type", value_name="stat_value"
-    )
-
-    plt.figure()
-
-    g = sns.barplot(
-        data=run_stats_melted,
-        x="stat_type",
-        y="stat_value",
-        errorbar="sd",
-        alpha=0.6,
-    )
-
-    g.xaxis.set_label_text("")
-    g.yaxis.set_label_text("Performance metric")
-    g.title.set_text(f"Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}){model_name}")
-
-# %% Make another barplot that shows train and test performance together.
+# %% Make the primary barplot.
 
 sns.set_theme(style="whitegrid")
+
+# set figure size to 3, 3
+plt.figure(figsize=(3, 3))
 
 all_run_stats_labeled = []
 for run_type in ["train", "test"]:
@@ -140,22 +119,35 @@ run_stats_labeled_melted = run_stats_labeled[["split", "run_id", "precision", "r
     id_vars=["split", "run_id"], var_name="stat_type", value_name="stat_value"
 )
 
-plt.figure()
+# Recode split from "train" and "test" to "dev" and "eval".
+run_stats_labeled_melted["split"] = run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
+
 
 g = sns.barplot(
-    data=run_stats_labeled_melted,
+    data=run_stats_labeled_melted.query("split == 'eval'"),
     x="stat_type",
     y="stat_value",
     errorbar="sd",
     alpha=0.6,
     hue="split",
+    palette={"dev": "#1F77B4", "eval": "#FA621E"},
 )
 
 g.xaxis.set_label_text("")
-g.yaxis.set_label_text("Performance metric")
-g.title.set_text(f"Paper finding benchmark results{model_name}")
+g.yaxis.set_label_text("Proportion")
+g.title.set_text("Paper selection")
+
+# capitalize the xticklabels
+g.set_xticklabels([x.get_text().capitalize() for x in g.get_xticklabels()])
+
+# remove the legend
+g.get_legend().remove()
 
 plt.ylim(0.5, 1)
+
+
+plt.savefig(f"{OUTPUT_DIR}/paper_finding_benchmark_performance{model_name}.png", bbox_inches="tight")
+
 
 # %% Print them instead.
 
