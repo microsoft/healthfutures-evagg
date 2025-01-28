@@ -99,35 +99,13 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
     all_run_stats[run_type] = run_stats
 
-# %% Make the counts performance barplot.
-sns.set_theme(style="whitegrid")
 
-for run_type in ["train", "test"]:
-    run_stats = all_run_stats[run_type]
-
-    run_type_alt = "train" if run_type == "train" else "eval"
-
-    # Convert this dataframe to have the columns: run_id, count_type, and count_value.
-    run_counts_melted = run_stats[["run_id", "n_correct", "n_missed", "n_irrelevant"]].melt(
-        id_vars="run_id", var_name="count_type", value_name="count_value"
-    )
-
-    plt.figure()
-
-    g = sns.barplot(
-        data=run_counts_melted,
-        x="count_type",
-        y="count_value",
-        errorbar="sd",
-        alpha=0.6,
-    )
-    g.xaxis.set_label_text("")
-    g.yaxis.set_label_text("Papers in category")
-    g.title.set_text(f"Paper finding benchmark results ({run_type_alt}; N={run_stats.shape[0]}){model_name}")
-
-# %% Make another barplot that shows train and test performance together.
+# %% Make the primary barplot.
 
 sns.set_theme(style="whitegrid")
+
+# set figure size to 3, 3
+plt.figure(figsize=(3, 3))
 
 all_run_stats_labeled = []
 for run_type in ["train", "test"]:
@@ -144,22 +122,32 @@ run_stats_labeled_melted = run_stats_labeled[["split", "run_id", "precision", "r
 # Recode split from "train" and "test" to "dev" and "eval".
 run_stats_labeled_melted["split"] = run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
 
-plt.figure()
 
 g = sns.barplot(
-    data=run_stats_labeled_melted,
+    data=run_stats_labeled_melted.query("split == 'eval'"),
     x="stat_type",
     y="stat_value",
     errorbar="sd",
     alpha=0.6,
     hue="split",
+    palette={"dev": "#1F77B4", "eval": "#FA621E"},
 )
 
 g.xaxis.set_label_text("")
-g.yaxis.set_label_text("Performance metric")
-g.title.set_text("Paper finding")
+g.yaxis.set_label_text("Proportion")
+g.title.set_text("Paper selection")
+
+# capitalize the xticklabels
+g.set_xticklabels([x.get_text().capitalize() for x in g.get_xticklabels()])
+
+# remove the legend
+g.get_legend().remove()
 
 plt.ylim(0.5, 1)
+
+
+plt.savefig(f"{OUTPUT_DIR}/paper_finding_benchmark_performance{model_name}.png", bbox_inches="tight")
+
 
 # %% Print them instead.
 

@@ -104,23 +104,30 @@ obs_run_stats_labeled_melted = obs_run_stats_labeled[
 # Recode split from "train" and "test" to "dev" and "eval".
 obs_run_stats_labeled_melted["split"] = obs_run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
 
-plt.figure()
+plt.figure(figsize=(6, 3))
 
+# Plot the eval data only.
 g = sns.barplot(
-    data=obs_run_stats_labeled_melted,
+    data=obs_run_stats_labeled_melted.query("split == 'eval'"),
     x="metric",
     y="result",
     errorbar="sd",
     hue="split",
     alpha=0.6,
+    palette={"dev": "#1F77B4", "eval": "#FA621E"},
 )
-# rename the x labels to precision, recall, precision (variant), recall (variant).
-g.set_xticklabels(["Precision", "Recall", "Precision (var)", "Recall (var)"])
+# Rename the x labels to precision, recall, precision (variant), recall (variant).
+g.set_xticklabels(["Precision", "Recall", "Variant\nprecision", "Variant\nrecall"])
+
+# Remove the legend
+g.get_legend().remove()
 
 g.xaxis.set_label_text("")
-g.yaxis.set_label_text("Performance metric")
+g.yaxis.set_label_text("Proportion")
 g.title.set_text("Observation finding")
 plt.ylim(0.5, 1)
+
+plt.savefig(f"{OUTPUT_DIR}/observation_finding_performance{model_suffix}.png", bbox_inches="tight")
 
 # %% Print them instead.
 

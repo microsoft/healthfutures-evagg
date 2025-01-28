@@ -12,6 +12,8 @@ from scripts.benchmark.utils import CONTENT_COLUMNS, get_benchmark_run_ids, get_
 
 # %% Constants.
 
+OUTPUT_DIR = ".out/manuscript_content_extraction"
+
 LOCAL_CONTENT_COLUMNS = CONTENT_COLUMNS.copy()
 LOCAL_CONTENT_COLUMNS.remove("study_type")
 LOCAL_CONTENT_COLUMNS.remove("animal_model")
@@ -87,24 +89,38 @@ obs_run_stats_labeled_melted = obs_run_stats_labeled[
 # Recode split from "train" and "test" to "dev" and "eval".
 obs_run_stats_labeled_melted["split"] = obs_run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
 
-plt.figure()
+plt.figure(figsize=(4, 3))
 
+# Plot the eval data only.
 g = sns.barplot(
-    data=obs_run_stats_labeled_melted,
+    data=obs_run_stats_labeled_melted.query("split == 'eval'"),
     x="metric",
     y="result",
     errorbar="sd",
     hue="split",
     alpha=0.6,
+    palette={"dev": "#1F77B4", "eval": "#FA621E"},
 )
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Accuracy")
 g.set_xticklabels(g.get_xticklabels(), rotation=90)
 
-# Set the legend location to the lower-left corner
-plt.legend(loc="lower left")
+# Remove the legend.
+g.get_legend().remove()
+
 g.title.set_text("Content extraction")
 plt.ylim(0.5, 1)
+
+
+# Replace all the underscores in the xticklabels with spaces.
+def label_fix(label: str) -> str:
+    # replace underscores with spaces, and replace "variant" with "v.", capitalize the first letter of each word
+    return " ".join([word.capitalize() for word in label.replace("variant", "v.").split("_")])
+
+
+g.set_xticklabels([label_fix(label.get_text()) for label in g.get_xticklabels()])
+
+plt.savefig(f"{OUTPUT_DIR}/content_extraction_accuracy.png", bbox_inches="tight")
 
 # %% Print them instead.
 
