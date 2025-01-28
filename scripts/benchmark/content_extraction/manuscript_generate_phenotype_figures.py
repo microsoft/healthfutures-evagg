@@ -100,13 +100,27 @@ run_stats_labeled_melted = run_stats_labeled[
 ].melt(id_vars=["split", "run_id"], var_name="metric", value_name="value")
 
 plt.figure()
-sns.barplot(data=run_stats_labeled_melted, x="metric", y="value", hue="split", ci="sd")
+sns.barplot(data=run_stats_labeled_melted.query("split == 'test'"), x="metric", y="value", hue="split", ci="sd")
 plt.ylabel("Performance metric")
 plt.title("Phenotype extraction performance")
+# Replace the xticks with "accuracy", "recall", "precision"
+plt.xticks([0, 1, 2], ["Accuracy", "Recall", "Precision"])
+plt.xlabel("")
+
 # set the ylim to 0.5-1
 plt.ylim(0.5, 1)
-plt.legend(loc="lower right")
+plt.legend([], [], frameon=False)
+
 plt.show()
+
+# %% Print the mean and standard deviation of the performance metrics.
+
+for run_type in ["train", "test"]:
+    run_stats = all_run_stats[run_type]
+    print(f"Run type: {run_type}")
+    print(run_stats[["pheno_acc", "pheno_recall", "pheno_precision"]].mean())
+    print(run_stats[["pheno_acc", "pheno_recall", "pheno_precision"]].std())
+    print()
 
 # %% Separately, make an example scatter plot that shows the effect of interest.
 
@@ -114,11 +128,11 @@ run = all_runs[list(all_runs.keys())[0]]
 
 # Instead make a scatter plot with n_truth on the x-axis and n_output on the y-axis
 # Jitter a little bit to make the points more visible
-plt.figure()
+plt.figure(figsize=(4, 6))
 sns.scatterplot(data=run, x="n_truth", y="n_output", alpha=0.5)
-plt.xlabel("Number of Phenotypes in Truth")
-plt.ylabel("Number of Phenotypes in Output")
-plt.title("Phenotype Counts in Truth vs. Output")
+plt.xlabel("# of terms in truth")
+plt.ylabel("# of terms in output")
+plt.title("Phenotype counts in truth vs. output")
 # Add black dashed line at x=y
 plt.plot([0, 20], [0, 20], "k--")
 plt.show()
@@ -133,5 +147,16 @@ plt.title("Generalized Phenotype Counts in Truth vs. Output")
 # Add black dashed line at x=y
 plt.plot([0, 10], [0, 10], "k--")
 plt.show()
+
+# %% Calculate the mean and std of the number of phenotypes in the truth and output.
+
+for run_type in ["train", "test"]:
+    run = all_runs[list(all_runs.keys())[0]]
+    print(f"Run type: {run_type}")
+    print(run[["n_truth", "n_output"]].mean())
+    print(run[["n_truth", "n_output"]].std())
+    print(run[["n_truth_gen", "n_output_gen"]].mean())
+    print(run[["n_truth_gen", "n_output_gen"]].std())
+    print()
 
 # %% Intentionally left blank.

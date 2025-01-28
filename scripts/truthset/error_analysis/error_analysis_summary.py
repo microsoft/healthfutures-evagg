@@ -203,20 +203,43 @@ for task in ["papers", "observations"]:
 
     # Make a new column for error_type, where error_type is "FP" if truth_value is False and error_type is "FN"
     # if truth_value is True
-    task_df["Error type"] = task_df["truth_value"].apply(lambda x: "FN" if x else "FP")
+    if task == "papers":
+        task_df["Error type"] = task_df["truth_value"].apply(
+            lambda x: "Putative\nmissed papers" if x else "Putative\nirrelevant papers"
+        )
+    else:
+        task_df["Error type"] = task_df["truth_value"].apply(
+            lambda x: "Putative\nmissed obs." if x else "Putative\nirrelevant obs."
+        )
 
     # Make a new column truth modification, where truth modification is True if truth_value is False and response is
     # True or vice versa
     task_df["Truth update"] = task_df.apply(lambda x: x["truth_value"] != x["response"], axis=1)
 
+    import seaborn as sns
+
     # Now we can make the plot, make sure to add counts to the plot
-    plt.figure(figsize=(12, 8))
-    g = task_df.groupby(["Error type", "Truth update"]).size().unstack().plot(kind="bar", stacked=True)
+    sns.set_theme(style="whitegrid")
+    # make the stacked bar plot, use the following palette:
+    #     palette={"False": "#1F77B4", "True": "#FA621E"},
+    g = (
+        task_df.groupby(["Error type", "Truth update"])
+        .size()
+        .unstack()
+        .plot(kind="bar", stacked=True, color=["#1F77B4", "#FA621E"])
+    )
+    # set the fig size
+    plt.gcf().set_size_inches(4, 4)
+
+    # set xlabel orientation to horizontal
+    plt.xticks(rotation=0)
+
+    plt.ylabel("Count")
 
     if task == "papers":
-        plt.title("Paper Selection Error Analysis")
+        plt.title("Paper selection error analysis")
     else:
-        plt.title("Observation Finding Error Analysis")
+        plt.title("Observation finding error analysis")
 
     plt.savefig(os.path.join(output_dir, f"{task}_barplot.png"), format="png", dpi=300, bbox_inches="tight")
 
@@ -233,9 +256,22 @@ content_df = merged_df.query("task in @content_tasks").copy()
 content_df["Truth update"] = content_df.apply(lambda x: x["truth_value"] != x["response"], axis=1)
 
 plt.figure(figsize=(12, 8))
-g = content_df.groupby(["task", "Truth update"]).size().unstack().plot(kind="bar", stacked=True)
+g = (
+    content_df.groupby(["task", "Truth update"])
+    .size()
+    .unstack()
+    .plot(kind="bar", stacked=True, color=["#1F77B4", "#FA621E"])
+)
 
-plt.title("Content Extraction Error Analysis")
+plt.title("Content extraction error analysis")
+plt.ylabel("Count")
+plt.xlabel("Task")
+# In the xticks, replace underscores with escaped newlines and capitalize.
+plt.xticks([0, 1, 2, 3], ["Phenotype", "Variant\ninheritance", "Variant\ntype", "Zygosity"])
+
+# rotate the xticks
+plt.xticks(rotation=0)
+
 
 plt.savefig(os.path.join(output_dir, "content_extraction_barplot.png"), format="png", dpi=300, bbox_inches="tight")
 
