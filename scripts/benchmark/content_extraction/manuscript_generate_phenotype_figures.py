@@ -122,11 +122,12 @@ for run_type in ["train", "test"]:
     print(run_stats[["pheno_acc", "pheno_recall", "pheno_precision"]].std())
     print()
 
-# %% Separately, make an example scatter plot that shows the effect of interest.
+# %% Separately, make an example scatter plots that shows the effect of interest.
 
+# First, collect the relevant data.
 run = all_runs[list(all_runs.keys())[0]]
 
-# Instead make a scatter plot with n_truth on the x-axis and n_output on the y-axis
+# Make a scatter plot with n_truth on the x-axis and n_output on the y-axis
 # Jitter a little bit to make the points more visible
 plt.figure(figsize=(4, 6))
 sns.scatterplot(data=run, x="n_truth", y="n_output", alpha=0.5)
@@ -137,7 +138,7 @@ plt.title("Phenotype counts in truth vs. output")
 plt.plot([0, 20], [0, 20], "k--")
 plt.show()
 
-# Instead make a scatter plot with n_truth_gen on the x-axis and n_output_gen on the y-axis
+# Make a scatter plot with n_truth_gen on the x-axis and n_output_gen on the y-axis
 # Jitter a little bit to make the points more visible
 plt.figure()
 sns.scatterplot(data=run, x="n_truth_gen", y="n_output_gen", alpha=0.5)
