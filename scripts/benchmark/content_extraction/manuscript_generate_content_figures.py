@@ -103,7 +103,7 @@ g = sns.barplot(
 )
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Accuracy")
-g.set_xticklabels(g.get_xticklabels(), rotation=90)
+g.set_xticklabels(g.get_xticklabels())
 
 # Remove the legend.
 g.get_legend().remove()
@@ -115,7 +115,7 @@ plt.ylim(0.5, 1)
 # Replace all the underscores in the xticklabels with spaces.
 def label_fix(label: str) -> str:
     # replace underscores with spaces, and replace "variant" with "v.", capitalize the first letter of each word
-    return " ".join([word.capitalize() for word in label.replace("variant", "v.").split("_")])
+    return "\n".join([word.capitalize() for word in label.split("_")])
 
 
 g.set_xticklabels([label_fix(label.get_text()) for label in g.get_xticklabels()])
