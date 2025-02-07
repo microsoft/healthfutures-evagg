@@ -38,6 +38,9 @@ for model in MODELS:
 # Concatenate the dataframes.
 data = pd.concat([data_dicts[model][split] for model in MODELS for split in ["train", "test"]])
 
+# Substitute "dev" for "train" and "eval" for "test" in the split column.
+data["split"] = data["split"].replace({"train": "dev", "test": "eval"})
+
 # %% Incorporate runtimes and cost estimates.
 
 INVALID_RUNTIME_IDS = ["20240911_223218", "20240920_223702"]
@@ -53,7 +56,6 @@ data["runtime"] = data.run_id.apply(get_runtime_sec)
 
 # Set the runtimes for the invalid runs to NaN.
 data.loc[data.run_id.isin(INVALID_RUNTIME_IDS), "runtime"] = None
-
 
 # %% Make plots.
 

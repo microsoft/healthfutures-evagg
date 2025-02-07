@@ -1,4 +1,4 @@
-"""Inter-rater Discrepancy Identification
+"""Inter-rater Discrepancy Identification.
 
 This script reads the discrepancy resolution data from Excel files provided by the analysts and compares the responses
 to identify discrepancies between the analysts. The parsed Excel files and the discrepancies are saved to separate
