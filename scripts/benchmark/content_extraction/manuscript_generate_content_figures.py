@@ -12,6 +12,15 @@ from scripts.benchmark.utils import CONTENT_COLUMNS, get_benchmark_run_ids, get_
 
 # %% Constants.
 
+OUTPUT_DIR = ".out/manuscript_content_extraction"
+
+LOCAL_CONTENT_COLUMNS = CONTENT_COLUMNS.copy()
+LOCAL_CONTENT_COLUMNS.remove("study_type")
+LOCAL_CONTENT_COLUMNS.remove("animal_model")
+LOCAL_CONTENT_COLUMNS.remove("engineered_cells")
+LOCAL_CONTENT_COLUMNS.remove("patient_cells_tissues")
+LOCAL_CONTENT_COLUMNS.remove("phenotype")
+
 TRAIN_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "train")
 TEST_RUNS = get_benchmark_run_ids("GPT-4-Turbo", "test")
 
@@ -35,7 +44,7 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
             "run_id": run_id,
         }
 
-        for column in CONTENT_COLUMNS:
+        for column in LOCAL_CONTENT_COLUMNS:
 
             eval_df = get_eval_df(run, column)
 
@@ -53,34 +62,6 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
     run_stats = pd.DataFrame(obs_run_stats_dicts)
 
     all_obs_run_stats[run_type] = run_stats
-
-
-# %% Make the performance barplot.
-sns.set_theme(style="whitegrid")
-
-for run_type in ["train", "test"]:
-    run_stats = all_obs_run_stats[run_type]
-
-    content_perf_melted = run_stats[["run_id"] + CONTENT_COLUMNS].melt(
-        id_vars="run_id", var_name="field", value_name="accuracy"
-    )
-
-    plt.figure()
-
-    g = sns.barplot(
-        data=content_perf_melted,
-        x="field",
-        y="accuracy",
-        errorbar="sd",
-        alpha=0.6,
-    )
-    g.xaxis.set_label_text("")
-    g.yaxis.set_label_text("Accuracy")
-    g.title.set_text(f"Content extraction benchmark results ({run_type}; N={run_stats.shape[0]})")
-
-    # rotate the x-axis labels
-    for item in g.get_xticklabels():
-        item.set_rotation(90)
 
 
 # %% Make another version of the plot where train and test are shown together.
@@ -102,30 +83,44 @@ obs_run_stats_labeled_melted = obs_run_stats_labeled[
         "zygosity",
         "variant_type",
         "variant_inheritance",
-        "phenotype",
-        "study_type",
-        "animal_model",
-        "engineered_cells",
-        "patient_cells_tissues",
     ]
 ].melt(id_vars=["split", "run_id"], var_name="metric", value_name="result")
 
-plt.figure()
+# Recode split from "train" and "test" to "dev" and "eval".
+obs_run_stats_labeled_melted["split"] = obs_run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
 
+plt.figure(figsize=(4, 3))
+
+# Plot the eval data only.
 g = sns.barplot(
-    data=obs_run_stats_labeled_melted,
+    data=obs_run_stats_labeled_melted.query("split == 'eval'"),
     x="metric",
     y="result",
     errorbar="sd",
     hue="split",
     alpha=0.6,
+    palette={"dev": "#1F77B4", "eval": "#FA621E"},
 )
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Accuracy")
-g.set_xticklabels(g.get_xticklabels(), rotation=90)
+g.set_xticklabels(g.get_xticklabels())
 
-g.title.set_text("Content extraction benchmark results")
-plt.ylim(0.25, 1)
+# Remove the legend.
+g.get_legend().remove()
+
+g.title.set_text("Content extraction")
+plt.ylim(0.5, 1)
+
+
+# Replace all the underscores in the xticklabels with spaces.
+def label_fix(label: str) -> str:
+    # replace underscores with spaces, and replace "variant" with "v.", capitalize the first letter of each word
+    return "\n".join([word.capitalize() for word in label.split("_")])
+
+
+g.set_xticklabels([label_fix(label.get_text()) for label in g.get_xticklabels()])
+
+plt.savefig(f"{OUTPUT_DIR}/content_extraction_accuracy.png", bbox_inches="tight")
 
 # %% Print them instead.
 
@@ -138,12 +133,14 @@ pd.set_option("display.width", 2000)
 for run_type in ["train", "test"]:
     run_stats = all_obs_run_stats[run_type]
 
-    print(f"-- Content extraction benchmark results ({run_type}; N={run_stats.shape[0]}) --")
+    run_type_alt = "dev" if run_type == "train" else "eval"
 
-    print(run_stats[["run_id"] + CONTENT_COLUMNS])
+    print(f"-- Content extraction benchmark results ({run_type_alt}; N={run_stats.shape[0]}) --")
+
+    print(run_stats[["run_id"] + LOCAL_CONTENT_COLUMNS])
 
     print()
-    print(run_stats[CONTENT_COLUMNS].aggregate(["mean", "std"]))
+    print(run_stats[LOCAL_CONTENT_COLUMNS].aggregate(["mean", "std"]))
     print()
 
 pd.set_option("display.max_columns", max_columns)
