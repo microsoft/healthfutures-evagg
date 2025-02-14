@@ -1,3 +1,9 @@
+# The only required field is "gene_symbol".
+# If "max_date" is specified, a value for "min_date" must also be specified.
+# If "min_date" is specified and "max_date" is not specified, the current date will be used as default.
+# Otherwise, a given field is not provided, the default value for the underlying search API will be used. Specifically
+# for "retmax", the current default value is 20.
+
 - "gene_symbol": "LRRC10" # no known gene-disease relationship
   "min_date": "2015/01/01"
   "max_date": "2024/06/01"

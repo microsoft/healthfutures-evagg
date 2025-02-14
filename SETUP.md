@@ -172,7 +172,7 @@ AZURE_OPENAI_API_VERSION="2024-02-15-preview"
 
 As an alternative to `dotenv` file-based settings, the `lib.evagg.utils.get_env_settings` pipeline utility component is analogous to `get_dotenv_settings` and can be used to read configuration settings in directly from environment variables.
 
-## Configure the pipeline app
+## Configure the pipeline app example
 
 The `lib/config/evagg_pipeline_example.yaml` app spec is a good starting place for your first full-featured execution of the pipeline. By default, this app is configured to use EntraID/RBAC auth for the AOAI Service and no caching for external web lookup calls. The configuration in the various `yaml` specs comprising the app can be modified before running to change the default behavior. For example:
 
@@ -182,7 +182,7 @@ The `lib/config/evagg_pipeline_example.yaml` app spec is a good starting place f
 
 You can create your own pipeline apps by modifying sub-specs as necessary and assembling them into top-level app specs that can be run to produce the desired output with the required runtime configurations. To see an example of a full-featured app spec that uses CosmosDB-based caching and RBAC-based auth for both the AOAI Service and CosmosDB, see `lib/config/evagg_pipeline.yaml`.
 
-## Run the pipeline app
+## Run the pipeline app example
 
 The script `run_evagg_app` is used to execute a pipeline app. It has one required argument - a pointer to an app spec `yaml` file that implements `lib.evagg.IEvAggApp` - and is invoked from the repository root. To execute the example app as configured above, run the following command. It will perform a PubMed query for a subset of potential papers with two query genes and write the resulting publication evidence table to file in the output directory. In a single test run, the pipeline identified 15 unique observations from a total of 4 publications considered in this configuration.
 
@@ -199,3 +199,20 @@ You can optionally add or override any leaf value within an app spec dictionary 
 ```bash
 run_evagg_app lib/config/evagg_pipeline_example.yaml -o writer.tsv_name:different log.level:DEBUG
 ```
+
+## Modify the pipeline app example to process genes of interest
+
+The example config used in the step above runs the pipline on a small set of genes that are specified in `lib/config/queries/example_subset.yaml`. In order to process a specific gene or set of genes, one must modify this portion of the pipeline's configuration. Each gene to be processed is specified by a `yaml` block with the following structure:
+
+```yaml
+- "gene_symbol": "LRRC10"
+  "min_date": "2015/01/01"
+  "max_date": "2024/06/01"
+  "retmax": 24
+```
+
+The only required field in this structure is `gene_symbol`.
+
+The fields `min_date` and `max_date` can optionally be used to constrain the publication date range for the papers to be returned. If not provided, the defaults for the underlying PubMed search API will be used. If `max_date` is provided then `min_date` must also be provided. If `min_date` is provided, `max_date` is not required and will default to today's date.
+
+The `retmax` field can be used to limit the total number of records requested from the underlying PubMed search API. This can be useful in testing scenarios, but can mask relevant results in production scenarios. A warning will be issued by the pipeline if the number of papers specified by `retmax` is equal to the number of papers returned by the PubMed search API as this is suggestive of truncation of results. If no value for `retmax` is provided, the default value for the underlying search API will be used; this is currently 20 records.
