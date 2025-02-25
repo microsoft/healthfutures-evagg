@@ -67,6 +67,8 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
                     result = eval(str(row["phenotype_result"]))
                     if key not in dicts[col]:
                         dicts[col][key] = {
+                            "agree_dict": result[1],
+                            "agree_count": dict.fromkeys(result[1].keys(), 1),
                             "truth_dict": result[2],
                             "truth_count": dict.fromkeys(result[2].keys(), 1),
                             "output_dict": result[3],
@@ -76,6 +78,14 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
                         }
                     else:
                         dicts[col][key]["total_count"] += 1
+                        for k in result[1]:
+                            if k not in dicts[col][key]["agree_dict"]:
+                                dicts[col][key]["agree_dict"][k] = list(set(result[1][k]))
+                                dicts[col][key]["agree_count"][k] = 1
+                            else:
+                                dicts[col][key]["agree_dict"][k] += result[1][k]
+                                dicts[col][key]["agree_dict"][k] = list(set(dicts[col][key]["agree_dict"][k]))
+                                dicts[col][key]["agree_count"][k] += 1
                         for k in result[2]:
                             if k not in dicts[col][key]["truth_dict"]:
                                 dicts[col][key]["truth_dict"][k] = result[2][k]
@@ -136,6 +146,21 @@ for col, df in dfs.items():
         )
     print(f"Found {df['discrepancy'].sum()} discrepancies for {col}.")
 
+# %% As a special case, we're going to count the number of individual discrepancies and agreements for phenotype.
+
+df = dfs["phenotype"]
+
+# First, count the number of output_discrepancies. This can be determined by looking at the output_dict and counting
+# the number of unique values for each key, provided that the output_count associated with that key is greater than
+# or equal to half the total_count for that row.
+df["output_discrepancy_count"] = df.apply(
+    lambda row: sum(
+        len(set(row["output_dict"][k]))
+        for k in row["output_dict"]
+        if ((row["output_count"][k] >= row["total_count"] / 2) & (row["total_count"] >= 2))
+    ),
+    axis=1,
+)
 
 # %% Write the dataframes to a CSV file.
 if not os.path.exists(OUTPUT_DIR):
