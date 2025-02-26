@@ -162,6 +162,16 @@ df["output_discrepancy_count"] = df.apply(
     axis=1,
 )
 
+# Next count the number of truth discrepancies. The approach here is analogous.
+df["truth_discrepancy_count"] = df.apply(
+    lambda row: sum(
+        len(set(row["truth_dict"][k]))
+        for k in row["truth_dict"]
+        if ((row["truth_count"][k] >= row["total_count"] / 2) & (row["total_count"] >= 2))
+    ),
+    axis=1,
+)
+
 # %% Write the dataframes to a CSV file.
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
