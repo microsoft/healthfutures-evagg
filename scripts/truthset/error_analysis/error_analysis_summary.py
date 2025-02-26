@@ -275,7 +275,7 @@ plt.xticks(rotation=0)
 
 # Customize the legend text, what was False should be "EvAgg additions to curated dataset" and what was True should be
 # "EvAgg errors". Remove the legend title.
-plt.legend(["Evagg errors", "EvAgg additions to curated dataset"], title=None)
+plt.legend(["EvAgg errors", "EvAgg additions to curated dataset"], title=None)
 
 plt.savefig(os.path.join(output_dir, "content_extraction_barplot.png"), format="png", dpi=300, bbox_inches="tight")
 
