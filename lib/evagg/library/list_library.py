@@ -43,7 +43,4 @@ class ListLibrary(IGetPapers):
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
             and paper.props["can_access"] is True
         ]
-        import pdb
-
-        pdb.set_trace()
         return papers
