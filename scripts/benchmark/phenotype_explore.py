@@ -1,20 +1,17 @@
 """Exploratory script to demonstrate/evaluate the phenotype generalization approach."""
 
 # %% Imports.
-
 import re
+from typing import List, Set
 
 import pandas as pd
-from pyhpo import Ontology
+from pyhpo import HPOTerm, Ontology
 
 from scripts.benchmark.utils import generalize_hpo_term
 
 Ontology()
 
-# %% Constants.
-
-
-# %% First, let's get a list of all the terms that are children of Phenotypic abnormality.
+# %% First, answer the question of what are all the direct descendants of HP:0000118
 
 # Phenotypic abnormality.
 parent_term = Ontology.get_hpo_object("HP:0000118")
@@ -31,7 +28,7 @@ train_df = pd.read_csv("data/v1.1/evidence_train_v1.1.tsv", sep="\t")
 
 truth_df = pd.concat([train_df, test_df], ignore_index=True)
 
-# %%
+# %% Print out an error message for any term that is not a descendant of HP:0000118
 
 for idx, row in truth_df.iterrows():
     if pd.isna(row.phenotype):
@@ -43,7 +40,7 @@ for idx, row in truth_df.iterrows():
         if not gen_term.startswith("HP:0000118"):
             print(f"{idx}: {gen_term}")
 
-# %%
+# %% Collect all of the unique ancestor terms represented in the truth set.
 
 all_terms = set()
 
@@ -64,11 +61,8 @@ for t in all_terms:
 # %% Now lets load an example pipeline output
 
 pip_df = pd.read_csv(".out/run_evagg_pipeline_20240909_165847/pipeline_benchmark.tsv", sep="\t", skiprows=1)
-# comp_df = pd.read_csv(
-#     ".out/run_evagg_pipeline_20240909_165847_content_extraction_benchmarks/content_extraction_results.tsv", sep="\t"
-# )
 
-# %% Get the distribution of L3 terms
+# %% Get the distribution of ancestor terms
 
 
 def hpo_str_to_list(hpo_compound_string: str) -> list[str]:
@@ -92,18 +86,15 @@ pip_df_exploded = (
 )
 pip_df_exploded.rename(columns={"phenotype_list": "term"}, inplace=True)
 
-# %%
+# %% Print out the distribution of terms.
 pip_df_exploded["parent_term"] = pip_df_exploded.term.apply(lambda x: generalize_hpo_term(x))
-
 pip_df_exploded["parent_term"].value_counts()
 
-# %%
+# %% Print out the distribution of terms at the super parent level.
 pip_df_exploded["super_parent_term"] = pip_df_exploded.term.apply(lambda x: generalize_hpo_term(x, 2))
 pip_df_exploded["super_parent_term"].value_counts()
 
-# %% Finally, create the descendency graph for each term.
-
-from typing import List
+# %% Create the descendency graph for each term.
 
 
 def get_lineage(term: str) -> List[str]:
@@ -128,11 +119,8 @@ for idx, row in pip_df_exploded.sample(10).iterrows():
     print_lineage(row.lineage)
     print()
 
-# %% Let's play with an alternative to generalize_hpo_term
-
-from typing import Set
-
-from pyhpo import HPOTerm
+# %% Let's play with an alternative to generalize_hpo_term that honors the fact that a given specific term
+# may have multiple parents at the target level.
 
 children: Set[HPOTerm] = set()
 
@@ -158,10 +146,10 @@ def get_all_parent_terms_by_id(term_id: str) -> Set[HPOTerm]:
     return get_all_parent_terms(term)
 
 
+# %% See how many terms have multiple parents.
+
 pip_df_exploded["parent_set"] = pip_df_exploded.term.apply(get_all_parent_terms_by_id)
-
 pip_df_exploded["n_parents"] = pip_df_exploded.parent_set.apply(len)
-
 pip_df_exploded["n_parents"].value_counts()
 
 # %% Ask the same question of the truth set hpo terms.
