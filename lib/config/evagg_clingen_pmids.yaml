@@ -2,7 +2,7 @@
 
 log:
   di_factory: lib.evagg.utils.init_logger
-  level: INFO
+  level: DEBUG
   to_file: true
 
 # Imported objects.
@@ -25,7 +25,7 @@ library:
       - 35813615
     TCIRG1:
       - 37107657
-      - 35991533
+#      - 35991533 # Causes mutalyzer 504
     FANCM:
       - 29231814
     BANF1:
@@ -33,7 +33,27 @@ library:
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:
-    di_factory: lib/config/fields/evidence_all.yaml
+    - evidence_id
+    - gene
+    - paper_id
+    - hgvs_c
+    - hgvs_p
+    - paper_variant
+    - transcript
+    - validation_error
+    - gnomad_frequency
+    - individual_id
+#    - phenotype
+    - zygosity
+    - variant_inheritance
+    - variant_type
+    - study_type
+    - engineered_cells
+    - patient_cells_tissues
+    - animal_model
+    - citation
+    - link
+    - paper_title  
   llm_client:
     di_factory: lib/config/objects/llm_cache.yaml
   phenotype_searcher:
@@ -47,7 +67,7 @@ extractor:
     di_factory: lib.evagg.content.ObservationFinder
     llm_client: "{{llm_client}}"
     variant_factory: 
-      di_factory: lib/config/objects/variant_factory_cache.yaml    
+      di_factory: lib/config/objects/variant_factory.yaml    
       # di_factory: lib/config/objects/variant_factory_cache.yaml
     variant_comparator: 
       di_factory: lib.evagg.content.HGVSVariantComparator
