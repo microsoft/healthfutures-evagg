@@ -6,7 +6,7 @@ from functools import cache
 from typing import List, Set, Type
 
 import pandas as pd
-from pyhpo import Ontology
+from pyhpo import HPOTerm, Ontology
 
 from lib.di import DiContainer
 from lib.evagg.ref import IPaperLookupClient
@@ -101,29 +101,59 @@ def _get_ontology() -> Type[Ontology]:
     return Ontology
 
 
-def generalize_hpo_term(hpo_term: str, depth: int = 3) -> str:
+def _get_terms_for_depth_recurse(
+    target_depth: int, current_depth: int, cur_obj: HPOTerm, forgettable: Set[HPOTerm]
+) -> List[str]:
+    """Get all HPO terms at a given depth."""
+    if current_depth == target_depth:
+        if cur_obj in forgettable:
+            return []
+        return [cur_obj.__str__()]
+
+    forgettable.add(cur_obj)
+
+    return [
+        term
+        for child in cur_obj.children
+        for term in _get_terms_for_depth_recurse(target_depth, current_depth + 1, child, forgettable)
+    ]
+
+
+@cache
+def _get_terms_for_depth(depth: int) -> Set[str]:
+    """Get all HPO terms at a given depth."""
+    return set(
+        _get_terms_for_depth_recurse(
+            target_depth=depth, current_depth=1, cur_obj=_get_ontology().get_hpo_object("HP:0000001"), forgettable=set()
+        )
+    )
+
+
+def generalize_hpo_term(hpo_term: str, depth: int = 3) -> List[str]:
     """Take an HPO term ID and return the generalized version of that term at `depth`.
 
     `depth` determines the degree to which hpo_term gets generalized, setting depth=1 will always return HP:0000001.
+    Note that multiple possible generalizations may exist, this function return all of them. The `depth` of any given
+    generalization will be defined as the shortest possible path from the root to that generalization.
 
-    If the provided term is more generalized than depth (e.g., "HP:0000118"), then that term itself will be returned.
+    If the provided term is more generalized than `depth` (e.g., "HP:0000118"), i.e., if it has a shorter path to the
+    root node, then that term itself will be returned.
+
     If the provided term doesn't exist in the ontology, then an error will be raised.
     """
+    potential_terms = _get_terms_for_depth(depth)
+
     try:
         hpo_obj = _get_ontology().get_hpo_object(hpo_term)
     except RuntimeError:
         # HPO term not found in pyhpo, can't use
         print("Warning: HPO term not found in pyhpo, can't use", hpo_term)
-        return ""
+        return [""]
 
-    try:
-        path_len, path, _, _ = _get_ontology().get_hpo_object("HP:0000001").path_to_other(hpo_obj)
-    except RuntimeError:
-        # No root found, occurs for obsolete terms.
-        return hpo_obj.__str__()
-    if path_len < depth:
-        return hpo_obj.__str__()
-    return path[depth - 1].__str__()
+    parents = potential_terms & {p.__str__() for p in hpo_obj.all_parents}
+    if not parents:
+        return [hpo_obj.__str__()]
+    return [parent for parent in parents]
 
 
 def hpo_str_to_set(hpo_compound_string: str) -> Set[str]:

@@ -28,13 +28,13 @@ def preprocess_content_results(df: pd.DataFrame) -> pd.DataFrame:
     df["phenotype_truth"] = df["phenotype_truth"].apply(hpo_str_to_set)
     df["phenotype_output"] = df["phenotype_output"].apply(hpo_str_to_set)
 
-    df["phenotype_truth_gen"] = df["phenotype_truth"].apply(lambda x: {generalize_hpo_term(term) for term in x})
-    df["phenotype_output_gen"] = df["phenotype_output"].apply(lambda x: {generalize_hpo_term(term) for term in x})
+    #df["phenotype_truth_gen"] = df["phenotype_truth"].apply(lambda x: {generalize_hpo_term(term) for term in x})
+    #df["phenotype_output_gen"] = df["phenotype_output"].apply(lambda x: {generalize_hpo_term(term) for term in x})
 
     df["n_truth"] = df["phenotype_truth"].apply(len)
     df["n_output"] = df["phenotype_output"].apply(len)
-    df["n_truth_gen"] = df["phenotype_truth_gen"].apply(len)
-    df["n_output_gen"] = df["phenotype_output_gen"].apply(len)
+    #df["n_truth_gen"] = df["phenotype_truth_gen"].apply(len)
+    #df["n_output_gen"] = df["phenotype_output_gen"].apply(len)
 
     return df
 

@@ -388,34 +388,55 @@ def _match_hpo_sets(
     left_terms = hpo_str_to_set(hpo_left)
     right_terms = hpo_str_to_set(hpo_right)
 
-    # Build a mapping from specific to general terms.
+    # Build a mapping from specific to general terms. Note that the generalized terms are lists, not single strings.
     left_gen_dict = {t: generalize_hpo_term(t) for t in left_terms}
     right_gen_dict = {t: generalize_hpo_term(t) for t in right_terms}
 
-    # Invert the mapping.
-    left_spec_dict: dict[str, list[str]] = defaultdict(list)
+    # For every element in left_gen_dict, get a list of any generalized terms from right_gen_dict that match.
+    # left_gen_matches should be keyed on specific terms from left, and the value should be a list of all of the generalized
+    # terms from any element in right_gen_dict that match the generalized term from left_gen_dict for the specific term key.
+    left_gen_matches: dict[str, list[str]] = {}
     for k, v in left_gen_dict.items():
-        if k != "":
-            left_spec_dict[v].append(k)
+        left_gen_matches[k] = [match for _, v2 in right_gen_dict.items() for match in set(v).intersection(set(v2))]
 
-    right_spec_dict: dict[str, list[str]] = defaultdict(list)
+    right_gen_matches: dict[str, list[str]] = {}
     for k, v in right_gen_dict.items():
-        if k != "":
-            right_spec_dict[v].append(k)
+        right_gen_matches[k] = [match for _, v2 in left_gen_dict.items() for match in set(v).intersection(set(v2))]
 
-    # Get the generalized terms for the left and right sets.
-    left_gen = set(left_spec_dict.keys())
-    right_gen = set(right_spec_dict.keys())
+    # matches then becomes the unique list of all of the values from both left_gen_matches and right_gen_matches.
+    matches = list(
+        {elt for v in left_gen_matches.values() for elt in v}.union(
+            {elt for v in right_gen_matches.values() for elt in v}
+        )
+    )
 
-    matches = list(left_gen.intersection(right_gen))
+    # match_dict is a dict keyed on the unique values from matches, and the value is a list of all of the specific terms
+    # from left_gen_dict and right_gen_dict that match the unique value.
+    match_dict: dict[str, list[str]] = defaultdict(list)
+    for k, v in left_gen_matches.items():
+        for match in set(v):
+            match_dict[match].append(k)
+    for k, v in right_gen_matches.items():
+        for match in set(v):
+            match_dict[match].append(k)
+    match_dict = {k: list(set(v)) for k, v in match_dict.items()}
 
-    # Return the list of general terms that matched, a dict mapping each of those terms back to one or more specific
-    # terms, a dict of terms that were in the left set but not the right, and a dict of terms that were in the right
-    # set but not the left.
+    left_dict: dict[str, list[str]] = defaultdict(list)
+    for k, v in left_gen_dict.items():
+        # if left_gen_matches is empty, add the specific term k to left_dict for every value in v.
+        if not left_gen_matches[k]:
+            for match in set(v):
+                left_dict[match].append(k)
+    left_dict = {k: list(set(v)) for k, v in left_dict.items()}
 
-    match_dict = {k: list(set(left_spec_dict[k] + right_spec_dict[k])) for k in matches}
-    left_dict = {k: left_spec_dict[k] for k in left_gen - right_gen}
-    right_dict = {k: right_spec_dict[k] for k in right_gen - left_gen}
+    right_dict: dict[str, list[str]] = defaultdict(list)
+    for k, v in right_gen_dict.items():
+        # if right_gen_matches is empty, add the specific term k to right_dict for every value in v.
+        if not right_gen_matches[k]:
+            for match in set(v):
+                right_dict[match].append(k)
+    right_dict = {k: list(set(v)) for k, v in right_dict.items()}
+
     return matches, match_dict, left_dict, right_dict
 
 
