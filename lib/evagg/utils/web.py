@@ -107,6 +107,7 @@ class CacheClientSettings(BaseModel, extra=Extra.forbid):
     credential: Any
     database: str = "document_cache"
     container: str = "cache"
+    no_cache_codes: List[int] = []
 
 
 class CosmosCachingWebClient(RequestsWebContentClient):
@@ -153,8 +154,8 @@ class CosmosCachingWebClient(RequestsWebContentClient):
             # If the item is not in the cache, fetch it from the web.
             code, content = super()._get_content(url + (url_extra or ""), data)
             item = {"id": cache_key, "url": url, "status_code": code, "content": content}
-            # Don't cache the response if it's a retryable/transient error.
-            if code not in self._settings.retry_codes:
+            # Don't cache the response if it's a retryable/transient error or excluded code.
+            if code not in self._settings.retry_codes and code not in self._cache_settings.no_cache_codes:
                 container.upsert_item(item)
 
         self._raise_for_status(code)
