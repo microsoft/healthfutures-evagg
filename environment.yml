@@ -32,6 +32,7 @@ dependencies:
 
   # AI/ML.
   - openai==1.35.10
+  - httpx==0.27.0 # Greater than this breaks openai 1.35.
   - scikit-learn==1.5.1
 
   # Bioinformatics.
