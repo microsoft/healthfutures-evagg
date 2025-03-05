@@ -204,12 +204,10 @@ for task in ["papers", "observations"]:
     # Make a new column for error_type, where error_type is "FP" if truth_value is False and error_type is "FN"
     # if truth_value is True
     if task == "papers":
-        task_df["Error type"] = task_df["truth_value"].apply(
-            lambda x: "Putative\nmissed papers" if x else "Putative\nirrelevant papers"
-        )
+        task_df["Error type"] = task_df["truth_value"].apply(lambda x: "Missing\npapers" if x else "Extra\npapers")
     else:
         task_df["Error type"] = task_df["truth_value"].apply(
-            lambda x: "Putative\nmissed obs." if x else "Putative\nirrelevant obs."
+            lambda x: "Missing\nobservations" if x else "Extra\nobservations"
         )
 
     # Make a new column truth modification, where truth modification is True if truth_value is False and response is
@@ -226,7 +224,7 @@ for task in ["papers", "observations"]:
         task_df.groupby(["Error type", "Truth update"])
         .size()
         .unstack()
-        .plot(kind="bar", stacked=True, color=["#1F77B4", "#FA621E"])
+        .plot(kind="bar", stacked=True, color=["#FCA178", "#1F77B4"])
     )
     # set the fig size
     plt.gcf().set_size_inches(4, 4)
@@ -235,6 +233,9 @@ for task in ["papers", "observations"]:
     plt.xticks(rotation=0)
 
     plt.ylabel("Count")
+
+    # delete the legend
+    plt.legend().remove()
 
     if task == "papers":
         plt.title("Paper selection error analysis")
@@ -255,13 +256,13 @@ content_df = merged_df.query("task in @content_tasks").copy()
 
 content_df["Truth update"] = content_df.apply(lambda x: x["truth_value"] != x["response"], axis=1)
 
-plt.figure(figsize=(12, 8))
 g = (
     content_df.groupby(["task", "Truth update"])
     .size()
     .unstack()
-    .plot(kind="bar", stacked=True, color=["#1F77B4", "#FA621E"])
+    .plot(kind="bar", stacked=True, color=["#FCA178", "#1F77B4"])
 )
+plt.gcf().set_size_inches(6, 4)
 
 plt.title("Content extraction error analysis")
 plt.ylabel("Count")
@@ -272,6 +273,9 @@ plt.xticks([0, 1, 2, 3], ["Phenotype", "Variant\ninheritance", "Variant\ntype", 
 # rotate the xticks
 plt.xticks(rotation=0)
 
+# Customize the legend text, what was False should be "EvAgg additions to curated dataset" and what was True should be
+# "EvAgg errors". Remove the legend title.
+plt.legend(["EvAgg errors", "EvAgg additions to curated dataset"], title=None)
 
 plt.savefig(os.path.join(output_dir, "content_extraction_barplot.png"), format="png", dpi=300, bbox_inches="tight")
 
