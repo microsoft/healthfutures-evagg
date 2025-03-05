@@ -52,8 +52,6 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
     runs = [load_run(id, "content_extraction_results.tsv") for id in run_ids]
 
     for run in runs:
-        # if broken:
-        #     break
         if run is None:
             continue
 
