@@ -133,6 +133,9 @@ def test_cosmos_cache_miss(mock_client, mock_request, mock_container):
         MagicMock(status_code=200, text='{"reports": [{"query": ["GGG6"]}]}'),
         MagicMock(status_code=422, text='{"error": "invalid query, no throw"}'),
         MagicMock(status_code=500, text="throws, doesn't cache"),
+        MagicMock(status_code=400, text="throws, caches"),
+        MagicMock(status_code=400, text="throws, doesn't cache"),
+        MagicMock(status_code=400, text="throws, doesn't cache"),
     ]
 
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=GGG6&sort=relevance&retmax=1&tool=biopython"  # noqa
@@ -151,7 +154,18 @@ def test_cosmos_cache_miss(mock_client, mock_request, mock_container):
     url = "https://testing.invalid/invalid/500"
     with raises(requests.exceptions.HTTPError):
         web_client.get(url, content_type="json")
+    url = "https://testing.invalid/invalid/400-cache"
+    with raises(requests.exceptions.HTTPError):
+        web_client.get(url, content_type="json")
+    with raises(requests.exceptions.HTTPError):
+        web_client.get(url, content_type="json")
+    url = "https://testing.invalid/invalid/400-no-cache"
+    web_client._cache_settings.no_cache_codes = [400]
+    with raises(requests.exceptions.HTTPError):
+        web_client.get(url, content_type="json")
+    with raises(requests.exceptions.HTTPError):
+        web_client.get(url, content_type="json")
 
-    assert len(mock_container.misses) == 4
-    assert len(mock_container.writes) == 3
-    assert len(mock_container.hits) == 3
+    assert len(mock_container.misses) == 7
+    assert len(mock_container.writes) == 4
+    assert len(mock_container.hits) == 4

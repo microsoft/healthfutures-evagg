@@ -80,8 +80,9 @@ Regardless of your choice on Authentication method above, you will also need to 
 - **AZURE_OPENAI_DEPLOYMENT** - set this to the model deployment name that you configured above (not necessarily the name of the model itself - the model deployment name is customizable during deployment configuration)
 - **AZURE_OPENAI_ENDPOINT** - set this to the web endpoint for your AOAI Service Resource (typically "https://<your_resource_name>.openai.azure.com")
 - **AZURE_OPENAI_API_KEY** [optional] - set this to one of your AOAI Service Resource's shared keys (only needed if you are using shared key-based authentication)
-- **AZURE_OPENAI_API_VERSION** - set this to your AOAI version ("2024-02-15-preview" or later)
+- **AZURE_OPENAI_API_VERSION** - set this to an AOAI API version supported by your deployment (Note, currently only tested against "2024-02-15-preview")
 - **AZURE_OPENAI_MAX_PARALLEL_REQUESTS** [optional] - this controls the maximum number of concurrent outstanding requests being made to the AOAI endpoint - leave it out or set it to 0 (no max) unless you need to reduce the concurrency
+
 
 ## [Optional] Azure CosmosDB database
 

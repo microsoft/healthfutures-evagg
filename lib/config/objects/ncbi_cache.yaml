@@ -4,6 +4,8 @@ web_client:
   web_settings:
     status_code_translator:
       di_factory: lib.evagg.ref.ncbi.get_ncbi_response_translator
+  cache_settings:
+    no_cache_codes: [400]
 settings:
   di_factory: lib.evagg.utils.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
