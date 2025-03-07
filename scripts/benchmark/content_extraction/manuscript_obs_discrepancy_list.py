@@ -99,8 +99,13 @@ sns.histplot(data=var, x="discrepancy_count", bins=range(0, 11), discrete=True)
 sns.lineplot(x=[MIN_RECURRENCE - 0.5, MIN_RECURRENCE - 0.5], y=[0, 100], color="red", linestyle="--")
 
 
+# Print the number of discrepancies
 print(f"Found {obs['discrepancy'].sum()} observation discrepancies.")
 print(f"Found {var['discrepancy'].sum()} variant discrepancies.")
+
+# Print the number of agreements
+print(f"Found {(~obs['discrepancy']).sum()} observation agreements.")
+print(f"Found {(~var['discrepancy']).sum()} variant agreements.")
 
 # %% Write the dataframe to a CSV file.
 if not os.path.exists(OUTPUT_DIR):

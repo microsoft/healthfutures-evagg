@@ -11,11 +11,12 @@ populate_arrays() {
 
 # Check if model parameter is provided
 if [ -z "$1" ]; then
-    echo "Usage: $0 <model>"
+    echo "Usage: $0 <model> [truthset_version]"
     exit 1
 fi
 
 MODEL=$1
+TRUTHSET_VERSION=${2:-v1.1}
 JSON_FILE="scripts/benchmark/benchmark_runs.json"
 
 # Populate TRAIN and TEST arrays
@@ -26,7 +27,7 @@ for run_id in "${TRAIN[@]}"; do
     echo "### Processing TRAIN run $run_id ###"
     python scripts/benchmark/paper_finding/manuscript_single_run.py \
     -s "scripts/benchmark/paper_finding/paper_finding_benchmarks_skipped_pmids.txt" \
-    -m data/v1.1/papers_train_v1.1.tsv -p "$run_id"
+    -m "data/$TRUTHSET_VERSION/papers_train_$TRUTHSET_VERSION.tsv" -p "$run_id"
 done
 
 # Loop through each element in the TEST list
@@ -34,5 +35,5 @@ for run_id in "${TEST[@]}"; do
     echo "### Processing TEST run $run_id ###"
     python scripts/benchmark/paper_finding/manuscript_single_run.py \
     -s "scripts/benchmark/paper_finding/paper_finding_benchmarks_skipped_pmids.txt" \
-    -m data/v1.1/papers_test_v1.1.tsv -p "$run_id"
+    -m "data/$TRUTHSET_VERSION/papers_test_$TRUTHSET_VERSION.tsv" -p "$run_id"
 done
