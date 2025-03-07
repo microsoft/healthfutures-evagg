@@ -46,6 +46,19 @@ def get_row_key(row: pd.Series, col: str) -> Tuple:
     return tuple(row[INDICES_FOR_COLUMN[col]])
 
 
+# There's a lot of book-keeping happening below to keep track of agreements and disagreements for content extraction.
+# The complexity arises because every run doesn't necessarily contain the same set of papers, nor the same set of
+# observations extracted from those papers. For the most part, these things are consistent, but it's possible that
+# if five runs are executed, the number of times a specific observation is found could be less. In order to ask the
+# follow up question as to whether agreement or disagreement was _consistent_ for any particular content value, we
+# also need to know how many opportunities we've had to even observe that fact. Therefore, we coun't the number of times
+# pipeline output for a particular content column was in agreement with the truth set AND the number of opportunies
+# we had to observe that fact.
+#
+# There is additional complexity about the phenotype column, because instead of being a discrete value, it's a set of
+# zero or more HPO terms (both in the truth data and pipeline outputs) and we're generalizing the terms to organ/system
+# level terms. This approach is outlined in more detail in the inline comments below.
+
 dicts: Dict[str, Dict[Tuple[Any, ...], Dict[str, Any]]] = {col: {} for col in CONTENT_COLUMNS}
 
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
