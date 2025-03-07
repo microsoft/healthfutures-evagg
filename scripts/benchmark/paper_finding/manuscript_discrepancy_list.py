@@ -61,6 +61,7 @@ papers = pd.DataFrame(papers_dict).T
 # Each row in the dataframe where truth_count is not equal to pipeline_count is a discrepancy.
 papers["discrepancy"] = abs(papers["truth_count"] - papers["pipeline_count"]) >= MIN_RECURRENCE
 print(f"Found {papers['discrepancy'].sum()} discrepancies.")
+print(f"Found {(~papers['discrepancy']).sum()} agreements.")
 
 # %% Write the dataframe to a CSV file.
 if not os.path.exists(OUTPUT_DIR):
