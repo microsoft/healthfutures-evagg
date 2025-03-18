@@ -36,6 +36,10 @@ class PaperQueryApp(IEvAggApp):
 
             # Extract observation fieldsets for each paper.
             for paper in papers:
+                pmid: str = paper.props["pmid"]
+                if pmid.find("35991533") >= 0:
+                    logger.info(f"Skipping {pmid} for gene {query.get('gene_symbol')} as it has a known issue.")
+                    continue
                 extracted_fieldsets = self._extractor.extract(paper, term)
                 output_fieldsets.extend(extracted_fieldsets)
 

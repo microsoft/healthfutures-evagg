@@ -8,14 +8,14 @@
 - validation_error
 - gnomad_frequency
 - individual_id
-- phenotype
-- zygosity
-- variant_inheritance
-- variant_type
-- study_type
-- engineered_cells
-- patient_cells_tissues
-- animal_model
+# - phenotype
+# - zygosity
+# - variant_inheritance
+# - variant_type
+# - study_type
+# - engineered_cells
+# - patient_cells_tissues
+# - animal_model
 - citation
 - link
 - paper_title
