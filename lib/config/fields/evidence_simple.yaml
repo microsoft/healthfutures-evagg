@@ -1,0 +1,13 @@
+- evidence_id
+- gene
+- paper_id
+- hgvs_c
+- hgvs_p
+- paper_variant
+- transcript
+- validation_error
+- gnomad_frequency
+- individual_id
+- citation
+- link
+- paper_title

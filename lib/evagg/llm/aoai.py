@@ -157,10 +157,11 @@ class OpenAIClient(IPromptClient):
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=system_prompt))
 
         settings = {
-            "max_tokens": 1024,
+            "max_completion_tokens": 1024,
+            # "max_tokens": 1024,
             "frequency_penalty": 0,
             "presence_penalty": 0,
-            "temperature": 0.7,
+            # "temperature": 0.7,
             "model": self._config.deployment,
             **(prompt_settings or {}),
         }

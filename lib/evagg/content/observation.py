@@ -48,11 +48,12 @@ uninterrupted sequences of whitespace characters.
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
         default_settings = {
-            "max_tokens": 2048,
+            "max_completion_tokens": 2048,
             "prompt_tag": "observation",
-            "temperature": 0.7,
-            "top_p": 0.95,
+            # "temperature": 0.7,
+            # "top_p": 0.95,
             "response_format": {"type": "json_object"},
+            "reasoning_effort": "medium",
         }
         prompt_settings = {**default_settings, **prompt_settings}
 
@@ -413,7 +414,7 @@ uninterrupted sequences of whitespace characters.
                 params={"text": full_text, "gene": gene_symbol},
                 prompt_settings={
                     "prompt_tag": "observation__sanity_check",
-                    "temperature": 0.5,
+                    # "temperature": 0.5,
                     "prompt_metadata": metadata,
                 },
             )

@@ -29,7 +29,7 @@ async def test_openai_client_prompt(mock_openai, test_file_contents) -> None:
             {"role": "system", "content": "Extract field"},
             {"role": "user", "content": prompt_text},
         ],
-        max_tokens=1024,
+        max_completion_tokens=1024,
         frequency_penalty=0,
         presence_penalty=0,
         temperature=1.5,

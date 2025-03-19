@@ -103,7 +103,12 @@ class RareDiseaseFileLibrary(IGetPapers):
             user_prompt_file=_get_prompt_file_path("paper_category"),
             system_prompt="Extract field",
             params=parameters,
-            prompt_settings={"prompt_tag": "paper_category", "prompt_metadata": prompt_metadata, "temperature": 0.8},
+            prompt_settings={
+                "prompt_tag": "paper_category",
+                "prompt_metadata": prompt_metadata,
+                # "temperature": 0.8,
+                "reasoning_effort": "low",
+            },
         )
 
         result = response.strip('"')

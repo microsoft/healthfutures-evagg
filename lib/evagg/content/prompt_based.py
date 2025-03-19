@@ -39,7 +39,7 @@ class PromptBasedContentExtractor(IExtractFields):
     _SYSTEM_PROMPT = open(_get_prompt_file_path("system")).read()
 
     _DEFAULT_PROMPT_SETTINGS = {
-        "max_tokens": 2048,
+        "max_completion_tokens": 2048,
         "prompt_tag": "observation",
         "temperature": 0.7,
         "top_p": 0.95,
@@ -201,7 +201,7 @@ class PromptBasedContentExtractor(IExtractFields):
         all_phenotypes_result = await self._run_json_prompt(
             self._PROMPT_FIELDS["phenotype"],
             {"passage": text},
-            {"prompt_tag": "phenotypes_all", "max_tokens": 4096, "prompt_metadata": metadata},
+            {"prompt_tag": "phenotypes_all", "max_completion_tokens": 4096, "prompt_metadata": metadata},
         )
         if (all_phenotypes := all_phenotypes_result.get("phenotypes", [])) == []:
             return []

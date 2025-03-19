@@ -21,7 +21,7 @@ def test_log(capfd, tmpdir, test_file_contents):
     prompt_log = {
         "prompt_tag": "test",
         "prompt_metadata": {"name": "test", "type": "test"},
-        "prompt_settings": {"model": "test", "max_tokens": 10},
+        "prompt_settings": {"model": "test", "max_completion_tokens": 10},
         "prompt_text": "\n".join(["line1", "line2"]),
         "prompt_response": "test response",
     }
