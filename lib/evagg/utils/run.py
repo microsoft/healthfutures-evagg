@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -93,10 +94,17 @@ def get_previous_run(
 ) -> Optional[RunRecord]:
     global _current_run, _output_root
 
+    def _run_name_for_dir(dir: str) -> Optional[str]:
+        if match := re.search(r"^run_(.*?)_[0-9]+_[0-9]+$", dir):
+            return match.group(1)
+        return None
+
     def _is_match(dir: str) -> bool:
+        dir_run_name = _run_name_for_dir(dir)
         return (
             dir != _current_run.dir_name
-            and dir.startswith(f"run_{name or _current_run.name}_")
+            and dir_run_name is not None
+            and (dir_run_name is None or dir_run_name == (name or _current_run.name))
             and os.path.exists(os.path.join(_output_root, dir, "run.json"))
             and (sub_path is None or os.path.exists(os.path.join(_output_root, dir, sub_path)))
             and (name_includes is None or name_includes in dir)
