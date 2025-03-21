@@ -5,7 +5,7 @@
 
 log:
   di_factory: lib.evagg.utils.init_logger
-  level: INFO
+  level: DEBUG
   to_file: true
 
 # Imported objects.
@@ -25,26 +25,11 @@ library:
   allowed_categories:
     - "genetic disease"
 extractor:
-  di_factory: lib.evagg.PromptBasedContentExtractor
+  di_factory: lib.evagg.ReasoningContentExtractorCached
   fields:
-    di_factory: lib/config/fields/evidence_simple.yaml
+    di_factory: lib/config/fields/evidence_all.yaml
   llm_client:
     di_factory: lib/config/objects/llm_cache.yaml
-  phenotype_searcher:
-    di_factory: lib.evagg.ref.WebHPOClient
-    web_client:
-      di_factory: lib/config/objects/web.yaml
-      # di_factory: lib/config/objects/web_cache.yaml
-  phenotype_fetcher:
-    di_factory: lib.evagg.ref.PyHPOClient    
-  observation_finder:
-    di_factory: lib.evagg.content.ObservationFinder
-    llm_client: "{{llm_client}}"
-    variant_factory: 
-      di_factory: lib/config/objects/variant_factory.yaml
-      # di_factory: lib/config/objects/variant_factory_cache.yaml
-    variant_comparator: 
-      di_factory: lib.evagg.content.HGVSVariantComparator
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark

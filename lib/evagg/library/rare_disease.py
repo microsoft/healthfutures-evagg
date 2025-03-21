@@ -108,6 +108,7 @@ class RareDiseaseFileLibrary(IGetPapers):
                 "prompt_metadata": prompt_metadata,
                 # "temperature": 0.8,
                 "reasoning_effort": "low",
+                "max_completion_tokens": 16000,
             },
         )
 

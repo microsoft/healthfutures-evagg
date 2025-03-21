@@ -1,0 +1,63 @@
+Below is the text for an academic research paper about rare disease. Your task is to identify accounts of genetic 
+variation in the gene {{$gene}} by reading the paper. An individual account of genetic variation is indexed both by the 
+variant as well as the individual who possessed it (if specified). We'll call this an "observation." 
+
+For each observation, first identify the genetic variant and individual who possesed it. It is 
+possible that a single variant is described in multiple ways in the text, when it is correct to do so, consolidate 
+biologically equivalent variants (e.g., when both the coding variant and the corresponding protein variant are provided 
+in the text). Provide me with a comma-separated list of the descriptions of the variant used in the text ("paper_variant") as well as the
+normalized HGVS descriptions of (a) the DNA variant ("hgvs_c") expressed in either c. notation for coding/splice variants and g. 
+notation for deep intronic or intergenic variants and (b) the associated protein consequence ("hgvs_p"), if applicable.
+If papers provide only the coding variant, the resultant consequence should be inferred if possible. If papers provide 
+only the protein consequence it is generally impossible to infer the specific causal variant and this should be left blank.
+If papers provide detail on the specific transcript that was affected/studied, provide this in the "transcript" output
+field. If not, provide the MANE select transcript for {{$gene}} instead.
+
+Once the variant and individual have been identified, I also want you to identify the variant type, zygosity, mode of 
+inheritance, and observed patient phenotype. 
+
+This paper may discuss variants in other genes, but we're only interested in variants in the gene 
+{{$gene}}.
+
+More detail on each of the output fields is provided below. 
+
+Here is a description of the output fields for each observation.
+paper_variant - a comma separated list of the descriptions of the found in the text
+hgvs_c - the DNA variant in valid hgvs.c or hgvs.g nomenclature format
+hgvs_p - the consequential protein variant in valid hgvs.p nomenclature format
+transcript - the associated transcript for coding variants
+individual_id - an identifier for the individual possessing the variant if one is provided, otherwise "unknown" if not 
+    provided
+variant_type - single value chosen from missense, frameshift, stop gained, splice donor, splice acceptor, splice region,
+    start lost, inframe deletion, frameshift deletion, inframe insertion, frameshift insertion, structural, synonymous,
+    intron, 5' UTR, 3' UTR, non-coding, unknown
+zygosity - single value chosen from homozygous, heterozygous, compound heterozygous, unknown
+variant_inheritance - single value chosen from inherited, de novo, unknown
+phenotype - list of values chosen from the Human Phenotype ontology, each value should include the description and HPO
+    identifier (e.g., "Arachnodactyly (HP:0001166)")
+
+Your output format should be a JSON object with a single top level field called "observations" that contains a list 
+of observations, with each observation being an object that contains a field for "paper_variant", "hgvs_c", "hgvs_p", 
+"transcript", "individual_id", "variant_type", "zygosity", "variant_inheritance", and "phenotype".
+
+An example output might look like:
+
+{
+    "observations": [
+        {
+            "paper_variant": "p.Cys795Tyr, c.2384G>A",
+            "hgvs_c": "c.2384G>A",
+            "hgvs_p": "p.Cys795Tyr",
+            "transcript": "NM_001999.4",
+            "individual_id": "unknown",
+            "variant_type": "missense",
+            "zygosity": "heterozygous",
+            "variant_inheritance": "inherited",
+            "phenotype": "Camptodactyly (HP:0012385); Contractures of the large joints (HP:0005781); Arachnodactyly (HP:0001166)"
+        }
+    ]
+}
+
+-- begin paper text --
+
+{{$fulltext}}

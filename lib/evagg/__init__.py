@@ -1,7 +1,12 @@
 """The evagg core library."""
 
 from .app import PaperQueryApp
-from .content import PromptBasedContentExtractor, PromptBasedContentExtractorCached
+from .content import (
+    PromptBasedContentExtractor,
+    PromptBasedContentExtractorCached,
+    ReasoningContentExtractor,
+    ReasoningContentExtractorCached,
+)
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
 from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached
@@ -26,6 +31,8 @@ __all__ = [
     # Content.
     "PromptBasedContentExtractor",
     "PromptBasedContentExtractorCached",
+    "ReasoningContentExtractor",
+    "ReasoningContentExtractorCached",
     "PropertyContentExtractor",
     "SampleContentExtractor",
 ]
