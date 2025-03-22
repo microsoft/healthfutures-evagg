@@ -37,6 +37,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
         include_negative_examples: bool = True,
+        allow_abstracts: bool = False,
     ) -> None:
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
@@ -53,6 +54,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         # Allowed categories must be a subset of or equal to possible CATEGORIES.
         if not set(self._allowed_categories).issubset(set(self.CATEGORIES)):
             raise ValueError(f"Invalid category set: {self._allowed_categories}")
+        self._allow_abstracts = allow_abstracts
 
     def _get_keyword_category(self, paper: Paper) -> str:
         """Categorize papers based on keywords in the title and abstract."""
@@ -158,7 +160,12 @@ class RareDiseaseFileLibrary(IGetPapers):
         if not query.get("gene_symbol"):
             raise ValueError("Minimum requirement to search is to input a gene symbol.")
 
-        params: dict[str, Any] = {"query": f"{query['gene_symbol']} pubmed pmc open access[filter]"}
+        params: dict[str, Any] = {}
+        if self._allow_abstracts:
+            params["query"] = query["gene_symbol"]
+        else:
+            params["query"] = f"{query['gene_symbol']} pubmed pmc open access[filter]"
+
         # Rationalize the optional parameters.
         if ("max_date" in query or "date_type" in query) and "min_date" not in query:
             raise ValueError("A min_date is required when max_date or date_type is provided.")
@@ -184,9 +191,11 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper
             for paper_id in paper_ids
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
-            and paper.props["can_access"] is True
         ]
-        logger.info(f"Categorizing {len(papers)} papers with full text for {query['gene_symbol']}.")
+        if not self._allow_abstracts:
+            papers = [p for p in papers if p.props["can_access"]]
+
+        logger.info(f"Categorizing {len(papers)} papers for {query['gene_symbol']}.")
 
         await asyncio.gather(*[self._get_paper_categorizations(paper, query["gene_symbol"]) for paper in papers])
         return papers

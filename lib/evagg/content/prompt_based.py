@@ -75,10 +75,9 @@ class PromptBasedContentExtractor(IExtractFields):
         elif field == "citation":
             value = paper.props["citation"]
         elif field == "link":
-            # TODO: fix in paper props generation
             value = (
                 "https://www.ncbi.nlm.nih.gov/pmc/articles/" + paper.props["pmcid"]
-                if "pmcid" in paper.props
+                if paper.props.get("pmcid", "") != ""
                 else paper.props["link"]
             )
         elif field == "paper_title":
@@ -353,10 +352,6 @@ class PromptBasedContentExtractor(IExtractFields):
         return await asyncio.gather(*[self._get_fields(gene_symbol, paper, ob, cache) for ob in obs])
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
-        if not paper.props.get("can_access", False):
-            logger.warning(f"Skipping {paper.id} because it is not licensed for access")
-            return []
-
         # Find all the observations in the paper relating to the query.
         observations = asyncio.run(self._observation_finder.find_observations(gene_symbol, paper))
         if not observations:
