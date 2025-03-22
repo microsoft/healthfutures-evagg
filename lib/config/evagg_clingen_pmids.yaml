@@ -1,0 +1,76 @@
+# This YAML file configures the EvAgg pipeline to reproduce the errors observed by the clingen team
+
+log:
+  di_factory: lib.evagg.utils.init_logger
+  level: DEBUG
+  to_file: true
+
+# Imported objects.
+llm_client:
+  di_factory: lib/config/objects/llm.yaml
+
+# Application.
+di_factory: lib.evagg.PaperQueryApp
+queries:
+  di_factory: lib/config/queries/clingen_debug_genes.yaml
+library:
+  di_factory: lib.evagg.library.ListLibrary
+  paper_client:
+    di_factory: lib/config/objects/ncbi.yaml
+    # di_factory: lib/config/objects/ncbi_cache.yaml
+  pmid_dict:
+    LBR: 
+      - 19940018
+    CACNA1D:
+      - 35813615
+    TCIRG1:
+      - 37107657
+#      - 35991533 # Causes mutalyzer 504
+    FANCM:
+      - 29231814
+    BANF1:
+      - 31796734
+extractor:
+  di_factory: lib.evagg.PromptBasedContentExtractor
+  fields:
+    - evidence_id
+    - gene
+    - paper_id
+    - hgvs_c
+    - hgvs_p
+    - paper_variant
+    - transcript
+    - validation_error
+    - gnomad_frequency
+    - individual_id
+#    - phenotype
+    - zygosity
+    - variant_inheritance
+    - variant_type
+    - study_type
+    - engineered_cells
+    - patient_cells_tissues
+    - animal_model
+    - citation
+    - link
+    - paper_title  
+  llm_client:
+    di_factory: lib/config/objects/llm_cache.yaml
+  phenotype_searcher:
+    di_factory: lib.evagg.ref.WebHPOClient
+    web_client:
+      di_factory: lib/config/objects/web.yaml
+      # di_factory: lib/config/objects/web_cache.yaml
+  phenotype_fetcher:
+    di_factory: lib.evagg.ref.PyHPOClient
+  observation_finder:
+    di_factory: lib.evagg.content.ObservationFinder
+    llm_client: "{{llm_client}}"
+    variant_factory: 
+      di_factory: lib/config/objects/variant_factory.yaml    
+      # di_factory: lib/config/objects/variant_factory_cache.yaml
+    variant_comparator: 
+      di_factory: lib.evagg.content.HGVSVariantComparator
+writer:
+  di_factory: lib.evagg.TableOutputWriter
+  tsv_name: pipeline_benchmark
