@@ -110,8 +110,8 @@ def get_pmid_list_query(gene_symbol: str) -> Sequence[str]:
 def find_line_in_logs(query: str) -> str:
     """Search through every line in the log files for a line that matches query. Return the first match."""
     log_files = [
-        ".out/run_evagg_pipeline_clingen_10_genes_20250305_145143/console.log",
-        ".out/run_evagg_pipeline_clingen_10_genes_20250305_122938/console.log",
+        ".out/run_zevagg_pipeline_clingen_10_genes_20250305_145143/console.log",
+        ".out/run_zevagg_pipeline_clingen_10_genes_20250305_122938/console.log",
         # ".out/run_evagg_pipeline_20250317_191428/console.log",
         # ".out/run_evagg_pipeline_20250317_170658/console.log",
     ]

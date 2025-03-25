@@ -1,49 +1,49 @@
 - "gene_symbol": "BANF1"
   "min_date": "2000/01/01"
   "max_date": "2024/04/03"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "BCL9"
   "min_date": "2000/01/01"
   "max_date": "2023/09/11"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "CACNA1D"
   "min_date": "2000/01/01"
   "max_date": "2024/04/17"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "CCDC50"
   "min_date": "2000/01/01"
   "max_date": "2024/06/25"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "CCNQ"
   "min_date": "2000/01/01"
   "max_date": "2024/07/19"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "FANCM"
   "min_date": "2000/01/01"
   "max_date": "2024/11/22"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "KLF13"
   "min_date": "2000/01/01"
   "max_date": "2024/02/12"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "LBR"
   "min_date": "2000/01/01"
   "max_date": "2023/11/01"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "MBD4"
   "min_date": "2000/01/01"
   "max_date": "2024/09/25"
-  "retmax": 550
+  "retmax": 1400
 
 - "gene_symbol": "TCIRG1"
   "min_date": "2000/01/01"
   "max_date": "2023/12/04"
-  "retmax": 550
+  "retmax": 1400

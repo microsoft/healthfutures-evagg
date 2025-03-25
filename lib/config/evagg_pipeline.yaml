@@ -14,7 +14,7 @@ llm_client:
 # Application.
 di_factory: lib.evagg.PaperQueryApp
 queries:
-  di_factory: lib/config/queries/clingen_debug_genes.yaml
+  di_factory: lib/config/queries/clingen_10_genes.yaml
 library:
   di_factory: lib.evagg.RareDiseaseLibraryCached
   paper_client:
@@ -22,6 +22,7 @@ library:
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "genetic disease"
+  allow_abstracts: true
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractorCached
   fields:
