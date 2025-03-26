@@ -1,0 +1,4 @@
+di_factory: lib.evagg.llm.AzureFoundryClient
+config:
+  di_factory: lib.evagg.utils.get_dotenv_settings
+  filter_prefix: "AZURE_FOUNDRY_"

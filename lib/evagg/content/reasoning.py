@@ -26,11 +26,17 @@ class ReasoningContentExtractor(IExtractFields):
     _SYSTEM_PROMPT = open(_get_prompt_file_path("system")).read()
 
     _DEFAULT_PROMPT_SETTINGS = {
-        "max_completion_tokens": 30000,
         "prompt_tag": "content_reasoning",
-        "reasoning_effort": "high",
-        "response_format": {"type": "json_object"},
-        "timeout": 300,
+        # Use for AOAI
+        # "max_completion_tokens": 30000,
+        # "reasoning_effort": "high",
+        # "response_format": {"type": "json_object"},
+        # "timeout": 300,
+        # Use for foundry.
+        "response_format": "json_object",
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "max_tokens": 30000,
     }
 
     def __init__(

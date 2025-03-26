@@ -106,9 +106,12 @@ class RareDiseaseFileLibrary(IGetPapers):
             prompt_settings={
                 "prompt_tag": "paper_category",
                 "prompt_metadata": prompt_metadata,
-                # "temperature": 0.8,
-                "reasoning_effort": "low",
-                "max_completion_tokens": 16000,
+                # Use for AOAI
+                # "reasoning_effort": "low",
+                # "max_completion_tokens": 16000,
+                # Use for foundry
+                "temperature": 0.8,
+                "max_tokens": 16000,
             },
         )
 

@@ -48,12 +48,16 @@ uninterrupted sequences of whitespace characters.
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
         default_settings = {
-            "max_completion_tokens": 2048,
             "prompt_tag": "observation",
-            # "temperature": 0.7,
-            # "top_p": 0.95,
-            "response_format": {"type": "json_object"},
-            "reasoning_effort": "medium",
+            # Use these for AOAI only
+            # "response_format": {"type": "json_object"},
+            # "reasoning_effort": "medium",
+            # "max_completion_tokens": 2048,
+            # Use these for Foundry only
+            "response_format": "json_object",
+            "temperature": 0.7,
+            "top_p": 0.95,
+            "max_tokens": 2048,
         }
         prompt_settings = {**default_settings, **prompt_settings}
 
