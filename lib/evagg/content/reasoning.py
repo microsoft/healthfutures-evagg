@@ -35,7 +35,7 @@ class ReasoningContentExtractor(IExtractFields):
         # Use for foundry.
         "response_format": "json_object",
         "temperature": 0.7,
-        "top_p": 0.95,
+        ##"top_p": 0.95,
         "max_tokens": 30000,
     }
 
@@ -82,7 +82,12 @@ class ReasoningContentExtractor(IExtractFields):
             "prompt_tag": "content",
             "prompt_metadata": {"gene_symbol": gene_symbol, "paper_id": paper.id},
         }
-        obs_dicts_raw = await self._run_json_prompt(self._PROMPT_FIELDS["content"], params, prompt_settings)
+        try:
+            obs_dicts_raw = await self._run_json_prompt(self._PROMPT_FIELDS["content"], params, prompt_settings)
+        except Exception as e:
+            logger.error(f"Caught exception extracting content for {paper}: {e}")
+            return []
+
         obs_dicts = obs_dicts_raw.get("observations", [])
 
         # Populate the lookup fields.
@@ -118,7 +123,7 @@ class ReasoningContentExtractor(IExtractFields):
             return []
 
         # Run the primary reasoning prompt.
-        content = asyncio.run(self._extract_all(paper, gene_symbol))
+        content = asyncio.get_event_loop().run_until_complete(self._extract_all(paper, gene_symbol))
 
         if not content:
             logger.info(f"No observations found in {paper.id} for {gene_symbol}")

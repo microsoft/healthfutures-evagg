@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, Dict, List, Sequence
 
@@ -21,8 +22,18 @@ class PaperQueryApp(IEvAggApp):
         self._extractor = extractor
         self._writer = writer
 
+    def _init_event_loop(self) -> None:
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
     def execute(self) -> None:
         output_fieldsets: List[Dict[str, str]] = []
+
+        # This sucks, ask Greg and Lorenzo.
+        self._init_event_loop()
 
         for query in self._queries:
             if not query.get("gene_symbol"):

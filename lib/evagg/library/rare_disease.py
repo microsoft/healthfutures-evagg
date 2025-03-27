@@ -209,5 +209,5 @@ class RareDiseaseFileLibrary(IGetPapers):
         Returns:
             Sequence[Paper]: The set of rare disease papers that match the query.
         """
-        all_papers = asyncio.run(self._get_all_papers(query))
+        all_papers = asyncio.get_event_loop().run_until_complete(self._get_all_papers(query))
         return list(filter(lambda p: p.props["disease_category"] in self._allowed_categories, all_papers))

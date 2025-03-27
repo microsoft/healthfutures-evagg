@@ -4,30 +4,30 @@
 
 log:
   di_factory: lib.evagg.utils.init_logger
-  level: DEBUG
+  level: INFO
   to_file: true
 
 # Imported objects.
 llm_client:
-  di_factory: lib/config/objects/llm.yaml
+  di_factory: lib/config/objects/llm_foundry.yaml
 
 # Application.
 di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/mgttest_subset.yaml
 library:
-  di_factory: lib.evagg.RareDiseaseLibraryCached
+  di_factory: lib.evagg.RareDiseaseFileLibrary
   paper_client:
     di_factory: lib/config/objects/ncbi_cache.yaml
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "genetic disease"
 extractor:
-  di_factory: lib.evagg.ReasoningContentExtractorCached
+  di_factory: lib.evagg.ReasoningContentExtractor
   fields:
     di_factory: lib/config/fields/evidence_all.yaml
   llm_client:
-    di_factory: lib/config/objects/llm_cache.yaml
+    di_factory: lib/config/objects/llm_foundry.yaml
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark

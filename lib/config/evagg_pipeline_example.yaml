@@ -25,11 +25,11 @@ library:
   allowed_categories:
     - "genetic disease"
 extractor:
-  di_factory: lib.evagg.ReasoningContentExtractorCached
+  di_factory: lib.evagg.ReasoningContentExtractor
   fields:
     di_factory: lib/config/fields/evidence_all.yaml
   llm_client:
-    di_factory: lib/config/objects/llm_foundry_cache.yaml
+    di_factory: lib/config/objects/llm_foundry.yaml
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark

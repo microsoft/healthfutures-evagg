@@ -1,5 +1,5 @@
 from .aoai import OpenAICacheClient, OpenAIClient
-from .foundry import AzureFoundryCacheClient, AzureFoundryClient
+from .foundry import AzureFoundryClient
 from .interfaces import IPromptClient
 
 __all__ = [
@@ -7,7 +7,6 @@ __all__ = [
     "OpenAIClient",
     "OpenAICacheClient",
     "AzureFoundryClient",
-    "AzureFoundryCacheClient",
     # Interfaces.
     "IPromptClient",
 ]
