@@ -15,7 +15,7 @@ from lib.evagg.ref import IRefSeqLookupClient
 
 # %% Constants.
 
-output_path = ".out/run_evagg_pipeline_20250320_180112/pipeline_benchmark.tsv"
+output_path = ".out/run_evagg_pipeline_20250327_051436/pipeline_benchmark.tsv"
 
 # %% Load the data.
 
@@ -61,6 +61,10 @@ async def ask_llm(t1: str, t2: str) -> bool:
 # %% Do the comparison for each phenotype term.
 import asyncio
 
+import nest_asyncio
+
+nest_asyncio.apply()
+
 phenos_df["result"] = "unknown"
 phenos_df["onto_name"] = "none"
 
@@ -78,7 +82,7 @@ for idx, row in phenos_df.iterrows():
 
     phenos_df.at[idx, "onto_name"] = hpo_element.name
 
-    if asyncio.run(ask_llm(row["name"], hpo_element.name)):
+    if asyncio.get_event_loop().run_until_complete(ask_llm(row["name"], hpo_element.name)):
         phenos_df.at[idx, "result"] = "match"
     else:
         phenos_df.at[idx, "result"] = "mismatch"

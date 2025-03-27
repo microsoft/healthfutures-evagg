@@ -5,7 +5,7 @@ import os
 import pandas as pd
 
 # %% Contants.
-input_file = "/home/azureuser/healthfutures-evagg/.out/run_evagg_pipeline_20250320_180112/pipeline_benchmark.tsv"
+input_file = "/home/azureuser/healthfutures-evagg/.out/run_evagg_pipeline_20250327_051436/pipeline_benchmark.tsv"
 
 # %% Step 1: Copy the original TSV to a new location
 backup_file = input_file.replace(".tsv", "_backup.tsv")
@@ -20,6 +20,8 @@ df = df.dropna(subset=["hgvs_c", "hgvs_p"], how="all")
 
 # %% Step 5: Fix format issues in the 'phenotype' column
 df["phenotype"] = df["phenotype"].str.replace(r"[\[\]']", "", regex=True)
+df["phenotype"] = df["phenotype"].str.replace(", ", "; ")
+df["phenotype"] = df["phenotype"].str.replace("'", "")
 
 # %% Rename column id to evidence_id
 df.rename(columns={"id": "evidence_id"}, inplace=True)

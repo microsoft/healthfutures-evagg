@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from azure.ai.inference.aio import ChatCompletionsClient
 from azure.ai.inference.models import ChatRequestMessage, SystemMessage, UserMessage
 from azure.core.credentials import AzureKeyCredential
+from azure.core.exceptions import HttpResponseError, ServiceResponseError
 from pydantic import BaseModel
 
 from lib.evagg.utils.logging import PROMPT
@@ -120,6 +121,9 @@ class AzureFoundryClient(IPromptClient):
 
                 elapsed = time.time() - start_ts
                 break
+            except (ServiceResponseError, HttpResponseError) as e:
+                logger.warning(f"Transient Error on {prompt_tag}: {type(e)} // {e}")
+                await asyncio.sleep(1)
             except Exception as e:
                 logger.warning(f"Error on {prompt_tag}: {type(e)} // {e}")
                 raise (e)
@@ -178,19 +182,3 @@ class AzureFoundryClient(IPromptClient):
         self, inputs: List[str], embedding_settings: Optional[Dict[str, Any]] = None
     ) -> Dict[str, List[float]]:
         raise NotImplementedError("Embeddings are not supported in Azure Foundry.")
-
-
-# class AzureFoundryCacheClient(AzureFoundryClient):
-#     def __init__(self, config: Dict[str, Any]) -> None:
-#         # Don't cache tasks that have errored out.
-#         self.task_cache = ObjectCache[asyncio.Task](lambda t: not t.done() or t.exception() is None)
-#         super().__init__(config)
-
-#     def _create_completion_task(self, messages: ChatMessages, settings: Dict[str, Any]) -> asyncio.Task:
-#         """Create a new task only if no identical non-errored one was already cached."""
-#         cache_key = hash((messages.content, json.dumps(settings)))
-#         if task := self.task_cache.get(cache_key):
-#             return task
-#         task = super()._create_completion_task(messages, settings)
-#         self.task_cache.set(cache_key, task)
-#         return task
