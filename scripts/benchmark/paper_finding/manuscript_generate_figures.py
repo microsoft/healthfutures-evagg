@@ -22,6 +22,11 @@ from scripts.benchmark.utils import get_benchmark_run_ids, load_run
 
 OUTPUT_DIR = ".out/manuscript_paper_finding"
 
+# ensure OUTPUT_DIR exists
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
+    
+
 MODEL = "GPT-4-Turbo"  # or "GPT-4o" or "GPT-4o-mini"
 
 TRAIN_RUNS = get_benchmark_run_ids(MODEL, "train")
