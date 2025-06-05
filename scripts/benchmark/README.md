@@ -30,8 +30,8 @@ lines above. By default, the outputs for these analyses will be placed in new, r
 
 2. **Figure generation**: In an interactive window (figures aren't currently written to disk), run
 `scripts/benchmark/paper_finding/manuscript_generate_figures.py`,
-`scripts/benchmark/content_extraction/manuscript_generate_figures.py`, and
-`scripts/benchmark/content_extraction/content_benchmark.py`. These will generate a bunch of figures that can be used in
+`scripts/benchmark/content_extraction/manuscript_generate_obs_figures.py`, and
+`scripts/benchmark/content_extraction/manuscript_generate_content_figures.py`. These will generate a bunch of figures that can be used in
 paper authoring. The first two scripts and will also generate a number of output TSVs that can be used in downstream
 analyses.
 
