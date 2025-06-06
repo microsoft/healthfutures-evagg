@@ -10,7 +10,7 @@ pipeline output set for a different model.
 # %% Imports.
 
 import os
-from typing import Any, Dict, List, Set
+from typing import Dict, Set
 
 import pandas as pd
 import seaborn as sns
@@ -20,12 +20,14 @@ from scripts.benchmark.utils import get_benchmark_run_ids, load_run
 
 # %% Constants.
 
+
 OUTPUT_DIR = ".out/manuscript_paper_finding"
+TRUTHSET_VERSIONS = ["v1", "v1.1"]
 
 # ensure OUTPUT_DIR exists
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
-    
+
 
 MODEL = "GPT-4-Turbo"  # or "GPT-4o" or "GPT-4o-mini"
 
@@ -38,7 +40,7 @@ model_name = f" - {MODEL}"
 
 for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
 
-    runs = [load_run(id, "paper_finding", "pipeline_mgt_comparison.tsv") for id in run_ids]
+    runs = [load_run(id, "paper_finding", f"pipeline_mgt_comparison_{TRUTHSET_VERSIONS[0]}.tsv") for id in run_ids]
 
     run_type_alt = "train" if run_type == "train" else "eval"
 
@@ -58,75 +60,56 @@ for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
     print(f"Paper consistency ({run_type_alt}): {paper_presence.agg("mean", axis=1).agg("mean")}")
 
 
-# %% Generate run stats.
+# %% Generate run stats for all truthset versions.
+all_run_stats_labeled = []
+TRAIN_RUNS = get_benchmark_run_ids(MODEL, "train")
+TEST_RUNS = get_benchmark_run_ids(MODEL, "test")
 
-all_run_stats: Dict[str, pd.DataFrame] = {}
-
-for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
-
-    runs = [load_run(id, "paper_finding", "pipeline_mgt_comparison.tsv") for id in run_ids]
-
-    run_stats_dicts: List[Dict[str, Any]] = []
-
-    for run_id, run in zip(run_ids, runs):
-        if run is None:
-            continue
-
-        n_correct = run.query("in_truth == True and in_pipeline == True").shape[0]
-        missed = run.query("in_truth == True and in_pipeline == False")
-        n_missed = missed.shape[0]
-        missed_queries = set(missed["pmid_with_query"].unique())
-        irrelevant = run.query("in_truth == False and in_pipeline == True")
-        n_irrelevant = irrelevant.shape[0]
-        irrelevant_queries = set(irrelevant["pmid_with_query"].unique())
-
-        run_stats_dicts.append(
-            {
-                "run_id": run_id,
-                "n_correct": n_correct,
-                "n_missed": n_missed,
-                "n_irrelevant": n_irrelevant,
-                "missed": missed_queries,
-                "irrelevant": irrelevant_queries,
-            }
+for truthset_version in TRUTHSET_VERSIONS:
+    for run_type, run_ids in [("train", TRAIN_RUNS), ("test", TEST_RUNS)]:
+        runs = [load_run(id, "paper_finding", f"pipeline_mgt_comparison_{truthset_version}.tsv") for id in run_ids]
+        run_stats_dicts = []
+        for run_id, run in zip(run_ids, runs):
+            if run is None:
+                continue
+            n_correct = run.query("in_truth == True and in_pipeline == True").shape[0]
+            missed = run.query("in_truth == True and in_pipeline == False")
+            n_missed = missed.shape[0]
+            missed_queries = set(missed["pmid_with_query"].unique())
+            irrelevant = run.query("in_truth == False and in_pipeline == True")
+            n_irrelevant = irrelevant.shape[0]
+            irrelevant_queries = set(irrelevant["pmid_with_query"].unique())
+            run_stats_dicts.append(
+                {
+                    "run_id": run_id,
+                    "n_correct": n_correct,
+                    "n_missed": n_missed,
+                    "n_irrelevant": n_irrelevant,
+                    "missed": missed_queries,
+                    "irrelevant": irrelevant_queries,
+                    "truthset_version": truthset_version,
+                    "split": run_type,
+                }
+            )
+        run_stats = pd.DataFrame(run_stats_dicts)
+        run_stats["precision"] = run_stats["n_correct"] / (run_stats["n_correct"] + run_stats["n_irrelevant"])
+        run_stats["recall"] = run_stats["n_correct"] / (run_stats["n_correct"] + run_stats["n_missed"])
+        run_stats["f1"] = (
+            2 * run_stats["precision"] * run_stats["recall"] / (run_stats["precision"] + run_stats["recall"])
         )
-
-    # Make a dataframe out of run_counts_dicts.
-    run_stats = pd.DataFrame(run_stats_dicts)
-
-    # Add derived stats.
-    run_stats["precision"] = run_stats["n_correct"] / (run_stats["n_correct"] + run_stats["n_irrelevant"])
-    run_stats["recall"] = run_stats["n_correct"] / (run_stats["n_correct"] + run_stats["n_missed"])
-    run_stats["f1"] = 2 * run_stats["precision"] * run_stats["recall"] / (run_stats["precision"] + run_stats["recall"])
-
-    # Reorder columns, putting missed and irrelevant at the end.
-    run_stats = run_stats[list(run_stats.columns.drop(["missed", "irrelevant"])) + ["missed", "irrelevant"]]
-
-    all_run_stats[run_type] = run_stats
+        run_stats = run_stats[list(run_stats.columns.drop(["missed", "irrelevant"])) + ["missed", "irrelevant"]]
+        all_run_stats_labeled.append(run_stats)
 
 
-# %% Make the primary barplot.
-
-sns.set_theme(style="whitegrid")
-
+# %%
 # set figure size to 3, 3
 plt.figure(figsize=(3, 3))
 
-all_run_stats_labeled = []
-for run_type in ["train", "test"]:
-    run_stats_labeled = all_run_stats[run_type].copy()
-    run_stats_labeled["split"] = run_type
-    all_run_stats_labeled.append(run_stats_labeled)
-
-run_stats_labeled = pd.concat(all_run_stats_labeled)
-
-run_stats_labeled_melted = run_stats_labeled[["split", "run_id", "precision", "recall"]].melt(
-    id_vars=["split", "run_id"], var_name="stat_type", value_name="stat_value"
+run_stats_labeled = pd.concat(all_run_stats_labeled, ignore_index=True)
+run_stats_labeled_melted = run_stats_labeled[["split", "run_id", "precision", "recall", "truthset_version"]].melt(
+    id_vars=["split", "run_id", "truthset_version"], var_name="stat_type", value_name="stat_value"
 )
-
-# Recode split from "train" and "test" to "dev" and "eval".
 run_stats_labeled_melted["split"] = run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
-
 
 g = sns.barplot(
     data=run_stats_labeled_melted.query("split == 'eval'"),
@@ -134,42 +117,36 @@ g = sns.barplot(
     y="stat_value",
     errorbar="sd",
     alpha=0.6,
-    hue="split",
-    palette={"dev": "#1F77B4", "eval": "#FA621E"},
+    hue="truthset_version",
+    palette={"v1": "#1F77B4", "v1.1": "#FA621E"},
 )
-
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Proportion")
-g.title.set_text("Paper selection")
-
-# capitalize the xticklabels
+g.set_title("Paper selection")
 g.set_xticklabels([x.get_text().capitalize() for x in g.get_xticklabels()])
-
-# remove the legend
-g.get_legend().remove()
-
-plt.ylim(0.5, 1)
-
-
+plt.ylim(0.4, 1)
 plt.savefig(f"{OUTPUT_DIR}/paper_finding_benchmark_performance{model_name}.png", bbox_inches="tight")
 
 
 # %% Print them instead.
 
-for run_type in ["train", "test"]:
-    run_stats = all_run_stats[run_type]
 
-    print(f"-- Paper finding benchmark results ({run_type}; N={run_stats.shape[0]}) --")
-
-    print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]].round(3))
-
-    print()
-    print(
-        run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]]
-        .aggregate(["mean", "std"])
-        .round(3)
-    )
-    print()
+# Print tables for each truthset version
+for truthset_version in TRUTHSET_VERSIONS:
+    print(f"\n==== Results for truthset version: {truthset_version} ====")
+    for run_type in ["train", "test"]:
+        run_stats = run_stats_labeled[
+            (run_stats_labeled["truthset_version"] == truthset_version) & (run_stats_labeled["split"] == run_type)
+        ]
+        print(f"-- Paper finding benchmark results ({run_type}/{truthset_version}; N={run_stats.shape[0]}) --")
+        print(run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]].round(3))
+        print()
+        print(
+            run_stats[["n_correct", "n_missed", "n_irrelevant", "precision", "recall", "f1"]]
+            .aggregate(["mean", "std"])
+            .round(3)
+        )
+        print()
 
 
 # %% Write outputs for later use.
@@ -177,8 +154,11 @@ for run_type in ["train", "test"]:
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
-for run_type in ["train", "test"]:
-    run_stats = all_run_stats[run_type]
-    run_stats.to_csv(f"{OUTPUT_DIR}/paper_finding_benchmarks_{run_type}_{MODEL}.tsv", sep="\t", index=False)
+for truthset_version in TRUTHSET_VERSIONS:
+    for run_type in ["train", "test"]:
+        run_stats = run_stats_labeled.query("truthset_version == @truthset_version & split == @run_type")
+        run_stats.to_csv(
+            f"{OUTPUT_DIR}/paper_finding_benchmarks_{truthset_version}_{run_type}_{MODEL}.tsv", sep="\t", index=False
+        )
 
 # %% Intentionally empty.
