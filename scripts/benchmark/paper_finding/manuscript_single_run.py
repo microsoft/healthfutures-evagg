@@ -15,7 +15,6 @@ for the Evidence Aggregator tool
 # Libraries
 import argparse
 import os
-import shutil
 from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
@@ -45,6 +44,7 @@ def calculate_metrics(num_correct: int, num_missed: int, num_irrelevant: int) ->
 def plot_benchmarking_results(
     output_dir: str,
     joined_df: pd.DataFrame,
+    truthset_version: str,
 ) -> None:
     """Plot the benchmarking results from the  set in a barplot."""
     # List of categories
@@ -91,7 +91,7 @@ def plot_benchmarking_results(
     plt.xticks(tick_pos, ["Correct", "Missed", "Irrelevant"])
 
     # Save barplot
-    plt.savefig(output_dir + "/benchmarking_paper_finding_results.png")
+    plt.savefig(output_dir + f"/benchmarking_paper_finding_results_{truthset_version}.png")
 
 
 def build_individual_result_summary(
@@ -125,6 +125,7 @@ def build_individual_result_summary(
 def write_output_summary(
     output_dir: str,
     joined_df: pd.DataFrame,
+    truthset_version: str,
 ) -> None:
     ea_tp = joined_df[joined_df.in_truth & joined_df.in_pipeline][["pmid_with_query", "paper_title"]]
     ea_fn = joined_df[joined_df.in_truth & ~joined_df.in_pipeline][["pmid_with_query", "paper_title"]]
@@ -133,7 +134,7 @@ def write_output_summary(
     ea_precision, ea_recall, ea_f1_score = calculate_metrics(ea_tp.shape[0], ea_fn.shape[0], ea_fp.shape[0])
 
     # Compile and save the benchmarking results to a file
-    with open(os.path.join(output_dir, "benchmarking_paper_finding_results.txt"), "w") as f:
+    with open(os.path.join(output_dir, f"benchmarking_paper_finding_results_{truthset_version}.txt"), "w") as f:
         f.write("Evidence Aggregator Paper Finding Benchmarks Key: \n")
         f.write(
             "- Search 'E.A. overall precision' to see 1) overall Evidence Aggregator precision, recall, F1, and 2) "
@@ -303,25 +304,28 @@ def main(args: argparse.Namespace) -> None:
 
     joined_df["paper_title"] = joined_df["pmid"].apply(get_paper_title)
 
+    truthset_version = args.truthset_version
     outdir = args.outdir or pipeline_path + "_paper_finding_benchmarks"
 
     # Prep output directory.
-    if os.path.isdir(outdir):
-        shutil.rmtree(outdir)
-    os.makedirs(outdir, exist_ok=True)
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir, exist_ok=True)
 
     # Plot results.
-    plot_benchmarking_results(outdir, joined_df)
+    plot_benchmarking_results(outdir, joined_df, truthset_version)
 
     # Write text output summary.
-    write_output_summary(outdir, joined_df)
+    write_output_summary(outdir, joined_df, truthset_version)
 
     # Write the joined_df to file.
-    joined_df.to_csv(os.path.join(outdir, "pipeline_mgt_comparison.tsv"), sep="\t", index=False)
+    joined_df.to_csv(os.path.join(outdir, f"pipeline_mgt_comparison_{truthset_version}.tsv"), sep="\t", index=False)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evidence Aggregator Paper Finding Benchmarks")
+    parser.add_argument(
+        "--truthset-version", required=True, type=str, help="Truthset version string to suffix output files with."
+    )
     parser.add_argument(
         "-p",
         "--pipeline-output",
