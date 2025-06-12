@@ -118,12 +118,13 @@ g = sns.barplot(
     errorbar="sd",
     alpha=0.6,
     hue="truthset_version",
-    palette={"v1": "#1F77B4", "v1.1": "#FA621E"},
+    palette={"v1": "#1F77B4", "v1.1": "#FCA178"},
 )
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Proportion")
 g.set_title("Paper selection")
 g.set_xticklabels([x.get_text().capitalize() for x in g.get_xticklabels()])
+g.get_legend().remove()
 plt.ylim(0.4, 1)
 plt.savefig(f"{OUTPUT_DIR}/paper_finding_benchmark_performance{model_name}.png", bbox_inches="tight")
 

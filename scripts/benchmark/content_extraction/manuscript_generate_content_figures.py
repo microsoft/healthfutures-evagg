@@ -108,7 +108,7 @@ g = sns.barplot(
     errorbar="sd",
     hue="truthset_version",
     alpha=0.6,
-    palette={"v1": "#1F77B4", "v1.1": "#FA621E"},
+    palette={"v1": "#1F77B4", "v1.1": "#FCA178"},
 )
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Accuracy")
