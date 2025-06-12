@@ -120,7 +120,7 @@ g = sns.barplot(
     errorbar="sd",
     hue="truthset_version",
     alpha=0.6,
-    palette={"v1": "#1F77B4", "v1.1": "#FA621E"},
+    palette={"v1": "#1F77B4", "v1.1": "#FCA178"},
 )
 # Rename the x labels to precision, recall, precision (variant), recall (variant).
 g.set_xticklabels(["Precision", "Recall", "Variant\nprecision", "Variant\nrecall"])
@@ -128,6 +128,8 @@ g.set_xticklabels(["Precision", "Recall", "Variant\nprecision", "Variant\nrecall
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Proportion")
 g.title.set_text("Observation finding")
+g.get_legend().remove()
+
 plt.ylim(0.4, 1)
 
 plt.savefig(f"{OUTPUT_DIR}/observation_finding_performance{model_suffix}.png", bbox_inches="tight")
