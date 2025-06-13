@@ -119,7 +119,6 @@ g = sns.barplot(
     y="result",
     errorbar="sd",
     hue="truthset_version",
-    alpha=0.6,
     palette={"v1": "#1F77B4", "v1.1": "#FCA178"},
 )
 # Rename the x labels to precision, recall, precision (variant), recall (variant).
