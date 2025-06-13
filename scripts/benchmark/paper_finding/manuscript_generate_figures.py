@@ -103,6 +103,8 @@ for truthset_version in TRUTHSET_VERSIONS:
 
 # %%
 # set figure size to 3, 3
+sns.set_theme(style="whitegrid")
+
 plt.figure(figsize=(3, 3))
 
 run_stats_labeled = pd.concat(all_run_stats_labeled, ignore_index=True)
@@ -116,7 +118,6 @@ g = sns.barplot(
     x="stat_type",
     y="stat_value",
     errorbar="sd",
-    alpha=0.6,
     hue="truthset_version",
     palette={"v1": "#1F77B4", "v1.1": "#FCA178"},
 )

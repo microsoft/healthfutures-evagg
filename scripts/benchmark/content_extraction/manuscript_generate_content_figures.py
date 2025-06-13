@@ -88,17 +88,22 @@ obs_run_stats_labeled_melted = obs_run_stats_labeled[
         "split",
         "truthset_version",
         "run_id",
-        "zygosity",
-        "variant_type",
-        "variant_inheritance",
         "phenotype",
+        "variant_inheritance",
+        "variant_type",
+        "zygosity",
     ]
 ].melt(id_vars=["split", "run_id", "truthset_version"], var_name="metric", value_name="result")
 
 # Recode split from "train" and "test" to "dev" and "eval".
 obs_run_stats_labeled_melted["split"] = obs_run_stats_labeled_melted["split"].map({"train": "dev", "test": "eval"})
 
-plt.figure(figsize=(4, 3))
+# Recode truthset_version from "v1" and "v1.1" to "Original dataset" and "Refined dataset".
+obs_run_stats_labeled_melted["truthset_version"] = obs_run_stats_labeled_melted["truthset_version"].map(
+    {"v1": "Original dataset", "v1.1": "Refined dataset"}
+)
+
+plt.figure(figsize=(6, 3))
 
 # Plot the eval data only.
 g = sns.barplot(
@@ -107,15 +112,18 @@ g = sns.barplot(
     y="result",
     errorbar="sd",
     hue="truthset_version",
-    alpha=0.6,
-    palette={"v1": "#1F77B4", "v1.1": "#FCA178"},
+    palette={"Original dataset": "#1F77B4", "Refined dataset": "#FCA178"},
 )
 g.xaxis.set_label_text("")
 g.yaxis.set_label_text("Accuracy")
 g.set_xticklabels(g.get_xticklabels())
 
-# Remove the legend.
-g.get_legend().remove()
+# Remove the legend title
+g.get_legend().set_title("")
+
+# Set legend location to lower right
+g.get_legend().set_loc("lower right")
+
 
 g.title.set_text("Content extraction")
 plt.ylim(0.4, 1)
