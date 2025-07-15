@@ -1,4 +1,8 @@
-Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
+{{$text}}
+
+--
+
+Above is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
 these variants. Provide for me a list of all of the human patients described in this text. This information can often 
 be found in tables within the text, especially if there is a large number of patients.
 
@@ -46,8 +50,4 @@ or alternatively:
 }
 
 Do not provide any additional text in your response other than the json object.
-
---
-
-{{$text}}
 

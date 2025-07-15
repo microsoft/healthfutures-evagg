@@ -1,4 +1,10 @@
-Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
+Full text of the paper:
+
+{{$text}}
+
+-- End text --
+
+Above is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
 these variants. Your task is to provide for me a mapping between a list of the patient identifiers and the variants
 that they possess.
 
@@ -30,8 +36,6 @@ Here is an example of what your output should look like:
 
 Do not provide any additional text in your response other than the json object.
 
---
-
 List of patient identifiers from the text:
 
 {{$patients}}
@@ -39,7 +43,3 @@ List of patient identifiers from the text:
 List of genetic variants we're interested in, all associated with the gene {{$gene_symbol}}:
 
 {{$variants}}
-
-Full text of the paper:
-
-{{$text}}

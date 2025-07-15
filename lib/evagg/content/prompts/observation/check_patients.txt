@@ -1,4 +1,8 @@
-Here is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
+{{$text}}
+
+--
+
+Above is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
 these variants. I'm going to give you the identifier for a potential patient that is mentioned in this text. I want
 you to tell me whether the patient identifier actually refers to a patient in the text.
 
@@ -31,9 +35,5 @@ or alternatively:
 
 Do not provide any additional text in your response other than the json object.
 
---
-
-The patient identifier you are checking for in the text below is: {{$patient}}
-
-{{$text}}
+The patient identifier you are checking for in the text above is: {{$patient}}
 

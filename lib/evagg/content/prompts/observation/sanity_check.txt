@@ -1,4 +1,6 @@
-Tell me whether the following text contains mentions of specific genetic variants in the gene {{$gene}}. 
+{{$text}}
+
+Above is some text. Tell me whether the text contains mentions of specific genetic variants in the gene {{$gene}}. 
 Respond with a json-formatted object of the form:
 
 {
@@ -10,7 +12,5 @@ OR
 {
     "relevant": false
 }
-
-{{$text}}
 
 As a reminder, please tell me whether the text above contains mentions of specific genetic variants in the gene {{$gene}}. 

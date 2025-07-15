@@ -1,4 +1,8 @@
-Here is some text from a paper describing genetic variants and potentially the patients or subjects who possessed 
+{{$text}}
+
+--
+
+Above is some text from a paper describing genetic variants and potentially the patients or subjects who possessed 
 these variants. In order to correctly interpret the variants discussed in this paper, it is helpful to know the
 genome build against which the patient's genomes were aligned in order to identifier these variants.
 
@@ -32,8 +36,4 @@ or:
 }
 
 Do not provide any additional text in your response other than the json object.
-
---
-
-{{$text}}
 

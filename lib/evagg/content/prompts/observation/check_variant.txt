@@ -1,4 +1,6 @@
-Below you will find one or more descriptions of a genetic variant, and a gene of interest. I want you to search the 
+Text: {{$text}}
+
+Above you will find one or more descriptions of a genetic variant, and a gene of interest. I want you to search the 
 subsequent text to assess whether the variant of interest is in the gene of interest, or whether there isn't evidence
 to support this conclusion.
 
@@ -13,4 +15,3 @@ the following json object:
 
 Gene of interest: {{$gene_symbol}}
 Variant descriptions: {{$variant_descriptions}}
-Text: {{$text}}
