@@ -1,5 +1,3 @@
-Full text of the paper:
-
 {{$text}}
 
 -- End text --
