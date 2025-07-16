@@ -136,6 +136,15 @@ class OpenAIClient(IPromptClient):
             "prompt_settings": settings,
             "prompt_text": "\n".join([str(m.get("content")) for m in messages.to_list()]),
             "prompt_response": response,
+            "prompt_response_metadata": {
+                "prompt_tokens": completion.usage.prompt_tokens,
+                "completion_tokens": completion.usage.completion_tokens,
+                "cached_tokens": (
+                    completion.usage.prompt_tokens_details.cached_tokens
+                    if (completion and hasattr(completion.usage, "prompt_tokens_details"))
+                    else -1
+                ),
+            },
         }
 
         logger.log(PROMPT, f"Chat '{prompt_tag}' complete in {elapsed:.1f} seconds.", extra=prompt_log)
