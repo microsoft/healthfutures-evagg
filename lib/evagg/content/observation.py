@@ -278,7 +278,22 @@ uninterrupted sequences of whitespace characters.
         for id in table_ids:
             table_texts.append("\n\n".join([sec.text for sec in table_sections if sec.id == id]))
 
-        return full_text, table_texts
+        # Filter out header-only table segments that don't contain actual data
+        filtered_table_texts = []
+        for table_text in table_texts:
+            lines = [line.strip() for line in table_text.split('\n') if line.strip()]
+            
+            # Filter criteria to identify header-only segments
+            has_sufficient_lines = len(lines) > 2
+            has_sufficient_length = len(table_text) > 100
+            
+            # Only include segments that look like actual tables with data
+            if has_sufficient_lines and has_sufficient_length:
+                filtered_table_texts.append(table_text)
+            else:
+                logger.debug(f"Filtered out header-only table segment from {paper.id}: {table_text[:50]}...")
+        
+        return full_text, filtered_table_texts
 
     def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str], allow_empty: bool) -> str:
         sections = get_sections(paper.props["fulltext_xml"])
