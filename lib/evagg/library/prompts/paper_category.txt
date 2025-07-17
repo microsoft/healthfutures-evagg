@@ -11,8 +11,10 @@ Below are the title and abstract:
 Title: {{$title}}
 Abstract: {{$abstract}}
 
-Provide your response as a single string: "genetic disease" or "other" based on your classification. The only valid values in your output response should be "genetic disease" or "other". 
- 
+Provide your response as a JSON object with a single "category" field containing either "genetic disease" or "other". 
+
+Example: {"category": "genetic disease"} or {"category": "other"}
+
 When considering the provided criteria, remember to focus on the content of the title and abstract without overfitting to specific examples. The goal is to ensure high precision and recall for identifying genetic disease papers in general.
 
 {{$positive_examples}}

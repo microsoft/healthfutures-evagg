@@ -99,14 +99,30 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Few shot examples embedded into paper finding classification prompt
         prompt_metadata = {"gene_symbol": gene, "paper_id": paper.id}
+        system_prompt = """You are an intelligent assistant to a genetic analyst.
+
+All of your responses should be provided in the form of a JSON object."""
+        
         response = await self._llm_client.prompt_file(
             user_prompt_file=_get_prompt_file_path("paper_category"),
-            system_prompt="Extract field",
+            system_prompt=system_prompt,
             params=parameters,
-            prompt_settings={"prompt_tag": "paper_category", "prompt_metadata": prompt_metadata, "temperature": 0.8},
+            prompt_settings={
+                "prompt_tag": "paper_category", 
+                "prompt_metadata": prompt_metadata, 
+                "temperature": 0.8,
+                "response_format": {"type": "json_object"}
+            },
         )
 
-        result = response.strip('"')
+        # Parse JSON response
+        try:
+            parsed_response = json.loads(response)
+            result = parsed_response.get("category", "").strip()
+            logger.debug(f"Parsed category '{result}' from response: {response[:100]}...")
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON response for {paper.id}: {response[:200]}...")
+            return "other"
 
         if result in self.CATEGORIES:
             return result
