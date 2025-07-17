@@ -10,7 +10,7 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .fulltext import get_fulltext, get_sections
-from .interfaces import ICompareVariants, IFindObservations, Observation
+from .interfaces import ICompareVariants, IFindObservations, IFindVariants, Observation
 
 PatientVariant = Tuple[HGVSVariant, str]
 
@@ -19,6 +19,39 @@ logger = logging.getLogger(__name__)
 
 def _get_prompt_file_path(name: str) -> str:
     return os.path.join(os.path.dirname(__file__), "prompts", "observation", f"{name}.txt")
+
+
+async def run_json_prompt(
+    llm_client: IPromptClient, 
+    prompt_filepath: str, 
+    params: Dict[str, str], 
+    prompt_settings: Dict[str, Any],
+    system_prompt: str
+) -> Dict[str, Any]:
+    """Utility function to run a JSON prompt with an LLM client."""
+    default_settings = {
+        "max_tokens": 2048,
+        "prompt_tag": "observation",
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "response_format": {"type": "json_object"},
+    }
+    prompt_settings = {**default_settings, **prompt_settings}
+
+    response = await llm_client.prompt_file(
+        user_prompt_file=prompt_filepath,
+        system_prompt=system_prompt,
+        params=params,
+        prompt_settings=prompt_settings,
+    )
+
+    try:
+        result = json.loads(response)
+    except json.decoder.JSONDecodeError:
+        logger.error(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
+        return {}
+
+    return result
 
 
 class ObservationFinder(IFindObservations):
@@ -39,37 +72,18 @@ uninterrupted sequences of whitespace characters.
         llm_client: IPromptClient,
         variant_factory: ICreateVariants,
         variant_comparator: ICompareVariants,
+        variant_finder: IFindVariants,
     ) -> None:
         self._llm_client = llm_client
         self._variant_factory = variant_factory
         self._variant_comparator = variant_comparator
+        self._variant_finder = variant_finder
 
     async def _run_json_prompt(
         self, prompt_filepath: str, params: Dict[str, str], prompt_settings: Dict[str, Any]
     ) -> Dict[str, Any]:
-        default_settings = {
-            "max_tokens": 2048,
-            "prompt_tag": "observation",
-            "temperature": 0.7,
-            "top_p": 0.95,
-            "response_format": {"type": "json_object"},
-        }
-        prompt_settings = {**default_settings, **prompt_settings}
+        return await run_json_prompt(self._llm_client, prompt_filepath, params, prompt_settings, self._SYSTEM_PROMPT)
 
-        response = await self._llm_client.prompt_file(
-            user_prompt_file=prompt_filepath,
-            system_prompt=self._SYSTEM_PROMPT,
-            params=params,
-            prompt_settings=prompt_settings,
-        )
-
-        try:
-            result = json.loads(response)
-        except json.decoder.JSONDecodeError:
-            logger.error(f"Failed to parse response from LLM to {prompt_filepath}: {response}")
-            return {}
-
-        return result
 
     async def _check_patients(self, patient_candidates: Sequence[str], texts_to_check: Sequence[str]) -> List[str]:
         checked_patients: List[str] = []
@@ -451,7 +465,7 @@ uninterrupted sequences of whitespace characters.
             return []
 
         # Determine the candidate genetic variants matching `gene_symbol`
-        variant_descriptions = await self._find_variant_descriptions(
+        variant_descriptions = await self._variant_finder.find_variant_descriptions(
             full_text=full_text, focus_texts=table_texts, gene_symbol=gene_symbol, metadata=metadata
         )
         logger.debug(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
