@@ -305,34 +305,10 @@ class PromptBasedContentExtractor(IExtractFields):
         gene_symbol: str,
         paper: Paper,
         ob: Observation,
-        cache: Dict[Any, asyncio.Task],
     ) -> Dict[str, str]:
 
-        def _get_key(ob: Observation, field: str) -> Any:
-            if field in self._CACHE_VARIANT_FIELDS:
-                return (ob.variant, field)
-            elif field in self._CACHE_INDIVIDUAL_FIELDS and ob.individual != "unknown":
-                return (ob.individual, field)
-            elif field in self._CACHE_PAPER_FIELDS:
-                # Paper instance is implicit.
-                return field
-            return None
-
         async def _get_prompt_field(field: str) -> Tuple[str, str]:
-            # Use a cached task for variant fields if available.
-            key = _get_key(ob, field)
-            if key and key in cache:
-                prompt_task = cache[key]
-                logger.info(f"Using cached task for {key}")
-            else:
-                # Create and schedule a prompt task to get the prompt field.
-                prompt_task = asyncio.create_task(self._generate_prompt_field(gene_symbol, ob, field))
-
-                if key:
-                    cache[key] = prompt_task
-
-            # Get the value from the completed task.
-            value = await prompt_task
+            value = await self._generate_prompt_field(gene_symbol, ob, field)
             return field, value
 
         lookup_fields = [f for f in self._fields if f not in self._PROMPT_FIELDS]
@@ -349,8 +325,7 @@ class PromptBasedContentExtractor(IExtractFields):
         # with all observations of the same variant (but different individuals). As a temporary solution, we'll cache
         # the first finding of a variant-level result and use that only. This will not be robust to scenarios where the
         # texts associated with multiple observations of the same variant differ.
-        cache: Dict[Any, asyncio.Task] = {}
-        return await asyncio.gather(*[self._get_fields(gene_symbol, paper, ob, cache) for ob in obs])
+        return await asyncio.gather(*[self._get_fields(gene_symbol, paper, ob) for ob in obs])
 
     def extract(self, paper: Paper, gene_symbol: str) -> Sequence[Dict[str, str]]:
         if not paper.props.get("can_access", False):
