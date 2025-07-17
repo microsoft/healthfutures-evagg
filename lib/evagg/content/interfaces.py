@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Protocol, Sequence, Set
+from typing import Any, Dict, List, Protocol, Sequence, Set
 
 from lib.evagg.types import HGVSVariant, Paper
 
@@ -41,6 +41,18 @@ class Observation:
     patient_descriptions: List[str]
     texts: List[TextSection]
     paper_id: str
+
+
+class IFindVariants(Protocol):
+    async def find_variant_descriptions(
+        self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str, metadata: Dict[str, Any]
+    ) -> Sequence[str]:
+        """Identify the genetic variants relevant to the gene_symbol described in the full text of the paper.
+
+        Returned variants will be _as described_ in the source text. Downstream manipulations to make them
+        HGVS-compliant may be required.
+        """
+        ...  # pragma: no cover
 
 
 class IFindObservations(Protocol):
