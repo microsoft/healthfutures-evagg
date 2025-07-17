@@ -45,6 +45,9 @@ extractor:
       # di_factory: lib/config/objects/variant_factory_cache.yaml
     variant_comparator: 
       di_factory: lib.evagg.content.HGVSVariantComparator
+    variant_finder:
+      di_factory: lib.evagg.content.LLMVariantFinder
+      llm_client: "{{llm_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark
