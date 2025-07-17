@@ -1,9 +1,10 @@
 import logging
 import urllib.parse as urlparse
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from collections.abc import Callable, Sequence
+from typing import Any
 
 from defusedxml import ElementTree
-from pydantic import BaseModel, Extra, root_validator
+from pydantic import BaseModel, model_validator
 from requests.exceptions import HTTPError, RetryError
 
 from lib.evagg.types import Paper
@@ -14,11 +15,12 @@ from .interfaces import IAnnotateEntities, IGeneLookupClient, IPaperLookupClient
 logger = logging.getLogger(__name__)
 
 
-class NcbiApiSettings(BaseModel, extra=Extra.forbid):
-    api_key: Optional[str] = None
+class NcbiApiSettings(BaseModel):
+    model_config = {'extra': 'forbid'}
+    api_key: str | None = None
     email: str = "biomedcomp@microsoft.com"
 
-    def get_key_string(self) -> Optional[str]:
+    def get_key_string(self) -> str | None:
         key_string = ""
         if self.email:
             key_string += f"&email={urlparse.quote(self.email)}"
@@ -26,9 +28,9 @@ class NcbiApiSettings(BaseModel, extra=Extra.forbid):
             key_string += f"&api_key={self.api_key}"
         return key_string if key_string else None
 
-    @root_validator(pre=True)
+    @model_validator(mode='before')
     @classmethod
-    def _validate_settings(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def _validate_settings(cls, values: dict[str, Any]) -> dict[str, Any]:
         if values.get("api_key") and not values.get("email"):
             raise ValueError("If NCBI_EUTILS_API_KEY is specified NCBI_EUTILS_EMAIL is required.")
         return values
@@ -41,11 +43,11 @@ class NcbiClientBase:
     EUTILS_SEARCH_URL = EUTILS_SEARCH_SITE + "?db={db}&term={term}&sort={sort}&tool=biopython"
     EUTILS_FETCH_URL = EUTILS_FETCH_SITE + "?db={db}&id={id}&retmode={retmode}&rettype={rettype}&tool=biopython"
 
-    def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
+    def __init__(self, web_client: IWebContentClient, settings: dict[str, str] | None = None) -> None:
         self._config = NcbiApiSettings(**settings) if settings else NcbiApiSettings()
         self._web_client = web_client
 
-    def _esearch(self, db: str, term: str, sort: str, **extra_params: Dict[str, Any]) -> Any:
+    def _esearch(self, db: str, term: str, sort: str, **extra_params: dict[str, Any]) -> Any:
         key_string = self._config.get_key_string()
         url = self.EUTILS_SEARCH_URL.format(db=db, term=term, sort=sort)
         url += "".join([f"&{k}={v}" for k, v in extra_params.items()])
@@ -90,10 +92,10 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
     )
     BIOC_GET_URL = "https://www.ncbi.nlm.nih.gov/research/bionlp/RESTful/pmcoa.cgi/BioC_xml/{pmcid}/ascii"
 
-    def __init__(self, web_client: IWebContentClient, settings: Optional[Dict[str, str]] = None) -> None:
+    def __init__(self, web_client: IWebContentClient, settings: dict[str, str] | None = None) -> None:
         super().__init__(web_client, settings)
 
-    def _get_xml_props(self, article: Any) -> Dict[str, str]:
+    def _get_xml_props(self, article: Any) -> dict[str, str]:
         """Extracts paper properties from an XML root element."""
         extractions = {
             "title": "./MedlineCitation/Article/ArticleTitle",
@@ -111,9 +113,9 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         props = {k: _get_xml_string(article.find(path)) for k, path in extractions.items()}
         return props
 
-    def _get_license_props(self, pmcid: str) -> Dict[str, str | bool]:
+    def _get_license_props(self, pmcid: str) -> dict[str, str | bool]:
         """Get the access status for a paper from the PMC OA API."""
-        props: Dict[str, str | bool] = {"can_access": False, "license": "unknown", "OA": False}
+        props: dict[str, str | bool] = {"can_access": False, "license": "unknown", "OA": False}
         if not pmcid:
             return props
 
@@ -140,14 +142,14 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
 
         return props
 
-    def _get_derived_props(self, props: Dict[str, Any]) -> Dict[str, str]:
+    def _get_derived_props(self, props: dict[str, Any]) -> dict[str, str]:
         """Get the derived properties of a paper."""
-        derived_props: Dict[str, Any] = {}
+        derived_props: dict[str, Any] = {}
         derived_props["citation"] = f"{props['first_author']} ({props['pub_year']}) {props['journal']}"
         derived_props["link"] = f"https://pubmed.ncbi.nlm.nih.gov/{props['pmid']}/"
         return derived_props
 
-    def _get_full_text(self, props: Dict[str, Any]) -> str:
+    def _get_full_text(self, props: dict[str, Any]) -> str:
         """Get the full text of a paper from PMC."""
         pmcid = props["pmcid"]
         if not props["can_access"]:
@@ -160,37 +162,39 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
             return ""
 
         # Find and return the specific document.
-        if (doc := root.find(f"./document[id='{pmcid.upper().lstrip('PMC')}']")) is None:
-            # Some BioC do not have the prefix stripped, so try again with the original pmcid.
-            if (doc := root.find(f"./document[id='{pmcid.upper()}']")) is None:
-                logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
-                return ""
+        # Some BioC do not have the prefix stripped, so try both with and without prefix
+        if (
+            (doc := root.find(f"./document[id='{pmcid.upper().lstrip('PMC')}']")) is None
+            and (doc := root.find(f"./document[id='{pmcid.upper()}']")) is None
+        ):
+            logger.warning(f"Response received from BioC, but corresponding PMC ID not found: {pmcid}")
+            return ""
         return ElementTree.tostring(doc, encoding="unicode")
 
     # IPaperLookupClient
-    def search(self, query: str, **extra_params: Dict[str, Any]) -> Sequence[str]:
+    def search(self, query: str, **extra_params: dict[str, Any]) -> Sequence[str]:
         root = self._esearch(db="pubmed", term=query, sort="relevance", **extra_params)
         pmids = [id.text for id in root.findall("./IdList/Id") if id.text]
         return pmids
 
-    def fetch(self, paper_id: str, include_fulltext: bool = False) -> Optional[Paper]:
+    def fetch(self, paper_id: str, include_fulltext: bool = False) -> Paper | None:
         if (root := self._efetch(db="pubmed", id=paper_id, retmode="xml", rettype="abstract")) is None:
             return None
 
         if (article := root.find(f"PubmedArticle/MedlineCitation/PMID[.='{paper_id}']/../..")) is None:
             return None
 
-        props: Dict[str, Any] = {"id": f"pmid:{paper_id}", "pmid": paper_id}
+        props: dict[str, Any] = {"id": f"pmid:{paper_id}", "pmid": paper_id}
         props.update(self._get_xml_props(article))
         props.update(self._get_license_props(props["pmcid"]))
         props.update(self._get_derived_props(props))
-        assert PAPER_BASE_PROPS == set(props.keys()), f"Missing properties: {PAPER_BASE_PROPS ^ set(props.keys())}"
+        assert set(props.keys()) == PAPER_BASE_PROPS, f"Missing properties: {PAPER_BASE_PROPS ^ set(props.keys())}"
         if include_fulltext:
             props["fulltext_xml"] = self._get_full_text(props)
         return Paper(**props)
 
     # IGeneLookupClient
-    def gene_id_for_symbol(self, *symbols: str, allow_synonyms: bool = False) -> Dict[str, int]:
+    def gene_id_for_symbol(self, *symbols: str, allow_synonyms: bool = False) -> dict[str, int]:
         """Query the NCBI gene database for the gene_id for a given collection of `symbols`.
 
         If `allow_synonyms` is True, then this will attempt to return the most relevant gene_id for each symbol. If
@@ -202,7 +206,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         return _extract_gene_symbols(root.get("reports", []), symbols, allow_synonyms)
 
     # IVariantLookupClient
-    def hgvs_from_rsid(self, *rsids: str) -> Dict[str, Dict[str, str]]:
+    def hgvs_from_rsid(self, *rsids: str) -> dict[str, dict[str, str]]:
         # Provided rsids should be numeric strings prefixed with `rs`.
         if not rsids or not all(rsid.startswith("rs") and rsid[2:].isnumeric() for rsid in rsids):
             raise ValueError("Invalid rsids list - must provide 'rs' followed by a string of numeric characters.")
@@ -217,7 +221,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         return {"rs" + uid: _extract_hgvs_from_xml(root, uid) for uid in uids}
 
     # IAnnotateEntities
-    def annotate(self, paper: Paper) -> Dict[str, Any]:
+    def annotate(self, paper: Paper) -> dict[str, Any]:
         """Annotate the paper with entities from PubTator."""
         if not paper.props.get("can_access", False):
             logger.warning(f"Cannot annotate, paper '{paper}' is not licensed for access.")
@@ -227,7 +231,7 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         return self._web_client.get(url, content_type="json")
 
 
-def _extract_hgvs_from_xml(root: Any, uid: str) -> Dict[str, str]:
+def _extract_hgvs_from_xml(root: Any, uid: str) -> dict[str, str]:
     if root is None:
         return {}
     ns = "{https://www.ncbi.nlm.nih.gov/SNP/docsum}"
@@ -254,19 +258,19 @@ def _extract_hgvs_from_xml(root: Any, uid: str) -> Dict[str, str]:
     return ret_dict
 
 
-def _extract_gene_symbols(reports: List[Dict], symbols: Sequence[str], allow_synonyms: bool) -> Dict[str, int]:
+def _extract_gene_symbols(reports: list[dict], symbols: Sequence[str], allow_synonyms: bool) -> dict[str, int]:
     matches = {g["gene"]["symbol"]: int(g["gene"]["gene_id"]) for g in reports if g["gene"]["symbol"] in symbols}
 
     if allow_synonyms:
-        for missing_symbol in [s for s in symbols if s not in matches.keys()]:
+        for missing_symbol in [s for s in symbols if s not in matches]:
             if synonym := next((g["gene"] for g in reports if missing_symbol in g["query"]), None):
                 matches[missing_symbol] = int(synonym["gene_id"])
 
     return matches
 
 
-def get_ncbi_response_translator() -> Callable[[str, int, str], Tuple[int, str]]:
-    def translate(url: str, original_status: int, text: str) -> Tuple[int, str]:
+def get_ncbi_response_translator() -> Callable[[str, int, str], tuple[int, str]]:
+    def translate(url: str, original_status: int, text: str) -> tuple[int, str]:
         """Translate the status code of an NCBI search response in case they improperly reported a server error."""
         if (
             text
