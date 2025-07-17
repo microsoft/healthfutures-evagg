@@ -1,4 +1,6 @@
-from .interfaces import ICompareVariants, IFindObservations, Observation, TextSection
+from .interfaces import ICompareVariants, IFindObservations, IFindVariants, Observation, TextSection
+from .llm_variant_finder import LLMVariantFinder
+from .mcp_variant_finder import MCPVariantFinder
 from .observation import ObservationFinder
 from .prompt_based import PromptBasedContentExtractor
 from .prompt_based_cache import PromptBasedContentExtractorCached
@@ -11,11 +13,14 @@ __all__ = [
     # Interfaces.
     "ICompareVariants",
     "IFindObservations",
+    "IFindVariants",
     "Observation",
     "TextSection",
     # Mention.
     "HGVSVariantFactory",
     "HGVSVariantComparator",
     # Observation.
+    "LLMVariantFinder",
+    "MCPVariantFinder",
     "ObservationFinder",
 ]

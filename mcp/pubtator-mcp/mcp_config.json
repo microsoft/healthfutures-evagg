@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pubtator": {
+      "command": "uv",
+      "args": ["run", "pubtator-mcp-server", "--cache-dir", "${PUBTATOR_CACHE_DIR:-../../.cache}"]
+    }
+  }
+}

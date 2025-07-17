@@ -11,12 +11,38 @@ log:
 llm_client:
   di_factory: lib/config/objects/llm.yaml
 
+# MCP client (optional - only needed for MCP-based implementations)
+# mcp_client:
+#   di_factory: lib.evagg.utils.create_mcp_client
+#   env_vars:
+#     di_factory: lib.evagg.utils.get_dotenv_settings
+#   config:
+#     mcp_servers:
+#       pubtator:
+#         command: "uv"
+#         args: ["run", "pubtator-mcp-server", "--cache-dir", "${PUBTATOR_CACHE_DIR:-../../.cache}"]
+#         cwd: "mcp/pubtator-mcp"
+
 # Application.
 di_factory: lib.evagg.PaperQueryApp
 queries:
   di_factory: lib/config/queries/study_set.yaml
 library:
   di_factory: lib.evagg.RareDiseaseLibraryCached
+  paper_searcher:
+    # Default: PubMed search via NCBI
+    di_factory: lib.evagg.library.PubMedPaperSearcher
+    web_client:
+      di_factory: lib/config/objects/web_cache.yaml
+    settings:
+      di_factory: lib.evagg.utils.get_dotenv_settings
+      filter_prefix: "NCBI_EUTILS_"
+    # Alternative: MCP-based search (uncomment mcp_client above and use this instead)
+    # di_factory: lib.evagg.library.MCPPaperSearcher
+    # mcp_client: "{{mcp_client}}"
+    # tool_name: "search_gene_variant_papers"
+    # parameter_mapping:
+    #   gene_symbol: "gene_symbol"
   paper_client:
     di_factory: lib/config/objects/ncbi_cache.yaml
   llm_client: "{{llm_client}}"
@@ -41,6 +67,17 @@ extractor:
       di_factory: lib/config/objects/variant_factory_cache.yaml
     variant_comparator: 
       di_factory: lib.evagg.content.HGVSVariantComparator
+    variant_finder:
+      # Default: Variant extraction via LLM
+      di_factory: lib.evagg.content.LLMVariantFinder
+      llm_client: "{{llm_client}}"
+      # Alternative: MCP-based variant extraction (uncomment mcp_client above and use this instead)
+      # di_factory: lib.evagg.content.MCPVariantFinder
+      # mcp_client: "{{mcp_client}}"
+      # tool_name: "extract_variants"
+      # parameter_mapping:
+      #   text: "text"
+      #   gene_symbol: "gene_symbol"
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark
