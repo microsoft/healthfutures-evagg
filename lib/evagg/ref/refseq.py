@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 import requests
 
 from lib.evagg.utils import IWebContentClient
+from lib.evagg.utils.cache_dirs import CacheDirectoryManager
 
 from .interfaces import IRefSeqLookupClient
 from .ncbi import NcbiClientBase
@@ -16,18 +17,17 @@ logger = logging.getLogger(__name__)
 
 
 class BaseLookupClient(NcbiClientBase, IRefSeqLookupClient):
-    _DEFAULT_REFERENCE_DIR = ".ref"
     _ref: Dict[str, Dict[str, str]]
     _lazy_initialized: bool
 
     def __init__(
         self,
         web_client: IWebContentClient,
+        cache_dir_manager: CacheDirectoryManager,
         settings: Optional[Dict[str, str]] = None,
-        reference_dir: str = _DEFAULT_REFERENCE_DIR,
     ) -> None:
         # Lazy initialize so the constructor is fast.
-        self._reference_dir = reference_dir
+        self._reference_dir = cache_dir_manager.get_cache_dir("ref")
         self._lazy_initialized = False
         self._ref = {}
 

@@ -8,6 +8,9 @@ log:
   level: INFO
   to_file: true
 
+cache_dir_manager:
+  di_factory: lib.evagg.utils.CacheDirectoryManager
+
 # Imported objects.
 llm_client:
   di_factory: lib/config/objects/llm.yaml

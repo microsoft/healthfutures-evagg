@@ -4,3 +4,4 @@ web_client:
   settings:
     status_code_translator:
       di_factory: lib.evagg.ref.ncbi.get_ncbi_response_translator
+cache_dir_manager: "{{cache_dir_manager}}"
