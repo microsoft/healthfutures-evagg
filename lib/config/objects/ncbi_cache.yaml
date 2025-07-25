@@ -9,3 +9,4 @@ web_client:
 settings:
   di_factory: lib.evagg.utils.get_dotenv_settings
   filter_prefix: "NCBI_EUTILS_"
+# pmc_mirror_dir: ".cache/pmc"  # Uncomment and set path to enable local PMC mirror

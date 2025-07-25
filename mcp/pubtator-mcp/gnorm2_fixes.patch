@@ -1,0 +1,22 @@
+--- src_python/GeneNER/model_ner.py.bak	2025-07-22 22:14:42
++++ src_python/GeneNER/model_ner.py	2025-07-22 22:14:52
+@@ -9,7 +9,7 @@
+ from transformers import TFAutoModel
+ from tensorflow.keras.layers import Input, TimeDistributed, Dropout, Dense
+ from tensorflow.keras.models import Model
+-from tensorflow.keras.optimizers import Adam
++from tensorflow.keras.optimizers.legacy import Adam
+ 
+ # Import your custom class
+ # from my_custom_bert import TFBertWrapper
+--- src_python/SpeAss/model_sa.py.bak	2025-07-22 22:14:39
++++ src_python/SpeAss/model_sa.py	2025-07-22 22:14:58
+@@ -10,7 +10,7 @@
+ import tensorflow as tf
+ from tensorflow.keras.layers import Input, TimeDistributed, Dropout, Dense
+ from tensorflow.keras.models import Model
+-from tensorflow.keras.optimizers import Adam
++from tensorflow.keras.optimizers.legacy import Adam
+ from transformers import TFAutoModel
+ 
+ from src_python.SpeAss.represent_sa import Hugface_RepresentationLayer

@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pubtator-mcp"
+version = "0.1.0"
+description = "MCP server for PubTator3 integration - search and variant extraction"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {name = "Microsoft Biomedical Computing Group", email = "BiomedComp@microsoft.com"}
+]
+dependencies = [
+    "fastmcp>=0.5.0",
+    "pydantic>=2.0.0",
+    "requests>=2.25.0",
+    "jdk4py==21.0.4.2",
+]
+
+[project.scripts]
+pubtator-mcp-server = "pubtator_mcp.pubtator_mcp_server:main"
+pubtator-mcp-update-indices = "pubtator_mcp.pubtator_update_indices:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pubtator_mcp"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

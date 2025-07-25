@@ -18,6 +18,13 @@ queries:
   di_factory: lib/config/queries/example_subset.yaml
 library:
   di_factory: lib.evagg.RareDiseaseFileLibrary
+  paper_searcher:
+    di_factory: lib.evagg.library.PubMedPaperSearcher
+    web_client:
+      di_factory: lib/config/objects/web.yaml
+    settings:
+      di_factory: lib.evagg.utils.get_dotenv_settings
+      filter_prefix: "NCBI_EUTILS_"
   paper_client:
     di_factory: lib/config/objects/ncbi.yaml
     # di_factory: lib/config/objects/ncbi_cache.yaml
@@ -45,6 +52,9 @@ extractor:
       # di_factory: lib/config/objects/variant_factory_cache.yaml
     variant_comparator: 
       di_factory: lib.evagg.content.HGVSVariantComparator
+    variant_finder:
+      di_factory: lib.evagg.content.LLMVariantFinder
+      llm_client: "{{llm_client}}"
 writer:
   di_factory: lib.evagg.TableOutputWriter
   tsv_name: pipeline_benchmark

@@ -29,6 +29,10 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
 # Asserts are OK.
 [tool.bandit]
 skips = ['B101']

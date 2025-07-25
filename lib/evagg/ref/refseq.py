@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -16,14 +16,14 @@ logger = logging.getLogger(__name__)
 
 
 class BaseLookupClient(NcbiClientBase, IRefSeqLookupClient):
-    _DEFAULT_REFERENCE_DIR = ".ref"
-    _ref: Dict[str, Dict[str, str]]
+    _DEFAULT_REFERENCE_DIR = ".cache/refseq"
+    _ref: dict[str, dict[str, str]]
     _lazy_initialized: bool
 
     def __init__(
         self,
         web_client: IWebContentClient,
-        settings: Optional[Dict[str, str]] = None,
+        settings: dict[str, str] | None = None,
         reference_dir: str = _DEFAULT_REFERENCE_DIR,
     ) -> None:
         # Lazy initialize so the constructor is fast.
@@ -55,7 +55,7 @@ class BaseLookupClient(NcbiClientBase, IRefSeqLookupClient):
             self._lazy_init()
         return self._ref.get(symbol, {}).get("Genomic", None)
 
-    def accession_autocomplete(self, accession: str) -> Optional[str]:
+    def accession_autocomplete(self, accession: str) -> str | None:
         """Get the latest RefSeq version for a versionless accession."""
         if accession.find(".") >= 0:
             logger.info(f"Accession '{accession}' is already versioned. Nothing to do.")
@@ -89,7 +89,7 @@ class RefSeqLookupClient(BaseLookupClient):
         with open(target, "wb") as f:
             f.write(response.content)
 
-    def _process_raw_resource(self) -> Dict[str, Any]:
+    def _process_raw_resource(self) -> dict[str, Any]:
         raw_target_filepath = os.path.join(self._reference_dir, self._RAW_FILENAME)
 
         if not os.path.exists(raw_target_filepath):
@@ -101,7 +101,7 @@ class RefSeqLookupClient(BaseLookupClient):
         protein_lines = []
         transcript_lines = []
 
-        refseqs: Dict[str, Any] = {}
+        refseqs: dict[str, Any] = {}
 
         logger.info("Processing raw reference file.")
         with gzip.open(raw_target_filepath, "rt") as f:
@@ -126,10 +126,9 @@ class RefSeqLookupClient(BaseLookupClient):
             xref = {kv.split(":")[0]: kv.split(":")[1] for kv in attributes["Dbxref"].split(",")}
             assert "GeneID" in xref, "GeneID not found in DBxref"
 
-            if attributes["gene"] in refseqs:
-                if refseqs[attributes["gene"]]["MANE"]:
-                    logger.warning(f"{attributes['gene']} already has a MANE protein")
-                    continue
+            if attributes["gene"] in refseqs and refseqs[attributes["gene"]]["MANE"]:
+                logger.warning(f"{attributes['gene']} already has a MANE protein")
+                continue
 
             refseqs[attributes["gene"]] = {
                 "Protein": attributes["protein_id"],
@@ -177,9 +176,11 @@ class RefSeqLookupClient(BaseLookupClient):
 
         if not os.path.exists(resource_path):
             self._ref = self._process_raw_resource()
-            json.dump(self._ref, open(resource_path, "w"), indent=4)
+            with open(resource_path, "w") as f:
+                json.dump(self._ref, f, indent=4)
         else:
-            self._ref = json.load(open(resource_path, "r"))
+            with open(resource_path) as f:
+                self._ref = json.load(f)
 
         self._lazy_initialized = True
 
@@ -292,9 +293,9 @@ class RefSeqGeneLookupClient(BaseLookupClient):
         self._ref = self._load_reference(reference_filepath)
         self._lazy_initialized = True
 
-    def _load_reference(self, filepath: str) -> Dict[str, Dict[str, str]]:
+    def _load_reference(self, filepath: str) -> dict[str, dict[str, str]]:
         """Load a reference TSV file into a dictionary."""
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             lines = f.readlines()
 
         header = lines[0].strip().split("\t")
@@ -316,7 +317,7 @@ class RefSeqGeneLookupClient(BaseLookupClient):
                 logging.debug(f"Multiple reference standard entries for gene {gene_symbol}. Keeping the first one.")
                 continue
             reference_dict[gene_symbol] = {
-                field_mapping.get(k, k): v for k, v in zip(header, fields) if k in kept_fields
+                field_mapping.get(k, k): v for k, v in zip(header, fields, strict=False) if k in kept_fields
             }
 
         return reference_dict
