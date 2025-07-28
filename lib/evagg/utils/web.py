@@ -2,13 +2,14 @@ import hashlib
 import json
 import logging
 import urllib.parse
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 import requests
 from azure.cosmos import ContainerProxy, CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from defusedxml import ElementTree
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, field_validator
 from requests.adapters import HTTPAdapter, Retry
 
 from .interfaces import IWebContentClient
@@ -18,16 +19,17 @@ logger = logging.getLogger(__name__)
 CONTENT_TYPES = ["text", "json", "xml"]
 
 
-class WebClientSettings(BaseModel, extra=Extra.forbid):
+class WebClientSettings(BaseModel):
+    model_config = {'extra': 'forbid'}
     max_retries: int = 0  # no retries by default
     retry_backoff: float = 0.5  # indicates progression of 0.5, 1, 2, 4, 8, etc. seconds
-    retry_codes: List[int] = [429, 500, 502, 503, 504]  # rate-limit exceeded, server errors
-    no_raise_codes: List[int] = []  # don't raise exceptions for these codes
+    retry_codes: list[int] = [429, 500, 502, 503, 504]  # rate-limit exceeded, server errors
+    no_raise_codes: list[int] = []  # don't raise exceptions for these codes
     content_type: str = "text"
     timeout: float = 15.0  # seconds
-    status_code_translator: Optional[Callable[[str, int, str], Tuple[int, str]]] = None
+    status_code_translator: Callable[[str, int, str], tuple[int, str]] | None = None
 
-    @validator("content_type")
+    @field_validator("content_type")
     @classmethod
     def _validate_content_type(cls, value: str) -> str:
         if value not in CONTENT_TYPES:
@@ -38,9 +40,9 @@ class WebClientSettings(BaseModel, extra=Extra.forbid):
 class RequestsWebContentClient(IWebContentClient):
     """A web content client that uses the requests/urllib3 libraries."""
 
-    def __init__(self, settings: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, settings: dict[str, Any] | None = None) -> None:
         self._settings = WebClientSettings(**settings) if settings else WebClientSettings()
-        self._session: Optional[requests.Session] = None
+        self._session: requests.Session | None = None
         self._get_status_code = self._settings.status_code_translator or (lambda _, c, s: (c, s))
 
     def _get_session(self) -> requests.Session:
@@ -63,7 +65,7 @@ class RequestsWebContentClient(IWebContentClient):
             response.status_code = code
             raise requests.HTTPError(f"Request failed with status code {code}", response=response)
 
-    def _transform_content(self, text: str, content_type: Optional[str]) -> Any:
+    def _transform_content(self, text: str, content_type: str | None) -> Any:
         """Get the content from the response based on the provided content type."""
         content_type = content_type or self._settings.content_type
         if content_type == "text":
@@ -75,7 +77,7 @@ class RequestsWebContentClient(IWebContentClient):
         else:
             raise ValueError(f"Invalid content type: {content_type}")
 
-    def _get_content(self, url: str, data: Optional[Dict[str, Any]] = None) -> Tuple[int, str]:
+    def _get_content(self, url: str, data: dict[str, Any] | None = None) -> tuple[int, str]:
         """GET (or POST) the text content at the provided URL."""
         if data is not None:
             response = self._get_session().post(url, json=data, timeout=self._settings.timeout)
@@ -92,9 +94,9 @@ class RequestsWebContentClient(IWebContentClient):
     def get(
         self,
         url: str,
-        data: Optional[Dict[str, Any]] = None,
-        content_type: Optional[str] = None,
-        url_extra: Optional[str] = None,
+        data: dict[str, Any] | None = None,
+        content_type: str | None = None,
+        url_extra: str | None = None,
     ) -> Any:
         """GET (or POST) the content at the provided URL."""
         code, content = self._get_content(url + (url_extra or ""), data)
@@ -102,7 +104,8 @@ class RequestsWebContentClient(IWebContentClient):
         return self._transform_content(content, content_type)
 
 
-class CacheClientSettings(BaseModel, extra=Extra.forbid):
+class CacheClientSettings(BaseModel):
+    model_config = {'extra': 'forbid'}
     endpoint: str
     credential: Any
     database: str = "document_cache"
@@ -113,7 +116,7 @@ class CacheClientSettings(BaseModel, extra=Extra.forbid):
 class CosmosCachingWebClient(RequestsWebContentClient):
     """A web content client that uses a lookaside CosmosDB cache."""
 
-    def __init__(self, cache_settings: Dict[str, Any], web_settings: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, cache_settings: dict[str, Any], web_settings: dict[str, Any] | None = None) -> None:
         self._cache_settings = CacheClientSettings(**cache_settings)
         self._cache = CosmosClient(self._cache_settings.endpoint, self._cache_settings.credential)
         self._container: Optional[ContainerProxy] = None
@@ -129,9 +132,9 @@ class CosmosCachingWebClient(RequestsWebContentClient):
     def get(
         self,
         url: str,
-        data: Optional[Dict[str, Any]] = None,
-        content_type: Optional[str] = None,
-        url_extra: Optional[str] = None,
+        data: dict[str, Any] | None = None,
+        content_type: str | None = None,
+        url_extra: str | None = None,
     ) -> Any:
         """GET (or POST) the content at the provided URL, using the cache if available."""
         cache_key = url.removeprefix("http://").removeprefix("https://")

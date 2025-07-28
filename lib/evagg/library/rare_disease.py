@@ -1,10 +1,10 @@
 import asyncio
-import datetime
 import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from lib.evagg.interfaces import IGetPapers
 from lib.evagg.llm import IPromptClient
@@ -18,6 +18,7 @@ from .disease_categorization import (
     POSITIVE_EXAMPLES,
     POSITIVE_EXAMPLES_INTRO,
 )
+from .interfaces import ISearchPapers
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ class RareDiseaseFileLibrary(IGetPapers):
 
     def __init__(
         self,
+        paper_searcher: ISearchPapers,
         paper_client: IPaperLookupClient,
         llm_client: IPromptClient,
         allowed_categories: Sequence[str] | None = None,
@@ -41,11 +43,13 @@ class RareDiseaseFileLibrary(IGetPapers):
         """Initialize a new instance of the RareDiseaseFileLibrary class.
 
         Args:
-            paper_client (IPaperLookupClient): A class for searching and fetching papers.
+            paper_searcher (ISearchPapers): A class for searching paper IDs.
+            paper_client (IPaperLookupClient): A class for fetching full paper content.
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
             include_negative_examples (bool, optional): Whether to include negative examples in the LLM prompt.
         """
+        self._paper_searcher = paper_searcher
         self._paper_client = paper_client
         self._llm_client = llm_client
         self._allowed_categories = allowed_categories if allowed_categories else ["genetic disease"]
@@ -59,7 +63,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         title = paper.props.get("title") or ""
         abstract = paper.props.get("abstract") or ""
 
-        def _has_keywords(text: str, keywords: List[str]) -> bool:
+        def _has_keywords(text: str, keywords: list[str]) -> bool:
             """Check if a text contains any of the keywords."""
             if not text:
                 return False
@@ -99,14 +103,30 @@ class RareDiseaseFileLibrary(IGetPapers):
 
         # Few shot examples embedded into paper finding classification prompt
         prompt_metadata = {"gene_symbol": gene, "paper_id": paper.id}
+        system_prompt = """You are an intelligent assistant to a genetic analyst.
+
+All of your responses should be provided in the form of a JSON object."""
+
         response = await self._llm_client.prompt_file(
             user_prompt_file=_get_prompt_file_path("paper_category"),
-            system_prompt="Extract field",
+            system_prompt=system_prompt,
             params=parameters,
-            prompt_settings={"prompt_tag": "paper_category", "prompt_metadata": prompt_metadata, "temperature": 0.8},
+            prompt_settings={
+                "prompt_tag": "paper_category",
+                "prompt_metadata": prompt_metadata,
+                "temperature": 0.8,
+                "response_format": {"type": "json_object"}
+            },
         )
 
-        result = response.strip('"')
+        # Parse JSON response
+        try:
+            parsed_response = json.loads(response)
+            result = parsed_response.get("category", "").strip()
+            logger.debug(f"Parsed category '{result}' from response: {response[:100]}...")
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON response for {paper.id}: {response[:200]}...")
+            return "other"
 
         if result in self.CATEGORIES:
             return result
@@ -126,7 +146,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             paper.props["disease_categorizations"] = "{}"
             return keyword_cat
 
-        counts: Dict[str, int] = {}
+        counts: dict[str, int] = {}
         # Otherwise it's conflicting - run the LLM prompt two more times and accumulate all the results.
         tiebreakers = await asyncio.gather(self._get_llm_category(paper, gene), self._get_llm_category(paper, gene))
         for category in [keyword_cat, llm_cat, *tiebreakers]:
@@ -143,7 +163,7 @@ class RareDiseaseFileLibrary(IGetPapers):
         paper.props["disease_categorizations"] = json.dumps(counts)
         return best_category
 
-    async def _get_all_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
+    async def _get_all_papers(self, query: dict[str, Any]) -> Sequence[Paper]:
         """Search for papers based on the given query.
 
         Args:
@@ -158,40 +178,23 @@ class RareDiseaseFileLibrary(IGetPapers):
         if not query.get("gene_symbol"):
             raise ValueError("Minimum requirement to search is to input a gene symbol.")
 
-        params: dict[str, Any] = {"query": f"{query['gene_symbol']} pubmed pmc open access[filter]"}
-        # Rationalize the optional parameters.
-        if ("max_date" in query or "date_type" in query) and "min_date" not in query:
-            raise ValueError("A min_date is required when max_date or date_type is provided.")
-        if "min_date" in query:
-            params["mindate"] = query["min_date"]
-            params["date_type"] = query.get("date_type", "pdat")
-            params["maxdate"] = query.get("max_date", datetime.datetime.now().strftime("%Y/%m/%d"))
-        if "retmax" in query:
-            params["retmax"] = query["retmax"]
+        # Step 1: Search for paper IDs
+        paper_ids = await self._paper_searcher.search_papers(query["gene_symbol"], query)
 
-        # Perform the search for papers
-        paper_ids = self._paper_client.search(**params)
-        logger.info(f"Fetching {len(paper_ids)} papers for {query['gene_symbol']}.")
-
-        if "retmax" in params and len(paper_ids) == params["retmax"]:
-            logger.warning(
-                f"Reached the maximum number of papers ({params['retmax']}) for {query['gene_symbol']}. This may cause "
-                "an incomplete result, with not all papers matching the gene and date range being processed."
-            )
-
-        # Extract the paper content that we care about (e.g. title, abstract, PMID, etc.)
+        # Step 2: Fetch full paper content
         papers = [
             paper
             for paper_id in paper_ids
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
             and paper.props["can_access"] is True
         ]
+
         logger.info(f"Categorizing {len(papers)} papers with full text for {query['gene_symbol']}.")
 
         await asyncio.gather(*[self._get_paper_categorizations(paper, query["gene_symbol"]) for paper in papers])
         return papers
 
-    def get_papers(self, query: Dict[str, Any]) -> Sequence[Paper]:
+    def get_papers(self, query: dict[str, Any]) -> Sequence[Paper]:
         """Search for papers based on the given query.
 
         Args:
