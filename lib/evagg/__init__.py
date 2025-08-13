@@ -4,8 +4,7 @@ from .app import PaperQueryApp
 from .content import PromptBasedContentExtractor, PromptBasedContentExtractorCached
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
-from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached
-from .library import PaperListLibrary
+from .library import PaperListLibrary, RareDiseaseFileLibrary, RareDiseaseLibraryCached
 from .simple import PropertyContentExtractor, SampleContentExtractor, SimpleFileLibrary
 from .truthset import TruthsetFileHandler
 
