@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from lib.evagg import RareDiseaseFileLibrary, SimpleFileLibrary
+from lib.evagg import RareDiseaseFileLibrary, SimpleFileLibrary, PaperListLibrary
 from lib.evagg.library import RareDiseaseLibraryCached
 from lib.evagg.llm import IPromptClient
 from lib.evagg.ref import IPaperLookupClient
@@ -216,6 +216,106 @@ def test_simple_search() -> None:
         assert paper1 in results
         assert paper2 in results
         assert paper3 in results
+
+
+def test_paper_list_library_init(mock_paper_client: Any) -> None:
+    """Test PaperListLibrary initialization."""
+    paper_client = mock_paper_client()
+    gene_pmid_mapping = {"FBN2": ["26084686", "32184806"], "EXOC2": ["32639540"]}
+    
+    library = PaperListLibrary(paper_client, gene_pmid_mapping)
+    
+    assert library._paper_client == paper_client
+    assert library._gene_pmid_mapping == gene_pmid_mapping
+
+
+def test_paper_list_library_get_papers(mock_paper_client: Any, json_load: Any) -> None:
+    """Test PaperListLibrary.get_papers method."""
+    # Create mock papers
+    paper1 = Paper(**json_load("rare_disease_paper.json"))  
+    paper2 = Paper(**json_load("other_paper.json"))
+    
+    # Update IDs to match our test PMIDs
+    paper1.id = "26084686"
+    paper1.props["pmid"] = "26084686"
+    paper2.id = "32184806"
+    paper2.props["pmid"] = "32184806"
+    
+    # Set up mock client to return the papers in order
+    paper_client = mock_paper_client(paper1, paper2)
+    
+    # Create library with gene-PMID mapping
+    gene_pmid_mapping = {
+        "FBN2": ["26084686", "32184806"],
+        "EXOC2": ["32639540"]  # This PMID won't be tested here
+    }
+    library = PaperListLibrary(paper_client, gene_pmid_mapping)
+    
+    # Test with FBN2 gene
+    query = {"gene_symbol": "FBN2"}
+    result = library.get_papers(query)
+    
+    # Should return both papers for FBN2
+    assert len(result) == 2
+    assert paper1 in result
+    assert paper2 in result
+    
+    # Verify the correct calls were made
+    assert paper_client.call_count("fetch") == 2
+    assert paper_client.last_call("fetch") == ("32184806", {"include_fulltext": True})
+
+
+def test_paper_list_library_unknown_gene(mock_paper_client: Any) -> None:
+    """Test PaperListLibrary with unknown gene symbol."""
+    paper_client = mock_paper_client()  # No responses needed since no fetch calls expected
+    gene_pmid_mapping = {"FBN2": ["26084686", "32184806"]}
+    
+    library = PaperListLibrary(paper_client, gene_pmid_mapping)
+    
+    # Test with unknown gene
+    query = {"gene_symbol": "UNKNOWN_GENE"}
+    result = library.get_papers(query)
+    
+    # Should return empty list
+    assert len(result) == 0
+    assert result == []
+    
+    # Fetch should not be called
+    assert paper_client.call_count("fetch") == 0
+
+
+def test_paper_list_library_no_gene_symbol(mock_paper_client: Any) -> None:
+    """Test PaperListLibrary raises error when gene_symbol not provided."""
+    paper_client = mock_paper_client()
+    gene_pmid_mapping = {"FBN2": ["26084686"]}
+    
+    library = PaperListLibrary(paper_client, gene_pmid_mapping)
+    
+    # Test with query missing gene_symbol
+    query = {"some_other_key": "value"}
+    
+    with pytest.raises(ValueError, match="Minimum requirement to search is to input a gene symbol."):
+        library.get_papers(query)
+
+
+def test_paper_list_library_failed_fetch(mock_paper_client: Any) -> None:
+    """Test PaperListLibrary handles failed paper fetches gracefully."""
+    # Set up mock to return None (fetch failure)
+    paper_client = mock_paper_client(None)
+    
+    gene_pmid_mapping = {"FBN2": ["invalid_pmid"]}
+    library = PaperListLibrary(paper_client, gene_pmid_mapping)
+    
+    query = {"gene_symbol": "FBN2"}
+    result = library.get_papers(query)
+    
+    # Should return empty list when fetch fails
+    assert len(result) == 0
+    assert result == []
+    
+    # Verify fetch was called once
+    assert paper_client.call_count("fetch") == 1
+    assert paper_client.last_call("fetch") == ("invalid_pmid", {"include_fulltext": True})
 
 
 def test_caching(mock_paper_client: Any, mock_llm_client: Any, json_load: Any) -> None:

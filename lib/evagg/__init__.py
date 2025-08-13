@@ -5,6 +5,7 @@ from .content import PromptBasedContentExtractor, PromptBasedContentExtractorCac
 from .interfaces import IEvAggApp, IExtractFields, IGetPapers, IWriteOutput
 from .io import TableOutputWriter
 from .library import RareDiseaseFileLibrary, RareDiseaseLibraryCached
+from .library import PaperListLibrary
 from .simple import PropertyContentExtractor, SampleContentExtractor, SimpleFileLibrary
 from .truthset import TruthsetFileHandler
 
@@ -23,6 +24,7 @@ __all__ = [
     "TruthsetFileHandler",
     "RareDiseaseFileLibrary",
     "RareDiseaseLibraryCached",
+    "PaperListLibrary",
     # Content.
     "PromptBasedContentExtractor",
     "PromptBasedContentExtractorCached",

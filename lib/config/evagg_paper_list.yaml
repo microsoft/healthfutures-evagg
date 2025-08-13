@@ -1,0 +1,44 @@
+# Configuration file demonstrating PaperListLibrary usage
+# This config shows how to use PaperListLibrary to return specific papers for gene queries
+
+log:
+  di_factory: lib.evagg.utils.init_logger
+  level: INFO
+  to_file: true
+
+# Application.
+di_factory: lib.evagg.PaperQueryApp
+queries:
+  di_factory: lib/config/queries/example_subset.yaml
+library:
+  di_factory: lib.evagg.PaperListLibrary
+  paper_client:
+    di_factory: lib/config/objects/ncbi.yaml
+  gene_pmid_mapping:
+    "FBN2": ["26084686", "32184806"]
+    "EXOC2": ["32639540"]
+    "BRCA1": ["25823446", "26969315"]
+    "TP53": ["24705250", "25670083"]
+extractor:
+  di_factory: lib.evagg.PromptBasedContentExtractorCached
+  fields:
+    di_factory: lib/config/fields/evidence_all.yaml
+  llm_client:
+    di_factory: lib/config/objects/llm_cache.yaml
+  phenotype_searcher:
+    di_factory: lib.evagg.ref.WebHPOClient
+    web_client:
+      di_factory: lib/config/objects/web_cache.yaml
+  phenotype_fetcher:
+    di_factory: lib.evagg.ref.PyHPOClient    
+  observation_finder:
+    di_factory: lib.evagg.content.ObservationFinder
+    llm_client:
+      di_factory: lib/config/objects/llm_cache.yaml
+    variant_factory: 
+      di_factory: lib/config/objects/variant_factory_cache.yaml
+    variant_comparator: 
+      di_factory: lib.evagg.content.HGVSVariantComparator
+writer:
+  di_factory: lib.evagg.TableOutputWriter
+  tsv_name: paper_list_results
