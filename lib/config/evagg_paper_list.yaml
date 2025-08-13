@@ -17,8 +17,6 @@ library:
   gene_pmid_mapping:
     "FBN2": ["26084686", "32184806"]
     "EXOC2": ["32639540"]
-    "BRCA1": ["25823446", "26969315"]
-    "TP53": ["24705250", "25670083"]
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractorCached
   fields:
