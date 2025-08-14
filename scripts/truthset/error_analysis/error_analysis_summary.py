@@ -227,7 +227,7 @@ for task in ["papers", "observations"]:
         .plot(kind="bar", stacked=True, color=["#FCA178", "#1F77B4"])
     )
     # set the fig size
-    plt.gcf().set_size_inches(4, 4)
+    plt.gcf().set_size_inches(4, 3)
 
     # set xlabel orientation to horizontal
     plt.xticks(rotation=0)
@@ -262,7 +262,7 @@ g = (
     .unstack()
     .plot(kind="bar", stacked=True, color=["#FCA178", "#1F77B4"])
 )
-plt.gcf().set_size_inches(6, 4)
+plt.gcf().set_size_inches(6, 3)
 
 plt.title("Content extraction error analysis")
 plt.ylabel("Count")

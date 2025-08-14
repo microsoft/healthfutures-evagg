@@ -378,8 +378,11 @@ def write_observation_finding_summary(merged_df: pd.DataFrame, output_filepath: 
             f.write("All observations found. This is likely because the Truthset observation finder was used.")
 
 
-def write_observation_finding_outputs(merged_df: pd.DataFrame, output_dir: str) -> None:
-    merged_df[["in_truth", "in_pipeline"]].to_csv(os.path.join(output_dir, "observation_finding_results.tsv"), sep="\t")
+def write_observation_finding_outputs(merged_df: pd.DataFrame, output_dir: str, truthset_version: str) -> None:
+    suffix = f"_{truthset_version}" if truthset_version else ""
+    merged_df[["in_truth", "in_pipeline"]].to_csv(
+        os.path.join(output_dir, f"observation_finding_results{suffix}.tsv"), sep="\t"
+    )
 
 
 def _match_hpo_sets(
@@ -482,9 +485,10 @@ def write_content_extraction_summary(df: pd.DataFrame, columns_of_interest: Set[
             f.write("\n")
 
 
-def write_content_extraction_outputs(df: pd.DataFrame, output_dir: str) -> None:
+def write_content_extraction_outputs(df: pd.DataFrame, output_dir: str, truthset_version: str) -> None:
+    suffix = f"_{truthset_version}" if truthset_version else ""
     columns = sorted(df.columns)
-    df[columns].to_csv(os.path.join(output_dir, "content_extraction_results.tsv"), sep="\t")
+    df[columns].to_csv(os.path.join(output_dir, f"content_extraction_results{suffix}.tsv"), sep="\t")
 
 
 def _plot_confusion_matrix(
@@ -546,20 +550,20 @@ PLOT_CONFIG = {
 }
 
 
-def write_content_plots(df: pd.DataFrame, columns_of_interest: Set[str], output_dir: str) -> None:
-
+def write_content_plots(
+    df: pd.DataFrame, columns_of_interest: Set[str], output_dir: str, truthset_version: str
+) -> None:
     print(f"Writing content extraction plots to: {output_dir}")
-
     for column in columns_of_interest:
         if column in PLOT_CONFIG:
             eval_df = get_eval_df(df, column)
-
+            suffix = f"_{truthset_version}" if truthset_version else ""
             _plot_confusion_matrix(
                 eval_df[f"{column}_truth"].copy(),
                 eval_df[f"{column}_output"].copy(),
                 PLOT_CONFIG[column]["options"].copy(),
                 column,
-                os.path.join(output_dir, f"{column}_confusion_matrix.png"),
+                os.path.join(output_dir, f"{column}_confusion_matrix{suffix}.png"),
             )
 
 
@@ -605,6 +609,8 @@ def main(args: argparse.Namespace) -> None:
     ground_truth, pipeline_outputs = consolidate_near_miss_individual_ids(ground_truth, pipeline_outputs)
 
     # Prep to write outputs.
+    truthset_version = args.truthset_version
+    suffix = f"_{truthset_version}"
     outdir = args.outdir or pipeline_path + "_content_extraction_benchmarks"
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -618,9 +624,9 @@ def main(args: argparse.Namespace) -> None:
     merged_var_data = merge_dfs(ground_truth, pipeline_outputs, all_columns, new_idx).query("in_supplement != 'Y'")
 
     # Write observation finding-related outputs.
-    write_observation_finding_summary(merged_data, os.path.join(outdir, "observation_finding_summary.txt"))
-    write_observation_finding_summary(merged_var_data, os.path.join(outdir, "variant_finding_summary.txt"))
-    write_observation_finding_outputs(merged_data, outdir)
+    write_observation_finding_summary(merged_data, os.path.join(outdir, f"observation_finding_summary{suffix}.txt"))
+    write_observation_finding_summary(merged_var_data, os.path.join(outdir, f"variant_finding_summary{suffix}.txt"))
+    write_observation_finding_outputs(merged_data, outdir, truthset_version)
 
     # Assess content extraction performance.
     shared_df = merged_data[merged_data.in_truth & merged_data.in_pipeline].copy()  # Don't work with a view.
@@ -630,16 +636,19 @@ def main(args: argparse.Namespace) -> None:
     write_content_extraction_summary(
         df=content_result,
         columns_of_interest=content_columns,
-        output_filepath=os.path.join(outdir, "content_extraction_summary.txt"),
+        output_filepath=os.path.join(outdir, f"content_extraction_summary{suffix}.txt"),
     )
-    write_content_extraction_outputs(df=content_result, output_dir=outdir)
+    write_content_extraction_outputs(df=content_result, output_dir=outdir, truthset_version=truthset_version)
 
     # Write content extraction plots.
-    write_content_plots(content_result, content_columns, outdir)
+    write_content_plots(content_result, content_columns, outdir, truthset_version)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evidence Aggregator Content Extraction Benchmarks")
+    parser.add_argument(
+        "--truthset-version", required=True, type=str, help="Truthset version string to suffix output files with."
+    )
     parser.add_argument(
         "-p",
         "--pipeline-output",
