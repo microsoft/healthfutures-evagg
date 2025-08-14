@@ -14,7 +14,7 @@ llm_client:
 # Application.
 di_factory: lib.evagg.PaperQueryApp
 queries:
-  di_factory: lib/config/queries/mgttrain_subset.yaml
+  di_factory: lib/config/queries/study_set.yaml
 library:
   di_factory: lib.evagg.RareDiseaseLibraryCached
   paper_client:
