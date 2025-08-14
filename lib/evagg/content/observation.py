@@ -20,8 +20,10 @@ logger = logging.getLogger(__name__)
 def _get_observation_prompt_file_path(name: str) -> str:
     return os.path.join(os.path.dirname(__file__), "prompts", "observation", f"{name}.txt")
 
+
 def _get_content_prompt_file_path(name: str) -> str:
     return os.path.join(os.path.dirname(__file__), "prompts", f"{name}.txt")
+
 
 class ObservationFinder(IFindObservations):
     # Read the system prompt from file
