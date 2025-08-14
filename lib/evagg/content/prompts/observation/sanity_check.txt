@@ -1,5 +1,7 @@
 {{$text}}
 
+-- End paper text --
+
 Above is some text. Tell me whether the text contains mentions of specific genetic variants in the gene {{$gene}}. 
 Respond with a json-formatted object of the form:
 

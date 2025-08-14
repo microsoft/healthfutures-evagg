@@ -17,22 +17,15 @@ PatientVariant = Tuple[HGVSVariant, str]
 logger = logging.getLogger(__name__)
 
 
-def _get_prompt_file_path(name: str) -> str:
+def _get_observation_prompt_file_path(name: str) -> str:
     return os.path.join(os.path.dirname(__file__), "prompts", "observation", f"{name}.txt")
 
+def _get_content_prompt_file_path(name: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "prompts", f"{name}.txt")
 
 class ObservationFinder(IFindObservations):
-    _SYSTEM_PROMPT = """
-You are an intelligent assistant to a genetic analyst. Their task is to identify the genetic variant or variants that
-are causing a patient's disease. One approach they use to solve this problem is to seek out evidence from the academic
-literature that supports (or refutes) the potential causal role that a given variant is playing in a patient's disease.
-
-As part of that process, you will assist the analyst in identifying observations of genetic variation in human
-subjects/patients.
-
-All of your responses should be provided in the form of a JSON object. These responses should never include long,
-uninterrupted sequences of whitespace characters.
-"""
+    # Read the system prompt from file
+    _SYSTEM_PROMPT = open(_get_content_prompt_file_path("system")).read()
 
     def __init__(
         self,
@@ -77,7 +70,7 @@ uninterrupted sequences of whitespace characters.
         async def check_patient(patient: str) -> None:
             for text in texts_to_check:
                 validation_response = await self._run_json_prompt(
-                    prompt_filepath=_get_prompt_file_path("check_patients"),
+                    prompt_filepath=_get_observation_prompt_file_path("check_patients"),
                     params={"text": text, "patient": patient},
                     prompt_settings={"prompt_tag": "observation__check_patients"},
                 )
@@ -95,7 +88,7 @@ uninterrupted sequences of whitespace characters.
     ) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
         full_text_response = await self._run_json_prompt(
-            prompt_filepath=_get_prompt_file_path("find_patients"),
+            prompt_filepath=_get_observation_prompt_file_path("find_patients"),
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_patients", "prompt_metadata": metadata},
         )
@@ -107,7 +100,7 @@ uninterrupted sequences of whitespace characters.
 
         async def check_focus_text(focus_text: str) -> None:
             focus_response = await self._run_json_prompt(
-                prompt_filepath=_get_prompt_file_path("find_patients"),
+                prompt_filepath=_get_observation_prompt_file_path("find_patients"),
                 params={"text": focus_text},
                 prompt_settings={"prompt_tag": "observation__find_patients", "prompt_metadata": metadata},
             )
@@ -126,7 +119,7 @@ uninterrupted sequences of whitespace characters.
         async def split_patient(patient: str) -> None:
             if any(term in patient for term in [" and ", " or "]):
                 split_response = await self._run_json_prompt(
-                    prompt_filepath=_get_prompt_file_path("split_patients"),
+                    prompt_filepath=_get_observation_prompt_file_path("split_patients"),
                     params={"patient_list": f'"{patient}"'},  # Encase in double-quotes in prep for bulk calling.
                     prompt_settings={"prompt_tag": "observation__split_patients", "prompt_metadata": metadata},
                 )
@@ -174,7 +167,7 @@ uninterrupted sequences of whitespace characters.
         # Create prompts to find all the unique variants mentioned in the full text and focus texts.
         prompt_runs = [
             self._run_json_prompt(
-                prompt_filepath=_get_prompt_file_path("find_variants"),
+                prompt_filepath=_get_observation_prompt_file_path("find_variants"),
                 params={"text": text, "gene_symbol": gene_symbol},
                 prompt_settings={"prompt_tag": "observation__find_variants", "prompt_metadata": metadata},
             )
@@ -224,7 +217,7 @@ uninterrupted sequences of whitespace characters.
             if "p." in candidates[i] and "c." in candidates[i]:
                 split_prompt_runs.append(
                     self._run_json_prompt(
-                        prompt_filepath=_get_prompt_file_path("split_variants"),
+                        prompt_filepath=_get_observation_prompt_file_path("split_variants"),
                         params={"variant_list": f'"{candidates[i]}"'},  # Encase in double-quotes for bulk calling.
                         prompt_settings={"prompt_tag": "observation__split_variants", "prompt_metadata": metadata},
                     )
@@ -240,7 +233,7 @@ uninterrupted sequences of whitespace characters.
     async def _find_genome_build(self, full_text: str, metadata: Dict[str, str]) -> str | None:
         """Identify the genome build used in the paper."""
         response = await self._run_json_prompt(
-            prompt_filepath=_get_prompt_file_path("find_genome_build"),
+            prompt_filepath=_get_observation_prompt_file_path("find_genome_build"),
             params={"text": full_text},
             prompt_settings={"prompt_tag": "observation__find_genome_build", "prompt_metadata": metadata},
         )
@@ -257,7 +250,7 @@ uninterrupted sequences of whitespace characters.
             "gene_symbol": metadata["gene_symbol"],
         }
         response = await self._run_json_prompt(
-            prompt_filepath=_get_prompt_file_path("link_entities"),
+            prompt_filepath=_get_observation_prompt_file_path("link_entities"),
             params=params,
             prompt_settings={"prompt_tag": "observation__link_entities", "prompt_metadata": metadata},
         )
@@ -409,7 +402,7 @@ uninterrupted sequences of whitespace characters.
     async def _sanity_check_paper(self, full_text: str, gene_symbol: str, metadata: Dict[str, str]) -> bool:
         try:
             result = await self._run_json_prompt(
-                prompt_filepath=_get_prompt_file_path("sanity_check"),
+                prompt_filepath=_get_observation_prompt_file_path("sanity_check"),
                 params={"text": full_text, "gene": gene_symbol},
                 prompt_settings={
                     "prompt_tag": "observation__sanity_check",
@@ -483,7 +476,7 @@ variant isn't actually associated with the gene. But the possibility of previous
 """
             if mentioning_text:
                 response = await self._run_json_prompt(
-                    prompt_filepath=_get_prompt_file_path("check_variant"),
+                    prompt_filepath=_get_observation_prompt_file_path("check_variant"),
                     params={
                         "variant_descriptions": ", ".join(descriptions),
                         "gene_symbol": gene_symbol,

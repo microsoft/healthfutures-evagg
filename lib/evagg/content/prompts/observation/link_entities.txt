@@ -1,6 +1,6 @@
 {{$text}}
 
--- End text --
+-- End paper text --
 
 Above is some text from a paper describing genetic variants and potentially the human patients or subjects who possessed 
 these variants. Your task is to provide for me a mapping between a list of the patient identifiers and the variants

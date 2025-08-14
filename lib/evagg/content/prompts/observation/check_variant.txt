@@ -1,7 +1,9 @@
-Text: {{$text}}
+{{$text}}
 
-Above you will find one or more descriptions of a genetic variant, and a gene of interest. I want you to search the 
-subsequent text to assess whether the variant of interest is in the gene of interest, or whether there isn't evidence
+-- End paper text --
+
+Below you will find one or more descriptions of a genetic variant, and a gene of interest. I want you to search the 
+text above to assess whether the variant of interest is in the gene of interest, or whether there isn't evidence
 to support this conclusion.
 
 {{$warning}}

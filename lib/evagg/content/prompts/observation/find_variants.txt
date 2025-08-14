@@ -1,6 +1,6 @@
 {{$text}}
 
---
+-- End paper text --
 
 Above is some text from a paper describing genetic variants and potentially the patients or subjects who possessed 
 these variants. Provide for me a list of all of the genetic variants associated with the gene {{$gene_symbol}} that are

@@ -1,6 +1,6 @@
 {{$passage}}
 
--- end text --
+-- End paper text --
 
 Extract all of the diseases and disease phenotypes described in the above text.  
 
