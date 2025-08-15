@@ -68,6 +68,7 @@ def test_prompt_based_content_extractor_valid_fields(
         "phenotype": "test (HP:0123)",
         "zygosity": "test",
         "variant_inheritance": "test",
+        "source_type": "abstract",
     }
 
     observation = Observation(
