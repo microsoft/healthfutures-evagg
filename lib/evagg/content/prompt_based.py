@@ -74,6 +74,8 @@ class PromptBasedContentExtractor(IExtractFields):
             value = paper.id
         elif field == "citation":
             value = paper.props["citation"]
+        elif field == "source_type":
+            value = "fulltext" if paper.props.get("fulltext_xml") else "abstract"
         elif field == "link":
             value = (
                 "https://www.ncbi.nlm.nih.gov/pmc/articles/" + paper.props["pmcid"]
