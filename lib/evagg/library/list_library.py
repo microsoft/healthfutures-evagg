@@ -1,5 +1,3 @@
-import asyncio
-import datetime
 import logging
 from typing import Any, Dict, Sequence
 
@@ -41,6 +39,5 @@ class ListLibrary(IGetPapers):
             paper
             for paper_id in pmids_for_gene
             if (paper := self._paper_client.fetch(paper_id, include_fulltext=True)) is not None
-            and paper.props["can_access"] is True
         ]
         return papers

@@ -267,7 +267,7 @@ uninterrupted sequences of whitespace characters.
     def _get_text_sections(self, paper: Paper) -> Tuple[str, List[str]]:
         # Get paper texts.
         if not paper.props.get("fulltext_xml"):
-            logger.warning(f"Unable to retrieve fulltext for {paper.id}, falling back to abstract only.")
+            logger.info(f"Unable to retrieve fulltext for {paper.id}, falling back to abstract only.")
             return paper.props["abstract"], []
 
         paper_text = get_fulltext(paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"])

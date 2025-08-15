@@ -46,6 +46,7 @@ class RareDiseaseFileLibrary(IGetPapers):
             llm_client (IPromptClient): A class to leverage LLMs to filter to the right papers.
             allowed_categories (Sequence[str], optional): The categories of papers to allow. Defaults to "rare disease".
             include_negative_examples (bool, optional): Whether to include negative examples in the LLM prompt.
+            allow_abstracts (bool): Whether to return abstracts if full-text is not available.
         """
         self._paper_client = paper_client
         self._llm_client = llm_client
