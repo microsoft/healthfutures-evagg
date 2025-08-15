@@ -266,12 +266,13 @@ uninterrupted sequences of whitespace characters.
 
     def _get_text_sections(self, paper: Paper) -> Tuple[str, List[str]]:
         # Get paper texts.
-        if not paper.props.get("fulltext_xml"):
+        fulltext_xml = paper.props.get("fulltext_xml")
+        if not fulltext_xml:
             logger.info(f"Unable to retrieve fulltext for {paper.id}, falling back to abstract only.")
             return paper.props["abstract"], []
 
-        paper_text = get_fulltext(paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"])
-        table_sections = list(get_sections(paper.props["fulltext_xml"], include=["TABLE"]))
+        paper_text = get_fulltext(fulltext_xml, exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"])
+        table_sections = list(get_sections(fulltext_xml, include=["TABLE"]))
 
         table_ids = {t.id for t in table_sections}
         table_texts = []
@@ -282,31 +283,19 @@ uninterrupted sequences of whitespace characters.
 
     def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str], allow_empty: bool) -> str:
 
-        sections = (
-            get_sections(paper.props["fulltext_xml"])
-            if paper.props["fulltext_xml"]
-            else [
-                TextSection(
-                    section_type="abstract", text_type="unknown", offset=-1, text=paper.props["abstract"], id="unknown"
-                )
-            ]
-        )
+        fulltext_xml = paper.props.get("fulltext_xml")  # Can be None
+        abstract_fallback_section_list = [
+            TextSection(
+                section_type="abstract", text_type="unknown", offset=-1, text=paper.props["abstract"], id="unknown"
+            )
+        ]
+        sections = get_sections(fulltext_xml) if fulltext_xml else abstract_fallback_section_list
         filtered_text = "\n\n".join(
             [section.text for section in sections if any(variant in section.text for variant in variant_descriptions)]
         )
         if not filtered_text and not allow_empty:
             sections = (
-                get_sections(paper.props["fulltext_xml"])
-                if paper.props["fulltext_xml"]
-                else [
-                    TextSection(
-                        section_type="abstract",
-                        text_type="unknown",
-                        offset=-1,
-                        text=paper.props["abstract"],
-                        id="unknown",
-                    )
-                ]
+                get_sections(fulltext_xml) if fulltext_xml else abstract_fallback_section_list
             )  # Reset the exhausted generator.
             return "\n\n".join([section.text for section in sections])
         return filtered_text
