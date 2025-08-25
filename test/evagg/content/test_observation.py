@@ -49,7 +49,7 @@ def test_sanity_check_failure(
     assert result == []
 
     # Paper passes sanity check, but only because json is unparsable.
-    llm_client = mock_llm_client("unparsable json")
+    llm_client = mock_llm_client("unparsable json", "{}")
     of = ObservationFinder(llm_client, mock_factory(None), mock_comparator({}))
     # Paper has no full text, no observations should be found.
     result = asyncio.run(of.find_observations("gene", paper))
@@ -62,7 +62,7 @@ def test_find_observations_no_variants(
     # Remove the full text content for the paper.
     paper.props.pop("fulltext_xml")
 
-    llm_client = mock_llm_client('{"relevant": true}')
+    llm_client = mock_llm_client('{"relevant": true}', "{}")
     of = ObservationFinder(llm_client, mock_factory(None), mock_comparator({}))
     result = asyncio.run(of.find_observations("gene", paper))
     assert result == []

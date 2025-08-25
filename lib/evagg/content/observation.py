@@ -10,7 +10,7 @@ from lib.evagg.llm import IPromptClient
 from lib.evagg.types import HGVSVariant, ICreateVariants, Paper
 
 from .fulltext import get_fulltext, get_sections
-from .interfaces import ICompareVariants, IFindObservations, Observation
+from .interfaces import ICompareVariants, IFindObservations, Observation, TextSection
 
 PatientVariant = Tuple[HGVSVariant, str]
 
@@ -86,12 +86,12 @@ class ObservationFinder(IFindObservations):
         return checked_patients
 
     async def _find_patients(
-        self, full_text: str, focus_texts: Sequence[str] | None, metadata: Dict[str, str]
+        self, paper_text: str, focus_texts: Sequence[str] | None, metadata: Dict[str, str]
     ) -> Sequence[str]:
         """Identify the individuals (human subjects) described in the full text of the paper."""
         full_text_response = await self._run_json_prompt(
             prompt_filepath=_get_observation_prompt_file_path("find_patients"),
-            params={"text": full_text},
+            params={"text": paper_text},
             prompt_settings={"prompt_tag": "observation__find_patients", "prompt_metadata": metadata},
         )
 
@@ -147,19 +147,19 @@ class ObservationFinder(IFindObservations):
         # If there are focus texts (tables), assume lists of patients are available in those tables and cross-check.
         # If there are no focus texts, use the full text of the paper.
         if len(patients_after_splitting) >= 5:
-            texts_to_check = focus_texts if focus_texts else [full_text]
+            texts_to_check = focus_texts if focus_texts else [paper_text]
             checked_patients = await self._check_patients(patients_after_splitting, texts_to_check)
 
             if not checked_patients and texts_to_check == focus_texts:
                 # All patients failed checking in focus texts, try the full text.
-                checked_patients = await self._check_patients(patients_after_splitting, [full_text])
+                checked_patients = await self._check_patients(patients_after_splitting, [paper_text])
         else:
             checked_patients = patients_after_splitting
 
         return checked_patients
 
     async def _find_variant_descriptions(
-        self, full_text: str, focus_texts: Sequence[str] | None, gene_symbol: str, metadata: Dict[str, str]
+        self, paper_text: str, focus_texts: Sequence[str] | None, gene_symbol: str, metadata: Dict[str, str]
     ) -> Sequence[str]:
         """Identify the genetic variants relevant to the gene_symbol described in the full text of the paper.
 
@@ -173,7 +173,7 @@ class ObservationFinder(IFindObservations):
                 params={"text": text, "gene_symbol": gene_symbol},
                 prompt_settings={"prompt_tag": "observation__find_variants", "prompt_metadata": metadata},
             )
-            for text in ([full_text] if full_text else []) + list(focus_texts or [])
+            for text in ([paper_text] if paper_text else []) + list(focus_texts or [])
         ]
 
         # Run prompts in parallel.
@@ -232,21 +232,21 @@ class ObservationFinder(IFindObservations):
 
         return candidates
 
-    async def _find_genome_build(self, full_text: str, metadata: Dict[str, str]) -> str | None:
+    async def _find_genome_build(self, paper_text: str, metadata: Dict[str, str]) -> str | None:
         """Identify the genome build used in the paper."""
         response = await self._run_json_prompt(
             prompt_filepath=_get_observation_prompt_file_path("find_genome_build"),
-            params={"text": full_text},
+            params={"text": paper_text},
             prompt_settings={"prompt_tag": "observation__find_genome_build", "prompt_metadata": metadata},
         )
 
         return response.get("genome_build", "unknown")
 
     async def _link_entities(
-        self, full_text: str, patients: Sequence[str], variants: Sequence[str], metadata: Dict[str, str]
+        self, paper_text: str, patients: Sequence[str], variants: Sequence[str], metadata: Dict[str, str]
     ) -> Dict[str, List[str]]:
         params = {
-            "text": full_text,
+            "text": paper_text,
             "patients": ", ".join(patients),
             "variants": ", ".join(variants),
             "gene_symbol": metadata["gene_symbol"],
@@ -259,29 +259,39 @@ class ObservationFinder(IFindObservations):
 
         return response
 
-    def _get_fulltext_sections(self, paper: Paper) -> Tuple[str, List[str]]:
+    def _get_text_sections(self, paper: Paper) -> Tuple[str, List[str]]:
         # Get paper texts.
-        if not paper.props.get("fulltext_xml"):
-            logger.warning(f"Skipping {paper.id} because full text could not be retrieved")
-            return "", []
+        fulltext_xml = paper.props.get("fulltext_xml")
+        if not fulltext_xml:
+            logger.info(f"Unable to retrieve fulltext for {paper.id}, falling back to abstract only.")
+            return paper.props["abstract"], []
 
-        full_text = get_fulltext(paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"])
-        table_sections = list(get_sections(paper.props["fulltext_xml"], include=["TABLE"]))
+        paper_text = get_fulltext(fulltext_xml, exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"])
+        table_sections = list(get_sections(fulltext_xml, include=["TABLE"]))
 
         table_ids = {t.id for t in table_sections}
         table_texts = []
         for id in table_ids:
             table_texts.append("\n\n".join([sec.text for sec in table_sections if sec.id == id]))
 
-        return full_text, table_texts
+        return paper_text, table_texts
 
     def _get_text_mentioning_variant(self, paper: Paper, variant_descriptions: Sequence[str], allow_empty: bool) -> str:
-        sections = get_sections(paper.props["fulltext_xml"])
+
+        fulltext_xml = paper.props.get("fulltext_xml")  # Can be None
+        abstract_fallback_section_list = [
+            TextSection(
+                section_type="abstract", text_type="unknown", offset=-1, text=paper.props["abstract"], id="unknown"
+            )
+        ]
+        sections = get_sections(fulltext_xml) if fulltext_xml else abstract_fallback_section_list
         filtered_text = "\n\n".join(
             [section.text for section in sections if any(variant in section.text for variant in variant_descriptions)]
         )
         if not filtered_text and not allow_empty:
-            sections = get_sections(paper.props["fulltext_xml"])  # Reset the exhausted generator.
+            sections = (
+                get_sections(fulltext_xml) if fulltext_xml else abstract_fallback_section_list
+            )  # Reset the exhausted generator.
             return "\n\n".join([section.text for section in sections])
         return filtered_text
 
@@ -401,11 +411,11 @@ class ObservationFinder(IFindObservations):
             logger.warning(f"Unable to create variant from {variant_str} and {gene_symbol}: {e}")
             return None
 
-    async def _sanity_check_paper(self, full_text: str, gene_symbol: str, metadata: Dict[str, str]) -> bool:
+    async def _sanity_check_paper(self, paper_text: str, gene_symbol: str, metadata: Dict[str, str]) -> bool:
         try:
             result = await self._run_json_prompt(
                 prompt_filepath=_get_observation_prompt_file_path("sanity_check"),
-                params={"text": full_text, "gene": gene_symbol},
+                params={"text": paper_text, "gene": gene_symbol},
                 prompt_settings={
                     "prompt_tag": "observation__sanity_check",
                     "temperature": 0.5,
@@ -431,28 +441,29 @@ class ObservationFinder(IFindObservations):
         """Identify all observations relevant to `gene_symbol` in `paper`.
 
         `gene_symbol` should be a gene_symbol. `paper` is the paper to search for relevant observations. Paper must be
-        in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions.
+        in the PMC-OA dataset and have license terms that permit derivative works based on current restrictions in order
+        to process full text, otherwise only the abstract wil be processed.
 
         The returned observation objects are logically "clinical" observations of a variant in a human. Each object
         describes an individual in which a variant was observed along with the relevant text from the paper.
         """
         # Get the full text of the paper and any focus texts (e.g., tables).
-        full_text, table_texts = self._get_fulltext_sections(paper)
+        paper_text, table_texts = self._get_text_sections(paper)
         metadata = {"gene_symbol": gene_symbol, "paper_id": paper.id}
 
         # First, sanity check the paper for mention of genetic variants of interest.
-        if not await self._sanity_check_paper(full_text, gene_symbol, metadata):
+        if not await self._sanity_check_paper(paper_text, gene_symbol, metadata):
             logger.info(f"Skipping {paper.id} as it doesn't pass initial check for relevance.")
             return []
 
         # Determine the candidate genetic variants matching `gene_symbol`
         variant_descriptions = await self._find_variant_descriptions(
-            full_text=full_text, focus_texts=table_texts, gene_symbol=gene_symbol, metadata=metadata
+            paper_text=paper_text, focus_texts=table_texts, gene_symbol=gene_symbol, metadata=metadata
         )
         logger.debug(f"Found the following variants described for {gene_symbol} in {paper}: {variant_descriptions}")
 
         if any("chr" in v or "g." in v for v in variant_descriptions):
-            genome_build = await self._find_genome_build(full_text=full_text, metadata=metadata)
+            genome_build = await self._find_genome_build(paper_text=paper_text, metadata=metadata)
             logger.info(f"Found the following genome build in {paper}: {genome_build}")
         else:
             genome_build = None
@@ -512,12 +523,14 @@ variant isn't actually associated with the gene. But the possibility of previous
         # if there are no variants (regardless of patients), then there are no observations to report.
         if variants_by_description:
             # Determine all of the patients specifically referred to in the paper, if any.
-            patients = await self._find_patients(full_text=full_text, focus_texts=table_texts, metadata=metadata)
+            patients = await self._find_patients(paper_text=paper_text, focus_texts=table_texts, metadata=metadata)
             logger.debug(f"Found the following patients in {paper}: {patients}")
             variant_descriptions = list(variants_by_description.keys())
 
             if patients:
-                descriptions_by_patient = await self._link_entities(full_text, patients, variant_descriptions, metadata)
+                descriptions_by_patient = await self._link_entities(
+                    paper_text, patients, variant_descriptions, metadata
+                )
                 # TODO, consider validating returned patients.
             else:
                 descriptions_by_patient = {"unknown": variant_descriptions}
@@ -559,6 +572,16 @@ variant isn't actually associated with the gene. But the possibility of previous
                             get_sections(
                                 paper.props["fulltext_xml"], exclude=["AUTH_CONT", "ACK_FUND", "COMP_INT", "REF"]
                             )
+                            if paper.props["fulltext_xml"]
+                            else [
+                                TextSection(
+                                    section_type="abstract",
+                                    text_type="unknown",
+                                    offset=-1,
+                                    text=paper.props["abstract"],
+                                    id="unknown",
+                                )
+                            ]
                         ),
                         paper_id=paper.id,
                     )
