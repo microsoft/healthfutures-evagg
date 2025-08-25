@@ -1,4 +1,8 @@
-Below you will find some text from a paper describing genetic variants in the gene {{$gene}}.
+{{$passage}}
+
+-- End paper text --
+
+Above you will find some text from a paper describing genetic variants in the gene {{$gene}}.
 I want you to tell me the functional studies described in this paper for a specific genetic variant. The genetic
 variant of interest can be described in any of the following ways: {{$variant_descriptions}}.
 
@@ -14,10 +18,6 @@ function prediction, etc.), however they are not relevant here.
 {
   "functional_study": ["animal model", "patient cells", "cell line", "none"]
 }
-
--- Begin paper text --
-
-{{$passage}}
 
 
 

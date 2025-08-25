@@ -1,4 +1,8 @@
-Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+{{$passage}}
+
+-- End paper text --
+
+Above is some text from a paper describing genetic variants in the gene {{$gene}}.
 
 Here is a list of previously defined phenotypes and diseases that are mentioned in this text: {{$candidates}}
 
@@ -22,9 +26,5 @@ If you cannot determine the phenotype from the text provided please respond:
 {
   "phenotypes": []
 }
-
--- Begin paper text --
-
-{{$passage}}
 
 

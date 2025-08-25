@@ -1,4 +1,8 @@
-Below is the text from an academic paper.
+{{$passage}}
+
+-- End paper text --
+
+Above is the text from an academic paper.
 
 I would like you to classify this paper into one of the following categories: case report, case series, cohort analysis, review, or other.
 
@@ -19,8 +23,4 @@ Provide your response as a valid JSON object, using the following format.
 
 Your response should ALWAYS be a valid json object with the key "study_type" and a value that is one of 
 "case report", "case series", "cohort analysis", "review", or "other".
-
--- Begin paper text --
-
-{{$passage}}
 

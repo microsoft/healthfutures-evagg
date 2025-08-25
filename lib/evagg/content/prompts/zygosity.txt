@@ -1,4 +1,8 @@
-Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+{{$passage}}
+
+-- End paper text --
+
+Above is some text from a paper describing genetic variants in the gene {{$gene}}.
 
 I would like you to determine the zygosity for the patient and variant described below. By zygosity I mean
 the number of copies of this particular variant that the patient described below possesses. Multiple patients
@@ -30,7 +34,3 @@ Provide your response as a valid JSON object, using the following format.
 {
   "zygosity": "homozygous" | "heterozygous" | "compound heterozygous" | "none"
 }
-
--- Begin paper text --
-
-{{$passage}}

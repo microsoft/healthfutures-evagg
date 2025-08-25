@@ -1,4 +1,8 @@
-Here is a list of previously defined phenotypes and diseases that are mentioned in this text: {{$phenotypes}}
+{{$passage}}
+
+-- End paper text --
+
+Above is the text from a paper. Here is a list of previously defined phenotypes and diseases that are mentioned in this text: {{$phenotypes}}
 
 Return this same list but with acryonms and abbreviations expanded to their complete forms based on definitions 
 provided in the text. Use only definitions provided in the text to do this expansion; when this is not possible, return
@@ -14,10 +18,6 @@ Provide your response as a valid JSON object, in the following format:
     "etc..."
   ]
 }
-
--- Begin paper text --
-
-{{$passage}}
 
 Again, remember that the only set of phenotypes that you're trying to expand abbreviations for is: {{$phenotypes}}. 
 Your response should only contain a list of the unabbreviated form of these phenotypic terms, nothing else.

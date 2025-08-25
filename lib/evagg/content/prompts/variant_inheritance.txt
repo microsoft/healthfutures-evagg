@@ -1,4 +1,8 @@
-Here is some text from a paper describing genetic variants in the gene {{$gene}}.
+{{$passage}}
+
+-- End paper text --
+
+Above is some text from a paper describing genetic variants in the gene {{$gene}}.
 
 I would like you to determine the mode of inheritance for the patient and variant described below. Multiple patients
 in the paper might possess this variant, but I want you to determine the mode of inheritance for this patient specifically.
@@ -27,8 +31,4 @@ Provide your response as a valid JSON object, using the following format.
 
 Your response should ALWAYS be a valid json object with the key "variant_inheritance" and a value that is one of 
 "inherited", "de novo", or "unknown".
-
--- Begin paper text --
-
-{{$passage}}
 

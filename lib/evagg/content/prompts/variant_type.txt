@@ -1,4 +1,8 @@
-Below you will find some text from a paper describing genetic variants in the gene {{$gene}}.
+{{$passage}}
+
+-- End paper text --
+
+Above you will find some text from a paper describing genetic variants in the gene {{$gene}}.
 I want you to tell me variant type for the genetic variant described in any of the following 
 ways: {{$variant_descriptions}}.
 
@@ -34,7 +38,7 @@ Here are some examples of this in action:
 Provide your response as a valid JSON object, using the format below. The only valid values you may select from in
 your response are "missense", "frameshift", "stop gained", "splice donor", "splice acceptor", "splice region", 
 "start lost", "inframe deletion", "frameshift deletion", "inframe insertion", "frameshift insertion", "structural", 
-"synonymous", "intron", "5’ UTR", "3’UTR", "non-coding", and "unknown".
+"synonymous", "intron", "5' UTR", "3'UTR", "non-coding", and "unknown".
 
 -- Output format --
 
@@ -42,8 +46,3 @@ Provide your response as a valid JSON object, using the following format.
 {                    .             .              .                   .               .                  .                                 .                        .                      .                     .                                      .
   "variant_type": "missense" | "frameshift" | "stop gained" | "splice donor" | "splice acceptor" | "splice region" | "start lost" | "inframe deletion" | "frameshift deletion" | "inframe insertion" | "frameshift insertion" | "structural" | "synonymous" | "intron" | "5' UTR" | "3' UTR" | "non-coding" | "unknown"
 }
-
--- Begin paper text --
-
-{{$passage}}
-

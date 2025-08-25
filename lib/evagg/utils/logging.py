@@ -60,6 +60,8 @@ def _format_prompt(record: logging.LogRecord) -> str:
     settings = record.__dict__.get("prompt_settings", {})
     prompt = record.__dict__.get("prompt_text", "")
     response = record.__dict__.get("prompt_response", "")
+    response_metadata = record.__dict__.get("prompt_response_metadata", {})
+
     return (
         f"#{'#' * 80}\n"
         + f"#{' METADATA '.ljust(80, '#')}\n"
@@ -71,6 +73,8 @@ def _format_prompt(record: logging.LogRecord) -> str:
         + f"{prompt}\n"
         + f"#{' RESPONSE '.ljust(80, '#')}\n"
         + f"{response}\n"
+        + f"#{' RESPONSE METADATA '.ljust(80, '#')}\n"
+        + f"{response_metadata}\n"
     )
 
 
