@@ -239,6 +239,16 @@ def get_pipeline_output(args: argparse.Namespace) -> Tuple[str, pd.DataFrame]:
     # If paper_id is prefixed with "pmid:", remove it.
     pipeline_df["pmid"] = pipeline_df["paper_id"].str.lstrip("pmid:").astype(int)
 
+    # If any of the pipeline results were drawn from abstracts only, we should issue a warning and exclude them from
+    # benchmarking.
+    if "source_type" in pipeline_df and any(pipeline_df["source_type"] == "abstract"):
+        print(
+            "Warning: some of the pipeline results were drawn from abstracts only. These will be excluded from "
+            "benchmarking. In general, you should avoid setting allow_abstracts=True in the pipeline config for "
+            "benchmarking runs."
+        )
+        pipeline_df = pipeline_df[pipeline_df["source_type"] != "abstract"]
+
     # Only keep the columns we care about.
     pipeline_df = pipeline_df[["gene", "pmid"]]
 

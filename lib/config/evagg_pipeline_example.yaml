@@ -24,6 +24,7 @@ library:
   llm_client: "{{llm_client}}"
   allowed_categories:
     - "genetic disease"
+  allow_abstracts: true
 extractor:
   di_factory: lib.evagg.PromptBasedContentExtractor
   fields:

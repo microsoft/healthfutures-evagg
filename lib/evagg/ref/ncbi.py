@@ -186,7 +186,11 @@ class NcbiLookupClient(NcbiClientBase, IPaperLookupClient, IGeneLookupClient, IV
         props.update(self._get_derived_props(props))
         assert PAPER_BASE_PROPS == set(props.keys()), f"Missing properties: {PAPER_BASE_PROPS ^ set(props.keys())}"
         if include_fulltext:
-            props["fulltext_xml"] = self._get_full_text(props)
+            if props["can_access"]:
+                props["fulltext_xml"] = self._get_full_text(props)
+            else:
+                props["fulltext_xml"] = None
+
         return Paper(**props)
 
     # IGeneLookupClient
